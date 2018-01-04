@@ -1,4 +1,6 @@
-#This a a modified version of the "kos-ports" PNG example. Changes made:
+#This a a modified version of the "kos-ports" PNG example.
+
+Changes made:
 	- Converted it to C++ just cause (Needed to define zlib_getlength() under regular C though)
 	- Added in some comments to help understand whats going on
 	- Free-d temp_tex since it wasn't needed anymore

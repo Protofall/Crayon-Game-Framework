@@ -2,7 +2,7 @@ These 4 programs all do the same kind of thing, that is to allow for reading dat
 
 But each program does it in different ways.
 
-#There are two variants, the non/GZ compressed and the 1st_read.bin/prog.cdi versions
+There are two variants, the non/GZ compressed and the 1st_read.bin/prog.cdi versions
 
 First I'll talk about the non/GZ compressed ones. The difference is that the GZ versions use GZ compression on the romdisk.img's to reduce the amount of data on the CD and time to load and put a little extra work on the CPU whereas the non-GZ versions just load the .img and mount it. IMO the GZ versions are better since the CPU is faster than reading information off of the CD which will give the end user the best situation.
 
