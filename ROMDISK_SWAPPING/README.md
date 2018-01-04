@@ -1,0 +1,13 @@
+These 4 programs all do the same kind of thing, that is to allow for reading data off of the CD and unloading it with the aid of swapable romdisks. IMO this is one of the most important techniques for Dreamcast homebrew since there is only 16MB of RAM to use and some of that is taken up by the program file. Pretty much all of the KOS examples bundle their romdisk into the program file itself, but that means you can't unload the romdisk hence wasting space.
+
+But each program does it in different ways.
+
+#There are two variants, the non/GZ compressed and the 1st_read.bin/prog.cdi versions
+
+First I'll talk about the non/GZ compressed ones. The difference is that the GZ versions use GZ compression on the romdisk.img's to reduce the amount of data on the CD and time to load and put a little extra work on the CPU whereas the non-GZ versions just load the .img and mount it. IMO the GZ versions are better since the CPU is faster than reading information off of the CD which will give the end user the best situation.
+
+Then there is the 1st_read.bin and prog.cdi versions. The "bootdreams" projects only go as far to make all the romdisk .img's or .img.gz's aswell as "1st_read.bin". The user would then have to put 1st_read.bin, IP.BIN and all the romdisks in a directory and select that directory with an application like bootdreams. Bootdreams then produces a .cdi file that you can either test in an emulator (Not recommended due to emulator inaccuracy) or burn to a CD-R and test on a real Dreamcast console. This can be a bit tedious if your making multiple revisions and if you aren't a windows user you will have to install WINE and launch bootdreams through that.
+
+The "JAMOHTP-PROTOFALL" versions (Name might change later) skip using bootdreams altogether and the makefile creates an .iso file then a .cdi file. It uses a Unix fork of img4dc to help create the .cdi file (Fork can be found here https://github.com/Kazade/img4dc) To build it you need to install cmake then run `cmake .` in the same directory as the img4dc-master directory, then run `make` and your executable will be found as img4dc-master/cdi4dc/cdi4dc. Then type `echo $PATH` and copy your new executable into one of those listed directories. I put mine in "opt/toolchains/dc/bin/" or $(KOS_BASE)/bin/. I also located my IP.BIN under "opt/toolchains/dc/" or $(KOS_BASE)/. I've never run KOS on Windows so I'm not sure if this will work on the Windows version of img4dc without any modifications.
+
+Massive thanks to BlackAura for the functions to read the .img's and .img.gz's into RAM, Kazade for his fork of img4dc and JamoHTP for finding the fork and creating the makefiles for the JAMOHTP-PROTOFALL versions.
