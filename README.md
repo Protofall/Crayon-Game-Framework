@@ -16,8 +16,8 @@ Contains code from this guide: http://dcemulation.org/?title=KMG_Textures
 ### myC++PNG
 Its just the PNG example included with the kos-ports converted to C++ with a few minor changes
 
-### paletteTest(WIP)
-When finished, it will have some code from BlackAura's guide on palette swapping, but the texture/palette loading code will be unique.
+### paletteTest
+It heavily borrows from bogglez's Spritesheet tutorial using texconv to make the paletted texture files, code to load them in and drawing sprites instead of polygons. I removed all the Spritesheet stuff to simplify this example and added swappable romdisks just because its the beter to use swappable romdisks than unswappable ones. His tutorial on spritesheets/paletted textures can be found here: http://dcemulation.org/?title=PVR_Spritesheets
 
 ### picSizeTest
 The dino textures are from Google Chrome's Dino Runner Game

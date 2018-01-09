@@ -1,9 +1,6 @@
 //Contains a lot of (modified) code from this tutorial: http://dcemulation.org/?title=PVR_Spritesheets
-//Also note insta's bg colour is manally be replaced down on line 459 or something
+//Also note insta's bg colour is manally be replaced down on line 300 or something
 
-//#include <kos.h>
-//#include <zlib/zlib.h>
-//#include <png/png.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -30,49 +27,31 @@ struct dpal_header {
   uint32_t color_count;
 };
 
-/*
-//Offset and dimensions of each sprite within a spritesheet (romdisks/rom1/file.txt file)
-struct sprite {
-  char name[32];
-  uint16_t x, y, width, height;
-};
-*/
-
 struct spritesheet {
   uint16_t width;         // Dimensions of texture to compute UV coordinates of sprites
   uint16_t height;        // later for drawing.
   pvr_ptr_t texture;      // Pointer to texture in video memory,   from file *.dtex
   uint32_t palette[256];  // Palette of texture, up to 256 colors, from file *.dtex.pal
   uint16_t color_count;   // How many colors are actually used in the palette
-  //uint16_t sprite_count;  // Amount of sprites in spritesheet,     from file *.txt
-  //struct sprite *sprites; // Information for drawing each sprite,  from file *.txt
 };
 
 struct spritesheet Fade, Insta;
 
-// Texture
-//pvr_ptr_t thing1;        //To store the image from Insta.png
-//pvr_ptr_t thing2;        //To store the image from Fade.png
-
 //spritesheet: Where to store the loaded information
 //image_filename: file.dtex
 //palette_filename: file.dtex.pal
-//sheet_filename: foo.txt (Not needed for this program)
-static int spritesheet_load(struct spritesheet * const spritesheet, char const * const image_filename, char const * const palette_filename/*, char const * const sheet_filename*/){
+static int spritesheet_load(struct spritesheet * const spritesheet, char const * const image_filename, char const * const palette_filename){
   int result = 0;
   FILE *image_file = NULL;
   FILE *palette_file = NULL;
-  //FILE *sheet_file = NULL;
   pvr_ptr_t texture = NULL;
-  //struct sprite *sprites = NULL;
 
 
   // Open all files
   image_file = fopen(image_filename, "rb");
   palette_file = fopen(palette_filename, "rb");
-  //sheet_file = fopen(sheet_filename, "rb");
 
-  if(!image_file | !palette_file /*| !sheet_file*/){
+  if(!image_file | !palette_file){
     result = 1;
     goto cleanup;
   }
@@ -124,55 +103,19 @@ static int spritesheet_load(struct spritesheet * const spritesheet, char const *
     goto cleanup;
   }
 
-
-  //This seems to be a spritesheet thing
-  /*
-  //Read sprite offsets and dimensions from *.txt file
-  uint16_t sprite_count = 0;
-  while(!feof(sheet_file)){ //Determine sprite count by line count (feof basically detects the end-of-file)
-    if(fgetc(sheet_file) == '\n')
-      ++sprite_count;
-    if(sprite_count == UINT16_MAX)
-      break;
-  }
-
-  sprites = malloc(sprite_count * sizeof(struct sprite));
-  if(!sprites) {
-    result = 9;
-    goto cleanup;
-  }
-
-  rewind(sheet_file); //rewind sets the file position to the beginning of the file of the given stream
-  struct sprite * sprite = sprites;
-  for(uint16_t i = 0; i < sprite_count && !feof(sheet_file); ++i){
-    int scanned = fscanf(sheet_file, "%[^,], %hu, %hu, %hu, %hu, 0, 0, 0, 0\n", sprite->name, &sprite->x, &sprite->y, &sprite->width, &sprite->height);
-    if(scanned != 5){
-      result = 10;
-      goto cleanup;
-    }
-
-    ++sprite;
-  }
-  */
-
-
   // Store info into the struct
   spritesheet->width        = dtex_header.width;
   spritesheet->height       = dtex_header.height;
   spritesheet->texture      = texture;
   spritesheet->color_count  = dpal_header.color_count;
-  //spritesheet->sprite_count = sprite_count;
-  //spritesheet->sprites      = sprites;
 
 cleanup:
   if(image_file){fclose(image_file);}
   if(palette_file){fclose(palette_file);}
-  //if(sheet_file){fclose(sheet_file);}
 
   //If a failure occured somewhere
   if(result){
     pvr_mem_free(texture);
-    //free(sprites);
   }
 
   return result;
@@ -185,7 +128,6 @@ void spritesheet_free(struct spritesheet * const spritesheet) {
   }
 
   pvr_mem_free(spritesheet->texture);
-  //free(spritesheet->sprites);
 
   memset(spritesheet, 0, sizeof(struct spritesheet)); //Seems to fill the spritesheet with "sizeof(struct spritesheet)"" amount of zeroes
                                                       //Seems redundant though in fact it feels more useful not to have this so you know
@@ -194,59 +136,6 @@ void spritesheet_free(struct spritesheet * const spritesheet) {
                                                       //In the Crayon library it would be better to delete the struct here rather than use
                                                       //memset. I'll have to think about how I pass stuff around if they're not global
 }
-
-/*
-//name is a pointer to the pvr_ptr_t, *name is the pvr_ptr_t
-void thing_init(int dim, char * location, pvr_ptr_t * name){
-  *name = pvr_mem_malloc(dim * dim * 2);
-  png_to_texture(location, *name, PNG_FULL_ALPHA);
-}
-
-void draw_thing(pvr_ptr_t name, int dim, int x, int y){
-  int z = 1;
-  pvr_poly_cxt_t cxt;
-  pvr_poly_hdr_t hdr;
-  pvr_vertex_t vert;
-
-  //pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB4444 | PVR_TXRFMT_TWIDDLED, dim, dim, name, PVR_FILTER_BILINEAR);
-  pvr_poly_cxt_txr(&cxt, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB4444, dim, dim, name, PVR_FILTER_BILINEAR);
-  pvr_poly_compile(&hdr, &cxt);
-  pvr_prim(&hdr, sizeof(hdr));
-
-  vert.argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);
-  vert.oargb = 0;
-  vert.flags = PVR_CMD_VERTEX;
-
-  vert.x = x;
-  vert.y = y;
-  vert.z = z;
-  vert.u = 0.0;
-  vert.v = 0.0;
-  pvr_prim(&vert, sizeof(vert));
-
-  vert.x = x + dim;
-  vert.y = y;
-  vert.z = z;
-  vert.u = 1;
-  vert.v = 0.0;
-  pvr_prim(&vert, sizeof(vert));
-
-  vert.x = x;
-  vert.y = y + dim;
-  vert.z = z;
-  vert.u = 0.0;
-  vert.v = 1;
-  pvr_prim(&vert, sizeof(vert));
-
-  vert.x = x + dim;
-  vert.y = y + dim;
-  vert.z = z;
-  vert.u = 1;
-  vert.v = 1;
-  vert.flags = PVR_CMD_VERTEX_EOL;
-  pvr_prim(&vert, sizeof(vert));
-}
-*/
 
 static int init_pvr() {
   int result = 0;
@@ -261,7 +150,6 @@ static int init_pvr() {
   };
   if(pvr_init(&pvr_params)) {
     result = 1;
-    //goto cleanup;
   }
   //pvr_set_bg_color(0.3, 0.3, 0.3);  //Remove this later (Appears to crash before it gets here)
 
@@ -270,30 +158,23 @@ static int init_pvr() {
 
 static int init_tex(){
   int result = 0;
-  //Load spritesheets (Why is this nessisary?)
+  //Load spritesheets (Why is it nessisary to zero these out first?)
   memset(&Fade, 0, sizeof(Fade));
   memset(&Insta, 0, sizeof(Insta));
 
-  result = spritesheet_load(&Fade, "/levels/Fade.dtex", "/levels/Fade.dtex.pal"/*, "/rd/stage1_actors_sheet.txt"*/);
+  result = spritesheet_load(&Fade, "/levels/Fade.dtex", "/levels/Fade.dtex.pal");
   if(result){
     printf("Cannot load stage1_actors spritesheet! Error %d\n", result);
     result = 1;
     goto cleanup;
   }
 
-  result = spritesheet_load(&Insta, "/levels/Insta.dtex", "/levels/Insta.dtex.pal"/*, "/rd/ui_sheet.txt"*/);
+  result = spritesheet_load(&Insta, "/levels/Insta.dtex", "/levels/Insta.dtex.pal");
   if(result){
     printf("Cannot load ui spritesheet! Error %d\n", result);
     result = 2;
     goto cleanup;
   }
-
-  /*
-  printf("\nSpritesheets:\n  stage1_actors: %u sprites, %u colors\n  ui:            %u sprites, %u colors\n\n",
-    stage1_actors_sheet.sprite_count, stage1_actors_sheet.color_count,
-    ui_sheet.sprite_count,            ui_sheet.color_count
-  );
-  */
 
 cleanup:
   if(result) {
@@ -312,26 +193,7 @@ void setup_palette(uint32_t const * colors, uint16_t count, uint8_t palette_numb
   }
 }
 
-void draw_sprite(struct spritesheet const * const sheet,/* char const * const name,*/ float x, float y, uint8_t palette_number) {
-  //Find sprite by name
-
-  //Not too sure what this stuff is below, but I know I want be needing it
-  /*
-  uint16_t const sprite_count = sheet->sprite_count;
-  struct sprite const * const sprites = sheet->sprites;
-  struct sprite const * sprite = NULL;
-  for(uint16_t i = 0; i < sprite_count; ++i) {
-    if(!strcmp(sprites[i].name, name)) {
-      sprite = &sprites[i];
-      break;
-    }
-  }
-
-  if(sprite == NULL) {
-    printf("There is no sprite named '%s' in this spritesheet.\n", name);
-    return;
-  }
-  */
+void draw_sprite(struct spritesheet const * const sheet, float x, float y, uint8_t palette_number) {
 
   //Setting out draw position variables, since we don't have spritesheets we can simplify this
   float const x0 = x;
@@ -381,14 +243,6 @@ void draw_frame(void){
   pvr_wait_ready();
   pvr_scene_begin();
 
-  //pvr_list_begin(PVR_LIST_TR_POLY);
-  //draw_thing(thing1, 128, 256, 80);
-  //draw_thing(thing2, 128, 256, 272);
-
-  //draw_thing(thing1, 128, 128, 176); //(x is horizontal 640, y is vertical 480)
-  //draw_thing(thing2, 128, 384, 176);
-  //pvr_list_finish();
-
   pvr_list_begin(PVR_LIST_PT_POLY);
   setup_palette(Fade.palette, Fade.color_count, 0);
   setup_palette(Insta.palette, Insta.color_count, 1);
@@ -403,8 +257,6 @@ void draw_frame(void){
 
 void cleanup(){
   // Clean up the texture memory we allocated earlier
-  //pvr_mem_free(thing1);
-  //pvr_mem_free(thing2);
 
   spritesheet_free(&Fade);
   spritesheet_free(&Insta);
@@ -437,29 +289,16 @@ int main(){
 
   mount_romdisk("/cd/rom1.img", "/levels"); //Trying to mount the first img to the romdisk
 
-  if(init_tex()){ //This fails at some point
+  if(init_tex()){
     puts("Cannot init textures");
     return -1;
   }
-
-  /*
-  while(1){
-    pvr_wait_ready();
-    pvr_scene_begin();
-    pvr_scene_finish();
-  }
-  */
-
-  //thing_init(128, "/levels/Insta.png", &thing1);
-  //thing_init(128, "/levels/Fade.png", &thing2);
 
   fs_romdisk_unmount("/levels");
 
   //Testing modifying the palettes
   Insta.palette[0] = 0xffff0000;  //Should set the background of Insta to full red (Don't forget alpha).
   //Insta.palette[0] = 0xffff0000 - 0x00ff0000 + 0x000000ff;  //Pure blue. ALso palette[1] is the text itself (This is same as setting it to zero)
-
-  //I feel I don't understand that yet because if I try to set it to full red it says its too large for an int, but its 32 bits, right?
 
   int done = 0;
 
@@ -480,10 +319,11 @@ int main(){
   return 0;
 }
 
-/*
-
-Basically want to grab everything from assets/rom1 and use texconv on them and output to romdisks/rom1 then make the image from that
-
-I hate makefiles so much
-
-*/
+  /*
+  //If you set a pvr bg then this can be an "alternative" to printfs (Since printf's don't work on CDIs)
+  while(1){
+    pvr_wait_ready();
+    pvr_scene_begin();
+    pvr_scene_finish();
+  }
+  */
