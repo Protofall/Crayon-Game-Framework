@@ -1,5 +1,5 @@
 //Contains a lot of (modified) code from this tutorial: http://dcemulation.org/?title=PVR_Spritesheets
-//Also note insta's bg colour is manally be replaced down on line 300 or something
+//Also note insta's bg colour is manually being replaced down in the main function
 
 #include <stdio.h>
 #include <stdint.h>
@@ -7,40 +7,51 @@
 #include <string.h>
 #include <math.h>
 
-#include <arch/timer.h> //Might not be needed for this example
 #include <dc/pvr.h>
-#include <dc/maple.h>   //For the "Press start" thing
-#include <dc/maple/controller.h>
+#include <dc/maple.h>
+#include <dc/maple/controller.h>  //For the "Press start to exit" thing
 #include <kos/fs_romdisk.h> //For romdisk swapping
 
+//#define Use_4bpp  //Comment this out if you want to do 8bpp (Note: Makefile would need to be adjusted to 8bpp in the texconv command)
+
+#ifdef Use_4bpp
+  #define bpp_Type 0x28000000 //The type is wrong and even then, the textures aren't being displayed right
+  #define bpp_Pal_Etr 16
+  #define bpp_txrfmt PVR_TXRFMT_PAL4BPP
+#else //8bpp
+  #define bpp_Type 0x30000000
+  #define bpp_Pal_Etr 256
+  #define bpp_txrfmt PVR_TXRFMT_PAL8BPP
+#endif
+
 struct dtex_header {
-  uint8_t  magic[4]; //'DTEX'
-  uint16_t width; //Goes into ss width
+  uint8_t  magic[4]; //'DTEX'  I dunno why its called magic though, probs just the "magic number/code"
+  uint16_t width; //Goes into sprite width
   uint16_t height;  //Same but for height
-  uint32_t type;  //I'm guessing this is for 8bpp or 4bpp
+  uint32_t type;  //This seems to be for 8bpp or 4bpp
   uint32_t size;
 };
 
 //DTEX .pal palette files also have a header (this is from romdisks/rom1/file.dtex.pal)
 struct dpal_header {
-  uint8_t  magic[4]; // 'DPAL'  I dunno why its called magic though, probs just the "magic number/code"
+  uint8_t  magic[4]; // 'DPAL'
   uint32_t color_count;
 };
 
-struct spritesheet {
+struct sprite {
   uint16_t width;         // Dimensions of texture to compute UV coordinates of sprites
   uint16_t height;        // later for drawing.
   pvr_ptr_t texture;      // Pointer to texture in video memory,   from file *.dtex
-  uint32_t palette[256];  // Palette of texture, up to 256 colors, from file *.dtex.pal
+  uint32_t palette[bpp_Pal_Etr];  // Palette of texture, up to 16/256 colors, from file *.dtex.pal
   uint16_t color_count;   // How many colors are actually used in the palette
 };
 
-struct spritesheet Fade, Insta;
+struct sprite Fade, Insta;
 
-//spritesheet: Where to store the loaded information
+//sprite: Where to store the loaded information
 //image_filename: file.dtex
 //palette_filename: file.dtex.pal
-static int spritesheet_load(struct spritesheet * const spritesheet, char const * const image_filename, char const * const palette_filename){
+static int sprite_load(struct sprite * const sprite, char const * const image_filename, char const * const palette_filename){
   int result = 0;
   FILE *image_file = NULL;
   FILE *palette_file = NULL;
@@ -64,7 +75,7 @@ static int spritesheet_load(struct spritesheet * const spritesheet, char const *
   }
 
   //Only allow 8 bit palette dtex files (dtex files are the basic image, dtex.pal are its palettes and the header contains useful info)
-  if(memcmp(dtex_header.magic, "DTEX", 4) || dtex_header.type != 0x30000000){ //memcmp compares first 4 bytes of param 1 to param2
+  if(memcmp(dtex_header.magic, "DTEX", 4) || dtex_header.type != bpp_Type){ //memcmp compares first 4 bytes of param 1 to param2
                                                                               //the hex type seems to be found within the file itself
                                                                               //But its not being set anywhere *scratches head
                                                                               //Is it defined in the fread above?
@@ -72,7 +83,7 @@ static int spritesheet_load(struct spritesheet * const spritesheet, char const *
     goto cleanup;
   }
 
-  texture = pvr_mem_malloc(dtex_header.size);
+  texture = pvr_mem_malloc(dtex_header.size); //For 4bpp, something appears to be going wrong when loading the header
   if(!texture){
     result = 4;
     goto cleanup;
@@ -98,16 +109,16 @@ static int spritesheet_load(struct spritesheet * const spritesheet, char const *
     goto cleanup;
   }
 
-  if(fread(spritesheet->palette, sizeof(uint32_t), dpal_header.color_count, palette_file) != dpal_header.color_count){
+  if(fread(sprite->palette, sizeof(uint32_t), dpal_header.color_count, palette_file) != dpal_header.color_count){
     result = 8;
     goto cleanup;
   }
 
-  // Store info into the struct
-  spritesheet->width        = dtex_header.width;
-  spritesheet->height       = dtex_header.height;
-  spritesheet->texture      = texture;
-  spritesheet->color_count  = dpal_header.color_count;
+  //Store info into the struct
+  sprite->width        = dtex_header.width;
+  sprite->height       = dtex_header.height;
+  sprite->texture      = texture;
+  sprite->color_count  = dpal_header.color_count;
 
 cleanup:
   if(image_file){fclose(image_file);}
@@ -121,79 +132,60 @@ cleanup:
   return result;
 }
 
-//Free ressources used by spritesheet, if any.
-void spritesheet_free(struct spritesheet * const spritesheet) {
-  if(!spritesheet){
+//Free ressources used by sprite, if any.
+void sprite_free(struct sprite * const sprite){
+  if(!sprite){
     return;
   }
 
-  pvr_mem_free(spritesheet->texture);
+  pvr_mem_free(sprite->texture);
 
-  memset(spritesheet, 0, sizeof(struct spritesheet)); //Seems to fill the spritesheet with "sizeof(struct spritesheet)"" amount of zeroes
-                                                      //Seems redundant though in fact it feels more useful not to have this so you know
-                                                      //Can see garbage info when you mess up as oppose to nothing
+  //memset(sprite, 0, sizeof(struct sprite)); //Seems to fill the sprite with "sizeof(struct sprite)"" amount of zeroes
+                                            //Seems redundant though in fact it feels more useful not to have this so you know
+                                            //Can see garbage info when you mess up as oppose to nothing
 
-                                                      //In the Crayon library it would be better to delete the struct here rather than use
-                                                      //memset. I'll have to think about how I pass stuff around if they're not global
+                                            //In the Crayon library it would be better to delete the struct here rather than use
+                                            //memset. I'll have to think about how I pass stuff around if they're not global
 }
 
-static int init_pvr() {
+static int init_txr(){
   int result = 0;
+  //Load sprite (Why is it nessisary to zero these out first?)
+  //memset(&Fade, 0, sizeof(Fade));
+  //memset(&Insta, 0, sizeof(Insta));
 
-  /* Initialize the PVR graphics chip.
-   * Set how many polygons can be stored in each of the PVRpolygon lists.
-   * Only opaque and punchthru are enabled in this tutorial, only punchthru is used.
-   */
-  pvr_init_params_t pvr_params = {
-    .opb_sizes = { PVR_BINSIZE_8, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_8 },
-    .vertex_buf_size = 512 * 1024
-  };
-  if(pvr_init(&pvr_params)) {
-    result = 1;
-  }
-  //pvr_set_bg_color(0.3, 0.3, 0.3);  //Remove this later (Appears to crash before it gets here)
-
-  return result;
-}
-
-static int init_tex(){
-  int result = 0;
-  //Load spritesheets (Why is it nessisary to zero these out first?)
-  memset(&Fade, 0, sizeof(Fade));
-  memset(&Insta, 0, sizeof(Insta));
-
-  result = spritesheet_load(&Fade, "/levels/Fade.dtex", "/levels/Fade.dtex.pal");
+  result = sprite_load(&Fade, "/levels/Fade.dtex", "/levels/Fade.dtex.pal");
   if(result){
-    printf("Cannot load stage1_actors spritesheet! Error %d\n", result);
+    printf("Cannot load Fade sprite! Error %d\n", result);
     result = 1;
     goto cleanup;
   }
 
-  result = spritesheet_load(&Insta, "/levels/Insta.dtex", "/levels/Insta.dtex.pal");
+  result = sprite_load(&Insta, "/levels/Insta.dtex", "/levels/Insta.dtex.pal");
   if(result){
-    printf("Cannot load ui spritesheet! Error %d\n", result);
+    printf("Cannot load Insta sprite! Error %d\n", result);
     result = 2;
     goto cleanup;
   }
 
 cleanup:
   if(result) {
-    spritesheet_free(&Fade);
-    spritesheet_free(&Insta);
+    sprite_free(&Fade);
+    sprite_free(&Insta);
   }
 
   return result;
 }
 
 void setup_palette(uint32_t const * colors, uint16_t count, uint8_t palette_number) {
-  pvr_set_pal_format(PVR_PAL_ARGB8888);
+  pvr_set_pal_format(PVR_PAL_ARGB8888); //Setting 3 here has the same effect since its just a macro :P
   uint16_t i;
   for(i = 0; i < count; ++i){
-    pvr_set_pal_entry(i + 256 * palette_number, colors[i]);
+    pvr_set_pal_entry(i + bpp_Pal_Etr * palette_number, colors[i]);
   }
 }
 
-void draw_sprite(struct spritesheet const * const sheet, float x, float y, uint8_t palette_number) {
+void draw_sprite(struct sprite const * const sheet, float x, float y, uint8_t palette_number) {
 
   //Setting out draw position variables, since we don't have spritesheets we can simplify this
   float const x0 = x;
@@ -210,7 +202,7 @@ void draw_sprite(struct spritesheet const * const sheet, float x, float y, uint8
   pvr_sprite_cxt_t context;
   pvr_sprite_hdr_t header;
 
-  pvr_sprite_cxt_txr(&context, PVR_LIST_PT_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(palette_number), sheet->width, sheet->height, sheet->texture, PVR_FILTER_NONE);
+  pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, bpp_txrfmt | PVR_TXRFMT_4BPP_PAL(palette_number), sheet->width, sheet->height, sheet->texture, PVR_FILTER_NONE);
   pvr_sprite_compile(&header, &context);
 
   pvr_prim(&header, sizeof(header));
@@ -243,10 +235,11 @@ void draw_frame(void){
   pvr_wait_ready();
   pvr_scene_begin();
 
-  pvr_list_begin(PVR_LIST_PT_POLY);
+  pvr_list_begin(PVR_LIST_TR_POLY);
   setup_palette(Fade.palette, Fade.color_count, 0);
   setup_palette(Insta.palette, Insta.color_count, 1);
 
+  //Fade is drawn last (So if they were overlapping Fade would be ontop) (Obviously Z value can change this)
   draw_sprite(&Fade, 128, 176, 0);
   draw_sprite(&Insta, 384, 176, 1);
   pvr_list_finish();
@@ -257,9 +250,8 @@ void draw_frame(void){
 
 void cleanup(){
   // Clean up the texture memory we allocated earlier
-
-  spritesheet_free(&Fade);
-  spritesheet_free(&Insta);
+  sprite_free(&Fade);
+  sprite_free(&Insta);
 
   // Shut down the pvr system
   pvr_shutdown();
@@ -280,25 +272,33 @@ int mount_romdisk(char *filename, char *mountpoint){
 }
 
 int main(){
-  //pvr_init_defaults();
+  pvr_init_defaults();  //The defaults only do OP and TR but not PT and the modifier OP and TR so thats why it wouldn't work before
 
-  if(init_pvr()){ //Seems to work fine
-    puts("Cannot init pvr");
+  /*
+  pvr_init_params_t pvr_params = {
+    .opb_sizes = { PVR_BINSIZE_8, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_8 },
+    .vertex_buf_size = 512 * 1024
+  };
+  if(pvr_init(&pvr_params)){
     return -1;
   }
+  */
 
-  mount_romdisk("/cd/rom1.img", "/levels"); //Trying to mount the first img to the romdisk
+  //pvr_set_bg_color(0.3, 0.3, 0.3);  //Its useful-ish for debugging
 
-  if(init_tex()){
-    puts("Cannot init textures");
+  mount_romdisk("/cd/rom1.img", "/levels"); //Trying to mount the first img to the romdisk. This could be improved with sprintf
+
+  if(init_txr()){
+    printf("Cannot init textures");
     return -1;
   }
 
   fs_romdisk_unmount("/levels");
 
-  //Testing modifying the palettes
-  Insta.palette[0] = 0xffff0000;  //Should set the background of Insta to full red (Don't forget alpha).
-  //Insta.palette[0] = 0xffff0000 - 0x00ff0000 + 0x000000ff;  //Pure blue. ALso palette[1] is the text itself (This is same as setting it to zero)
+  //By default entry 0 is R=50, G=189, B=7 and entry 1 is R=G=B=255 (Pure White)
+  //Insta.palette[0] = 0xff32BD07;  //This is the original green
+  //Insta.palette[0] = 0xff0000;  //This sets the green for Insta to fully red
+  //Insta.palette[0] = 0xffff0000 - 0x00ff0000 + 0x000000ff;  //Pure blue (Done by setting it to black then blue)
 
   int done = 0;
 
@@ -319,11 +319,18 @@ int main(){
   return 0;
 }
 
-  /*
-  //If you set a pvr bg then this can be an "alternative" to printfs (Since printf's don't work on CDIs)
+//The idea would be to make the pictures go from green/white to red/black or something. For Fade I think I'd increment
+//every 8 bits individually (So if blue is already good then only modify green and red). Insta just converts instantly
+//when Fade had done its transition. Fade effects this way would take 255 transitions max (So about 4.25 seconds for
+//60Hz or about 5 seconds for 50Hz) an option to consider is larger increments hence reducing the transition time
+
+/*
+  //If you set a pvr bg then this can be an "alternative" to printfs (Since printfs don't work in .cdi programs)
+  //However a combination of sprintf() and the BIOS font is a better option...
+
   while(1){
     pvr_wait_ready();
     pvr_scene_begin();
     pvr_scene_finish();
   }
-  */
+*/
