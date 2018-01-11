@@ -81,7 +81,7 @@ $(CDFS_DIR)/%.img: $(CDFS_DIR) $(DTEX_FILES)
 # create DTEX_FILES in ROMDISKS_DIR from png assets in ASSETS_DIR
 $(ROMDISKS_DIR)/%.dtex: $(ROMDISKS_DIR) $(ASSETS_DIR)/%.png
 	mkdir -p $(dir $@)
-	texconv -i $(ASSETS_DIR)/$*.png -o $@ -f PAL8BPP
+	texconv -i $(ASSETS_DIR)/$*.png -o $@ -f PAL4BPP
 
 # keep DTEX_FILES for inspection even after ROMDISK_IMGS are created
 .PRECIOUS: $(DTEX_FILES)

@@ -88,6 +88,8 @@ int mount_romdisk_gz(char *filename, char *mountpoint){
   printf("Attempting to mount the romdisk\n");
   void *buffer;
   int length = zlib_getlength(filename);
+
+  //Check against available main ram here
    
   // Check failure
   if(length == 0){

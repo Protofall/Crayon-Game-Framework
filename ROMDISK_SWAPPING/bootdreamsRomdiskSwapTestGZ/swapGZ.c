@@ -102,8 +102,10 @@ int mount_romdisk(char *filename, char *mountpoint){
 int mount_romdisk_gz(char *filename, char *mountpoint){
   printf("Attempting to mount the romdisk\n");
   void *buffer;
-  int length = zlib_getlength(filename);  //In the png example, filename = "/rd/text.gz". So maybe I do "/cd/level1.img.gz"?
-   
+  int length = zlib_getlength(filename);
+  
+  //Check against available main ram here
+
   // Check failure
   if(length == 0){
       printf("Length was zero\n");

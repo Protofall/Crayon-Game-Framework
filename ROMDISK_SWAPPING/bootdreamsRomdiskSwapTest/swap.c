@@ -84,6 +84,9 @@ void cleanup(){
 
 int mount_romdisk(char *filename, char *mountpoint){
   void *buffer;
+  
+  //Check against available main ram here
+
   ssize_t size = fs_load(filename, &buffer);	//Loads the file "filename" into RAM, user is responsible for freeing memory when done
 
   // Successfully read romdisk image
