@@ -33,7 +33,7 @@ extern int sprite_load(struct sprite *sprite,
   // Open all files
   //---------------------------------------------------------------------------
 
-#define ERROR(n){result = (n); goto cleanup;}
+#define ERROR(n) {result = (n); goto cleanup;}
 
   FILE *texture_file = fopen(texture_filename, "rb");
   FILE *palette_file = fopen(palette_filename, "rb");
