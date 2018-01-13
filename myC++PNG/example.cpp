@@ -249,26 +249,18 @@ int main(void){
         draw_frame();
     }
 
+    //Just a random test for maple controls
+    done = 0;
+    while(!done){
+        MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
+
+        if(st->buttons & CONT_A)    // Quits if A is pressed. Screen goes black
+            done = 1;
+
+        MAPLE_FOREACH_END()
+
+        //draw_frame();
+    }
+
     return 0;
 }
-
-/*
-
-Options for vid_set_mode();
-
-DM_320x240			320 x 240, 60Hz (or VGA)
-DM_640x480			640 x 480, 60Hz (or VGA)
-DM_800x608			800 x 608, 60Hz (or VGA)
-DM_256x256			256 x 256, 60Hz (or VGA)
-DM_768x480			768 x 480, 60Hz (or VGA)
-DM_768x576			768 x 576, 60Hz (or VGA)
-DM_640x480_PAL_IL	640 x 480, 50Hz
-DM_256x256_PAL_IL	256 x 256, 50Hz
-DM_768x480_PAL_IL	768 x 480, 50Hz
-DM_768x576_PAL_IL	768 x 576, 50Hz
-
-PM_RGB555	15-bit (xRRRRRGGGGGBBBBB)
-PM_RGB565	16-bit (RRRRRGGGGGGBBBBB)
-PM_RGB888	24-bit (RRRRRRRR GGGGGGGG BBBBBBBB)
-
-*/

@@ -30,7 +30,9 @@ Requirements:
 
 * Video mode support (!!!)
 
-* Threading/multiple processess support (!!! or !!)
+* Interupt Support (!!!)
+
+* Threading support (!!)
 
 * VGA/Progressive Scan support (!!)
 
