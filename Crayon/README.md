@@ -32,6 +32,8 @@ Requirements:
 
 * Interupt Support (!!!)
 
+* Selector to easily choose between "sd" and "cd" dirs (cd for CD-Rs, sd for the sdloader method) (!!)
+
 * Threading support (!!)
 
 * VGA/Progressive Scan support (!!)

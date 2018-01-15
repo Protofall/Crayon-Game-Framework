@@ -100,12 +100,13 @@ int main(void){
     //When A+B+X+Y+Start is held down on controller (0,0), repeatedly call the function end
     //The docs say it's for things like quit the game
 
+    //Using these following two commands instead of the "MAPLE_FOR_EACH_BEGIN/END" methods will allow the code to only work for the
+    //Controller in port A and ignore the rest of the controllers. It even seems to work correctly outside of the while loop. Pretty good!
+    maple_device_t *controller = maple_enum_type(0, MAPLE_FUNC_CONTROLLER); //Gets controller 0 (Or controller A)
+    cont_state_t * st = (cont_state_t *)maple_dev_status(controller);   //Funky stuff might happen if no controller is plugged into the selected port
+
     //Keep drawing frames forever and take directional input
     while(1){
-        //Using these following two commands instead of the "MAPLE_FOR_EACH_BEGIN/END" methods
-        //Will allow our code to only work for the controller in port A and ignore the rest of the controllers
-        maple_device_t *controller = maple_enum_type(0, MAPLE_FUNC_CONTROLLER); //Gets controller 0 (Or controller A) (Funky stuff might happen if no controller is plugged into that port)
-        cont_state_t * st = (cont_state_t *)maple_dev_status(controller);
 
         /*
         MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -124,10 +125,18 @@ int main(void){
             picX--;
         }
 
+        if(st->buttons & CONT_START){   //Pressing start basically has the effect of locking all controls (Except the callback function)
+            break;
+        }
+
         /*
         MAPLE_FOREACH_END()
         */
 
+        draw_frame();
+    }
+
+    while(1){
         draw_frame();
     }
 
