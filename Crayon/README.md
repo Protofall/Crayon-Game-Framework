@@ -47,3 +47,5 @@ Requirements:
 * 8bpp loading/rendering support (!)
 
 * Non paletted RGB565 loading/rendering support (!)
+
+* RAM/VRAM (And SRAM?) space debug (!)

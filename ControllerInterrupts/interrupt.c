@@ -92,7 +92,7 @@ int main(void){
 
     picX = 256; //(640-128)/2 = 256
     picY = 176; //(480-128)/2 = 176 This will place it in the center of the screen
-    picDim = 128;
+    picDim = 128;   //The dimensions of the "nerstr.png" image
 
     pic_init(); //Init pic
 
@@ -102,7 +102,14 @@ int main(void){
 
     //Keep drawing frames forever and take directional input
     while(1){
+        //Using these following two commands instead of the "MAPLE_FOR_EACH_BEGIN/END" methods
+        //Will allow our code to only work for the controller in port A and ignore the rest of the controllers
+        maple_device_t *controller = maple_enum_type(0, MAPLE_FUNC_CONTROLLER); //Gets controller 0 (Or controller A) (Funky stuff might happen if no controller is plugged into that port)
+        cont_state_t * st = (cont_state_t *)maple_dev_status(controller);
+
+        /*
         MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
+        */
 
         if(st->buttons & CONT_DPAD_UP){
             picY--;
@@ -117,12 +124,20 @@ int main(void){
             picX--;
         }
 
+        /*
         MAPLE_FOREACH_END()
+        */
 
         draw_frame();
     }
 
-    cleanup();  //Code should never get down here, but if it were here is the break case
+    cleanup();  //Program should never get down here, but if it did we should clean up
 
     return 0;
 }
+
+/*
+
+Reminder: Don't forget to ask about video mode's 2nd param
+
+*/
