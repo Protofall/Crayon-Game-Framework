@@ -15,3 +15,7 @@ By default we use 4bpp mode (But you can remove a flag in paletteTest.c and chan
 Every frame we must setup each palette and then we use our draw_sprite() function to draw our textures with the right palettes. After every pvr scene we get the current frame count and read the last 8 bits. We use that to incrementally modify Fade's background colour (palette[0]) which will give it the effect of changing from green to blue and every 256 frames we switch Insta's background colour between the original green and solid blue.
 
 This program also contains a debug tool, error_freeze(), that sorta replaces printf(). You pass a message and a variable into it and then it shuts down the pvr system and uses the BIOS font to render you message on the screen and indefinately hangs. Quite useful for users of .cdi's. Its limited compared to printf(), but later I'll make a new tool for live debugging display.
+
+
+
+DON'T FORGET TO UPDATE THIS WITH A LIST OF DEPENDENCIES

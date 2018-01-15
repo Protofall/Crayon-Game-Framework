@@ -1,8 +1,8 @@
 #include <kos.h>
-#include <png/png.h>	//For the png_to_texture function
+#include <png/png.h>    //For the png_to_texture function
 
 // Texture
-pvr_ptr_t pic;				//To store the image from pic.png
+pvr_ptr_t pic;              //To store the image from pic.png
 
 int picX;
 int picY;
@@ -14,7 +14,7 @@ void pic_init(){
 }
 
 void draw_pic(pvr_ptr_t name, int dim){
-	int z = 1;
+    int z = 1;
     pvr_poly_cxt_t cxt;
     pvr_poly_hdr_t hdr;
     pvr_vertex_t vert;
@@ -60,11 +60,11 @@ void draw_pic(pvr_ptr_t name, int dim){
 
 // Draw one frame
 void draw_frame(void){
-    pvr_wait_ready();	//Wait until the pvr system is ready to output again
+    pvr_wait_ready();   //Wait until the pvr system is ready to output again
     pvr_scene_begin();
 
     pvr_list_begin(PVR_LIST_OP_POLY);
-    draw_pic(pic, 64);	//Draw pic
+    draw_pic(pic, 64);  //Draw pic
     pvr_list_finish();
 
     pvr_scene_finish();
@@ -73,7 +73,7 @@ void draw_frame(void){
 void cleanup(){
     // Clean up the texture memory we allocated earlier
     pvr_mem_free(pic);
-	
+    
     // Shut down libraries we used
     pvr_shutdown();
 }
@@ -82,67 +82,53 @@ void cleanup(){
 extern uint8 romdisk_boot[];
 KOS_INIT_ROMDISK(romdisk_boot);
 
-void move(int mode){
-    if(mode == 0){
-        picY--;
-        return;
-    }
-    else if(mode == 1){
-        picX++;
-        return;
-    }
-    else if(mode == 2){
-        picY++;
-        return;
-    }
-    else if(mode == 3){
-        picX--;
-        return;
-    }
-    return;
-
+void endProg(uint8 addr, uint32 btns) {
+    // addr is the device that caused the interrupt
+    // btns is a mask of the buttons that were pressed when the interrupt occurred
+    exit(0);
 }
 
 int main(void){
     int done = 0;
 
-    pvr_init_defaults();		//Init kos
+    pvr_init_defaults();        //Init pvr
 
-    pic_init();			//Init pic
+    pic_init();         //Init pic
 
     picX = 0;
     picY = 0;
 
-    cont_btn_callback(maple_addr(0,0), CONT_DPAD_UP, move(0));
-    cont_btn_callback(maple_addr(0,0), CONT_DPAD_RIGHT, move(1));
-    cont_btn_callback(maple_addr(0,0), CONT_DPAD_DOWN, move(2));
-    cont_btn_callback(maple_addr(0,0), CONT_DPAD_LEFT, move(3));
+    cont_btn_callback(maple_addr(0,0), CONT_A|CONT_B|CONT_START, endProg);    //Strangely "CONT_A|CONT_B|CONT_X|CONT_Y|CONT_START" doesn't seem to work
+    //When A+B+X+Y+Start is held down on controller (0,0), repeatedly call the function end
+    //The docs say it's for things like quit the game
 
-    /*
-
-    cont_btn_callback(uint8 addr, uint32  btns, cont_btn_callback_t cb);
-
-    addr    The controller to listen on. This value can be obtained by using maple_addr().
-    btns    The buttons bitmask to match.
-    cb  The callback to call when the buttons are pressed.
-
-    */
-
-    //Keep drawing frames forever
+    //Keep drawing frames forever and take directional input
+    //Sometimes this input behaves strangley
+    //For example pressing left and right cancel each other out, but then adding down to the mix does nothing, but adding up moves it up
+    //I don't know why exactly
+    //Also doing Right + Down then adding left doesn't do anything
     while(!done){
-        /*
         MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
-        if(st->buttons & CONT_START)	//Quits if start is pressed. Screen goes black
-            done = 1;
+        if(st->buttons & CONT_DPAD_UP){
+            picY--;
+        }
+        if(st->buttons & CONT_DPAD_RIGHT){
+            picX++;
+        }
+        if(st->buttons & CONT_DPAD_DOWN){
+            picY++;
+        }
+        if(st->buttons & CONT_DPAD_LEFT){
+            picX--;
+        }
 
         MAPLE_FOREACH_END()
-        */
 
         draw_frame();
     }
 
-    cleanup();	//Free all usage of RAM and do the pvr_shutdown procedure
+    cleanup();  //Free all usage of RAM and do the pvr_shutdown procedure
 
     return 0;
 }
