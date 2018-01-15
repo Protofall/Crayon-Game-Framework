@@ -16,6 +16,7 @@ Every frame we must setup each palette and then we use our draw_sprite() functio
 
 This program also contains a debug tool, error_freeze(), that sorta replaces printf(). You pass a message and a variable into it and then it shuts down the pvr system and uses the BIOS font to render you message on the screen and indefinately hangs. Quite useful for users of .cdi's. Its limited compared to printf(), but later I'll make a new tool for live debugging display.
 
+### Dependencies
 
-
-DON'T FORGET TO UPDATE THIS WITH A LIST OF DEPENDENCIES
+* Texconv
+	* QT (Only needed to run qmake on Texconv)
