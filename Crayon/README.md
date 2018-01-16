@@ -91,6 +91,7 @@ Ofc we have the basics, romdisk un/mount, setup_palette, all the draw/render fun
 
 Each .dtex is actually a SS that contains 1 to many animations. So here's my proposed structs for storing the SS info
 
+```c
 SS{
 	pvr_ptr_t \* ss_texture;
 	Anim \* ss_anims;	//Assigned with dynamic array
@@ -107,9 +108,11 @@ Anim{
 	int \* anim_width;
 	int \* anim_height;
 }
+```
 
 I'm not 100% sure about the data types for the Anim struct (I don't think pairs exist in regular C). However this gets the job done. The SS structs will be stored in a linked list. There will also be rendering linked lists like the two below.
 
+```c
 renderOpaque{
 	SS \* spritesheet;
 	Anim \* animation;
@@ -131,15 +134,18 @@ renderTransparent{
 	short camID;
 	renderTransparent \* next;
 }
+```
 
 Even though they appear the same and could easily be reduced into one list, I feel this is better since the Dreamcast renders all opaque and transparent stuff seperate from one another (I'm ignoring punchthru since I don't plan to support it). So first it draws all the opaque textures then all the transparent textures. currentFrame is used to tell it which sprite to draw from the animation, drawX/Y/Z are just the draw coordinates relative to the camera. The camID variable tells it which camera we are drawing relative to. Prior to rendering we set up some camera structs like so
 
+```c
 camera{
 	int top_left_x_coord;
 	int top_left_y_coord;
 	int height;
 	int width;
 }
+```
 
 This would be useful for splitscreen (And maybe views too?). I feel this camera idea in its current state is very primative so I hope to see it develop over time.
 
