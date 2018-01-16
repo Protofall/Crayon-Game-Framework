@@ -107,11 +107,6 @@ int main(void){
 
     //Keep drawing frames forever and take directional input
     while(1){
-
-        /*
-        MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-        */
-
         if(st->buttons & CONT_DPAD_UP){
             picY--;
         }
@@ -128,11 +123,6 @@ int main(void){
         if(st->buttons & CONT_START){   //Pressing start basically has the effect of locking all controls (Except the callback function)
             break;
         }
-
-        /*
-        MAPLE_FOREACH_END()
-        */
-
         draw_frame();
     }
 
@@ -144,9 +134,3 @@ int main(void){
 
     return 0;
 }
-
-/*
-
-Reminder: Don't forget to ask about video mode's 2nd param
-
-*/
