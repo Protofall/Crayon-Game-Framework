@@ -102,7 +102,7 @@ SS{
 
 Anim{
 	char \* anim_name;
-	short anim_frames;	//Show many sprites make up the animation (Dunno if this should be a short or int yet)
+	short anim_frames;	//How many sprites make up the animation (Dunno if this should be a short or int yet)
 	int \* anim_top_left_x_coord;	//Assigned with dynamic array
 	int \* anim_top_left_y_coord;
 	int \* anim_width;
@@ -136,7 +136,7 @@ renderTransparent{
 }
 ```
 
-Even though they appear the same and could easily be reduced into one list, I feel this is better since the Dreamcast renders all opaque and transparent stuff seperate from one another (I'm ignoring punchthru since I don't plan to support it). So first it draws all the opaque textures then all the transparent textures. currentFrame is used to tell it which sprite to draw from the animation, drawX/Y/Z are just the draw coordinates relative to the camera. The camID variable tells it which camera we are drawing relative to. Prior to rendering we set up some camera structs like so
+Even though they appear the same and could easily be reduced into one list, I feel this is better since the Dreamcast renders all opaque and transparent stuff separate from one another (I'm ignoring punchthru since I don't plan to support it). So first it draws all the opaque textures then all the transparent textures. currentFrame is used to tell it which sprite to draw from the animation, drawX/Y/Z are just the draw coordinates relative to the camera. The camID variable tells it which camera we are drawing relative to. Prior to rendering we set up some camera structs like so
 
 ```c
 camera{
@@ -162,6 +162,6 @@ This would be useful for splitscreen (And maybe views too?). I feel this camera 
 
 + cdi4dc (Unix build)
 
-### Alternaive Directory Structure
+### Alternative Directory Structure
 
 Since each SS contains 1 to many animations and an animation could be 1 to many frames/sprites, it would be nice for the code to easily know which sprites belong to a certain animation rather than us having to manually make a seperate txt file that groups them. So maybe within each format directory you have another directory per animation. So for example we have romX/8bpp/tulip and romX/8bpp/rose each of them contain the sprites for those two animations. When texturepacker comes it puts them all into one big SS with the sprite coordinates, but something knows that certain sprites came from "tulip" and others from "rose" so when its loaded in it makes the SS and gives it two animation pointers, tulip and rose. Under each animation it knows the coords and dims of each sprite for that animation and hence its all done.
