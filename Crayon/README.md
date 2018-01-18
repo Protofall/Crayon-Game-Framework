@@ -58,26 +58,27 @@ I'm thinking we have 3 directories:
 
 + assets
 
-+ build
++ pack
 
 + cdfs
 
-assets contains the original game assets in their original formats. build will have pre-processed versions of the assets in their respective romdisks (So \*.png vecomes \*.dtex and \*.dtex.pal) and cdfs will contain \*.img's or \*.img.gz's of each romdisk dir from the build dir aswell as 1st_read.bin and is used to make the .cdi program
+assets contains the original game assets in their original formats. pack will have pre-processed versions of the assets in their respective romdisks (So \*.png vecomes \*.dtex and \*.dtex.pal) and cdfs will contain \*.img's or \*.img.gz's of each romdisk dir from the pack dir aswell as 1st_read.bin and is used to make the .cdi program
 
 More on assets, I want to set up the path to be something the developer/s can easily navigate, but still allow for automatic contruction. So heres my planned layout:
 
 assets -> rom0/rom1/.../romN-1 (Total of N romdisks)
-romX -> 4BPP/8BPP/OPAQUE/TRANSPARENT/OTHER
+romX -> sprites/other
+sprites -> name.format
 
 Incase thats not clear, assets contains those N directories (Not just rom0 that contains rom1 etc.) Same logic goes for each romdisk's contents
 
 Note: Its up to the artist/developers to make sure that the art assets meet the BPP requirements (OPAQUE and TRANSPARENT are 16BPP) and that the romdisk/textures/sound files will all fit in the Dreamcast's RAM nicely (ie. Not crash)
 
-For the directories in romX, I think we should have at most 1 spritesheet per texture format (1 4BPP SS, 1 8BPP SS, 1 OPAQUE(RGB565) SS and 1 TRANSPARENT(ARGB4444) SS) Where the SS PNG file/s and TXT file/s for sprite info are dumped in the "OTHER" directory. So if you want to use 4BPP textures you'd dump your sprites into assets/romX/4BPP and the makefile will compile a SS out of that and dump the result in the OTHER directory (Again, artist/devs need to make sure when making a paletted spritesheet that the png doesn't go over 16/256 colours). I think it would be too complicated to allow for multiple of the same kind of format SS to be created per romdisk (eg. 2 8BPP SS) so if you want to have multiple of the same kind of format you must switch romdisks. The output files will be called "4BPP.png 4BPP.txt 8BPP.png 8BPP.txt OPAQUE.png OPAQUE.txt TRANSPARENT.png TRANSPARENT.txt" so texconv knows how to handle each of them.
+For the directories in romX, I think the best approach is to store all PNG assets in the "sprites" dir where each of the sprite sheet assets are in the folder "name.format" where name is going to be the name of the resultant spritesheet and format is 4BPP, 8BPP, RGB565 (Opqaue) or ARGB4444 (Transparent). This will allow for the developer to easily have 1 to many spritesheets of each format in just 1 romdisk while still making it easy to navigate. The makefile will be able to look at each folder name and determine its format and will output the "name.format.png" and "name.format.txt" files into the "other" directory. So if you want to make a 4BPP spritesheet you'd dump your sprites into assets/romX/sprites/name.4BPP/ and the makefile will compile a SS out of that. (Again, artist/devs need to make sure when making a paletted spritesheet that the png doesn't go over 16/256 colours)
 
-The OTHER directory will contain the SS PNG and TXT files (If any were made) aswell as any other file you want in your romdisk. That could be other text files used for dialogue, music files and anything else I'm forgetting. I don't think we can store more PNGs here otherwise texconv wouldn't know what type you want to convert it to.
+The "other" directory will contain the SS PNG and TXT files (If any were made) aswell as any other files you want in your romdisk. That could be other text files used for dialogue, music files and anything else I'm forgetting. I don't think we can store more PNGs here otherwise texconv wouldn't know what type you want to convert it to, so just make a new spritesheet with just 1 texture in it.
 
-The build directory will contain all the contents of the OTHER directory/s except the PNGs will be converted to DTEXs (and DTEX.PALs if it was called 4BPP.png or 8BPP.png)
+The pack directory will contain all the contents of the "other" directory/s except the PNGs will be converted to DTEXs (and DTEX.PALs if it was called 4BPP.png or 8BPP.png)
 
 ### Code Structure
 
