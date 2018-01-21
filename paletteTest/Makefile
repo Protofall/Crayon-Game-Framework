@@ -8,7 +8,7 @@ IPBIN = $(KOS_BASE)/../IP.BIN
 CDFS_DIR = cdfs
 
 # each subdirectory <part> will produce <part>.img in CDFS_DIR
-ROMDISKS_DIR = romdisks
+ROMDISKS_DIR = pack
 
 # each subdirectory contains assets for conversion. outputs are placed in
 # ROMDISKS_DIR/<part>, where <part> is the name of the subdirectory
@@ -81,7 +81,7 @@ $(CDFS_DIR)/%.img: $(CDFS_DIR) $(DTEX_FILES)
 # create DTEX_FILES in ROMDISKS_DIR from png assets in ASSETS_DIR
 $(ROMDISKS_DIR)/%.dtex: $(ROMDISKS_DIR) $(ASSETS_DIR)/%.png
 	mkdir -p $(dir $@)
-	texconv -i $(ASSETS_DIR)/$*.png -o $@ -f PAL4BPP
+	texconv -i $(ASSETS_DIR)/$*.png -o $@ -f PAL8BPP
 
 # keep DTEX_FILES for inspection even after ROMDISK_IMGS are created
 .PRECIOUS: $(DTEX_FILES)

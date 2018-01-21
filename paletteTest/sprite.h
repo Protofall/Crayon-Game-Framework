@@ -13,7 +13,8 @@
 typedef struct sprite {
   uint16_t    width; //Texture width in pixels
   uint16_t   height; //Texture height in pixels
-  uint32_t     type; //Format (see https://github.com/tvspelsfreak/texconv)
+  //uint32_t     type; //Format and other stuff (see https://github.com/tvspelsfreak/texconv)
+  uint8_t    format; //Format (see https://github.com/tvspelsfreak/texconv)
   pvr_ptr_t texture; //Pointer to texture in video memory
   uint32_t *palette; //Pointer to heap allocated palette
   uint16_t color_count; //Number of colours in the palette
@@ -29,6 +30,6 @@ extern void sprite_free(struct sprite *sprite);
 
 //Draw a sprite with the PVR
 extern void draw_sprite(const struct sprite *sheet,
-  float x, float y, uint8_t palette_number, int bpp_mode);
+  float x, float y, uint8_t palette_number, uint8_t bpp_mode);
 
 #endif

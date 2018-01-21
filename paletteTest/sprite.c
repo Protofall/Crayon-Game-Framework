@@ -9,6 +9,7 @@
 #include <string.h>
 #include <dc/pvr.h>
 
+//These header types are kinda redundant
 typedef struct dtex_header{
   uint8_t magic[4]; //magic number "DTEX"
   uint16_t   width; //texture width in pixels
@@ -53,31 +54,55 @@ extern int sprite_load(struct sprite *sprite,
 
   if(fread(texture, dtex_header.size, 1, texture_file) != 1){ERROR(5);}
 
-  // Load palette
-  //---------------------------------------------------------------------------
-
-  dpal_header_t dpal_header;
-  if(fread(&dpal_header, sizeof(dpal_header), 1, palette_file) != 1){ERROR(6);}
-
-  if(memcmp(dpal_header.magic, "DPAL", 4) | !dpal_header.color_count){ERROR(7);}
-
-  palette = malloc(dpal_header.color_count * sizeof(uint32_t));
-  if(!palette){ERROR(9);}
-
-  if(fread(palette, sizeof(uint32_t), dpal_header.color_count,
-    palette_file) != dpal_header.color_count){ERROR(8);}
-
-#undef ERROR
-
-  // Write metadata
+  // Write all metadata except palette stuff
   //---------------------------------------------------------------------------
 
   sprite->width       = dtex_header.width;
   sprite->height      = dtex_header.height;
-  sprite->type        = dtex_header.type;
+  //sprite->type        = dtex_header.type;
   sprite->texture     = texture;
-  sprite->palette     = palette;
-  sprite->color_count = dpal_header.color_count;
+
+  //This assumes no mip-mapping, no stride, twiddled on, uncompressed and no stride setting (I'm doing this to save on space)
+  if(dtex_header.type == 0x08000000){ //RGB565
+    sprite->format = 1;
+  }
+  else if(dtex_header.type == 0x10000000){ //ARGB4444
+    sprite->format = 2;
+  }
+  else if(dtex_header.type == 0x28000000){ //PAL4BPP
+    sprite->format = 5;
+  }
+  else if(dtex_header.type == 0x30000000){ //PAL8BPP
+    sprite->format = 6;
+  }
+  else{ERROR(6);}
+
+  // Load palette if needed
+  //---------------------------------------------------------------------------
+
+  if(sprite->format == 5 ||sprite->format == 6){
+    dpal_header_t dpal_header;
+    if(fread(&dpal_header, sizeof(dpal_header), 1, palette_file) != 1){ERROR(7);}
+
+    if(memcmp(dpal_header.magic, "DPAL", 4) | !dpal_header.color_count){ERROR(8);}
+
+    palette = malloc(dpal_header.color_count * sizeof(uint32_t));
+    if(!palette){ERROR(9);}
+
+    if(fread(palette, sizeof(uint32_t), dpal_header.color_count,
+      palette_file) != dpal_header.color_count){ERROR(10);}
+
+  // Write palette metadata
+  //---------------------------------------------------------------------------
+
+    sprite->palette     = palette;
+    sprite->color_count = dpal_header.color_count;
+  }
+  else{
+    sprite->palette = NULL; //color_count doesn't need to be defined...nor does palette really...
+  }
+
+#undef ERROR
 
   // Cleanup
   //---------------------------------------------------------------------------
@@ -100,7 +125,7 @@ extern void sprite_free(struct sprite *sprite){
 }
 
 extern void draw_sprite(const struct sprite *sprite,
-  float x, float y, uint8_t palette_number, int bpp_mode){
+  float x, float y, uint8_t palette_number, uint8_t bpp_mode){
 
   const float x0 = x;
   const float y0 = y;
@@ -109,7 +134,7 @@ extern void draw_sprite(const struct sprite *sprite,
   const float z = 1;
 
   pvr_sprite_cxt_t context;
-  if(bpp_mode == 4){
+  if(bpp_mode == 5){  //PAL4BPP format
     pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY,
     PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(palette_number),
     sprite->width, sprite->height, sprite->texture, PVR_FILTER_NONE);

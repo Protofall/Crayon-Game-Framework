@@ -1,12 +1,3 @@
-//These libraries are also in sprite.h and error.h
-//#include <stdio.h>
-//#include <stdint.h>
-//#include <stdlib.h>
-//#include <string.h>
-//#include <math.h>
-
-//#include <dc/pvr.h>
-
 #include <dc/maple.h>
 #include <dc/maple/controller.h> //For the "Press start to exit" thing
 #include <kos/fs_romdisk.h> //For romdisk swapping
@@ -14,50 +5,25 @@
 #include "sprite.h"
 #include "error.h"
 
-//Contains a lot of (modified) code from this tutorial:
-//  http://dcemulation.org/?title=PVR_Spritesheets
-
-//The idea is to make the texture backgrounds go from green to blue.
-//Fade's transition takes 256 frames (4.27s at 60Hz or 5.12s at 50Hz). Every fram it modifies the blue and green values by one
-//Insta just switches to the other colour every 256 frames. Note Insta uses the original texture's green
-//whereas Fade goes from solid green to solid blue.
-
-//Comment Use_4bpp out if you want to do 8bpp (Note: Makefile would need to be adjusted
-//to 8BPP in the texconv command and you must run make clean first to regenerate the
-//textures in the right format)
-
-#define Use_4bpp
-
-#ifdef Use_4bpp
-  #define bpp_Type 0x28000000
-  #define bpp_Pal_Etr 16
-  #define bpp_mode 4
-#else //Use_8bpp
-  #define bpp_Type 0x30000000
-  #define bpp_Pal_Etr 256
-  #define bpp_mode 8
-#endif
-
 sprite_t Fade, Insta;
 
-static void init_txr(){
+static void init_txr(){ //Currently this only checks for RGB565, ARGB4444, 4bpp and 8bpp textures
   int result;
 
   result = sprite_load(&Fade, "/levels/Fade.dtex", "/levels/Fade.dtex.pal");
   if(result){error_freeze("Cannot load Fade sprite! Error %d\n", result);}
-  if(Fade.type != bpp_Type){error_freeze("Fade.dtex has the wrong type: 0x%08x", Fade.type);}
 
   result = sprite_load(&Insta, "/levels/Insta.dtex", "/levels/Insta.dtex.pal");
   if(result){error_freeze("Cannot load Insta sprite! Error %d\n", result);}
-  if(Insta.type != bpp_Type){error_freeze("Insta.dtex has the wrong type: 0x%08x", Insta.type);}
-
 }
 
-static void setup_palette(const uint32_t *colors, uint16_t count, uint8_t palette_number){
+static void setup_palette(const uint32_t *colors, uint16_t count, uint8_t palette_number, uint8_t bpp){
+  bpp -= 4; //So its either a 1 or 2
+  bpp *= 4; //Now bpp is the bits per pixel
   pvr_set_pal_format(PVR_PAL_ARGB8888);
   uint16_t i;
   for(i = 0; i < count; ++i){
-    pvr_set_pal_entry(i + bpp_Pal_Etr * palette_number, colors[i]);
+    pvr_set_pal_entry(i + (bpp * bpp) * palette_number, colors[i]);
   }
 }
 
@@ -66,11 +32,11 @@ static void draw_frame(void){
   pvr_scene_begin();
 
   pvr_list_begin(PVR_LIST_TR_POLY);
-  setup_palette(Fade.palette, Fade.color_count, 0);
-  setup_palette(Insta.palette, Insta.color_count, 1);
+  setup_palette(Fade.palette, Fade.color_count, 0, Fade.format);
+  setup_palette(Insta.palette, Insta.color_count, 1, Insta.format);
 
-  draw_sprite(&Fade, 128, 176, 0, bpp_mode);
-  draw_sprite(&Insta, 384, 176, 1, bpp_mode);
+  draw_sprite(&Fade, 128, 176, 0, Fade.format);
+  draw_sprite(&Insta, 384, 176, 1, Insta.format);
   pvr_list_finish();
 
   pvr_scene_finish();
