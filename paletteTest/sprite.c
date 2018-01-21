@@ -9,7 +9,6 @@
 #include <string.h>
 #include <dc/pvr.h>
 
-//These header types are kinda redundant
 typedef struct dtex_header{
   uint8_t magic[4]; //magic number "DTEX"
   uint16_t   width; //texture width in pixels
@@ -80,7 +79,7 @@ extern int sprite_load(struct sprite *sprite,
   // Load palette if needed
   //---------------------------------------------------------------------------
 
-  if(sprite->format == 5 ||sprite->format == 6){
+  if(sprite->format == 5 || sprite->format == 6){
     dpal_header_t dpal_header;
     if(fread(&dpal_header, sizeof(dpal_header), 1, palette_file) != 1){ERROR(7);}
 

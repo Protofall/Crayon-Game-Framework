@@ -1,9 +1,26 @@
+//These libraries are also in sprite.h and error.h
+//#include <stdio.h>
+//#include <stdint.h>
+//#include <stdlib.h>
+//#include <string.h>
+//#include <math.h>
+
+//#include <dc/pvr.h>
+
 #include <dc/maple.h>
 #include <dc/maple/controller.h> //For the "Press start to exit" thing
 #include <kos/fs_romdisk.h> //For romdisk swapping
 
 #include "sprite.h"
 #include "error.h"
+
+//Contains a lot of (modified) code from this tutorial:
+//  http://dcemulation.org/?title=PVR_Spritesheets
+
+//The idea is to make the texture backgrounds go from green to blue.
+//Fade's transition takes 256 frames (4.27s at 60Hz or 5.12s at 50Hz). Every fram it modifies the blue and green values by one
+//Insta just switches to the other colour every 256 frames. Note Insta uses the original texture's green
+//whereas Fade goes from solid green to solid blue.
 
 sprite_t Fade, Insta;
 
@@ -18,12 +35,21 @@ static void init_txr(){ //Currently this only checks for RGB565, ARGB4444, 4bpp 
 }
 
 static void setup_palette(const uint32_t *colors, uint16_t count, uint8_t palette_number, uint8_t bpp){
-  bpp -= 4; //So its either a 1 or 2
-  bpp *= 4; //Now bpp is the bits per pixel
+  int entries;
+  if(bpp == 5){
+    entries = 16;
+  }
+  else if(bpp == 6){
+    entries = 256;
+  }
+  else{
+    error_freeze("Wrong palette format! %d passed into bpp param\n", bpp);
+  }
+
   pvr_set_pal_format(PVR_PAL_ARGB8888);
   uint16_t i;
   for(i = 0; i < count; ++i){
-    pvr_set_pal_entry(i + (bpp * bpp) * palette_number, colors[i]);
+    pvr_set_pal_entry(i + entries * palette_number, colors[i]);
   }
 }
 
