@@ -16,11 +16,10 @@ typedef struct dtex_header{
 
 typedef struct dpal_header{
   uint8_t     magic[4]; //magic number "DPAL"
-  uint32_t color_count; //number of 24-bit ARGB palette entries
+  uint32_t color_count; //number of 32-bit ARGB palette entries
 } dpal_header_t;
 
-extern int memory_load_dtex(struct spritesheet *ss,
-  const char *path){
+extern int memory_load_dtex(struct spritesheet *ss, char *path){
 
   int result = 0;
   pvr_ptr_t texture = NULL;
@@ -135,13 +134,42 @@ extern int memory_load_dtex(struct spritesheet *ss,
   //I don't think the headers need to be free-d since they aren't pointers, but I'll leave this comment here for future me
 }
 
+//Path would be the path to the dtex file, except without the .dtex attached. An example would be "/levels/Fade"
+extern void memory_init_spritesheet(char *path, spritesheet *ss){
+  int result = sprite_load(ss, path);
+  if(result){error_freeze("Cannot load Fade sprite! Error %d\n", result);}
+}
+
+//There are 4 palettes for 8BPP and 64 palettes for 4BPP. palette_number is the id
+extern void setup_palette(uint8_t palette_number, spritesheet *ss){
+  int entries;
+  if(ss->format == 3){
+    entries = 16;
+  }
+  else if(ss->format == 4){
+    entries = 256;
+  }
+  else{
+    error_freeze("Wrong palette format! %d passed into bpp param\n", bpp);
+  }
+
+  pvr_set_pal_format(PVR_PAL_ARGB8888);
+  uint16_t i; //Can't this be a uint8_t instead? 0 to 255 and max 256 entries per palette
+  //...but then again how would the loop be able to break? since it would overflow back to 0
+  for(i = 0; i < ss->color_count; ++i){
+    pvr_set_pal_entry(i + entries * palette_number, ss->palette[i]);
+  }
+}
+
+//Need to adapt this to take in an ss list object instead so we don't loose the later half of the list
 extern void memory_spritesheet_free(struct spritesheet *ss){
   if(ss){
     if(ss->format == 3 || ss->format == 4){ //Paletted
       free(ss->palette);
     }
     pvr_mem_free(ss->texture);
-    //Then also a "free(ss)" when I get around to the spritesheet lists
+
+    //free(ss); //Need to make sure it's neighbours link to each other before doing this
   }
 }
 
@@ -149,7 +177,6 @@ extern int mount_romdisk(char *filename, char *mountpoint){
   void *buffer;
   ssize_t size = fs_load(filename, &buffer); // Loads the file "filename" into RAM, user is responsible for freeing memory when done
 
-  // Successfully read romdisk image
   if(size != -1){
     fs_romdisk_mount(mountpoint, buffer, 1); // Now mount that file as a romdisk, buffer will be freed when romdisk is unmounted
     return 0;
@@ -178,8 +205,7 @@ extern int mount_romdisk_gz(char *filename, char *mountpoint){
   buffer = malloc(length);
   gzread(file, buffer, length);
   gzclose(file);
-   
-  // Mount
+  
   fs_romdisk_mount(mountpoint, buffer, 1);
   return 0;
 }
