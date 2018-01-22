@@ -27,19 +27,19 @@ sprite_t Fade, Insta;
 static void init_txr(){ //Currently this only checks for RGB565, ARGB4444, 4bpp and 8bpp textures
   int result;
 
-  result = sprite_load(&Fade, "/levels/Fade.dtex", "/levels/Fade.dtex.pal");
+  result = sprite_load(&Fade, "/levels/Fade");
   if(result){error_freeze("Cannot load Fade sprite! Error %d\n", result);}
 
-  result = sprite_load(&Insta, "/levels/Insta.dtex", "/levels/Insta.dtex.pal");
+  result = sprite_load(&Insta, "/levels/Insta");
   if(result){error_freeze("Cannot load Insta sprite! Error %d\n", result);}
 }
 
 static void setup_palette(const uint32_t *colors, uint16_t count, uint8_t palette_number, uint8_t bpp){
   int entries;
-  if(bpp == 5){
+  if(bpp == 3){
     entries = 16;
   }
-  else if(bpp == 6){
+  else if(bpp == 4){
     entries = 256;
   }
   else{

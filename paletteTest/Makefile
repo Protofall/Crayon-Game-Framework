@@ -35,7 +35,7 @@ INTERMEDIATES += $(DTEX_FILES) $(addsuffix .pal,$(DTEX_FILES))
 CFLAGS = $(KOS_CFLAGS)
 # CFLAGS += -I$(KOS_BASE)/addons/zlib
 
-LIBS = -lpng -lz -lm $(KOS_LIBS)
+LIBS = -lz -lm $(KOS_LIBS)
 
 # main targets
 #------------------------------------------------------------------------------

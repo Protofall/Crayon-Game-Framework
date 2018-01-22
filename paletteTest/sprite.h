@@ -19,10 +19,8 @@ typedef struct sprite {
   uint16_t color_count; //Number of colours in the palette
 } sprite_t;
 
-//Load a sprite from a DTEX texture and DPAL palette
-extern int sprite_load(struct sprite *sprite,
-  const char *image_filename,
-  const char *palette_filename);
+//Load a sprite from a path to the texture. The path is used to generate a dtex and dtex.pal paths
+extern int sprite_load(struct sprite *sprite, const char *path);
 
 //Free any resources used by a sprite
 extern void sprite_free(struct sprite *sprite);

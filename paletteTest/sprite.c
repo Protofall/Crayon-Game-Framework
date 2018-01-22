@@ -23,8 +23,7 @@ typedef struct dpal_header{
 } dpal_header_t;
 
 extern int sprite_load(struct sprite *sprite,
-  const char *texture_filename,
-  const char *palette_filename){
+  const char *path){
 
   int result = 0;
   pvr_ptr_t texture = NULL;
@@ -35,10 +34,13 @@ extern int sprite_load(struct sprite *sprite,
 
 #define ERROR(n) {result = (n); goto cleanup;}
 
-  FILE *texture_file = fopen(texture_filename, "rb");
-  FILE *palette_file = fopen(palette_filename, "rb");
+  //If you somehow have a longer path then please increase the size of texName and palName
+  char texName[80];
+  sprintf(texName, "%s.dtex", path);
 
-  if(!texture_file | !palette_file){ERROR(1);}
+  FILE *texture_file = fopen(texName, "rb");
+
+  if(!texture_file){ERROR(1);}
 
   // Load texture
   //---------------------------------------------------------------------------
@@ -58,7 +60,6 @@ extern int sprite_load(struct sprite *sprite,
 
   sprite->width       = dtex_header.width;
   sprite->height      = dtex_header.height;
-  //sprite->type        = dtex_header.type;
   sprite->texture     = texture;
 
   //This assumes no mip-mapping, no stride, twiddled on, uncompressed and no stride setting (I'm doing this to save on space)
@@ -69,33 +70,53 @@ extern int sprite_load(struct sprite *sprite,
     sprite->format = 2;
   }
   else if(dtex_header.type == 0x28000000){ //PAL4BPP
-    sprite->format = 5;
+    sprite->format = 3;
   }
   else if(dtex_header.type == 0x30000000){ //PAL8BPP
-    sprite->format = 6;
+    sprite->format = 4;
   }
-  else{ERROR(6);}
+  else{
+    sprite->format = 0;
+    ERROR(6);
+  }
 
   // Load palette if needed
   //---------------------------------------------------------------------------
 
-  if(sprite->format == 5 || sprite->format == 6){
-    dpal_header_t dpal_header;
-    if(fread(&dpal_header, sizeof(dpal_header), 1, palette_file) != 1){ERROR(7);}
+#define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
+  
+  if(sprite->format == 3 || sprite->format == 4){
 
-    if(memcmp(dpal_header.magic, "DPAL", 4) | !dpal_header.color_count){ERROR(8);}
+    char palName[84];
+    sprintf(palName, "%s.dtex.pal", path);
+    FILE *palette_file = fopen(palName, "rb");
+    if(!palette_file){PAL_ERROR(7);}
+
+    dpal_header_t dpal_header;
+    if(fread(&dpal_header, sizeof(dpal_header), 1, palette_file) != 1){PAL_ERROR(8);}
+
+    if(memcmp(dpal_header.magic, "DPAL", 4) | !dpal_header.color_count){PAL_ERROR(9);}
 
     palette = malloc(dpal_header.color_count * sizeof(uint32_t));
-    if(!palette){ERROR(9);}
+    if(!palette){PAL_ERROR(10);}
 
     if(fread(palette, sizeof(uint32_t), dpal_header.color_count,
-      palette_file) != dpal_header.color_count){ERROR(10);}
+      palette_file) != dpal_header.color_count){PAL_ERROR(11);}
+
+#undef PAL_ERROR
 
   // Write palette metadata
   //---------------------------------------------------------------------------
 
     sprite->palette     = palette;
     sprite->color_count = dpal_header.color_count;
+
+    // Palette Cleanup
+    //---------------------------------------------------------------------------
+    PAL_cleanup:
+
+    if(palette_file){fclose(palette_file);}
+    goto cleanup;
   }
   else{
     sprite->palette = NULL; //color_count doesn't need to be defined...nor does palette really...
@@ -108,12 +129,13 @@ extern int sprite_load(struct sprite *sprite,
   cleanup:
 
   if(texture_file){fclose(texture_file);}
-  if(palette_file){fclose(palette_file);}
 
   // If a failure occured somewhere
   if(result && texture){pvr_mem_free(texture);}
 
   return result;
+
+  //I don't think the headers need to be free-d since they aren't pointers, but I'll leave this comment here for future me
 }
 
 extern void sprite_free(struct sprite *sprite){
@@ -133,7 +155,7 @@ extern void draw_sprite(const struct sprite *sprite,
   const float z = 1;
 
   pvr_sprite_cxt_t context;
-  if(bpp_mode == 5){  //PAL4BPP format
+  if(bpp_mode == 3){  //PAL4BPP format
     pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY,
     PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(palette_number),
     sprite->width, sprite->height, sprite->texture, PVR_FILTER_NONE);

@@ -73,62 +73,54 @@ Each .dtex is actually a SS that contains 1 to many animations. So here's my pro
 ss{
 	pvr_ptr_t * ss_texture;
 	anim * ss_anims;	//Assigned with dynamic array
-	int ss_dims;	//Since a pvr texture must be a square, we don't need height/width
-	short ss_format; //0 for 4BPP, 1 for 8BPP, 2 for RGB565 and 3 for ARGB4444 (-1 for unknown)
+	uint16_t ss_dims;	//Since a pvr texture must be a square, we don't need height/width
+	uint8_t ss_format; //1 for 4BPP, 2 for 8BPP, 3 for RGB565 and 4 for ARGB4444 (0 for unknown)
 	palette * ss_palette_id; //If it uses a palette, here is where you assign it's palette
 }
 
 anim{
 	char * anim_name;
-	short anim_frames;	//How many sprites make up the animation (Dunno if this should be a short or int yet)
-	int anim_top_left_x_coord;	//Since the anims are designed to be in tiles
-	int anim_top_left_y_coord;	//We can select an frame based off of the first frame's coords
-	int anim_sheet_width;	//Width of the anim sheet
-	int anim_sheet_height;
-	int anim_frame_width;	//Width of each frame
-	int anim_frame_height;
+	uint8_t anim_frames;	//How many sprites make up the animation (Dunno if this should be a short or int yet)
+	uint16_t anim_top_left_x_coord;	//Since the anims are designed to be in tiles
+	uint16_t anim_top_left_y_coord;	//We can select an frame based off of the first frame's coords
+	uint16_t anim_sheet_width;	//Width of the anim sheet
+	uint16_t anim_sheet_height;
+	uint16_t anim_frame_width;	//Width of each frame
+	uint16_t anim_frame_height;
 	//With these widths and heights, it might be possible to deduce some of them from other info, but idk
 }
 ```
 
-I'm not 100% sure about the data types for the anim struct (I don't think pairs exist in regular C). However this gets the job done. The ss structs will be stored in a linked list. There will also be rendering linked lists like the two below.
+I'm not 100% sure about the data types for the anim struct (I don't think pairs exist in regular C). However this gets the job done. The ss structs will be stored in a linked list. There will also be rendering linked lists like the one below.
 
 ```c
-renderOpaque{
+object{
 	ss * spritesheet;
 	anim * animation;
-	int currentFrame;
+	uint8_t currentFrame;
 	int drawX;
 	int drawY;
 	int drawZ;
-	short viewID;
-	renderOpaque * next;
-}
-
-renderTransparent{
-	ss * spritesheet;
-	anim * animation;
-	int currentFrame;
-	int drawX;
-	int drawY;
-	int drawZ;
-	short viewID;
-	renderTransparent * next;
+	uint8_t viewID;
+	object * next;
+	uint8_t objectLogicID;	//Might need to make this a uint16_t later, idk
 }
 ```
 
-Even though they appear the same and could easily be reduced into one list, I feel this is better since the Dreamcast renders all opaque and transparent stuff separate from one another (I'm ignoring punchthru since I don't plan to support it). So first it draws all the opaque textures then all the transparent textures. currentFrame is used to tell it which sprite to draw from the animation, drawX/Y/Z are just the draw coordinates relative to the view. The viewID variable tells it which view we are drawing relative to. Prior to rendering we set up some view structs like so
+It knows whether an object is opaque or transparent based on the ss->ss_format. currentFrame is used to tell it which sprite to draw from the animation, drawX/Y/Z are just the draw coordinates relative to the view. The viewID variable tells it which view we are drawing relative to. Prior to rendering we set up some view structs like so
 
 ```c
 view{
-	int top_left_x_coord;
-	int top_left_y_coord;
-	int height;
-	int width;
+	uint16_t top_left_x_coord;
+	uint16_t top_left_y_coord;
+	uint16_t height;
+	uint16_t width;
 }
 ```
 
 This would be useful for splitscreen (And maybe views too?). I feel this view idea in its current state is very primative so I hope to see it develop over time.
+
+objectLogicID is basically the general behaviour of a texture. So a background has none, but a sprite might have weight, immunity level, etc. The id is used to refer to the "logic list" that I'll decide on its specifics later.
 
 ### Pre-requisites
 
