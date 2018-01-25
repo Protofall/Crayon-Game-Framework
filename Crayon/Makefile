@@ -20,9 +20,8 @@ SUBDIRS = $(CDFS_DIR) $(ROMDISKS_DIR)
 # files
 #------------------------------------------------------------------------------
 
-LAZYOFILES = debug.o draw.o memory.o
-
 OFILES = $(patsubst %.c,%.o,$(wildcard *.c))
+LAZYOFILES = debug.o draw.o memory.o main.o
 SCRAMBLED = $(CDFS_DIR)/1st_read.bin
 ROMDISK_IMGS = $(patsubst %,$(CDFS_DIR)/%.img,$(notdir $(wildcard $(ROMDISKS_DIR)/* $(ASSETS_DIR)/*)))
 DTEX_FILES = $(patsubst $(ASSETS_DIR)/%.png,$(ROMDISKS_DIR)/%.dtex,$(wildcard $(ASSETS_DIR)/*/*.png))
@@ -30,6 +29,7 @@ DTEX_FILES = $(patsubst $(ASSETS_DIR)/%.png,$(ROMDISKS_DIR)/%.dtex,$(wildcard $(
 # list of files to be removed by make clean
 INTERMEDIATES = $(OFILES) $(SCRAMBLED) $(ROMDISK_IMGS)
 INTERMEDIATES += $(DTEX_FILES) $(addsuffix .pal,$(DTEX_FILES))
+INTERMEDIATES += $(LAZYOFILES)
 
 # flags
 #------------------------------------------------------------------------------
@@ -47,6 +47,7 @@ all:
 	kos-cc $(CFLAGS) -c crayon/debug.c -o debug.o
 	kos-cc $(CFLAGS) -c crayon/draw.c -o draw.o
 	kos-cc $(CFLAGS) -c crayon/memory.c -o memory.o
+	kos-cc $(CFLAGS) -c main.c -o main.o
 	$(KOS_CC) $(KOS_LDFLAGS) -o $(TARGET).elf $(KOS_START) $(LAZYOFILES) $(LIBS)
 	sh-elf-objcopy -R .stack -O binary $(TARGET).elf $(TARGET).bin
 	$(KOS_BASE)/utils/scramble/scramble $(TARGET).bin $(SCRAMBLED)
