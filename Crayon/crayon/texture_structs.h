@@ -1,5 +1,8 @@
-#ifndef STRUCTS_H
-#define STRUCTS_H
+#ifndef TEXTURE_STRUCTS_H
+#define TEXTURE_STRUCTS_H
+
+#include <dc/pvr.h>
+#include <stdint.h> //For the uintX_t types
 
 //Spritesheet stuff
 //-----------------------------------------------------------------------------
@@ -18,8 +21,8 @@ typedef struct anim{
 
 typedef struct spritesheet{
   pvr_ptr_t *spritesheet_texture;
-  char *spritesheet_name;	//I might remove this later, idk
-  anim_t *spritesheet_anims;	//Assigned with dynamic array
+  char *spritesheet_name;	//Might be useful for when it comes time to un-mount a romdisk?
+  anim_t **spritesheet_anim_array; //Allows me to make an array of anim_t pointers hopefully
   //uint16_t spritesheet_dims;	//Since a pvr texture must be a square, we don't need height/width
   uint16_t spritesheet_width;	//Doubling up just incase I'm wrong
   uint16_t spritesheet_height;
@@ -29,3 +32,5 @@ typedef struct spritesheet{
 } spritesheet_t;
 
 #endif
+
+//If you want to get the name of the i-th anim object you'd used spritesheet->spritesheet_anim_array[i-1]->anim_name

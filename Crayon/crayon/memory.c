@@ -1,11 +1,5 @@
 #include "memory.h"
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <dc/pvr.h>
-
 typedef struct dtex_header{
   uint8_t magic[4]; //magic number "DTEX"
   uint16_t   width; //texture width in pixels
@@ -118,6 +112,9 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){
     ss->spritesheet_palette = NULL; //color_count doesn't need to be defined...nor does palette really...
   }
 
+  //Insert the path + ".txt" code here. Need to figure out how I'll build that .txt first
+  //ASince every spritesheet has a txt file to go with it, I'll assume that it must be here hence its not optional
+
 #undef ERROR
 
   // Cleanup
@@ -135,47 +132,50 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){
 }
 
 //Path would be the path to the dtex file, except without the .dtex attached. An example would be "/levels/Fade"
-extern void memory_init_spritesheet(char *path, spritesheet *ss){
-  int result = sprite_load(ss, path);
+extern void memory_init_spritesheet(char *path, struct spritesheet *ss){
+  int result = memory_load_dtex(ss, path);
   if(result){error_freeze("Cannot load Fade sprite! Error %d\n", result);}
 }
 
 //There are 4 palettes for 8BPP and 64 palettes for 4BPP. palette_number is the id
-extern void setup_palette(uint8_t palette_number, spritesheet *ss){
+extern void setup_palette(uint8_t palette_number, const struct spritesheet *ss){
   int entries;
-  if(ss->format == 3){
+  if(ss->spritesheet_format == 3){
     entries = 16;
   }
-  else if(ss->format == 4){
+  else if(ss->spritesheet_format == 4){
     entries = 256;
   }
   else{
-    error_freeze("Wrong palette format! %d passed into bpp param\n", bpp);
+    error_freeze("Wrong palette format! It was set to %d\n", ss->spritesheet_format);
   }
 
   pvr_set_pal_format(PVR_PAL_ARGB8888);
   uint16_t i; //Can't this be a uint8_t instead? 0 to 255 and max 256 entries per palette
   //...but then again how would the loop be able to break? since it would overflow back to 0
-  for(i = 0; i < ss->color_count; ++i){
-    pvr_set_pal_entry(i + entries * palette_number, ss->palette[i]);
+  for(i = 0; i < ss->spritesheet_color_count; ++i){
+    pvr_set_pal_entry(i + entries * palette_number, ss->spritesheet_palette[i]);
   }
 }
 
 //Need to adapt this to take in an ss list object instead so we don't loose the later half of the list
 extern void memory_spritesheet_free(struct spritesheet *ss){
   if(ss){
-    if(ss->format == 3 || ss->format == 4){ //Paletted
-      free(ss->palette);
+    if(ss->spritesheet_format == 3 || ss->spritesheet_format == 4){ //Paletted
+      free(ss->spritesheet_palette);
     }
-    pvr_mem_free(ss->texture);
+    pvr_mem_free(ss->spritesheet_texture);
+
+    //Free all anim structs too
 
     //free(ss); //Need to make sure it's neighbours link to each other before doing this
+                //Also free all anims before this
   }
 }
 
 extern int mount_romdisk(char *filename, char *mountpoint){
   void *buffer;
-  ssize_t size = fs_load(filename, &buffer); // Loads the file "filename" into RAM, user is responsible for freeing memory when done
+  ssize_t size = fs_load(filename, &buffer); // Loads the file "filename" into RAM
 
   if(size != -1){
     fs_romdisk_mount(mountpoint, buffer, 1); // Now mount that file as a romdisk, buffer will be freed when romdisk is unmounted
@@ -205,7 +205,7 @@ extern int mount_romdisk_gz(char *filename, char *mountpoint){
   buffer = malloc(length);
   gzread(file, buffer, length);
   gzclose(file);
-  
+
   fs_romdisk_mount(mountpoint, buffer, 1);
   return 0;
 }

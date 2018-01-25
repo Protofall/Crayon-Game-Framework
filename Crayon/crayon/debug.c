@@ -1,8 +1,4 @@
-#include <stdarg.h>
-
-#include <dc/biosfont.h>
-#include <dc/video.h>
-#include <dc/pvr.h>
+#include "debug.h"
 
 extern void error_freeze(const char *format, ...){
 
@@ -18,3 +14,22 @@ extern void error_freeze(const char *format, ...){
 
   while(1); //Freeze
 }
+
+/*
+
+Depending on what's happening here, you can do something like
+# your destination folder for executables or whatever
+BIN=/bin/
+
+target.o: target.h target.c
+    gcc -c target.c -o $(BIN)/target.c
+
+another.o: another.h another.c
+   gcc -c another.c -o $(BIN)/another.c
+
+...
+(edited)
+Useful for if you ever change where your output folder is
+you can just change BIN at the top and it'll affect them all
+
+*/

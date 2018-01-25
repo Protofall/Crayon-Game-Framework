@@ -1,12 +1,12 @@
-#include <dc/pvr.h>
+#include "draw.h"
 
 extern void draw_paletted_sprite(const struct spritesheet *ss,
   float x, float y, uint8_t palette_number){
 
   const float x0 = x;
   const float y0 = y;
-  const float x1 = x + ss->width;
-  const float y1 = y + ss->height;
+  const float x1 = x + ss->spritesheet_width;
+  const float y1 = y + ss->spritesheet_height;
   const float z = 1;
 
   pvr_sprite_cxt_t context;
@@ -14,12 +14,12 @@ extern void draw_paletted_sprite(const struct spritesheet *ss,
     pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(palette_number),
     ss->spritesheet_width, ss->spritesheet_height, ss->spritesheet_texture, PVR_FILTER_NONE);
   }
-  else if(ss->spritesheet_format == 4){
+  else if(ss->spritesheet_format == 4){ //PAL8BPP format
     pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(palette_number),
     ss->spritesheet_width, ss->spritesheet_height, ss->spritesheet_texture, PVR_FILTER_NONE);
   }
   else{
-    error_freeze("%d isn't a paletted format\n", ss->spritesheet_format);
+    error_freeze("%d isn't a paletted format\n", ss->spritesheet_format); //Probs best to do a return here and let the main or something else call error_freeze
   }
 
   pvr_sprite_hdr_t header;
@@ -40,8 +40,8 @@ extern void draw_non_paletted_sprite(const struct spritesheet *ss, float x, floa
 
   const float x0 = x;
   const float y0 = y;
-  const float x1 = x + ss->width;
-  const float y1 = y + ss->height;
+  const float x1 = x + ss->spritesheet_width;
+  const float y1 = y + ss->spritesheet_height;
   const float z = 1;
 
   pvr_sprite_cxt_t context;
