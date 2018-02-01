@@ -11,8 +11,6 @@
 #include <kos/fs_romdisk.h> //For romdisk swapping
 #include <zlib/zlib.h>  //Not too sure if I need this for the gz romdisk...
 
-//#include <kos.h>	//Remove later and add the needed libs
-
 //Load a sprite from a path to the texture. The path is used to generate a dtex and dtex.pal paths
 extern int memory_load_dtex(struct spritesheet *ss, char *path);
 

@@ -1,6 +1,6 @@
 #include "draw.h"
 
-extern void draw_paletted_sprite(const struct spritesheet *ss,
+extern uint8_t draw_paletted_sprite(const struct spritesheet *ss,
   float x, float y, uint8_t palette_number){
 
   const float x0 = x;
@@ -19,7 +19,8 @@ extern void draw_paletted_sprite(const struct spritesheet *ss,
     ss->spritesheet_width, ss->spritesheet_height, ss->spritesheet_texture, PVR_FILTER_NONE);
   }
   else{
-    error_freeze("%d isn't a paletted format\n", ss->spritesheet_format); //Probs best to do a return here and let the main or something else call error_freeze
+    return 1;
+    //error_freeze("%d isn't a paletted format\n", ss->spritesheet_format); //Probs best to do a return here and let the main or something else call error_freeze
   }
 
   pvr_sprite_hdr_t header;
@@ -34,9 +35,11 @@ extern void draw_paletted_sprite(const struct spritesheet *ss,
     .dx = x0, .dy = y1
   };
   pvr_prim(&vert, sizeof(vert));
+
+  return 0;
 }
 
-extern void draw_non_paletted_sprite(const struct spritesheet *ss, float x, float y){
+extern uint8_t draw_non_paletted_sprite(const struct spritesheet *ss, float x, float y){
 
   const float x0 = x;
   const float y0 = y;
@@ -60,4 +63,6 @@ extern void draw_non_paletted_sprite(const struct spritesheet *ss, float x, floa
     .dx = x0, .dy = y1
   };
   pvr_prim(&vert, sizeof(vert));
+
+  return 0;
 }

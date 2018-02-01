@@ -4,9 +4,6 @@
 #include <dc/pvr.h>
 #include <stdint.h> //For the uintX_t types
 
-//Spritesheet stuff
-//-----------------------------------------------------------------------------
-
 typedef struct anim{
   char *anim_name;
   uint8_t anim_frames;	//How many sprites make up the animation (Dunno if this should be a short or int yet)
@@ -21,10 +18,10 @@ typedef struct anim{
 
 typedef struct spritesheet{
   pvr_ptr_t *spritesheet_texture;
-  char *spritesheet_name;	//Might be useful for when it comes time to un-mount a romdisk?
-  anim_t **spritesheet_anim_array; //Allows me to make an array of anim_t pointers hopefully
+  char *spritesheet_name;	//Might be useful for when it comes time to un-mount a romdisk, otherwise I don't think its needed
+  anim_t **spritesheet_anim_array; //Allows me to make an array of anim_t pointers
   //uint16_t spritesheet_dims;	//Since a pvr texture must be a square, we don't need height/width
-  uint16_t spritesheet_width;	//Doubling up just incase I'm wrong
+  uint16_t spritesheet_width;	//Might be able to replace these 2 with dims, idk yet
   uint16_t spritesheet_height;
   uint8_t spritesheet_format; //1 for 4BPP, 2 for 8BPP, 3 for RGB565 and 4 for ARGB4444 (0 for unknown)
   uint32_t *spritesheet_palette; //Pointer to heap allocated palette
