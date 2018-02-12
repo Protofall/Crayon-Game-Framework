@@ -33,29 +33,61 @@ Note: texconv doesn't work with 2048 by 2048 textures :(
 
 ### Developer's Directory Design (Old-ish)
 
-I'm thinking we have 3 directories:
+root:
 
-+ assets
-+ pack
-+ cdfs
+	+ assets/
+	+ cdfs/
+	+ crayon/	//Contains crayon library stuff
+	+ main.c
+	+ makefile
+	+ make.sh
 
-assets contains the original game assets in their original formats. pack will have pre-processed versions of the assets in their respective romdisks (So \*.png vecomes \*.dtex and \*.dtex.pal) and cdfs will contain \*.img's or \*.img.gz's of each romdisk dir from the pack dir aswell as 1st_read.bin and is used to make the .cdi program
+assets can contain a normal file system, but files/folders with crayon_x fields will be pre-processed. Basically the stuff inside there dirs will get processed and the processed result will be the cdfs directory.
 
-More on assets, I want to set up the path to be something the developer/s can easily navigate, but still allow for automatic contruction. So heres my planned layout:
+(Explain later what each field means)
 
-assets -> rom0/rom1/.../romN-1 (Total of N romdisks)
-romX -> sprites/other
-sprites -> name.format
-
-Incase thats not clear, assets contains those N directories (Not just rom0 that contains rom1 etc.) Same logic goes for each romdisk's contents
+The picture formats are PAL4BPP, PAL8BPP, RGB565 (Opqaue) or ARGB4444 (Transparent).
 
 Note: Its up to the artist/developers to make sure that the art assets meet the BPP requirements (OPAQUE and TRANSPARENT are 16BPP) and that the romdisk/textures/sound files will all fit in the Dreamcast's RAM nicely (ie. Not crash)
 
-For the directories in romX, I think the best approach is to store all PNG assets in the "sprites" dir where each of the sprite sheet assets are in the folder "name.format" where name is going to be the name of the resultant spritesheet and format is PAL4BPP, PAL8BPP, RGB565 (Opqaue) or ARGB4444 (Transparent). This will allow for the developer to easily have 1 to many spritesheets of each format in just 1 romdisk while still making it easy to navigate. The makefile will be able to look at each folder name and determine its format and will output the "name.format.png" and "name.format.txt" files into the "other" directory. So if you want to make a 4BPP spritesheet you'd dump your sprites into assets/romX/sprites/name.PAL4BPP/ and the makefile will compile a SS out of that. (Again, artist/devs need to make sure when making a paletted spritesheet that the png doesn't go over 16/256 colours)
+The crayon/ directory contains all the .c and .h crayon files used by the program
 
-The "other" directory will contain the SS PNG and TXT files (If any were made) aswell as any other files you want in your romdisk. That could be other text files used for dialogue, music files and anything else I'm forgetting. I don't think we can store more PNGs here otherwise texconv wouldn't know what type you want to convert it to, so just make a new spritesheet with just 1 texture in it.
+### In assets
 
-The pack directory will contain all the contents of the "other" directory/s except the PNGs will be converted to DTEXs (and DTEX.PALs if it was called PAL4BPP.png or PAL8BPP.png)
+assets/
+|-> plants.crayon_img/
+      |-> flowers.PAL4BPP.crayon_packer_sheet/
+      |     |-> rose.png
+      |     |-> rose.crayon_anim
+      |     |-> tulip.png
+      |     |-> tulip.crayon_anim
+      |-> lol.txt
+
+### In cdfs (If we could explore .img's)
+
+cdfs/
+|-> plants.img/
+      |-> flowers.dtex
+      |-> flowers.dtex.dpal
+      |-> flowers.txt
+      |-> lol.txt
+
+### In Dreamcast/KOS VFS
+
+cd/(mount name)	#Note, this might be attached to the sd dir instead
+  |-> flowers.dtex
+  |-> flowers.dtex.dpal
+  |-> flowers.txt
+  |-> lol.txt
+
+Notes:
+
+	+ crayon_x field is a hint to do something with the file/dir in preprocessing
+	+ The crayon_anim found in crayon_packer_sheet dirs contains "height width number_of_sprites" and is used to help make the final txt for that dir
+	+ A dir with the crayon_packer_sheet field may only contain n png's and n or less crayon_anim's (Each crayon_anim has a png of the same name, but if a png doesn't have a corresponding crayon_anim then its assumed the png is a single frame/just a sprite). Any other files and directories will be ignored
+	+ files that aren't involved in preprocessing (Except gziped ones) are hardlinked
+	+ crayon_img means "Make this into a romdisk"
+	+ crayon_gz means "GZ compress this file/romdisk", can be combined with crayon_img
 
 ### Code Structure
 
@@ -130,44 +162,9 @@ objectLogicID is basically the general behaviour of a texture. So a background h
 + Texconv
 	+ QT is required to build the Texconv executable
 + cdi4dc (Unix build)
-+ Something for SConstruct? (Not sure if I'll use that yet)
 
-### Random notes
+### Random note
 
 Force vid_set_mode(DM_640x480_VGA, PM_RGB565); for VGA mode...I think RGB888 might not be compatible with the pvr system (Only RGB565)
 
-Jamo/Proto convo:
-
-Having anims in one png in effect guarantees the layout of the frames in the texture, and gives you the location of the first frame and size of all the frames put together
-you can still make it easy for the developer
-
-The animation frames will be in a grid, so it's easy to find the coords of a frame given the coords of the grid, the size of the grid and the size of the frames and when someone is working on an animated sprite, they are most likely to be working on all the frames at once in a grid in their image editor, so it's easier for the artist (they don't have to split it up into frames every time they edit it)
-
-the only information that needs to be provided is the width and height of a frame within an animation all the frames will have the same size anything else is overcomplicated and an artist wouldn't bother with it
-
-I guess so. So txt file with width and height and in the makefile it combines all of those dim files into one big txt file and thats used along with texturepacker's txt file to help build the struct info
-
-I still feel frame number will be needed for when the anim sheet is inserted into the sprite sheet...
-
-SConstruct might be better than makefile. It uses python
-
-### New dir system
-
-root:
-
-	+ assets/
-	+ pack/
-	+ cdfs/
-	+ crayon/	//Contains crayon library stuff
-	+ main.c
-	+ makefile/SConstruct_file
-
-assets will contain 2 different kinds of folders (Maybe more later like a direct cd dir) name.img, name.img.gz. Basically the stuff inside there dirs will get processed and eventually become romdisks that are etither GZ compressed or not. Inside the romdisk dirs we will have "name" and "name.format.crayon_sheet" dirs. The first won't have any kind of processing done to it whereas the 2nd one will grab all PNG files in it and convert that into a spritesheet. It will also output a TXT file specifying where each PNG is in the spritesheet. Some work would need to be done to integrate the name.crayon_anim text files into the spritesheet TXT file to have the full data.
-
-The resultant spritesheet would be converted into a dtex file (+ dtex.pal depending on which format was chosen) The dtex/s and TXT file go into a romdisk dir.
-
-Right now the idea is that the pack dir looks just like the assets dir except name.format.crayon_sheet and name.crayon_anim has been processed and is now just a sprite sheet/anim sheet called "name.dtex" (+ name.dtex.pal for paletted). Might do a symlink solution later to remove asset duplication.
-
-Each romdisk will go into the cdfs dir (make clean just deletes all .img and .img.gz, it won't delete other stuff if you manually put stuff there)
-
-crayon/ contains all the .c and .h crayon files used by the program
+Sprite mode might only be able to reliably do a maximum dimension of 256 by 256 textures. Any larger could cause "Jitter" effects

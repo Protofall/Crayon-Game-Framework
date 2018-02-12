@@ -42,8 +42,10 @@ LIBS = -lz -lm $(KOS_LIBS)
 # main targets
 #------------------------------------------------------------------------------
 
-#Really lazy solution just to check that my code works
+#Really lazy solution just to check that my code works, need to move these
+#other commands into make.sh and remove all the old code in this makefile
 all:
+	./make.sh -make
 	kos-cc $(CFLAGS) -c crayon/debug.c -o debug.o
 	kos-cc $(CFLAGS) -c crayon/draw.c -o draw.o
 	kos-cc $(CFLAGS) -c crayon/memory.c -o memory.o

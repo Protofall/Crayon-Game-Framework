@@ -77,6 +77,8 @@ $(TARGET).elf: $(OFILES)
 # create ROMDISK_IMGS in CDFS_DIR from subdirectories of ROMDISKS_DIR
 $(CDFS_DIR)/%.img: $(CDFS_DIR) $(DTEX_FILES)
 	$(KOS_GENROMFS) -f $@ -d $(ROMDISKS_DIR)/$* -v
+# $(KOS_GENROMFS) = /opt/toolchains/dc/kos/utils/genromfs/genromfs
+# -x param might be able to remove the pack dir entirely...dunno yet
 
 # create DTEX_FILES in ROMDISKS_DIR from png assets in ASSETS_DIR
 $(ROMDISKS_DIR)/%.dtex: $(ROMDISKS_DIR) $(ASSETS_DIR)/%.png
