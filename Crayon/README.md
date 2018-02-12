@@ -31,7 +31,7 @@ Note: texconv doesn't work with 2048 by 2048 textures :(
 + Non paletted RGB565 loading/rendering support (!)
 + RAM/VRAM (And SRAM?) space debug (!)
 
-### Developer's Directory Design (Old-ish)
+### Developer's Directory Design
 
 root:
 
@@ -55,29 +55,45 @@ The crayon/ directory contains all the .c and .h crayon files used by the progra
 ### In assets
 
 assets/
+
 |-> plants.crayon_img/
+
       |-> flowers.PAL4BPP.crayon_packer_sheet/
+
       |     |-> rose.png
+
       |     |-> rose.crayon_anim
+
       |     |-> tulip.png
+
       |     |-> tulip.crayon_anim
+
       |-> lol.txt
 
 ### In cdfs (If we could explore .img's)
 
 cdfs/
+
 |-> plants.img/
+
       |-> flowers.dtex
+
       |-> flowers.dtex.dpal
+
       |-> flowers.txt
+
       |-> lol.txt
 
 ### In Dreamcast/KOS VFS
 
 cd/(mount name)	#Note, this might be attached to the sd dir instead
+
   |-> flowers.dtex
+
   |-> flowers.dtex.dpal
+
   |-> flowers.txt
+  
   |-> lol.txt
 
 Notes:
