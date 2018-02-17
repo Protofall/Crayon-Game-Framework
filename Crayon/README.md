@@ -37,8 +37,8 @@ root:
 
 	+ assets/
 	+ cdfs/
-	+ crayon/	//Contains crayon library stuff
-	+ main.c
+	+ code/crayon/	//Contains crayon library stuff
+	+ code/user/	//Contains the user's code
 	+ makefile
 	+ make.sh
 

@@ -41,7 +41,7 @@ packerSheet () {	#$3 is the format
 	cd ..
 }
 
-buildPreProcessed () {	#$1 is asset, $2 is projectRoot/pack, $3 is the current field
+buildPreProcessed () {	#$1 is asset, $2 is projectRoot/cdfs, $3 is the current field
 	cd "$1"
 	ls "$PWD" | while read x; do
 
@@ -125,24 +125,26 @@ buildExecutable () {
 	ofiles=$(ls *.o)
 	#echo "ofiles: $ofiles"
 
-	$($KOS_CC $KOS_LDFLAGS -o $3.elf $KOS_START "$ofiles" -lz -lm $KOS_LIBS)	#Make the elf
-	echo "Done elf"
-	$(sh-elf-objcopy -R .stack -O binary $3.elf $3.bin)	#Turn it into a binary
-	if [ "$2" == 0 ];then
-		$($KOS_BASE/utils/scramble/scramble $3.bin $1/1st_read.bin)	#scramble
-		$(mkisofs -G $KOS_BASE/../IP.BIN -C 0,11702 -J -l -r -o $3.iso $1)
-		cdi4dc "$3.iso" "$3.cdi"
+	if [ "$2" -le 1 ];then #dc-cd and dc-sd
+		$($KOS_CC $KOS_LDFLAGS -o $3.elf $KOS_START "$ofiles" -lz -lm $KOS_LIBS)	#Make the elf
+		if [ "$2" == 1 ];then	#dc-sd
+			$(sh-elf-objcopy -R .stack -O binary $3.elf $1/$3.bin)	#Turn it into a binary and place it in the cdfs dir
+		else	#dc-cd
+			$(sh-elf-objcopy -R .stack -O binary $3.elf $3.bin)	#Turn it into a binary
+			$($KOS_BASE/utils/scramble/scramble $3.bin $1/1st_read.bin)	#scramble
+			$(mkisofs -G $KOS_BASE/../IP.BIN -C 0,11702 -J -l -r -o $3.iso $1)
+			cdi4dc "$3.iso" "$3.cdi"
+		fi
 	fi
 }
-
-NAME=CRAYON	#Replace CRAYON with your project name
 
 preprocess=0	# 0 for don't build, 1 for build
 bootMode=-1	#-1 = undefined/none, 0 = dc-cd, 1 = dc-sd
 
-projectRoot="$PWD"	#Make sure command is called from the real project root
+NAME=${PWD##*/}	#The name of the program is the same name as the project
 assets="assets"
-pack="cdfs"
+cdfs="cdfs"
+projectRoot="$PWD"	#Make sure bash script is called from the real project root
 
 if [ $# = 0 ];then
 	echo 'No params, try "-h" for help'
@@ -160,9 +162,7 @@ do
 		rm "$NAME.bin"	#Removes the normal binary
 		rm "$NAME.iso"	#Removes the iso
 		rm "$NAME.cdi"	#Removes the cdi
-		cd "$pack"
-		rm -R *	#If its empty then it will say it can't find *
-		cd ..
+		rm -R "$cdfs/"*
 		echo "Clean complete"
 		exit
 	elif [ "$1" == "-dc-cd" ];then
@@ -188,11 +188,11 @@ do
 done
 
 if [ "$preprocess" == 1 ];then
-	buildPreProcessed "$assets" "$projectRoot/$pack"
+	buildPreProcessed "$assets" "$projectRoot/$cdfs"
 fi
 
 if [ "$bootMode" == 0 ];then	#cd build
-	buildExecutable "$pack" "$bootMode" "$NAME"
+	buildExecutable "$cdfs" "$bootMode" "$NAME"
 elif [ "$bootMode" == 1 ];then	#sd build
 	echo "SD mode hasn't been implemented yet"
 fi
@@ -203,7 +203,7 @@ exit
 
 #So far we check for files/dirs that have the fields crayon_anim, crayon_packer_sheet, crayon_img and crayon_gz. Heres how they all behave
 
-#crayon_img: Make the same dir in the pack dir, but without the crayonCheck field. Romdisks may contain more romdisks
+#crayon_img: Make the same dir in the cdfs dir, but without the crayonCheck field. Romdisks may contain more romdisks
 
 #crayon_gz: If this field is present, once all other crayon fields have been done, the result is compressed into a gz file
 	#Known bug: If you have a directory with the crayon_gz field, but no crayon_ig field, then it instead turns it into a romdisk
