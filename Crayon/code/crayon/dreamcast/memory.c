@@ -148,6 +148,7 @@ extern void setup_palette(uint8_t palette_number, const struct spritesheet *ss){
   }
   else{
     error_freeze("Wrong palette format! It was set to %d\n", ss->spritesheet_format);
+    //return 1; //Need to change this function into a non-void sometime and remove that error_freeze
   }
 
   pvr_set_pal_format(PVR_PAL_ARGB8888);

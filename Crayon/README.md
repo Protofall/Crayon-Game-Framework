@@ -161,6 +161,8 @@ This would be useful for splitscreen (And maybe views too?). I feel this view id
 
 objectLogicID is basically the general behaviour of a texture. So a background has none, but a sprite might have weight, immunity level, etc. The id is used to refer to the "logic list" that I'll decide on its specifics later.
 
+Note to self: Think about palette structs instead of locking one palette to a texture/ss
+
 ### Pre-requisites
 
 + General knowledge of C
@@ -170,7 +172,7 @@ objectLogicID is basically the general behaviour of a texture. So a background h
 	+ QT is required to build the Texconv executable
 + cdi4dc (Unix build)
 
-### Random note
+### Random notes
 
 Force vid_set_mode(DM_640x480_VGA, PM_RGB565); for VGA mode...I think RGB888 might not be compatible with the pvr system (Only RGB565)
 

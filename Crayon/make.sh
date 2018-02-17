@@ -5,7 +5,7 @@ helpInfo () {
 	echo 'build mode:'
 	echo -e ' \t -make to build preprocessed stuff'
 	echo -e ' \t -clean to clean up'
-	echo 'load mode (Not yet implemented)':
+	echo 'boot mode (Not fully implemented yet)':
 	echo -e ' \t  -cd for loading from the cd dir'
 	echo -e ' \t  -sd for loading from an ext2 formatted sd card'
 	exit
@@ -112,7 +112,34 @@ buildPreProcessed () {	#$1 is asset, $2 is projectRoot/pack, $3 is the current f
 	cd ..
 }
 
-buildMode=-1	#-1 = unknown, 0 = make, 1 = clean
+buildExecutable () {
+	files=$(echo $PWD/code/crayon/dreamcast/*.c)
+	for x in $files; do
+		y=${x%.c}
+		z=${y##*/}
+		$(kos-cc $KOS_CFLAGS -c $y.c -o $PWD/$z.o)
+	done
+	$(kos-cc $KOS_CFLAGS -c $PWD/code/user/main.c -o $PWD/main.o)	#Compile the main file
+
+	#ofiles=$(echo $PWD/*.o)	#I think this was giving the wrong path
+	ofiles=$(ls *.o)
+	#echo "ofiles: $ofiles"
+
+	$($KOS_CC $KOS_LDFLAGS -o $3.elf $KOS_START "$ofiles" -lz -lm $KOS_LIBS)	#Make the elf
+	echo "Done elf"
+	$(sh-elf-objcopy -R .stack -O binary $3.elf $3.bin)	#Turn it into a binary
+	if [ "$2" == 0 ];then
+		$($KOS_BASE/utils/scramble/scramble $3.bin $1/1st_read.bin)	#scramble
+		$(mkisofs -G $KOS_BASE/../IP.BIN -C 0,11702 -J -l -r -o $3.iso $1)
+		cdi4dc "$3.iso" "$3.cdi"
+	fi
+}
+
+NAME=CRAYON	#Replace CRAYON with your project name
+
+preprocess=0	# 0 for don't build, 1 for build
+bootMode=-1	#-1 = undefined/none, 0 = dc-cd, 1 = dc-sd
+
 projectRoot="$PWD"	#Make sure command is called from the real project root
 assets="assets"
 pack="cdfs"
@@ -124,19 +151,33 @@ fi
 
 while test ${#} -gt 0
 do
-	if [ "$1" == "-make" ];then
-		if [ "$buildMode" -ne -1 ];then
-			echo 'Please check your paramters (build mode). Try -h parameter for help'
-			exit
-		fi
-		buildMode=0
+	if [ "$1" == "-preprocess" ];then
+		preprocess=1
 		shift
 	elif [ "$1" == "-clean" ];then
-		if [ "$buildMode" -ne -1 ];then
-			echo 'Please check your paramters (build mode). Try -h parameter for help'
+		rm *.o	#Removes all object files
+		rm "$NAME.elf"	#Removes the elf
+		rm "$NAME.bin"	#Removes the normal binary
+		rm "$NAME.iso"	#Removes the iso
+		rm "$NAME.cdi"	#Removes the cdi
+		cd "$pack"
+		rm -R *	#If its empty then it will say it can't find *
+		cd ..
+		echo "Clean complete"
+		exit
+	elif [ "$1" == "-dc-cd" ];then
+		if [ "$bootMode" -ne -1 ];then
+			echo 'Please check your paramters (boot mode). Try -h parameter for help'
 			exit
 		fi
-		buildMode=1
+		bootMode=0
+		shift
+	elif [ "$1" == "-dc-sd" ];then
+		if [ "$bootMode" -ne -1 ];then
+			echo 'Please check your paramters (boot mode). Try -h parameter for help'
+			exit
+		fi
+		bootMode=1
 		shift
 	elif [ "$1" == "-h" ];then
 		helpInfo
@@ -146,17 +187,14 @@ do
 	fi
 done
 
-if [ "$buildMode" == -1 ];then	#This code will never be activated, will it?
-	echo 'No build mode selected'
-	exit
+if [ "$preprocess" == 1 ];then
+	buildPreProcessed "$assets" "$projectRoot/$pack"
 fi
 
-if [ "$buildMode" == 0 ];then
-	buildPreProcessed "$assets" "$projectRoot/$pack"
-else
-	cd "$pack"
-	rm -R *
-	cd ..
+if [ "$bootMode" == 0 ];then	#cd build
+	buildExecutable "$pack" "$bootMode" "$NAME"
+elif [ "$bootMode" == 1 ];then	#sd build
+	echo "SD mode hasn't been implemented yet"
 fi
 
 exit
