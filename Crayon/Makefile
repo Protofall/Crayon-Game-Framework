@@ -1,4 +1,4 @@
-TARGET = paletteTest
+TARGET = Crayon
 IPBIN = $(KOS_BASE)/../IP.BIN
 
 # directories
@@ -18,7 +18,7 @@ SUBDIRS = $(CDFS_DIR) $(ROMDISKS_DIR)
 #------------------------------------------------------------------------------
 
 OFILES = $(patsubst %.c,%.o,$(wildcard *.c))
-LAZYOFILES = error.o sprite.o paletteTest.o
+LAZYOFILES = debug.o draw.o memory.o main.o
 SCRAMBLED = $(CDFS_DIR)/1st_read.bin
 
 # flags
@@ -31,11 +31,6 @@ LIBS = -lz -lm $(KOS_LIBS)
 
 all:
 	./make.sh -preprocess -dc-cd
-#$(KOS_CC) $(KOS_LDFLAGS) -o $(TARGET).elf $(KOS_START) $(LAZYOFILES) $(LIBS)
-#sh-elf-objcopy -R .stack -O binary $(TARGET).elf $(TARGET).bin
-#$(KOS_BASE)/utils/scramble/scramble $(TARGET).bin $(SCRAMBLED)
-#mkisofs -G $(IPBIN) -C 0,11702 -J -l -r -o $(TARGET).iso $(CDFS_DIR)
-#cdi4dc $(TARGET).iso $(TARGET).cdi
 
 clean:
 	./make.sh -clean

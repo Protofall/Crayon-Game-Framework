@@ -3,11 +3,11 @@
 helpInfo () {
 	echo 'Usage: ./make-assist [build mode] [load mode]'
 	echo 'build mode:'
-	echo -e ' \t -make to build preprocessed stuff'
+	echo -e ' \t -preprocess to build preprocessed stuff'
 	echo -e ' \t -clean to clean up'
 	echo 'boot mode (Not fully implemented yet)':
-	echo -e ' \t  -cd for loading from the cd dir'
-	echo -e ' \t  -sd for loading from an ext2 formatted sd card'
+	echo -e ' \t  -dc-cd for loading from the cd dir'
+	echo -e ' \t  -dc-sd for loading from an ext2 formatted sd card'
 	exit
 }
 
@@ -121,18 +121,16 @@ buildExecutable () {
 	done
 	$(kos-cc $KOS_CFLAGS -c $PWD/code/user/main.c -o $PWD/main.o)	#Compile the main file
 
-	#ofiles=$(echo $PWD/*.o)	#I think this was giving the wrong path
 	ofiles=$(ls *.o)
-	#echo "ofiles: $ofiles"
 
 	if [ "$2" -le 1 ];then #dc-cd and dc-sd
-		$($KOS_CC $KOS_LDFLAGS -o $3.elf $KOS_START "$ofiles" -lz -lm $KOS_LIBS)	#Make the elf
+		$($KOS_CC $KOS_LDFLAGS -o $3.elf $KOS_START $ofiles -lz -lm $KOS_LIBS)	#Make the elf
 		if [ "$2" == 1 ];then	#dc-sd
 			$(sh-elf-objcopy -R .stack -O binary $3.elf $1/$3.bin)	#Turn it into a binary and place it in the cdfs dir
 		else	#dc-cd
 			$(sh-elf-objcopy -R .stack -O binary $3.elf $3.bin)	#Turn it into a binary
 			$($KOS_BASE/utils/scramble/scramble $3.bin $1/1st_read.bin)	#scramble
-			$(mkisofs -G $KOS_BASE/../IP.BIN -C 0,11702 -J -l -r -o $3.iso $1)
+			$(mkisofs -G $4 -C 0,11702 -J -l -r -o $3.iso $1)
 			cdi4dc "$3.iso" "$3.cdi"
 		fi
 	fi
@@ -142,6 +140,7 @@ preprocess=0	# 0 for don't build, 1 for build
 bootMode=-1	#-1 = undefined/none, 0 = dc-cd, 1 = dc-sd
 
 NAME=${PWD##*/}	#The name of the program is the same name as the project
+IPBIN="$KOS_BASE/../IP.BIN"	#Change this depending on where your IP.BIN file is located
 assets="assets"
 cdfs="cdfs"
 projectRoot="$PWD"	#Make sure bash script is called from the real project root
@@ -192,7 +191,7 @@ if [ "$preprocess" == 1 ];then
 fi
 
 if [ "$bootMode" == 0 ];then	#cd build
-	buildExecutable "$cdfs" "$bootMode" "$NAME"
+	buildExecutable "$cdfs" "$bootMode" "$NAME" "$IPBIN"
 elif [ "$bootMode" == 1 ];then	#sd build
 	echo "SD mode hasn't been implemented yet"
 fi
