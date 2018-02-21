@@ -2,8 +2,8 @@
 #include "../crayon/dreamcast/memory.h"
 #include "../crayon/dreamcast/debug.h"
 #include "../crayon/dreamcast/draw.h"
-//#include "code/crayon/dreamcast/render_structs.h"	//This is included in other crayon files
-//#include "code/crayon/dreamcast/texture_structs.h"	//This is included in other crayon files
+//#include "../crayon/dreamcast/render_structs.h"	//This is included in other crayon files
+//#include "../crayon/dreamcast/texture_structs.h"	//This is included in other crayon files
 
 int main(){
 	vid_set_mode(DM_640x480_VGA, PM_RGB565);

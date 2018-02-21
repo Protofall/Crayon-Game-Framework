@@ -24,7 +24,7 @@ typedef struct spritesheet{
   uint16_t spritesheet_width;	//Might be able to replace these 2 with dims, idk yet
   uint16_t spritesheet_height;
   uint8_t spritesheet_format; //1 for 4BPP, 2 for 8BPP, 3 for RGB565 and 4 for ARGB4444 (0 for unknown)
-  uint32_t *spritesheet_palette; //Pointer to heap allocated palette
+  uint32_t *spritesheet_palette; //Pointer to heap allocated palette (Its treated like an array of size spritesheet_colour_count)
   uint16_t spritesheet_color_count; //Number of colours in the palette
 } spritesheet_t;
 

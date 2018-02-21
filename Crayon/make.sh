@@ -1,13 +1,19 @@
 #!/bin/bash
 
+#NOTE TO SELF: $? gets result of previous command and is useful for checking if something messed up
+
 helpInfo () {
-	echo 'Usage: ./make-assist [build mode] [load mode]'
+	echo 'Usage: ./make-assist [build mode] [platform] [boot mode] [other]'
 	echo 'build mode:'
 	echo -e ' \t -preprocess to build preprocessed stuff'
+	echo 'platform:'
+	echo -e ' \t -dreamcast to make a dreamcast build'
+	echo -e ' \t boot mode:'
+	echo -e ' \t \t  -cd for loading from the cd directory'
+	echo -e ' \t \t  -sd for loading from an ext2 formatted sd card'
+	echo 'other:'
+	echo -e ' \t -noRM Prevents the remaval of temperary files for viewing'
 	echo -e ' \t -clean to clean up'
-	echo 'boot mode (Not fully implemented yet)':
-	echo -e ' \t  -dc-cd for loading from the cd dir'
-	echo -e ' \t  -dc-sd for loading from an ext2 formatted sd card'
 	exit
 }
 
@@ -27,16 +33,19 @@ packerSheet () {	#$3 is the format
 		if [[ -f "$textFileName" ]];then #If theres a txt, then append its content to the end
 			VAR+=" $(cat $textFileName)"
 		else	#If there was no txt file, we assume its just a normal sprite (aka 1 frame animation)
-			width="$(file rose.png | rev | cut -d' ' -f 6 | rev)"
-			height="$(file rose.png | rev | cut -d' ' -f 4 | rev | cut -d',' -f 1)"
+			targetName="$(echo $VAR | cut -d' ' -f 1).png"
+			width="$(file $targetName | rev | cut -d' ' -f 6 | rev)"
+			height="$(file $targetName | rev | cut -d' ' -f 4 | rev | cut -d',' -f 1)"
 			VAR+=" $width $height 1"
 		fi
 		echo "$VAR" >> "$2/$name.txt"
 	done
 
 	#We remove old packer png and txt
-	rm "$2/$name.crayon_temp.png"
-	rm "$2/$name.crayon_temp.txt"
+	if [ "$4" = 0 ];then
+		rm "$2/$name.crayon_temp.png"
+		rm "$2/$name.crayon_temp.txt"
+	fi
 
 	cd ..
 }
@@ -87,11 +96,13 @@ buildPreProcessed () {	#$1 is asset, $2 is projectRoot/cdfs, $3 is the current f
 		    	if [ "$crayonField" = 3 ];then	#For gz compressed romdisks
 		    		gzip -f -9 "$newX.img"
 		    	fi
-		    	rm -R "$2/$newX"	#Remove this line to check if the pre-processing stuff worked
+		    	if [ "$3" = 0 ];then
+		    		rm -R "$2/$newX"	#Delete the processed directory
+		    	fi
 		    	cd "$back"
 
 			elif [ "$crayonField" -le 7 ];then	#If we're on the x.FORMAT.crayon_packer_sheet dir
-				packerSheet "$x" "$2" "$crayonCheckSecond"	#This builds the spritesheet then converts it to a dtex
+				packerSheet "$x" "$2" "$crayonCheckSecond" "$3"	#This builds the spritesheet then converts it to a dtex
 		    fi
 		elif [[ -f "$x" ]];then	#This won't get triggered when within a crayon_packer_sheet dir so no problems there
 			newX="$x"
@@ -137,7 +148,9 @@ buildExecutable () {
 }
 
 preprocess=0	# 0 for don't build, 1 for build
+platform=-1 #-1 for undefined, 0 for Dreamcast
 bootMode=-1	#-1 = undefined/none, 0 = dc-cd, 1 = dc-sd
+noRM=0	#0 means it will remove temp files, 1 means it won't remove them
 
 NAME=${PWD##*/}	#The name of the program is the same name as the project
 IPBIN="$KOS_BASE/../IP.BIN"	#Change this depending on where your IP.BIN file is located
@@ -152,10 +165,10 @@ fi
 
 while test ${#} -gt 0
 do
-	if [ "$1" == "-preprocess" ];then
+	if [ "$1" = "-preprocess" ];then
 		preprocess=1
 		shift
-	elif [ "$1" == "-clean" ];then
+	elif [ "$1" = "-clean" ];then
 		rm *.o	#Removes all object files
 		rm "$NAME.elf"	#Removes the elf
 		rm "$NAME.bin"	#Removes the normal binary
@@ -164,21 +177,26 @@ do
 		rm -R "$cdfs/"*
 		echo "Clean complete"
 		exit
-	elif [ "$1" == "-dc-cd" ];then
-		if [ "$bootMode" -ne -1 ];then
-			echo 'Please check your paramters (boot mode). Try -h parameter for help'
+	elif [ "$1" = "-dreamcast" ];then
+		if [ "$platform" -ne -1 ];then
+			echo 'Please check your paramters (platform). Try -h parameter for help'
 			exit
 		fi
-		bootMode=0
+		platform=0
 		shift
-	elif [ "$1" == "-dc-sd" ];then
-		if [ "$bootMode" -ne -1 ];then
-			echo 'Please check your paramters (boot mode). Try -h parameter for help'
+		if [ "$1" = "-cd" ];then
+			bootmode=0
+		elif [ "$1" = "-sd" ];then
+			bootmode=1
+		else
+			echo 'Please check your paramters (bootmode). Try -h parameter for help'
 			exit
 		fi
-		bootMode=1
 		shift
-	elif [ "$1" == "-h" ];then
+	elif [ "$1" = "-noRM" ];then
+		noRM=1
+		shift
+	elif [ "$1" = "-h" ];then
 		helpInfo
 	else
 		echo 'Please check your paramters Try -h parameter for help'
@@ -186,14 +204,12 @@ do
 	fi
 done
 
-if [ "$preprocess" == 1 ];then
-	buildPreProcessed "$assets" "$projectRoot/$cdfs"
+if [ "$preprocess" = 1 ];then
+	buildPreProcessed "$assets" "$projectRoot/$cdfs" "$noRM"
 fi
 
-if [ "$bootMode" == 0 ];then	#cd build
-	buildExecutable "$cdfs" "$bootMode" "$NAME" "$IPBIN"
-elif [ "$bootMode" == 1 ];then	#sd build
-	echo "SD mode hasn't been implemented yet"
+if [ "$platform" = 0 ]; then	#Dreamcast
+	buildExecutable "$cdfs" "$bootMode" "$NAME" "$IPBIN"	#It will build cd or sd depending on bootMode
 fi
 
 exit

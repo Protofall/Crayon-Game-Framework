@@ -131,14 +131,24 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){
   //I don't think the headers need to be free-d since they aren't pointers, but I'll leave this comment here for future me
 }
 
+//Need to work on this. It will contain a lot of content from memory_load_dtex, but more specialised stuff and call "memory_load_palette"
+extern int memory_load_packer_sheet(struct spritesheet *ss, char *path){
+  return 1;
+}
+
 //Path would be the path to the dtex file, except without the .dtex attached. An example would be "/levels/Fade"
-extern void memory_init_spritesheet(char *path, struct spritesheet *ss){
+//Might remove this later since its kinda pointless
+extern int memory_init_spritesheet(char *path, struct spritesheet *ss){
   int result = memory_load_dtex(ss, path);
-  if(result){error_freeze("Cannot load Fade sprite! Error %d\n", result);}
+  if(result){
+    //error_freeze("Cannot load Fade sprite! Error %d\n", result);
+    return 1;
+  }
+  return 0;
 }
 
 //There are 4 palettes for 8BPP and 64 palettes for 4BPP. palette_number is the id
-extern void setup_palette(uint8_t palette_number, const struct spritesheet *ss){
+extern int setup_palette(uint8_t palette_number, const struct spritesheet *ss){
   int entries;
   if(ss->spritesheet_format == 3){
     entries = 16;
@@ -147,8 +157,8 @@ extern void setup_palette(uint8_t palette_number, const struct spritesheet *ss){
     entries = 256;
   }
   else{
-    error_freeze("Wrong palette format! It was set to %d\n", ss->spritesheet_format);
-    //return 1; //Need to change this function into a non-void sometime and remove that error_freeze
+    //error_freeze("Wrong palette format! It was set to %d\n", ss->spritesheet_format);
+    return 1;
   }
 
   pvr_set_pal_format(PVR_PAL_ARGB8888);
@@ -157,10 +167,11 @@ extern void setup_palette(uint8_t palette_number, const struct spritesheet *ss){
   for(i = 0; i < ss->spritesheet_color_count; ++i){
     pvr_set_pal_entry(i + entries * palette_number, ss->spritesheet_palette[i]);
   }
+  return 0;
 }
 
 //Need to adapt this to take in an ss list object instead so we don't loose the later half of the list
-extern void memory_spritesheet_free(struct spritesheet *ss){
+extern int memory_spritesheet_free(struct spritesheet *ss){
   if(ss){
     if(ss->spritesheet_format == 3 || ss->spritesheet_format == 4){ //Paletted
       free(ss->spritesheet_palette);
@@ -171,7 +182,9 @@ extern void memory_spritesheet_free(struct spritesheet *ss){
 
     //free(ss); //Need to make sure it's neighbours link to each other before doing this
                 //Also free all anims before this
+    return 0;
   }
+  return 1;
 }
 
 extern int mount_romdisk(char *filename, char *mountpoint){

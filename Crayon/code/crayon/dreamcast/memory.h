@@ -14,14 +14,20 @@
 //Load a sprite from a path to the texture. The path is used to generate a dtex and dtex.pal paths
 extern int memory_load_dtex(struct spritesheet *ss, char *path);
 
+//Loads the "crayon_packer_sheet" field directory content
+extern int memory_load_packer_sheet(struct spritesheet *ss, char *path);
+
+//
+extern int memory_load_palette(uint32_t *palette, uint32_t palColours, char *path);	//Need to send back a palette struct
+
 //Loads a spritesheet
-extern void memory_init_spritesheet(char *path, struct spritesheet *ss);
+extern int memory_init_spritesheet(char *path, struct spritesheet *ss);
 
 //Sets a palette for a spritesheet
-extern void setup_palette(uint8_t palette_number, const struct spritesheet *ss);
+extern int setup_palette(uint8_t palette_number, const struct spritesheet *ss);
 
 //Free any resources used by a sprite
-extern void memory_sprite_free(struct spritesheet *ss);
+extern int memory_sprite_free(struct spritesheet *ss);
 
 //Mount a romdisk
 extern int mount_romdisk(char *filename, char *mountpoint);
