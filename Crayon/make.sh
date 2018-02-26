@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#NOTE TO SELF: $? gets result of previous command and is useful for checking if something messed up
-
 helpInfo () {
 	echo 'Usage: ./make-assist [build mode] [platform] [boot mode] [other]'
 	echo 'build mode:'
@@ -129,13 +127,27 @@ buildExecutable () {
 		y=${x%.c}
 		z=${y##*/}
 		$(kos-cc $KOS_CFLAGS -c $y.c -o $PWD/$z.o)
+		if [ "$?" == 1 ];then	#Checks to see if an error occurred
+			echo "$z.o failed to build"
+			exit
+		fi
 	done
 	$(kos-cc $KOS_CFLAGS -c $PWD/code/user/main.c -o $PWD/main.o)	#Compile the main file
+	if [ "$?" == 1 ];then	#Checks to see if an error occurred
+		echo "main.o failed to build"
+		exit
+	fi
+	#echo "About to do elf"
 
 	ofiles=$(ls *.o)
 
 	if [ "$2" -le 1 ];then #dc-cd and dc-sd
 		$($KOS_CC $KOS_LDFLAGS -o $3.elf $KOS_START $ofiles -lz -lm $KOS_LIBS)	#Make the elf
+		if [ "$?" == 1 ];then	#Checks to see if an error occurred
+			echo "Failed to build the elf"
+			exit
+		fi
+
 		if [ "$2" == 1 ];then	#dc-sd
 			$(sh-elf-objcopy -R .stack -O binary $3.elf $1/$3.bin)	#Turn it into a binary and place it in the cdfs dir
 		else	#dc-cd

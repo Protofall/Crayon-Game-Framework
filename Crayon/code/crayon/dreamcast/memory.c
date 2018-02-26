@@ -133,6 +133,8 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){
 
 //Need to work on this. It will contain a lot of content from memory_load_dtex, but more specialised stuff and call "memory_load_palette"
 extern int memory_load_packer_sheet(struct spritesheet *ss, char *path){
+  //The goal of this it to take in a .dtex from a texturepacker png and store its info in the spritesheet struct and each of its "anims"
+  //in anim structs. The spritesheet stores a list of all anim structs related to it
   return 1;
 }
 
@@ -143,29 +145,6 @@ extern int memory_init_spritesheet(char *path, struct spritesheet *ss){
   if(result){
     //error_freeze("Cannot load Fade sprite! Error %d\n", result);
     return 1;
-  }
-  return 0;
-}
-
-//There are 4 palettes for 8BPP and 64 palettes for 4BPP. palette_number is the id
-extern int setup_palette(uint8_t palette_number, const struct spritesheet *ss){
-  int entries;
-  if(ss->spritesheet_format == 3){
-    entries = 16;
-  }
-  else if(ss->spritesheet_format == 4){
-    entries = 256;
-  }
-  else{
-    //error_freeze("Wrong palette format! It was set to %d\n", ss->spritesheet_format);
-    return 1;
-  }
-
-  pvr_set_pal_format(PVR_PAL_ARGB8888);
-  uint16_t i; //Can't this be a uint8_t instead? 0 to 255 and max 256 entries per palette
-  //...but then again how would the loop be able to break? since it would overflow back to 0
-  for(i = 0; i < ss->spritesheet_color_count; ++i){
-    pvr_set_pal_entry(i + entries * palette_number, ss->spritesheet_palette[i]);
   }
   return 0;
 }

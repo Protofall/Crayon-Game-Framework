@@ -23,9 +23,6 @@ extern int memory_load_palette(uint32_t *palette, uint32_t palColours, char *pat
 //Loads a spritesheet
 extern int memory_init_spritesheet(char *path, struct spritesheet *ss);
 
-//Sets a palette for a spritesheet
-extern int setup_palette(uint8_t palette_number, const struct spritesheet *ss);
-
 //Free any resources used by a sprite
 extern int memory_sprite_free(struct spritesheet *ss);
 

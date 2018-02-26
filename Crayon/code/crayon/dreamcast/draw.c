@@ -1,6 +1,6 @@
 #include "draw.h"
 
-extern uint8_t draw_paletted_sprite(const struct spritesheet *ss,
+extern uint8_t render_paletted_sprite(const struct spritesheet *ss,
   float x, float y, uint8_t palette_number){
 
   const float x0 = x;
@@ -39,7 +39,7 @@ extern uint8_t draw_paletted_sprite(const struct spritesheet *ss,
   return 0;
 }
 
-extern uint8_t draw_non_paletted_sprite(const struct spritesheet *ss, float x, float y){
+extern uint8_t render_non_paletted_sprite(const struct spritesheet *ss, float x, float y){
 
   const float x0 = x;
   const float y0 = y;
@@ -64,5 +64,28 @@ extern uint8_t draw_non_paletted_sprite(const struct spritesheet *ss, float x, f
   };
   pvr_prim(&vert, sizeof(vert));
 
+  return 0;
+}
+
+//There are 4 palettes for 8BPP and 64 palettes for 4BPP. palette_number is the id
+extern int render_setup_palette(uint8_t palette_number, const struct spritesheet *ss){
+  int entries;
+  if(ss->spritesheet_format == 3){
+    entries = 16;
+  }
+  else if(ss->spritesheet_format == 4){
+    entries = 256;
+  }
+  else{
+    //error_freeze("Wrong palette format! It was set to %d\n", ss->spritesheet_format);
+    return 1;
+  }
+
+  pvr_set_pal_format(PVR_PAL_ARGB8888);
+  uint16_t i; //Can't this be a uint8_t instead? 0 to 255 and max 256 entries per palette
+  //...but then again how would the loop be able to break? since it would overflow back to 0
+  for(i = 0; i < ss->spritesheet_color_count; ++i){
+    pvr_set_pal_entry(i + entries * palette_number, ss->spritesheet_palette[i]);
+  }
   return 0;
 }
