@@ -1,7 +1,7 @@
 //Crayon libraries
 #include "../crayon/dreamcast/memory.h"
 #include "../crayon/dreamcast/debug.h"
-#include "../crayon/dreamcast/draw.h"
+#include "../crayon/dreamcast/graphics.h"
 //#include "../crayon/dreamcast/render_structs.h"	//This is included in other crayon files
 //#include "../crayon/dreamcast/texture_structs.h"	//This is included in other crayon files
 
@@ -40,11 +40,11 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
-		render_setup_palette(0, &Fade);
-		render_setup_palette(1, &Insta);
+		graphics_setup_palette(0, &Fade);
+		graphics_setup_palette(1, &Insta);
 
-		render_paletted_sprite(&Fade, 128, 176, 0);
-		render_paletted_sprite(&Insta, 384, 176, 1);
+		graphics_draw_paletted_sprite(&Fade, 128, 176, 0);
+		graphics_draw_paletted_sprite(&Insta, 384, 176, 1);
 		pvr_list_finish();
 
 		pvr_scene_finish();

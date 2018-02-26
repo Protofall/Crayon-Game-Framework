@@ -1,6 +1,6 @@
-#include "draw.h"
+#include "graphics.h"
 
-extern uint8_t render_paletted_sprite(const struct spritesheet *ss,
+extern uint8_t graphics_draw_paletted_sprite(const struct spritesheet *ss,
   float x, float y, uint8_t palette_number){
 
   const float x0 = x;
@@ -39,7 +39,7 @@ extern uint8_t render_paletted_sprite(const struct spritesheet *ss,
   return 0;
 }
 
-extern uint8_t render_non_paletted_sprite(const struct spritesheet *ss, float x, float y){
+extern uint8_t graphics_draw_non_paletted_sprite(const struct spritesheet *ss, float x, float y){
 
   const float x0 = x;
   const float y0 = y;
@@ -68,7 +68,7 @@ extern uint8_t render_non_paletted_sprite(const struct spritesheet *ss, float x,
 }
 
 //There are 4 palettes for 8BPP and 64 palettes for 4BPP. palette_number is the id
-extern int render_setup_palette(uint8_t palette_number, const struct spritesheet *ss){
+extern int graphics_setup_palette(uint8_t palette_number, const struct spritesheet *ss){
   int entries;
   if(ss->spritesheet_format == 3){
     entries = 16;
