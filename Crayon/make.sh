@@ -24,10 +24,12 @@ packerSheet () {	#$3 is the format
 
 	texconv -i "$2/$name.crayon_temp.png" -o "$2/$name.dtex" -f "$3"
 
+	pngCount=$(wc -l "$2/$name.crayon_temp.txt" | cut -d' ' -f 1)
+	echo "$pngCount" >> "$2/$name.txt"
+
 	#Make the new and improved txt file based on the dims of the original png's and the packer txt (Also crop name to remove last 2 fields)
 	cat "$2/$name.crayon_temp.txt" | tr -d ',' | while read VAR ; do #I assume the file name has no command in it because its stupid
-		textFileName="$(echo $VAR | cut -d' ' -f 1)"
-		textFileName+=".crayon_anim"	#Might change to crayon_anim later
+		textFileName="$(echo $VAR | cut -d' ' -f 1).crayon_anim"
 		if [[ -f "$textFileName" ]];then #If theres a txt, then append its content to the end
 			VAR+=" $(cat $textFileName)"
 		else	#If there was no txt file, we assume its just a normal sprite (aka 1 frame animation)

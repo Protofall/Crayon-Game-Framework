@@ -13,11 +13,11 @@ typedef struct dpal_header{
   uint32_t color_count; //number of 32-bit ARGB palette entries
 } dpal_header_t;
 
-extern int memory_load_dtex(struct spritesheet *ss, char *path){
+extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doesn't set the name
 
   int result = 0;
   pvr_ptr_t texture = NULL;
-  uint32_t *palette = NULL;
+  uint32_t *palette = NULL; //The list of palettes entries
 
   // Open all files
   //---------------------------------------------------------------------------
@@ -127,15 +127,32 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){
   if(result && texture){pvr_mem_free(texture);}
 
   return result;
-
-  //I don't think the headers need to be free-d since they aren't pointers, but I'll leave this comment here for future me
 }
 
 //Need to work on this. It will contain a lot of content from memory_load_dtex, but more specialised stuff and call "memory_load_palette"
-extern int memory_load_packer_sheet(struct spritesheet *ss, char *path){
+extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
   //The goal of this it to take in a .dtex from a texturepacker png and store its info in the spritesheet struct and each of its "anims"
   //in anim structs. The spritesheet stores a list of all anim structs related to it
-  return 1;
+
+  int result = 0;
+  pvr_ptr_t texture = NULL;
+
+#define ERROR(n) {result = (n); goto cleanup;}
+
+  FILE *texture_file = fopen(path, "rb");
+
+  if(!texture_file){ERROR(1);}
+
+#undef ERROR
+
+  cleanup:
+
+  if(texture_file){fclose(texture_file);}
+
+  // If a failure occured somewhere
+  if(result && texture){pvr_mem_free(texture);}
+
+  return result;
 }
 
 //Path would be the path to the dtex file, except without the .dtex attached. An example would be "/levels/Fade"

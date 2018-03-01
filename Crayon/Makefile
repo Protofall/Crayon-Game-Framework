@@ -18,3 +18,6 @@ clean:
 
 help:
 	./make.sh -h
+
+check:
+	./make.sh -preprocess -noRM

@@ -19,10 +19,15 @@ int main(){
 
 	mount_romdisk("/cd/colourMod.img", "/colourMod");
 	spritesheet_t Fade, Insta;
-	memory_load_dtex(&Fade, "/colourMod/Fade");
+	//memory_load_dtex(&Fade, "/colourMod/Fade");
+	int res = memory_load_crayon_packer_sheet(&Fade, "/colourMod/Fade.dtex");	//Need to finish memory_load_packer_sheet function
+
+	error_freeze("%d", res);
+	error_freeze("%s, %d, %d, %d, %d", Fade.spritesheet_name, Fade.spritesheet_width, Fade.spritesheet_height, Fade.spritesheet_format, Fade.spritesheet_color_count);
+
   	memory_load_dtex(&Insta, "/colourMod/Insta");
-	//memory_load_packer_sheet(&Fade, "/colourMod/Fade.dtex");	//Need to finish memory_load_packer_sheet function
-	//memory_load_packer_sheet(&Insta, "/colourMod/Insta.dtex");
+	//memory_load_crayon_packer_sheet(&Insta, "/colourMod/Insta.dtex"); //Need to finish memory_load_packer_sheet function
+
 	fs_romdisk_unmount("/colourMod");
 
 	int done = 0;
@@ -43,8 +48,8 @@ int main(){
 		graphics_setup_palette(0, &Fade);
 		graphics_setup_palette(1, &Insta);
 
-		graphics_draw_paletted_sprite(&Fade, 128, 176, 0);
-		graphics_draw_paletted_sprite(&Insta, 384, 176, 1);
+		old_graphics_draw_paletted_sprite(&Fade, 128, 176, 0);
+		old_graphics_draw_paletted_sprite(&Insta, 384, 176, 1);
 		pvr_list_finish();
 
 		pvr_scene_finish();
