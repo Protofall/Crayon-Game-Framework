@@ -22,7 +22,7 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doe
   // Open all files
   //---------------------------------------------------------------------------
 
-#define ERROR(n) {result = (n); goto cleanup;}
+  #define ERROR(n) {result = (n); goto cleanup;}
 
   //If you somehow have a longer path then please increase the size of texName and palName
   char texName[80];
@@ -73,7 +73,7 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doe
   // Load palette if needed
   //---------------------------------------------------------------------------
 
-#define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
+  #define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
   
   if(ss->spritesheet_format == 3 || ss->spritesheet_format == 4){
 
@@ -93,7 +93,7 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doe
     if(fread(palette, sizeof(uint32_t), dpal_header.color_count,
       palette_file) != dpal_header.color_count){PAL_ERROR(11);}
 
-#undef PAL_ERROR
+  #undef PAL_ERROR
 
   // Write palette metadata
   //---------------------------------------------------------------------------
@@ -115,7 +115,7 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doe
   //Insert the path + ".txt" code here. Need to figure out how I'll build that .txt first
   //ASince every spritesheet has a txt file to go with it, I'll assume that it must be here hence its not optional
 
-#undef ERROR
+  #undef ERROR
 
   // Cleanup
   //---------------------------------------------------------------------------
@@ -136,14 +136,88 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
 
   int result = 0;
   pvr_ptr_t texture = NULL;
+  //uint32_t *palette = NULL; //The list of palettes entries (Should probs move this into "load palette" section)
 
-#define ERROR(n) {result = (n); goto cleanup;}
+  #define ERROR(n) {result = (n); goto cleanup;}
 
   FILE *texture_file = fopen(path, "rb");
 
   if(!texture_file){ERROR(1);}
 
-#undef ERROR
+  // Load texture
+  //---------------------------------------------------------------------------
+
+  dtex_header_t dtex_header;
+  if(fread(&dtex_header, sizeof(dtex_header), 1, texture_file) != 1){ERROR(2);}
+
+  if(memcmp(dtex_header.magic, "DTEX", 4)){ERROR(3);}
+
+  texture = pvr_mem_malloc(dtex_header.size);
+  if(!texture){ERROR(4);}
+
+  if(fread(texture, dtex_header.size, 1, texture_file) != 1){ERROR(5);}
+
+  // Write all metadata except palette stuff
+  //---------------------------------------------------------------------------
+
+  if(dtex_header.width > dtex_header.height){
+    ss->spritesheet_dims = dtex_header.width;
+  }
+  else{
+    ss->spritesheet_dims = dtex_header.height;
+  }
+
+  //error_freeze("%d, %d", dtex_header.width, dtex_header.height);  //Need to figure out how non-square textures work
+  //error_freeze("dims: %d", ss->spritesheet_dims);  //Need to figure out how non-square textures work
+
+  //ss->spritesheet_width = dtex_header.width;  //With spritesheet_dims, I don't think we need width and height anymore
+  //ss->spritesheet_height = dtex_header.height;
+  ss->spritesheet_texture = texture;
+
+  //This assumes no mip-mapping, no stride, twiddled on, its uncompressed and no stride setting (I'm doing this to save on space)
+  if(dtex_header.type == 0x08000000){ //RGB565
+    ss->spritesheet_format = 1;
+  }
+  else if(dtex_header.type == 0x10000000){ //ARGB4444
+    ss->spritesheet_format = 2;
+  }
+  else if(dtex_header.type == 0x28000000){ //PAL4BPP
+    ss->spritesheet_format = 3;
+  }
+  else if(dtex_header.type == 0x30000000){ //PAL8BPP
+    ss->spritesheet_format = 4;
+  }
+  else{
+    //ss->spritesheet_format = 0;
+    ERROR(6);
+  }
+
+  int temp = strlen(path);
+  if(ss->spritesheet_format == 3 || ss->spritesheet_format == 4){
+    char *palPath = (char*) malloc((temp+5)*sizeof(char));  //Add a check here to see if it failed
+    palPath = path;
+    palPath[temp+0] = '.';
+    palPath[temp+1] = 'p';
+    palPath[temp+2] = 'a';
+    palPath[temp+3] = 'l';
+    palPath[temp+4] = '\0';
+    //error_freeze("%s", palPath);
+    int resultPal = memory_load_palette(&ss->spritesheet_palette, &ss->spritesheet_color_count, path);
+      //If it fails it needs to return an error code. If succeeds then it must return the palette and colour count (And return 0)
+      //That must mean we need to pass it pointers to the ss struct to save into and make it return an int
+    error_freeze("%s", resultPal);
+    free(palPath);
+    if(resultPal != 0){ //Might be able to remove != 0 and have same result
+      ERROR(6 + resultPal);
+    }
+  }
+  else{
+    ss->spritesheet_palette = NULL; //color_count doesn't need to be defined...nor does palette really...
+  }
+
+  //Load the txt and use that data to make the anim structs
+
+  #undef ERROR
 
   cleanup:
 
@@ -151,6 +225,47 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
 
   // If a failure occured somewhere
   if(result && texture){pvr_mem_free(texture);}
+
+  return result;
+}
+
+extern int memory_load_palette(uint32_t **palette, uint16_t *palColours, char *path){
+  int result = 0;
+
+  #define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
+  
+  //error_freeze("%d", strcmp(path, "/colourMod/Fade.dtex.pal")); //Returns 0   (Its dtex.pal you derp!)
+  FILE *palette_file = fopen(path, "rb");
+  if(!palette_file){PAL_ERROR(1);}
+
+  //error_freeze("Defiance!");
+
+  dpal_header_t dpal_header;
+  if(fread(&dpal_header, sizeof(dpal_header), 1, palette_file) != 1){PAL_ERROR(2);}
+
+  if(memcmp(dpal_header.magic, "DPAL", 4) | !dpal_header.color_count){PAL_ERROR(3);}
+
+  palette = malloc(dpal_header.color_count * sizeof(uint32_t));
+  if(!palette){PAL_ERROR(4);}
+
+  if(fread(palette, sizeof(uint32_t), dpal_header.color_count,
+    palette_file) != dpal_header.color_count){PAL_ERROR(5);}
+
+  #undef PAL_ERROR
+
+  // Write palette metadata
+  //---------------------------------------------------------------------------
+
+  *palette    = palette;
+  *palColours = dpal_header.color_count;
+  //error_freeze("%d", dpal_header.color_count);
+  //error_freeze("%d", palColours);
+
+  // Palette Cleanup
+  //---------------------------------------------------------------------------
+  PAL_cleanup:
+
+  if(palette_file){fclose(palette_file);}
 
   return result;
 }

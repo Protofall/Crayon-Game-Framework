@@ -10,7 +10,7 @@ helpInfo () {
 	echo -e ' \t \t  -cd for loading from the cd directory'
 	echo -e ' \t \t  -sd for loading from an ext2 formatted sd card'
 	echo 'other:'
-	echo -e ' \t -noRM Prevents the remaval of temperary files for viewing'
+	echo -e ' \t -noRM Prevents the removal of temperary files for viewing'
 	echo -e ' \t -clean to clean up'
 	exit
 }
@@ -123,7 +123,7 @@ buildPreProcessed () {	#$1 is asset, $2 is projectRoot/cdfs, $3 is the current f
 	cd ..
 }
 
-buildExecutable () {
+buildDreamcastExecutable () {
 	files=$(echo $PWD/code/crayon/dreamcast/*.c)
 	for x in $files; do
 		y=${x%.c}
@@ -223,7 +223,7 @@ if [ "$preprocess" = 1 ];then
 fi
 
 if [ "$platform" = 0 ]; then	#Dreamcast
-	buildExecutable "$cdfs" "$bootMode" "$NAME" "$IPBIN"	#It will build cd or sd depending on bootMode
+	buildDreamcastExecutable "$cdfs" "$bootMode" "$NAME" "$IPBIN"	#It will build cd or sd depending on bootMode
 fi
 
 exit
