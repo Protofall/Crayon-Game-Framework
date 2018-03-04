@@ -226,8 +226,10 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
   return result;
 }
 
+//Later clean this function up by removing paletteStore and instead just read straight into the palette argument
 extern int memory_load_palette(uint32_t **palette, uint16_t *palColours, char *path){
   int result = 0;
+  uint32_t *paletteStore = NULL; //The list of palettes entries
 
   #define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
   
@@ -239,10 +241,10 @@ extern int memory_load_palette(uint32_t **palette, uint16_t *palColours, char *p
 
   if(memcmp(dpal_header.magic, "DPAL", 4) | !dpal_header.color_count){PAL_ERROR(3);}
 
-  palette = malloc(dpal_header.color_count * sizeof(uint32_t));
-  if(!palette){PAL_ERROR(4);}
+  paletteStore = malloc(dpal_header.color_count * sizeof(uint32_t));
+  if(!paletteStore){PAL_ERROR(4);}
 
-  if(fread(palette, sizeof(uint32_t), dpal_header.color_count,
+  if(fread(paletteStore, sizeof(uint32_t), dpal_header.color_count,
     palette_file) != dpal_header.color_count){PAL_ERROR(5);}
 
   #undef PAL_ERROR
@@ -250,11 +252,8 @@ extern int memory_load_palette(uint32_t **palette, uint16_t *palColours, char *p
   // Write palette metadata
   //---------------------------------------------------------------------------
 
-  //**palette   = palette;  //This line is causing a crash for some reason
+  *palette   = paletteStore;  //Update later to avoid even using paletteStore
   *palColours = dpal_header.color_count;
-
-  //error_freeze("%d", dpal_header.color_count);
-  //error_freeze("%d", palColours);
 
   // Palette Cleanup
   //---------------------------------------------------------------------------

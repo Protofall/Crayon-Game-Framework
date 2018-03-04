@@ -19,9 +19,7 @@ typedef struct anim{
 typedef struct spritesheet{
   pvr_ptr_t *spritesheet_texture;
   char *spritesheet_name;	//Might be useful for when it comes time to un-mount a romdisk, otherwise I don't think its needed
-  anim_t **spritesheet_anim_array; //Allows me to make an array of anim_t pointers
-  uint8_t spritesheet_anim_count; //The number of animations per spritesheet
-
+  
   uint16_t spritesheet_dims;	//Since a pvr texture must be a square, we don't need height/width
 
   uint16_t spritesheet_width;	//Might be able to replace these 2 with dims, idk yet
@@ -29,6 +27,9 @@ typedef struct spritesheet{
   uint8_t spritesheet_format; //1 for 4BPP, 2 for 8BPP, 3 for RGB565 and 4 for ARGB4444 (0 for unknown)
   uint32_t *spritesheet_palette; //Pointer to heap allocated palette (Its treated like an array of size spritesheet_colour_count)
   uint16_t spritesheet_color_count; //Number of colours in the palette
+
+  anim_t **spritesheet_anim_array; //Allows me to make an array of anim_t pointers
+  uint8_t spritesheet_anim_count; //The number of animations per spritesheet
 } spritesheet_t;
 
 #endif

@@ -89,3 +89,42 @@ extern int graphics_setup_palette(uint8_t palette_number, const struct spriteshe
   }
   return 0;
 }
+
+extern uint8_t temp_graphics_draw_paletted_sprite(const struct spritesheet *ss,
+  float x, float y, uint8_t palette_number){
+
+  const float x0 = x;
+  const float y0 = y;
+  const float x1 = x + ss->spritesheet_dims;
+  const float y1 = y + ss->spritesheet_dims;
+  const float z = 1;
+
+  pvr_sprite_cxt_t context;
+  if(ss->spritesheet_format == 3){  //PAL4BPP format
+    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(palette_number),
+    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
+  }
+  else if(ss->spritesheet_format == 4){ //PAL8BPP format
+    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(palette_number),
+    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
+  }
+  else{
+    return 1;
+    //error_freeze("%d isn't a paletted format\n", ss->spritesheet_format); //Probs best to do a return here and let the main or something else call error_freeze
+  }
+
+  pvr_sprite_hdr_t header;
+  pvr_sprite_compile(&header, &context);
+  pvr_prim(&header, sizeof(header));
+
+  pvr_sprite_txr_t vert = {
+    .flags = PVR_CMD_VERTEX_EOL,
+    .ax = x0, .ay = y0, .az = z, .auv = PVR_PACK_16BIT_UV(0.0, 0.0),
+    .bx = x1, .by = y0, .bz = z, .buv = PVR_PACK_16BIT_UV(1.0, 0.0),
+    .cx = x1, .cy = y1, .cz = z, .cuv = PVR_PACK_16BIT_UV(1.0, 1.0),
+    .dx = x0, .dy = y1
+  };
+  pvr_prim(&vert, sizeof(vert));
+
+  return 0;
+}
