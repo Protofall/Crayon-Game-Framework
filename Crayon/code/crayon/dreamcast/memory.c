@@ -194,18 +194,16 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
 
   int temp = strlen(path);
   if(ss->spritesheet_format == 3 || ss->spritesheet_format == 4){
-    char *palPath = (char*) malloc((temp+5)*sizeof(char));  //Add a check here to see if it failed
-    palPath = path;
-    palPath[temp+0] = '.';
-    palPath[temp+1] = 'p';
-    palPath[temp+2] = 'a';
-    palPath[temp+3] = 'l';
-    palPath[temp+4] = '\0';
-    //error_freeze("%s", palPath);
-    int resultPal = memory_load_palette(&ss->spritesheet_palette, &ss->spritesheet_color_count, path); //The function will modify the palette and colour count
-    //int resultPal = memory_load_palette(&ss->spritesheet_palette, &ss->spritesheet_color_count, "/colourMod/Fade.dtex.pal");
-    //error_freeze("%d", resultPal);
-    free(palPath);
+    char *pathPal;
+    pathPal = (char *) malloc((temp+5)*sizeof(char));  //Add a check here to see if it failed
+    strcpy(pathPal, path);
+    pathPal[temp] = '.';
+    pathPal[temp+1] = 'p';
+    pathPal[temp+2] = 'a';
+    pathPal[temp+3] = 'l';
+    pathPal[temp+4] = '\0';
+    int resultPal = memory_load_palette(&ss->spritesheet_palette, &ss->spritesheet_color_count, pathPal); //The function will modify the palette and colour count
+    free(pathPal);
     if(resultPal != 0){ //Might be able to remove "!= 0" and have same result
       ERROR(6 + resultPal);
     }
@@ -233,7 +231,6 @@ extern int memory_load_palette(uint32_t **palette, uint16_t *palColours, char *p
 
   #define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
   
-  //error_freeze("%d", strcmp(path, "/colourMod/Fade.dtex.pal")); //Returns 0
   FILE *palette_file = fopen(path, "rb");
   if(!palette_file){PAL_ERROR(1);}
 
@@ -253,7 +250,7 @@ extern int memory_load_palette(uint32_t **palette, uint16_t *palColours, char *p
   // Write palette metadata
   //---------------------------------------------------------------------------
 
-  **palette   = palette;  //This line is causing a crash for some reason
+  //**palette   = palette;  //This line is causing a crash for some reason
   *palColours = dpal_header.color_count;
 
   //error_freeze("%d", dpal_header.color_count);
