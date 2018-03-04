@@ -202,12 +202,11 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
     palPath[temp+3] = 'l';
     palPath[temp+4] = '\0';
     //error_freeze("%s", palPath);
-    int resultPal = memory_load_palette(&ss->spritesheet_palette, &ss->spritesheet_color_count, path);
-      //If it fails it needs to return an error code. If succeeds then it must return the palette and colour count (And return 0)
-      //That must mean we need to pass it pointers to the ss struct to save into and make it return an int
-    error_freeze("%s", resultPal);
+    int resultPal = memory_load_palette(&ss->spritesheet_palette, &ss->spritesheet_color_count, path); //The function will modify the palette and colour count
+    //int resultPal = memory_load_palette(&ss->spritesheet_palette, &ss->spritesheet_color_count, "/colourMod/Fade.dtex.pal");
+    //error_freeze("%d", resultPal);
     free(palPath);
-    if(resultPal != 0){ //Might be able to remove != 0 and have same result
+    if(resultPal != 0){ //Might be able to remove "!= 0" and have same result
       ERROR(6 + resultPal);
     }
   }
@@ -234,11 +233,9 @@ extern int memory_load_palette(uint32_t **palette, uint16_t *palColours, char *p
 
   #define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
   
-  //error_freeze("%d", strcmp(path, "/colourMod/Fade.dtex.pal")); //Returns 0   (Its dtex.pal you derp!)
+  //error_freeze("%d", strcmp(path, "/colourMod/Fade.dtex.pal")); //Returns 0
   FILE *palette_file = fopen(path, "rb");
   if(!palette_file){PAL_ERROR(1);}
-
-  //error_freeze("Defiance!");
 
   dpal_header_t dpal_header;
   if(fread(&dpal_header, sizeof(dpal_header), 1, palette_file) != 1){PAL_ERROR(2);}
@@ -256,8 +253,9 @@ extern int memory_load_palette(uint32_t **palette, uint16_t *palColours, char *p
   // Write palette metadata
   //---------------------------------------------------------------------------
 
-  *palette    = palette;
+  **palette   = palette;  //This line is causing a crash for some reason
   *palColours = dpal_header.color_count;
+
   //error_freeze("%d", dpal_header.color_count);
   //error_freeze("%d", palColours);
 
