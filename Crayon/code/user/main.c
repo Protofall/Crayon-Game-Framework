@@ -20,13 +20,12 @@ int main(){
 	mount_romdisk("/cd/colourMod.img", "/colourMod");
 	spritesheet_t Fade, Insta;
 
-	//memory_load_dtex(&Fade, "/colourMod/Fade");
 	int res = memory_load_crayon_packer_sheet(&Fade, "/colourMod/Fade.dtex");	//Need to finish memory_load_packer_sheet function
 
 	//error_freeze("%d", res);
 	//error_freeze("Results: %d, %d, %d", Fade.spritesheet_dims, Fade.spritesheet_format, Fade.spritesheet_color_count);
 
-	memory_load_crayon_packer_sheet(&Insta, "/colourMod/Insta.dtex");
+	memory_load_dtex(&Insta, "/colourMod/Insta");
 
 	fs_romdisk_unmount("/colourMod");
 

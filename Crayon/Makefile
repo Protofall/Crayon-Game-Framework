@@ -21,3 +21,7 @@ help:
 
 check:
 	./make.sh -preprocess -noRM
+
+# I should probs remove buildRun later on
+buildRun: clean all
+	lxdream Crayon.cdi

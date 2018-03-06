@@ -17,14 +17,14 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path);
 //Loads the "crayon_packer_sheet" field directory content
 extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path);
 
-//
-extern int memory_load_palette(uint32_t **palette, uint16_t *palColours, char *path);	//Need to send back a palette struct
+//If given a valid path it will insert the colours and amount of them into the first two arguments
+extern int memory_load_palette(uint32_t **palette, uint16_t *colourCount, char *path);
 
 //Loads a spritesheet
 extern int memory_init_spritesheet(char *path, struct spritesheet *ss);
 
 //Free any resources used by a sprite
-extern int memory_sprite_free(struct spritesheet *ss);
+extern int memory_spritesheet_free(struct spritesheet *ss);
 
 //Mount a romdisk
 extern int mount_romdisk(char *filename, char *mountpoint);

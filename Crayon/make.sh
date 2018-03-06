@@ -12,7 +12,7 @@ helpInfo () {
 	echo 'other:'
 	echo -e ' \t -noRM Prevents the removal of temperary files for viewing'
 	echo -e ' \t -clean to clean up'
-	exit
+	exit 0
 }
 
 packerSheet () {	#$3 is the format
@@ -29,6 +29,7 @@ packerSheet () {	#$3 is the format
 
 	#Make the new and improved txt file based on the dims of the original png's and the packer txt (Also crop name to remove last 2 fields)
 	cat "$2/$name.crayon_temp.txt" | tr -d ',' | while read VAR ; do #I assume the file name has no command in it because its stupid
+		VAR=$(echo "$VAR" | cut -d' ' -f 1,2,3,4,5)	#This removes the 4 last fields that are never used
 		textFileName="$(echo $VAR | cut -d' ' -f 1).crayon_anim"
 		if [[ -f "$textFileName" ]];then #If theres a txt, then append its content to the end
 			VAR+=" $(cat $textFileName)"
@@ -131,13 +132,13 @@ buildDreamcastExecutable () {
 		$(kos-cc $KOS_CFLAGS -c $y.c -o $PWD/$z.o)
 		if [ "$?" == 1 ];then	#Checks to see if an error occurred
 			echo "$z.o failed to build"
-			exit
+			exit 1
 		fi
 	done
 	$(kos-cc $KOS_CFLAGS -c $PWD/code/user/main.c -o $PWD/main.o)	#Compile the main file
 	if [ "$?" == 1 ];then	#Checks to see if an error occurred
 		echo "main.o failed to build"
-		exit
+		exit 1
 	fi
 	#echo "About to do elf"
 
@@ -147,7 +148,7 @@ buildDreamcastExecutable () {
 		$($KOS_CC $KOS_LDFLAGS -o $3.elf $KOS_START $ofiles -lz -lm $KOS_LIBS)	#Make the elf
 		if [ "$?" == 1 ];then	#Checks to see if an error occurred
 			echo "Failed to build the elf"
-			exit
+			exit 1
 		fi
 
 		if [ "$2" == 1 ];then	#dc-sd
@@ -174,7 +175,7 @@ projectRoot="$PWD"	#Make sure bash script is called from the real project root
 
 if [ $# = 0 ];then
 	echo 'No params, try "-h" for help'
-	exit
+	exit 1
 fi
 
 while test ${#} -gt 0
@@ -190,11 +191,11 @@ do
 		rm "$NAME.cdi"	#Removes the cdi
 		rm -R "$cdfs/"*
 		echo "Clean complete"
-		exit
+		exit 0
 	elif [ "$1" = "-dreamcast" ];then
 		if [ "$platform" -ne -1 ];then
 			echo 'Please check your paramters (platform). Try -h parameter for help'
-			exit
+			exit 1
 		fi
 		platform=0
 		shift
@@ -204,7 +205,7 @@ do
 			bootmode=1
 		else
 			echo 'Please check your paramters (bootmode). Try -h parameter for help'
-			exit
+			exit 1
 		fi
 		shift
 	elif [ "$1" = "-noRM" ];then
@@ -214,7 +215,7 @@ do
 		helpInfo
 	else
 		echo 'Please check your paramters Try -h parameter for help'
-		exit
+		exit 1
 	fi
 done
 
@@ -226,7 +227,7 @@ if [ "$platform" = 0 ]; then	#Dreamcast
 	buildDreamcastExecutable "$cdfs" "$bootMode" "$NAME" "$IPBIN"	#It will build cd or sd depending on bootMode
 fi
 
-exit
+exit 0
 
 #crayon fields:
 
