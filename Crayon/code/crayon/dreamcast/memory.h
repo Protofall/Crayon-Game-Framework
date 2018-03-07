@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "texture_structs.h"  //For the spritehseet and anim structs
+#include "texture_structs.h"  //For the spritehseet and animation structs
 
 #include <stdio.h>
 #include <stdlib.h>

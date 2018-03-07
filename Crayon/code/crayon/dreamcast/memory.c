@@ -48,8 +48,13 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doe
   // Write all metadata except palette stuff
   //---------------------------------------------------------------------------
 
-  ss->spritesheet_width       = dtex_header.width;
-  ss->spritesheet_height      = dtex_header.height;
+  if(dtex_header.width > dtex_header.height){
+    ss->spritesheet_dims = dtex_header.width;
+  }
+  else{
+    ss->spritesheet_dims = dtex_header.height;
+  }
+
   ss->spritesheet_texture     = texture;
 
   //This assumes no mip-mapping, no stride, twiddled on, uncompressed and no stride setting (I'm doing this to save on space)
@@ -131,17 +136,17 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doe
 
 //Need to work on this. Also it doesn't set the ss name
 extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
-  //The goal of this it to take in a .dtex from a texturepacker png and store its info in the spritesheet struct and each of its "anims"
-  //in anim structs. The spritesheet stores a list of all anim structs related to it
+  //The goal of this it to take in a .dtex from a texturepacker png and store its info in the spritesheet struct and each of its "animations"
+  //in animation structs. The spritesheet stores a list of all animation structs related to it
 
   int result = 0;
   pvr_ptr_t texture = NULL;
 
   #define ERROR(n) {result = (n); goto cleanup;}
 
+  FILE *sheet_file = NULL;
   FILE *texture_file = fopen(path, "rb");
   if(!texture_file){ERROR(1);}
-  FILE *sheet_file = NULL;
 
   // Load texture
   //---------------------------------------------------------------------------
@@ -197,7 +202,7 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
     pathPal[temp+4] = '\0';
     int resultPal = memory_load_palette(&ss->spritesheet_palette, &ss->spritesheet_color_count, pathPal); //The function will modify the palette and colour count
     free(pathPal);
-    if(resultPal){ //Same as resultPal != 0
+    if(resultPal){
       ERROR(6 + resultPal);
     }
   }
@@ -212,36 +217,24 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
   pathTxt[temp-2] = 't';
   pathTxt[temp-1] = '\0';
 
-  //Change the path to point at the txt file
-  //path[temp-1] = '\0';
-  //path[temp-2] = 't';
-  //path[temp-3] = 'x';
-  //path[temp-4] = 't';
-
-  //Load the txt and use that data to make the anim structs
-
   sheet_file = fopen(pathTxt, "rb");
   free(pathTxt);
   if(!sheet_file){ERROR(12);}
-  fscanf(sheet_file, "%d\n", &ss->spritesheet_anim_count);  //Different types, is this a problem?
+  fscanf(sheet_file, "%d\n", &ss->spritesheet_animation_count);
 
-  ss->spritesheet_anim_array = (anim_t *) malloc(sizeof(anim_t) * ss->spritesheet_anim_count);
-
-  //error_freeze("%d", ss->spritesheet_anim_count);
-
+  ss->spritesheet_animation_array = (animation_t *) malloc(sizeof(animation_t) * ss->spritesheet_animation_count);
+  
   int i;
-  for(i = 0; i < ss->spritesheet_anim_count; i++){
-    int scanned = fscanf(sheet_file, "%[^,], %hu, %hu, %hu, %hu, %hu, %hu, %hhu\n",
-                                                            ss->spritesheet_anim_array[i].anim_name,
-                                                            &ss->spritesheet_anim_array[i].anim_top_left_x_coord,
-                                                            &ss->spritesheet_anim_array[i].anim_top_left_y_coord,
-                                                            &ss->spritesheet_anim_array[i].anim_sheet_width,
-                                                            &ss->spritesheet_anim_array[i].anim_sheet_height,
-                                                            &ss->spritesheet_anim_array[i].anim_frame_width,
-                                                            &ss->spritesheet_anim_array[i].anim_frame_height,
-                                                            &ss->spritesheet_anim_array[i].anim_frames);
-    error_freeze("Oddness: %s", ss->spritesheet_anim_array[0].anim_name); //Seems to be storing everything into anim_name
-    //error_freeze("test. %d", scanned);
+  for(i = 0; i < ss->spritesheet_animation_count; i++){
+    int scanned = fscanf(sheet_file, "%s %hu %hu %hu %hu %hu %hu %hhu\n",
+                                                  ss->spritesheet_animation_array[i].animation_name,  //Fix anim_name in texture_structs later
+                                                  &ss->spritesheet_animation_array[i].animation_x,
+                                                  &ss->spritesheet_animation_array[i].animation_y,
+                                                  &ss->spritesheet_animation_array[i].animation_sheet_width,
+                                                  &ss->spritesheet_animation_array[i].animation_sheet_height,
+                                                  &ss->spritesheet_animation_array[i].animation_frame_width,
+                                                  &ss->spritesheet_animation_array[i].animation_frame_height,
+                                                  &ss->spritesheet_animation_array[i].animation_frames);
     if(scanned != 8){ERROR(13)}
   }
 
@@ -298,7 +291,7 @@ extern int memory_init_spritesheet(char *path, struct spritesheet *ss){
   return 0;
 }
 
-//Need to adapt this to take in an ss list object instead so we don't loose the later half of the list
+//This function needs to be re-made
 extern int memory_spritesheet_free(struct spritesheet *ss){
   if(ss){
     if(ss->spritesheet_format == 3 || ss->spritesheet_format == 4){ //Paletted
@@ -306,10 +299,10 @@ extern int memory_spritesheet_free(struct spritesheet *ss){
     }
     pvr_mem_free(ss->spritesheet_texture);
 
-    //Free all anim structs too
+    //Free all animation structs too
 
     //free(ss); //Need to make sure it's neighbours link to each other before doing this
-                //Also free all anims before this
+                //Also free all animations before this
     return 0;
   }
   return 1;
