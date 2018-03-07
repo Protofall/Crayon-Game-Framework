@@ -20,8 +20,8 @@ int main(){
 	mount_romdisk("/cd/colourMod.img", "/colourMod");
 	spritesheet_t Fade, Insta;
 
-	memory_load_crayon_packer_sheet(&Fade, "/colourMod/Fade.dtex");	//Need to finish memory_load_packer_sheet function
-	memory_load_dtex(&Insta, "/colourMod/Insta");
+	memory_load_crayon_packer_sheet(&Fade, "/colourMod/Fade.dtex");
+	memory_load_dtex(&Insta, "/colourMod/Enlarge");
 
 	fs_romdisk_unmount("/colourMod");
 
@@ -57,10 +57,11 @@ int main(){
     		graphics_frame_coordinates(&Fade.spritesheet_animation_array[2], &frame_x, &frame_y, frame);	//Generates the new frame coordinates
     	}
 
-		graphics_draw_paletted_sprite(&Fade, &Fade.spritesheet_animation_array[0], 128, 176, 1, 0, 0, 0);	//The new draw-er for anims
-		graphics_draw_paletted_sprite(&Fade, &Fade.spritesheet_animation_array[2], 295, 215, 1, 0, frame_x, frame_y);	//The "square wheel"
-		
-		old_graphics_draw_paletted_sprite(&Insta, 384, 176, 1);	//The old drawer that only draws single sprites
+		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[0], 128, 176, 1, 0, 0, 0);	//The new draw-er for anims
+		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[2], 295, 215, 1, 0, frame_x, frame_y);	//The "square wheel"
+		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[3], 192, 360, 1, 0, Fade.spritesheet_animation_array[3].animation_x, Fade.spritesheet_animation_array[3].animation_y);	//The "bottom message"
+		old_modded_graphics_draw_sprite(&Insta, 384, 176, 1);	//The old drawer that only draws single sprites at 128 by 128
+
 		pvr_list_finish();
 
 		pvr_scene_finish();

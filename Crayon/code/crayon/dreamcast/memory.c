@@ -117,9 +117,6 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doe
     ss->spritesheet_palette = NULL; //color_count doesn't need to be defined...nor does palette really...
   }
 
-  //Insert the path + ".txt" code here. Need to figure out how I'll build that .txt first
-  //ASince every spritesheet has a txt file to go with it, I'll assume that it must be here hence its not optional
-
   #undef ERROR
 
   // Cleanup
