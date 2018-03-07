@@ -57,8 +57,8 @@ int main(){
     		graphics_frame_coordinates(&Fade.spritesheet_animation_array[2], &frame_x, &frame_y, frame);	//Generates the new frame coordinates
     	}
 
-		graphics_draw_paletted_sprite(&Fade, &Fade.spritesheet_animation_array[0], 128, 176, 0, 0, 0);	//The new draw-er for anims
-		graphics_draw_paletted_sprite(&Fade, &Fade.spritesheet_animation_array[2], 295, 215, 0, frame_x, frame_y);	//The "square wheel"
+		graphics_draw_paletted_sprite(&Fade, &Fade.spritesheet_animation_array[0], 128, 176, 1, 0, 0, 0);	//The new draw-er for anims
+		graphics_draw_paletted_sprite(&Fade, &Fade.spritesheet_animation_array[2], 295, 215, 1, 0, frame_x, frame_y);	//The "square wheel"
 		
 		old_graphics_draw_paletted_sprite(&Insta, 384, 176, 1);	//The old drawer that only draws single sprites
 		pvr_list_finish();

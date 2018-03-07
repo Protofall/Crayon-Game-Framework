@@ -280,17 +280,6 @@ extern int memory_load_palette(uint32_t **palette, uint16_t *colourCount, char *
   return result;
 }
 
-//Path would be the path to the dtex file, except without the .dtex attached. An example would be "/levels/Fade"
-//Might remove this later since its kinda pointless
-extern int memory_init_spritesheet(char *path, struct spritesheet *ss){
-  int result = memory_load_dtex(ss, path);
-  if(result){
-    //error_freeze("Cannot load Fade sprite! Error %d\n", result);
-    return 1;
-  }
-  return 0;
-}
-
 //This function needs to be re-made
 extern int memory_spritesheet_free(struct spritesheet *ss){
   if(ss){
