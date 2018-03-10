@@ -17,7 +17,7 @@ int main(){
 
 	pvr_init_defaults(); // The defaults only do OP and TR but not PT and the modifier OP and TR so thats why it wouldn't work before
 
-	mount_romdisk("/cd/colourMod.img", "/colourMod");
+	memory_mount_romdisk("/cd/colourMod.img", "/colourMod");
 	spritesheet_t Fade, Insta;
 
 	memory_load_crayon_packer_sheet(&Fade, "/colourMod/Fade.dtex");
@@ -27,8 +27,11 @@ int main(){
 
 	int done = 0;
 	uint8_t frame = 0;
+	uint8_t frame2 = 0;
 	uint16_t frame_x;
 	uint16_t frame_y;
+	uint16_t frame_x2;
+	uint16_t frame_y2;
 	while(!done){
 	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
@@ -49,6 +52,7 @@ int main(){
 		pvr_stats_t stats;  //This can be defined outside the loop if you want
     	pvr_get_stats(&stats);
     	int curframe = stats.frame_count%30;  //256 frames of transition (This is kinda like modulo, 0xff means take the bottom 8 bits)
+    	int curframe2 = stats.frame_count%10;  //256 frames of transition (This is kinda like modulo, 0xff means take the bottom 8 bits)
     	if(curframe == 0){
     		frame++;
     		if(frame >= Fade.spritesheet_animation_array[2].animation_frames){
@@ -56,10 +60,18 @@ int main(){
     		}
     		graphics_frame_coordinates(&Fade.spritesheet_animation_array[2], &frame_x, &frame_y, frame);	//Generates the new frame coordinates
     	}
+    	if(curframe2 == 0){
+    		frame2++;
+    		if(frame2 >= Fade.spritesheet_animation_array[4].animation_frames){
+    			frame2 = 0;
+    		}
+    		graphics_frame_coordinates(&Fade.spritesheet_animation_array[4], &frame_x2, &frame_y2, frame2);	//Generates the new frame coordinates
+    	}
 
 		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[0], 128, 176, 1, 0, 0, 0);	//The new draw-er for anims
-		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[2], 295, 215, 1, 0, frame_x, frame_y);	//The "square wheel"
-		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[3], 192, 360, 1, 0, Fade.spritesheet_animation_array[3].animation_x, Fade.spritesheet_animation_array[3].animation_y);	//The "bottom message"
+		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[2], 295, 215, 1, frame_x, frame_y, 0);	//The "square wheel"
+		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[4], 312, 320, 1, frame_x2, frame_y2, 0);	//The pink coin
+		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[3], 192, 360, 1, Fade.spritesheet_animation_array[3].animation_x, Fade.spritesheet_animation_array[3].animation_y, 0);	//The "bottom message"
 		old_modded_graphics_draw_sprite(&Insta, 384, 176, 1);	//The old drawer that only draws single sprites at 128 by 128
 
 		pvr_list_finish();

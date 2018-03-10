@@ -76,10 +76,10 @@ extern void graphics_frame_coordinates(const struct animation *anim, uint16_t *f
 }
 
 extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
-  const struct animation *anim, float draw_x, float draw_y, float draw_z, uint8_t paletteNumber,
-  uint16_t frame_x, uint16_t frame_y){
+  const struct animation *anim, float draw_x, float draw_y, float draw_z,
+  uint16_t frame_x, uint16_t frame_y, uint8_t paletteNumber){
 
-  const float x0 = draw_x;
+  const float x0 = draw_x;  //Do these really need to be floats?
   const float y0 = draw_y;
   const float x1 = draw_x + anim->animation_frame_width;
   const float y1 = draw_y + anim->animation_frame_height;

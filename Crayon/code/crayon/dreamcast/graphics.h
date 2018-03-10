@@ -19,6 +19,6 @@ extern void graphics_frame_coordinates(const struct animation *anim, uint16_t *f
 //Que a texture to be rendered (If RGB565 or ARGB4444 then paletteNumber is never read)
 extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
   const struct animation *anim, float draw_x, float draw_y, float draw_z,
-  uint8_t paletteNumber, uint16_t frame_x, uint16_t frame_y);
+  uint16_t frame_x, uint16_t frame_y, uint8_t paletteNumber);
 
 #endif

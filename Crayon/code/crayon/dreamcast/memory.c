@@ -191,6 +191,7 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
   int temp = strlen(path);
   if(ss->spritesheet_format == 3 || ss->spritesheet_format == 4){
     char *pathPal = (char *) malloc((temp+5)*sizeof(char));  //Add a check here to see if it failed
+    if(!pathPal){ERROR(7);}
     strcpy(pathPal, path);
     pathPal[temp] = '.';
     pathPal[temp+1] = 'p';
@@ -199,15 +200,14 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
     pathPal[temp+4] = '\0';
     int resultPal = memory_load_palette(&ss->spritesheet_palette, &ss->spritesheet_color_count, pathPal); //The function will modify the palette and colour count
     free(pathPal);
-    if(resultPal){
-      ERROR(6 + resultPal);
-    }
+    if(resultPal){ERROR(7 + resultPal);}
   }
   else{
     ss->spritesheet_palette = NULL; //color_count doesn't need to be defined...nor does palette really...
   }
 
   char *pathTxt = (char *) malloc((temp)*sizeof(char));  //Add a check here to see if it failed
+  if(!pathTxt){ERROR(13);}
   strncpy(pathTxt, path, temp-4);
   pathTxt[temp-4] = 't';
   pathTxt[temp-3] = 'x';
@@ -216,10 +216,11 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
 
   sheet_file = fopen(pathTxt, "rb");
   free(pathTxt);
-  if(!sheet_file){ERROR(12);}
+  if(!sheet_file){ERROR(14);}
   fscanf(sheet_file, "%d\n", &ss->spritesheet_animation_count);
 
   ss->spritesheet_animation_array = (animation_t *) malloc(sizeof(animation_t) * ss->spritesheet_animation_count);
+  if(!ss->spritesheet_animation_array){ERROR(15);}
   
   int i;
   for(i = 0; i < ss->spritesheet_animation_count; i++){
@@ -232,7 +233,10 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
                                                   &ss->spritesheet_animation_array[i].animation_frame_width,
                                                   &ss->spritesheet_animation_array[i].animation_frame_height,
                                                   &ss->spritesheet_animation_array[i].animation_frames);
-    if(scanned != 8){ERROR(13)}
+    if(scanned != 8){
+      free(ss->spritesheet_animation_array);
+      ERROR(16);
+    }
   }
 
   #undef ERROR
@@ -277,24 +281,24 @@ extern int memory_load_palette(uint32_t **palette, uint16_t *colourCount, char *
   return result;
 }
 
-//This function needs to be re-made
-extern int memory_spritesheet_free(struct spritesheet *ss){
+//Free Texture, anim array and palette (Maybe the anim/ss names later on?)
+extern int memory_free_crayon_packer_sheet(struct spritesheet *ss){
   if(ss){
     if(ss->spritesheet_format == 3 || ss->spritesheet_format == 4){ //Paletted
       free(ss->spritesheet_palette);
     }
     pvr_mem_free(ss->spritesheet_texture);
+    free(ss->spritesheet_animation_array);
 
-    //Free all animation structs too
-
+    //We don't free the ss because its on the stack. Right? If it were on the heap then we would free it
     //free(ss); //Need to make sure it's neighbours link to each other before doing this
-                //Also free all animations before this
+
     return 0;
   }
   return 1;
 }
 
-extern int mount_romdisk(char *filename, char *mountpoint){
+extern int memory_mount_romdisk(char *filename, char *mountpoint){
   void *buffer;
   ssize_t size = fs_load(filename, &buffer); // Loads the file "filename" into RAM
 
@@ -305,7 +309,7 @@ extern int mount_romdisk(char *filename, char *mountpoint){
   return 1;
 }
 
-extern int mount_romdisk_gz(char *filename, char *mountpoint){
+extern int memory_mount_romdisk_gz(char *filename, char *mountpoint){
   void *buffer;
   int length = zlib_getlength(filename);
 
@@ -323,7 +327,7 @@ extern int mount_romdisk_gz(char *filename, char *mountpoint){
   }
 
   // Allocate memory, read file
-  buffer = malloc(length);
+  buffer = malloc(length);  //Might need an (if(!buffer) check here)
   gzread(file, buffer, length);
   gzclose(file);
 

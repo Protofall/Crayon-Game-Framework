@@ -20,13 +20,13 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path);
 //If given a valid path it will insert the colours and amount of them into the first two arguments
 extern int memory_load_palette(uint32_t **palette, uint16_t *colourCount, char *path);
 
-//Free any resources used by a sprite
-extern int memory_spritesheet_free(struct spritesheet *ss);
+//Free up all memory from a spritesheet struct
+extern int memory_free_crayon_packer_sheet(struct spritesheet *ss);
 
 //Mount a romdisk
-extern int mount_romdisk(char *filename, char *mountpoint);
+extern int memory_mount_romdisk(char *filename, char *mountpoint);
 
 //Mount a gz compressed romdisk
-extern int mount_romdisk_gz(char *filename, char *mountpoint);
+extern int memory_mount_romdisk_gz(char *filename, char *mountpoint);
 
 #endif
