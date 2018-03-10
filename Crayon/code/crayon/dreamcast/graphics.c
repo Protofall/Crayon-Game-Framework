@@ -1,47 +1,5 @@
 #include "graphics.h"
 
-extern uint8_t old_modded_graphics_draw_sprite(const struct spritesheet *ss,
-  float x, float y, uint8_t palette_number){
-
-  const float x0 = x;
-  const float y0 = y;
-  const float x1 = x + 128;
-  const float y1 = y + 128;
-  const float z = 1;
-
-  pvr_sprite_cxt_t context;
-  if(ss->spritesheet_format == 3){  //PAL4BPP format
-    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(palette_number),
-    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
-  }
-  else if(ss->spritesheet_format == 4){ //PAL8BPP format
-    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(palette_number),
-    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
-  }
-  else if(ss->spritesheet_format == 1 || ss->spritesheet_format == 2){  //RGB565 and RGB4444
-    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, (ss->spritesheet_format) << 27,
-    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
-  }
-  else{ //Unknown format
-    return 1;
-  }
-
-  pvr_sprite_hdr_t header;
-  pvr_sprite_compile(&header, &context);
-  pvr_prim(&header, sizeof(header));
-
-  pvr_sprite_txr_t vert = {
-    .flags = PVR_CMD_VERTEX_EOL,
-    .ax = x0, .ay = y0, .az = z, .auv = PVR_PACK_16BIT_UV(0.0, 0.0),
-    .bx = x1, .by = y0, .bz = z, .buv = PVR_PACK_16BIT_UV(1.0, 0.0),
-    .cx = x1, .cy = y1, .cz = z, .cuv = PVR_PACK_16BIT_UV(1.0, 1.0),
-    .dx = x0, .dy = y1
-  };
-  pvr_prim(&vert, sizeof(vert));
-
-  return 0;
-}
-
 //There are 4 palettes for 8BPP and 64 palettes for 4BPP. palette_number is the id
 extern int graphics_setup_palette(uint8_t palette_number, const struct spritesheet *ss){
   int entries;
@@ -77,12 +35,13 @@ extern void graphics_frame_coordinates(const struct animation *anim, uint16_t *f
 
 extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
   const struct animation *anim, float draw_x, float draw_y, float draw_z,
-  uint16_t frame_x, uint16_t frame_y, uint8_t paletteNumber){
+  float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
+  uint8_t paletteNumber){
 
   const float x0 = draw_x;  //Do these really need to be floats?
   const float y0 = draw_y;
-  const float x1 = draw_x + anim->animation_frame_width;
-  const float y1 = draw_y + anim->animation_frame_height;
+  const float x1 = draw_x + (anim->animation_frame_width) * scale_x;
+  const float y1 = draw_y + (anim->animation_frame_height) * scale_y;
   const float z = draw_z;
 
   const float u0 = frame_x / (float)ss->spritesheet_dims;
