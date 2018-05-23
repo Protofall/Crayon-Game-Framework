@@ -1,7 +1,7 @@
 #!/bin/bash
 
 helpInfo () {
-	echo 'Usage: ./make-assist [build mode] [platform] [boot mode] [other]'
+	echo 'Usage: ./make.sh [build mode] [platform] [boot mode] [other]'
 	echo 'build mode:'
 	echo -e ' \t -preprocess to build preprocessed stuff'
 	echo 'platform:'

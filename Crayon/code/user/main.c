@@ -80,7 +80,10 @@ int main(){
 		pvr_scene_finish();
    	}
 
-	error_freeze("Goodbye world!\n");
+   	int retVal2 = 0;
+   	retVal2 += memory_free_crayon_packer_sheet(&Fade);
+   	retVal2 += memory_free_crayon_packer_sheet(&Enlarge);
+	error_freeze("Free-ing result %d!\n", retVal2);
 
     return 0;
 }

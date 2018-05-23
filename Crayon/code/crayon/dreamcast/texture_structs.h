@@ -5,7 +5,7 @@
 #include <stdint.h> //For the uintX_t types
 
 typedef struct animation{
-  char animation_name[32]; //Fix this later so its not hard coded
+  char *animation_name; //Fix this later so its not hard coded and instead is a dynamic pointer
   uint16_t animation_x;	//Since the animations are designed to be in tiles
   uint16_t animation_y;	//We can select an frame based off of the first frame's coords
   uint16_t animation_sheet_width;	//Width of the animation sheet

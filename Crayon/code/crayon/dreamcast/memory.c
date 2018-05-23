@@ -224,6 +224,16 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
   
   int i;
   for(i = 0; i < ss->spritesheet_animation_count; i++){
+    //Check the length of the name
+    char anim_name_part = '0';
+    int count = -1;
+    while(anim_name_part != ' '){
+      anim_name_part = getc(sheet_file);
+      count++;
+    }
+    ss->spritesheet_animation_array[i].animation_name = (char *) malloc((count + 1) * sizeof(char));
+
+    fseek(sheet_file, -count - 1, SEEK_CUR);  //Go back so we can store the name
     int scanned = fscanf(sheet_file, "%s %hu %hu %hu %hu %hu %hu %hhu\n",
                                                   ss->spritesheet_animation_array[i].animation_name,  //Fix anim_name in texture_structs later
                                                   &ss->spritesheet_animation_array[i].animation_x,
@@ -281,17 +291,23 @@ extern int memory_load_palette(uint32_t **palette, uint16_t *colourCount, char *
   return result;
 }
 
-//Free Texture, anim array and palette (Maybe the anim/ss names later on?)
+//Free Texture, anim array and palette (Maybe the anim/ss names later on?). Doesn't free the spritesheet struct itself
 extern int memory_free_crayon_packer_sheet(struct spritesheet *ss){
   if(ss){
     if(ss->spritesheet_format == 3 || ss->spritesheet_format == 4){ //Paletted
       free(ss->spritesheet_palette);
     }
     pvr_mem_free(ss->spritesheet_texture);
-    free(ss->spritesheet_animation_array);
 
-    //We don't free the ss because its on the stack. Right? If it were on the heap then we would free it
-    //free(ss); //Need to make sure it's neighbours link to each other before doing this
+    int i;
+    for(i = 0; i < ss->spritesheet_animation_count; i++){
+      free(ss->spritesheet_animation_array[i].animation_name);
+    }
+    free(ss->spritesheet_animation_array);  //Is this really freeing all animations sheets? Maybe so
+    //Alocated with ss->spritesheet_animation_array = (animation_t *) malloc(sizeof(animation_t) * ss->spritesheet_animation_count);
+
+    //We don't free the ss because it could be on the stack and we can't confirm if a pointer points to the heap or stack.
+    //If it were on the heap then we would free it
 
     return 0;
   }

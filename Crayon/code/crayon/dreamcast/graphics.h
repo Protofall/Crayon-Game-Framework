@@ -5,10 +5,6 @@
 
 //#include <dc/pvr.h> //Not sure if this is needed since texture_struct.h includes it
 
-//Que a paletted texture to be rendered (OLD)
-extern uint8_t old_modded_graphics_draw_sprite(const struct spritesheet *ss,
-  float x, float y, uint8_t palette_number);
-
 //Sets a palette for a spritesheet
 extern int graphics_setup_palette(uint8_t palette_number, const struct spritesheet *ss);
 
