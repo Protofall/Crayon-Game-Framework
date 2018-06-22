@@ -1,5 +1,5 @@
-#ifndef DEBUG_H
-#define DEBUG_H
+#ifndef DEBUG_CRAYON_H
+#define DEBUG_CRAYON_H
 
 #include <stdarg.h>
 

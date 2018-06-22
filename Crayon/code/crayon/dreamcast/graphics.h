@@ -1,5 +1,5 @@
-#ifndef DRAW_H
-#define DRAW_H
+#ifndef GRAPHICS_CRAYON_H
+#define GRAPHICS_CRAYON_H
 
 #include "texture_structs.h"  //For the spritehseet and anim structs
 
@@ -17,5 +17,10 @@ extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
   const struct animation *anim, float draw_x, float draw_y, float draw_z,
   float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
   uint8_t paletteNumber);
+
+//Testing drawing multiple of same thing (WIP)
+extern uint8_t graphics_draw_sprite_array(const struct spritesheet *ss,
+  const struct animation *anim, float draw_z, float scale_x, float scale_y,
+  uint16_t frame_x, uint16_t frame_y, uint8_t paletteNumber);
 
 #endif

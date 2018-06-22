@@ -1,5 +1,5 @@
-#ifndef TEXTURE_STRUCTS_H
-#define TEXTURE_STRUCTS_H
+#ifndef TEXTURE_STRUCTS_CRAYON_H
+#define TEXTURE_STRUCTS_CRAYON_H
 
 #include <dc/pvr.h>
 #include <stdint.h> //For the uintX_t types

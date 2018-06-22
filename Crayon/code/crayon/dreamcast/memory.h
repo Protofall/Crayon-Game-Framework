@@ -1,5 +1,5 @@
-#ifndef MEMORY_H
-#define MEMORY_H
+#ifndef MEMORY_CRAYON_H
+#define MEMORY_CRAYON_H
 
 #include "texture_structs.h"  //For the spritehseet and animation structs
 
