@@ -85,25 +85,8 @@ extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
 }
 
 extern uint8_t graphics_draw_sprite_array(const struct spritesheet *ss,
-  const struct animation *anim, float draw_z, float scale_x, float scale_y,
-  uint16_t frame_x, uint16_t frame_y, uint8_t paletteNumber){
-
-  int num_sprites = 3;
-  int draw_coords[12];	//3 sprites, format x0, y0, x1, y1
-  draw_coords[0] = 100;
-  draw_coords[1] = 100;
-  draw_coords[2] = draw_coords[0] + (anim->animation_frame_width) * scale_x;
-  draw_coords[3] = draw_coords[1] + (anim->animation_frame_height) * scale_y;
-
-  draw_coords[4] = 240;
-  draw_coords[5] = 10;
-  draw_coords[6] = draw_coords[4] + (anim->animation_frame_width) * scale_x;
-  draw_coords[7] = draw_coords[5] + (anim->animation_frame_height) * scale_y;
-
-  draw_coords[8] = 312;
-  draw_coords[9] = 320;
-  draw_coords[10] = draw_coords[8] + (anim->animation_frame_width) * scale_x;
-  draw_coords[11] = draw_coords[9] + (anim->animation_frame_height) * scale_y;
+  const struct animation *anim, int *draw_coords, int coord_entries, float draw_z,
+  float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y, uint8_t paletteNumber){
 
   const float z = 10;
 
@@ -145,7 +128,7 @@ extern uint8_t graphics_draw_sprite_array(const struct spritesheet *ss,
 
   //draws all sprites in the array at their coords
   int i;
-  for(i = 0; i < num_sprites * 4; i = i + 4){
+  for(i = 0; i < coord_entries; i = i + 4){
 	  vert.ax = draw_coords[i];
 	  vert.ay = draw_coords[i + 1];
 	  vert.bx = draw_coords[i + 2];
