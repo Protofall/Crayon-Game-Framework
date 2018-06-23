@@ -177,3 +177,11 @@ Note to self: Think about palette structs instead of locking one palette to a te
 Force vid_set_mode(DM_640x480_VGA, PM_RGB565); for VGA mode...I think RGB888 might not be compatible with the pvr system (Only RGB565)
 
 Sprite mode might only be able to reliably do a maximum dimension of 256 by 256 textures. Any larger could cause "Jitter" effects
+
+
+
+
+
+
+
+`identify -format %k "filename" && echo` useful for getting number of colours in png (includes alphas as seperate colours)

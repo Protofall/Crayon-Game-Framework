@@ -22,6 +22,19 @@ packerSheet () {	#$3 is the format
 	pngs=$(echo $PWD/*.png)
 	TexturePacker --sheet "$2/$name.crayon_temp.png" --format gideros --data "$2/$name.crayon_temp.txt" --size-constraints POT --max-width 1024 --max-height 1024 --pack-mode Best --disable-rotation --trim-mode None --trim-sprite-names --algorithm Basic --png-opt-level 0 --extrude 0 --disable-auto-alias $pngs	#I need pngs to not be in quotes for it to work here
 
+	#Texconv needs x by x images, so if width != height, we must update them to the larger one
+	dims=$(identify "$2/$name.crayon_temp.png" | cut -d' ' -f3)
+	dimW=$(echo $dims | cut -d'x' -f1)
+	dimH=$(echo $dims | cut -d'x' -f2)
+	if (( dimW != dimH ));then
+		if (( dimH < dimW ));then
+			convert "$2/$name.crayon_temp.png" -background none -extent "x"$dimW "$2/$name.crayon_temp.png"
+		else
+			convert "$2/$name.crayon_temp.png" -background none -extent "$dimsH" "$2/$name.crayon_temp.png"	#Note, this line has never been tested since I haven't had a case with a file thats too tall
+		fi
+	fi
+	identify "$2/$name.crayon_temp.png"
+
 	texconv -i "$2/$name.crayon_temp.png" -o "$2/$name.dtex" -f "$3"
 
 	pngCount=$(wc -l "$2/$name.crayon_temp.txt" | cut -d' ' -f 1)

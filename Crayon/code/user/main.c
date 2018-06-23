@@ -8,6 +8,50 @@
 #include <dc/maple.h>
 #include <dc/maple/controller.h> //For the "Press start to exit" thing
 
+uint8_t easy_draw(struct spritesheet *ss, float draw_x, float draw_y, float draw_z, uint8_t paletteNumber){
+  const float x0 = draw_x;
+  const float y0 = draw_y;
+  const float x1 = ss->spritesheet_dims;
+  const float y1 = x1;
+  const float z = draw_z;
+  const float u0 = 0;
+  const float v0 = 0;
+  const float u1 = 1;
+  const float v1 = 1;
+
+  pvr_sprite_cxt_t context;
+  if(ss->spritesheet_format == 4){  //PAL8BPP format
+    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
+    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
+  }
+  else if(ss->spritesheet_format == 3){ //PAL4BPP format
+    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
+    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
+  }
+  else if(ss->spritesheet_format == 1 || ss->spritesheet_format == 2){  //RGB565 and RGB4444
+    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, (ss->spritesheet_format) << 27,
+    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
+  }
+  else{ //Unknown format
+    return 1;
+  }
+
+  pvr_sprite_hdr_t header;
+  pvr_sprite_compile(&header, &context);
+  pvr_prim(&header, sizeof(header));
+
+  pvr_sprite_txr_t vert = {
+    .flags = PVR_CMD_VERTEX_EOL,
+    .ax = x0, .ay = y0, .az = z, .auv = PVR_PACK_16BIT_UV(u0, v0),
+    .bx = x1, .by = y0, .bz = z, .buv = PVR_PACK_16BIT_UV(u1, v0),
+    .cx = x1, .cy = y1, .cz = z, .cuv = PVR_PACK_16BIT_UV(u1, v1),
+    .dx = x0, .dy = y1
+  };
+  pvr_prim(&vert, sizeof(vert));
+
+  return 0;
+}
+
 int main(){
 	vid_set_mode(DM_640x480_VGA, PM_RGB565);
 	//lxdream terminal says:
@@ -18,10 +62,12 @@ int main(){
 	pvr_init_defaults(); // The defaults only do OP and TR but not PT and the modifier OP and TR so thats why it wouldn't work before
 
 	memory_mount_romdisk("/cd/colourMod.img", "/colourMod");
-	spritesheet_t Fade, Enlarge;
+	spritesheet_t Fade, Enlarge, Blanka;
 
 	memory_load_crayon_packer_sheet(&Fade, "/colourMod/Fade.dtex");
 	memory_load_crayon_packer_sheet(&Enlarge, "/colourMod/Enlarge.dtex");
+	memory_load_crayon_packer_sheet(&Blanka, "/colourMod/SF2.dtex");
+	//memory_load_crayon_packer_sheet(&Blanka, "/colourMod/SF3.dtex");
 
 	fs_romdisk_unmount("/colourMod");
 
@@ -32,6 +78,27 @@ int main(){
 	uint16_t frame_y;
 	uint16_t frame_x2;
 	uint16_t frame_y2;
+	uint16_t blanka_frame_x;
+	uint16_t blanka_frame_y;
+
+	//The coin positions
+	int coord_entries = 12;	//Sprites = coord_entries / 4
+	int draw_coords[12];	//3 sprites, format x0, y0, x1, y1
+	draw_coords[0] = 100;
+	draw_coords[1] = 100;
+	draw_coords[2] = draw_coords[0] + (Fade.spritesheet_animation_array[4].animation_frame_width);
+	draw_coords[3] = draw_coords[1] + (Fade.spritesheet_animation_array[4].animation_frame_height);
+
+	draw_coords[4] = 240;
+	draw_coords[5] = 10;
+	draw_coords[6] = draw_coords[4] + (Fade.spritesheet_animation_array[4].animation_frame_width);
+	draw_coords[7] = draw_coords[5] + (Fade.spritesheet_animation_array[4].animation_frame_height);
+
+	draw_coords[8] = 312;
+	draw_coords[9] = 320;
+	draw_coords[10] = draw_coords[8] + (Fade.spritesheet_animation_array[4].animation_frame_width);
+	draw_coords[11] = draw_coords[9] + (Fade.spritesheet_animation_array[4].animation_frame_height);
+
 	while(!done){
 	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
@@ -46,8 +113,11 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
-		graphics_setup_palette(0, &Fade);
-		graphics_setup_palette(1, &Enlarge);
+		//graphics_setup_palette(0, &Fade);
+		//graphics_setup_palette(&Enlarge.spritesheet_color_count, &Enlarge);	//Why am I calling this for enlarge?
+		//graphics_setup_palette(Blanka.spritesheet_color_count, &Blanka);
+		//graphics_setup_palette(255, &Blanka);	//My draw function doesn't use the right palette data...
+		graphics_setup_palette(0, &Blanka);
 
 		pvr_stats_t stats;  //This can be defined outside the loop if you want
     	pvr_get_stats(&stats);
@@ -59,6 +129,7 @@ int main(){
     			frame = 0;
     		}
     		graphics_frame_coordinates(&Fade.spritesheet_animation_array[2], &frame_x, &frame_y, frame);	//Generates the new frame coordinates
+    		graphics_frame_coordinates(&Blanka.spritesheet_animation_array[0], &blanka_frame_x, &blanka_frame_y, frame);
     	}
     	if(curframe2 == 0){
     		frame2++;
@@ -68,12 +139,16 @@ int main(){
     		graphics_frame_coordinates(&Fade.spritesheet_animation_array[4], &frame_x2, &frame_y2, frame2);	//Generates the new frame coordinates
     	}
 
-		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[0], 128, 176, 1, 1, 1, 0, 0, 0);	//The new draw-er for anims
-		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[2], 295, 215, 1, 1, 1, frame_x, frame_y, 0);	//The "square wheel"
-		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[4], 312, 320, 1, 1, 1, frame_x2, frame_y2, 0);	//The pink coin
-		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[3], 192, 360, 1, 1, 1, Fade.spritesheet_animation_array[3].animation_x, Fade.spritesheet_animation_array[3].animation_y, 0);	//The "bottom message"
+		//graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[0], 128, 176, 1, 1, 1, 0, 0, 0);	//The new draw-er for anims
+		//graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[2], 295, 215, 1, 1, 1, frame_x, frame_y, 0);	//The "square wheel"
+		//graphics_draw_sprite(&Blanka, &Blanka.spritesheet_animation_array[0], 0, 0, 1, 1, 1, blanka_frame_x, blanka_frame_y, 0);	//Draw Blanka idle (Missing frames and not using palette correctly)
+		easy_draw(&Blanka, 0, 0, 1, 0);	//Draw Blanka idle (Missing frames and not using palette correctly)
+		//easy_draw(&Fade, 0, 0, 1, 0);	//Draw Blanka idle (Missing frames and not using palette correctly)
+		//Unsure if I'm passing draw_coords in right
+		//graphics_draw_sprites(&Fade, &Fade.spritesheet_animation_array[4], &draw_coords, coord_entries, 1, 1, 1, frame_x2, frame_y2, 0);	//The pink coin
+		//graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[3], 192, 360, 1, 1, 1, Fade.spritesheet_animation_array[3].animation_x, Fade.spritesheet_animation_array[3].animation_y, 0);	//The "bottom message"
 
-		graphics_draw_sprite(&Enlarge, &Enlarge.spritesheet_animation_array[0], 384, 176, 1, 16, 16, 0, 0, 1);	//Draws the right sprite 16 times larger
+		//graphics_draw_sprite(&Enlarge, &Enlarge.spritesheet_animation_array[0], 384, 176, 1, 16, 16, 0, 0, 1);	//Draws the right sprite 16 times larger
 
 		pvr_list_finish();
 

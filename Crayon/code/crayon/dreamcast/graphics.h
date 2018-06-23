@@ -19,7 +19,7 @@ extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
   uint8_t paletteNumber);
 
 //Testing drawing multiple of same thing (WIP)
-extern uint8_t graphics_draw_sprite_array(const struct spritesheet *ss,
+extern uint8_t graphics_draw_sprites(const struct spritesheet *ss,
   const struct animation *anim, int *draw_coords, int coord_entries, float draw_z,
   float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y, uint8_t paletteNumber);
 
