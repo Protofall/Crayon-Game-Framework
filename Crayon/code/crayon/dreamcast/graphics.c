@@ -17,7 +17,7 @@ extern int graphics_setup_palette(uint8_t palette_number, const struct spriteshe
   uint16_t i; //Can't this be a uint8_t instead? 0 to 255 and max 256 entries per palette
   //...but then again how would the loop be able to break? since it would overflow back to 0
   for(i = 0; i < ss->spritesheet_color_count; ++i){
-    pvr_set_pal_entry(i + palette_number, ss->spritesheet_palette[i]);
+    pvr_set_pal_entry(i + entries * palette_number, ss->spritesheet_palette[i]);
   }
   return 0;
 }

@@ -67,7 +67,6 @@ int main(){
 	memory_load_crayon_packer_sheet(&Fade, "/colourMod/Fade.dtex");
 	memory_load_crayon_packer_sheet(&Enlarge, "/colourMod/Enlarge.dtex");
 	memory_load_crayon_packer_sheet(&Blanka, "/colourMod/SF2.dtex");
-	//memory_load_crayon_packer_sheet(&Blanka, "/colourMod/SF3.dtex");
 
 	fs_romdisk_unmount("/colourMod");
 
@@ -113,11 +112,9 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
-		//graphics_setup_palette(0, &Fade);
-		//graphics_setup_palette(&Enlarge.spritesheet_color_count, &Enlarge);	//Why am I calling this for enlarge?
-		//graphics_setup_palette(Blanka.spritesheet_color_count, &Blanka);
-		//graphics_setup_palette(255, &Blanka);	//My draw function doesn't use the right palette data...
-		graphics_setup_palette(0, &Blanka);
+		graphics_setup_palette(0, &Fade);
+		//graphics_setup_palette(Fade.spritesheet_color_count, &Blanka);	//Blanka's palette starts after Fade's palette
+		graphics_setup_palette(1, &Blanka);	//Blanka's palette starts after Fade's palette
 
 		pvr_stats_t stats;  //This can be defined outside the loop if you want
     	pvr_get_stats(&stats);
@@ -129,7 +126,6 @@ int main(){
     			frame = 0;
     		}
     		graphics_frame_coordinates(&Fade.spritesheet_animation_array[2], &frame_x, &frame_y, frame);	//Generates the new frame coordinates
-    		graphics_frame_coordinates(&Blanka.spritesheet_animation_array[0], &blanka_frame_x, &blanka_frame_y, frame);
     	}
     	if(curframe2 == 0){
     		frame2++;
@@ -137,16 +133,19 @@ int main(){
     			frame2 = 0;
     		}
     		graphics_frame_coordinates(&Fade.spritesheet_animation_array[4], &frame_x2, &frame_y2, frame2);	//Generates the new frame coordinates
+    		graphics_frame_coordinates(&Blanka.spritesheet_animation_array[0], &blanka_frame_x, &blanka_frame_y, frame2);
     	}
 
-		//graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[0], 128, 176, 1, 1, 1, 0, 0, 0);	//The new draw-er for anims
-		//graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[2], 295, 215, 1, 1, 1, frame_x, frame_y, 0);	//The "square wheel"
-		//graphics_draw_sprite(&Blanka, &Blanka.spritesheet_animation_array[0], 0, 0, 1, 1, 1, blanka_frame_x, blanka_frame_y, 0);	//Draw Blanka idle (Missing frames and not using palette correctly)
-		easy_draw(&Blanka, 0, 0, 1, 0);	//Draw Blanka idle (Missing frames and not using palette correctly)
+		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[0], 128, 176, 1, 1, 1, 0, 0, 0);	//The new draw-er for anims
+		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[2], 295, 215, 1, 1, 1, frame_x, frame_y, 0);	//The "square wheel"
+		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[3], 192, 360, 1, 1, 1, Fade.spritesheet_animation_array[3].animation_x, Fade.spritesheet_animation_array[3].animation_y, 0);	//The "bottom message"
+		//graphics_draw_sprite(&Blanka, &Blanka.spritesheet_animation_array[0], 0, 0, 1, 1, 1, blanka_frame_x, blanka_frame_y, Fade.spritesheet_color_count);	//Draw Blanka idle anim
+		graphics_draw_sprite(&Blanka, &Blanka.spritesheet_animation_array[0], 0, 0, 1, 1, 1, blanka_frame_x, blanka_frame_y, 1);	//Draw Blanka idle anim
+
+		//easy_draw(&Blanka, 0, 0, 1, 0);	//Draw Blanka idle (Missing frames and not using palette correctly)
 		//easy_draw(&Fade, 0, 0, 1, 0);	//Draw Blanka idle (Missing frames and not using palette correctly)
 		//Unsure if I'm passing draw_coords in right
-		//graphics_draw_sprites(&Fade, &Fade.spritesheet_animation_array[4], &draw_coords, coord_entries, 1, 1, 1, frame_x2, frame_y2, 0);	//The pink coin
-		//graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[3], 192, 360, 1, 1, 1, Fade.spritesheet_animation_array[3].animation_x, Fade.spritesheet_animation_array[3].animation_y, 0);	//The "bottom message"
+		graphics_draw_sprites(&Fade, &Fade.spritesheet_animation_array[4], &draw_coords, coord_entries, 1, 1, 1, frame_x2, frame_y2, 0);	//The pink coin
 
 		//graphics_draw_sprite(&Enlarge, &Enlarge.spritesheet_animation_array[0], 384, 176, 1, 16, 16, 0, 0, 1);	//Draws the right sprite 16 times larger
 
