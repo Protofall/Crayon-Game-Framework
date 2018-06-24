@@ -85,57 +85,70 @@ extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
 }
 
 extern uint8_t graphics_draw_sprites(const struct spritesheet *ss,
-  const struct animation *anim, int *draw_coords, int coord_entries, float draw_z,
-  float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y, uint8_t paletteNumber){
+	const struct animation *anim, uint16_t *draw_coords, uint16_t *frame_data, uint16_t fd_size,
+	uint16_t num_sprites, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber){
 
-  //Texture coords. letter0 and letter1 have same logic as before (CHECK)
-  const float u0 = frame_x / (float)ss->spritesheet_dims;
-  const float v0 = frame_y / (float)ss->spritesheet_dims;
-  const float u1 = (frame_x + anim->animation_frame_width) / (float)ss->spritesheet_dims;
-  const float v1 = (frame_y + anim->animation_frame_height) / (float)ss->spritesheet_dims;
-  const float z = 10;	//Need to take a param for this (Should I have seperate z for each "element" of array)
+	//Texture coords. u0,v0 is the bottom left texel and u1,v1 is the top right
+	float u0 = frame_data[0] / (float)ss->spritesheet_dims;
+	float v0 = frame_data[1] / (float)ss->spritesheet_dims;
+	float u1 = (frame_data[0] + anim->animation_frame_width) / (float)ss->spritesheet_dims;
+	float v1 = (frame_data[1] + anim->animation_frame_height) / (float)ss->spritesheet_dims;
 
-  pvr_sprite_cxt_t context;
-  if(ss->spritesheet_format == 4){  //PAL8BPP format
-    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
-    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
-  }
-  else if(ss->spritesheet_format == 3){ //PAL4BPP format
-    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
-    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
-  }
-  else if(ss->spritesheet_format == 1 || ss->spritesheet_format == 2){  //RGB565 and RGB4444
-    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, (ss->spritesheet_format) << 27,
-    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
-  }
-  else{ //Unknown format
-    return 1;
-  }
+	uint8_t extras_mode = 0;
+	if(fd_size != 2){
+		extras_mode = 1;
+	}
 
-  //Set shared vert data
-  pvr_sprite_txr_t vert = {
-    .flags = PVR_CMD_VERTEX_EOL,
-    .az = z, .auv = PVR_PACK_16BIT_UV(u0, v0),
-    .bz = z, .buv = PVR_PACK_16BIT_UV(u1, v0),
-    .cz = z, .cuv = PVR_PACK_16BIT_UV(u1, v1)
-  };
+	pvr_sprite_cxt_t context;
+	if(ss->spritesheet_format == 4){  //PAL8BPP format
+		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
+		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
+	}
+	else if(ss->spritesheet_format == 3){ //PAL4BPP format
+		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
+		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
+	}
+	else if(ss->spritesheet_format == 1 || ss->spritesheet_format == 2){  //RGB565 and RGB4444
+		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, (ss->spritesheet_format) << 27,
+		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
+	}
+	else{ //Unknown format
+	return 1;
+	}
 
-  //draws all sprites in the array at their coords as listed in the array
-  pvr_sprite_hdr_t header;
-  pvr_sprite_compile(&header, &context);
-  pvr_prim(&header, sizeof(header));	//Doesn't seem to need to be in the loop, not too sure why though
-  int i;
-  for(i = 0; i < coord_entries; i = i + 4){
-	  vert.ax = draw_coords[i];
-	  vert.ay = draw_coords[i + 1];
-	  vert.bx = draw_coords[i + 2];
-	  vert.by = draw_coords[i + 1];
-	  vert.cx = draw_coords[i + 2];
-	  vert.cy = draw_coords[i + 3];
-	  vert.dx = draw_coords[i];
-	  vert.dy = draw_coords[i + 3];
-	  pvr_prim(&vert, sizeof(vert));
-  }
+	//Set shared vert data (Should z be like frame, different per sprite?)
+	pvr_sprite_txr_t vert = {
+		.flags = PVR_CMD_VERTEX_EOL,
+		.az = draw_z, .auv = PVR_PACK_16BIT_UV(u0, v0),
+		.bz = draw_z, .buv = PVR_PACK_16BIT_UV(u1, v0),
+		.cz = draw_z, .cuv = PVR_PACK_16BIT_UV(u1, v1),
+	};
 
-  return 0;
+	//draws all sprites in the array at their coords as listed in the array
+	pvr_sprite_hdr_t header;
+	pvr_sprite_compile(&header, &context);
+	pvr_prim(&header, sizeof(header));	//Doesn't seem to need to be in the loop, not too sure why though
+	int i;
+	for(i = 0; i < num_sprites * 2; i = i + 2){
+		vert.ax = draw_coords[i];
+		vert.ay = draw_coords[i + 1];
+		vert.bx = draw_coords[i] + anim->animation_frame_width;
+		vert.by = draw_coords[i + 1];
+		vert.cx = draw_coords[i] + anim->animation_frame_width;
+		vert.cy = draw_coords[i + 1] + anim->animation_frame_height;
+		vert.dx = draw_coords[i];
+		vert.dy = draw_coords[i + 1] + anim->animation_frame_height;
+		if(extras_mode == 1){	//When each sprite has its own frame data
+			u0 = frame_data[i] / (float)ss->spritesheet_dims;
+			v0 = frame_data[i + 1] / (float)ss->spritesheet_dims;
+			u1 = (frame_data[i] + anim->animation_frame_width) / (float)ss->spritesheet_dims;
+			v1 = (frame_data[i + 1] + anim->animation_frame_height) / (float)ss->spritesheet_dims;
+			vert.auv = PVR_PACK_16BIT_UV(u0, v0);
+			vert.buv = PVR_PACK_16BIT_UV(u1, v0);
+			vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+		}
+		pvr_prim(&vert, sizeof(vert));
+	}
+
+	return 0;
 }

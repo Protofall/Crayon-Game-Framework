@@ -33,7 +33,6 @@ packerSheet () {	#$3 is the format
 			convert "$2/$name.crayon_temp.png" -background none -extent "$dimsH" "$2/$name.crayon_temp.png"	#Note, this line has never been tested since I haven't had a case with a file thats too tall
 		fi
 	fi
-	identify "$2/$name.crayon_temp.png"
 
 	texconv -i "$2/$name.crayon_temp.png" -o "$2/$name.dtex" -f "$3"
 
@@ -169,7 +168,7 @@ buildDreamcastExecutable () {
 		else	#dc-cd
 			$(sh-elf-objcopy -R .stack -O binary $3.elf $3.bin)	#Turn it into a binary
 			$($KOS_BASE/utils/scramble/scramble $3.bin $1/1st_read.bin)	#scramble
-			$(mkisofs -G $4 -C 0,11702 -J -l -r -o $3.iso $1)
+			$(mkisofs -G $4 -C 0,11702 -J -l -r -o $3.iso $1) #IPBIN and name and cdfs
 			cdi4dc "$3.iso" "$3.cdi"
 		fi
 	fi

@@ -185,3 +185,4 @@ Sprite mode might only be able to reliably do a maximum dimension of 256 by 256 
 
 
 `identify -format %k "filename" && echo` useful for getting number of colours in png (includes alphas as seperate colours)
+Also we require the `convert` command
