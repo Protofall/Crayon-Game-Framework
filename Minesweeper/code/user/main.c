@@ -89,53 +89,53 @@ int main(){
 	while(!done){
 	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)	//Need to figure out how to get the loop increment
 	    //error_freeze("Iterator value: %d", __i);
-	    if( __i == 0){
-		    if(st->buttons & CONT_START){	//Applies until not held?
-				reset_grid(&Tiles.spritesheet_animation_array[2], logicGrid, coordGrid, frameGrid, mineProbability, gridX, gridY, gridStartX, gridStartY);
-		    }
-		    if(st->buttons & CONT_A){
-				if(clickedCursorPos[0] == -1 && clickedCursorPos[1] == -1){
-					clickedCursorPos[0] = cursorPos[0];
-					clickedCursorPos[1] = cursorPos[1];
-				}
-		    }
-		    else{
-		    	//Maths needed to see if the pos-es allign, for now I'll just say they're equal
-		    	if(cursorPos[0] == clickedCursorPos[0] && cursorPos[1] == clickedCursorPos[1]){
-		    		error_freeze("%d, %d, %d, %d", clickedCursorPos[0], cursorPos[0], clickedCursorPos[1], cursorPos[1]);
-					graphics_frame_coordinates(&Tiles.spritesheet_animation_array[2], frameGrid + 70, frameGrid + 71, 15);
-					clickedCursorPos[0] = -1;
-		    		clickedCursorPos[1] = -1;
-		    	}
-		    }
-		    if(st->buttons & CONT_B){
-				//reset_grid(&Tiles.spritesheet_animation_array[2], logicGrid, coordGrid, frameGrid, mineProbability, gridX, gridY);
-		    }
-		    if(st->buttons & CONT_DPAD_UP){
-				cursorPos[1] -= 2;
-				if(cursorPos[1] < 0){
-					cursorPos[1] = 0;
-				}
-		    }
-		    if(st->buttons & CONT_DPAD_DOWN){
-				cursorPos[1] += 2;
-				if(cursorPos[1] > 480){
-					cursorPos[1] = 480;
-				}
-		    }
-		    if(st->buttons & CONT_DPAD_LEFT){
-				cursorPos[0] -= 2;
-				if(cursorPos[0] < 0){
-					cursorPos[0] = 0;
-				}
-		    }
-		    if(st->buttons & CONT_DPAD_RIGHT){
-				cursorPos[0] += 2;
-				if(cursorPos[0] > 640){
-					cursorPos[0] = 640;
-				}
-		    }
-		}
+	    if(st->buttons & CONT_START){	//Applies until not held?
+			reset_grid(&Tiles.spritesheet_animation_array[2], logicGrid, coordGrid, frameGrid, mineProbability, gridX, gridY, gridStartX, gridStartY);
+	    }
+	    if(st->buttons & CONT_A){
+			if(clickedCursorPos[__i * 2] == -1 && clickedCursorPos[(__i * 2) + 1] == -1){
+				clickedCursorPos[__i * 2] = cursorPos[__i * 2];
+				clickedCursorPos[(__i * 2) + 1] = cursorPos[(__i * 2) + 1];
+			}
+			//graphics_frame_coordinates(&Tiles.spritesheet_animation_array[2], frameGrid + 70, frameGrid + 71, 15);
+	    }
+	    else{
+			//graphics_frame_coordinates(&Tiles.spritesheet_animation_array[2], frameGrid + 70, frameGrid + 71, 0);
+	    	//Maths needed to see if the pos-es allign, for now I'll just say they're equal
+	    	if(cursorPos[__i * 2] == clickedCursorPos[__i * 2] && cursorPos[(__i * 2) + 1] == clickedCursorPos[(__i * 2) + 1]){
+				graphics_frame_coordinates(&Tiles.spritesheet_animation_array[2], frameGrid + 70, frameGrid + 71, 15);
+				clickedCursorPos[__i * 2] = -1;
+	    		clickedCursorPos[(__i * 2) + 1] = -1;
+	    	}
+	    }
+
+	    if(st->buttons & CONT_B){
+			//reset_grid(&Tiles.spritesheet_animation_array[2], logicGrid, coordGrid, frameGrid, mineProbability, gridX, gridY);
+	    }
+	    if(st->buttons & CONT_DPAD_UP){
+			cursorPos[(__i * 2) + 1] -= 2;
+			if(cursorPos[(__i * 2) + 1] < 0){
+				cursorPos[(__i * 2) + 1] = 0;
+			}
+	    }
+	    if(st->buttons & CONT_DPAD_DOWN){
+			cursorPos[(__i * 2) + 1] += 2;
+			if(cursorPos[(__i * 2) + 1] > 480){
+				cursorPos[(__i * 2) + 1] = 480;
+			}
+	    }
+	    if(st->buttons & CONT_DPAD_LEFT){
+			cursorPos[__i * 2] -= 2;
+			if(cursorPos[__i * 2] < 0){
+				cursorPos[__i * 2] = 0;
+			}
+	    }
+	    if(st->buttons & CONT_DPAD_RIGHT){
+			cursorPos[__i * 2] += 2;
+			if(cursorPos[__i * 2] > 640){
+				cursorPos[__i * 2] = 640;
+			}
+	    }
 		
    		MAPLE_FOREACH_END()
 
