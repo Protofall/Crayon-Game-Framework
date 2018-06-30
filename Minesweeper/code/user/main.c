@@ -8,33 +8,78 @@
 #include <dc/maple.h>
 #include <dc/maple/controller.h> //For the "Press start to exit" thing
 
+uint16_t numMines;
+
 uint8_t true_prob(double p){
     return rand() < p * (RAND_MAX + 1.0);
+}
+
+uint8_t populate_logic(uint8_t * logicGrid, uint8_t gridX, uint8_t gridY, int x, uint8_t mode){
+	if(x < 0 || x > gridX * gridY){	//Out of bounds
+		return 0;
+	}
+	if(logicGrid[x] == 9){	//Is mine
+		return 1;
+	}
+	else if(mode == 1){
+		return 0;
+	}
+
+	//Sometimes its accidentally detecting right and left
+	uint8_t sum = 0;
+	if(x % gridX != 0){
+		sum += populate_logic(logicGrid, gridX, gridY, x - 1, 1);			//Left
+		sum += populate_logic(logicGrid, gridX, gridY, x - gridX - 1, 1);	//Top Left
+		sum += populate_logic(logicGrid, gridX, gridY, x + gridX - 1, 1);	//Bottom left
+	}
+	if(x % gridX != 29){
+		sum += populate_logic(logicGrid, gridX, gridY, x + 1, 1);			//Right
+		sum += populate_logic(logicGrid, gridX, gridY, x - gridX + 1, 1);	//Top right
+		sum += populate_logic(logicGrid, gridX, gridY, x + gridX + 1, 1);	//Bottom right
+	}
+
+	//These two are covered by the original OOB test
+	sum += populate_logic(logicGrid, gridX, gridY, x - gridX, 1);		//Top centre
+	sum += populate_logic(logicGrid, gridX, gridY, x + gridX, 1);		//Bottom centre
+
+	logicGrid[x] = sum;
+
+	return 0;
 }
 
 //Call this to reset the grid
 void reset_grid(animation_t * anim, uint8_t * logicGrid, uint16_t * coordGrid, uint16_t * frameGrid,
 		float mineProbability, uint8_t gridX, uint8_t gridY, uint8_t gridStartX, uint8_t gridStartY){
+	numMines = 0;
 	int i;
-	int j;
-	for(i = 0; i < gridX * gridY; i++){
-		logicGrid[i] = true_prob(mineProbability);
-	}
-
-	//This is missing some positions
-	for(j = 0; j < gridY; j++){
-		for(i = 0; i < gridX; i++){	//i is x, j is y
-			uint16_t ele = (j * gridX * 2) + (2 * i);
-			coordGrid[ele] = gridStartX + (i * 16);
-			coordGrid[ele + 1] = gridStartY + (j * 16);
-			//if(logicGrid[(gridX * j) + i] == 0){
-				graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 0);
-			//}
-			//else{
-			//	graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 4);
-			//}
+	uint16_t gridSize = gridX * gridY;
+	for(i = 0; i < gridSize; i++){
+		logicGrid[i] = 9 * true_prob(mineProbability);	//I think 0 is safe, 1 is mine?
+		if(logicGrid[i] == 9){
+			numMines++;
 		}
 	}
+
+	for(i = 0; i < 2 * gridSize; i = i + 2){
+		graphics_frame_coordinates(anim, frameGrid + i, frameGrid + i + 1, 0);
+	}
+
+	//Iterates through whole loop
+	for(i = 0; i < gridSize; i++){
+		populate_logic(logicGrid, gridX, gridY, i, 0);
+	}
+
+	return;
+}
+
+void discoverTile(animation_t * anim, uint16_t * frameGrid, uint8_t * logicGrid, uint16_t eleLogic){
+	int ele = eleLogic * 2;
+	if(logicGrid[eleLogic] == 9){
+		numMines--;
+		graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 4);
+		return;
+	}
+	graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 6 + logicGrid[eleLogic]);
 	return;
 }
 
@@ -48,13 +93,19 @@ int main(){
 	spritesheet_t Tiles, Windows;
 	int cursorPos[8];
 	int clickedCursorPos[8];
-	uint8_t held[8];	//Basically a boolean
 	int iter;
+	int jiter;
 	for(iter = 0; iter < 8; iter++){
-		cursorPos[iter] = 0;
 		clickedCursorPos[iter] = -1;
-		held[iter] = 0;
 	}
+	cursorPos[0] = 50;
+	cursorPos[1] = 100;
+	cursorPos[2] = 50;
+	cursorPos[3] = 350;
+	cursorPos[4] = 590;
+	cursorPos[5] = 100;
+	cursorPos[6] = 590;
+	cursorPos[7] = 350;
 
 	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	memory_load_crayon_packer_sheet(&Tiles, "/Minesweeper/Tiles.dtex");
@@ -74,21 +125,29 @@ int main(){
 	uint16_t gridSize = gridX * gridY;
 	float mineProbability = 0.2;
 	uint8_t *logicGrid = (uint8_t *) malloc(gridSize * sizeof(uint8_t));
-	uint16_t *coordGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
+	uint16_t *coordGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));	//Once set it doesn't need to be modified
 	uint16_t *frameGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
+
+	for(jiter = 0; jiter < gridY; jiter++){
+		for(iter = 0; iter < gridX; iter++){	//i is x, j is y
+			uint16_t ele = (jiter * gridX * 2) + (2 * iter);
+			coordGrid[ele] = gridStartX + (iter * 16);
+			coordGrid[ele + 1] = gridStartY + (jiter * 16);
+		}
+	}
 
 	//Set the grid's initial values
 	reset_grid(&Tiles.spritesheet_animation_array[2], logicGrid, coordGrid, frameGrid, mineProbability, gridX, gridY, gridStartX, gridStartY);
-
-	uint16_t numMines = 0;
 
 	uint16_t face_frame_x;
 	uint16_t face_frame_y;
 	graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, 0);
 
+  	bfont_set_encoding(BFONT_CODE_ISO8859_1);
+  	char mineStr[80];
+
 	while(!done){
 	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)	//Need to figure out how to get the loop increment
-	    //error_freeze("Iterator value: %d", __i);
 	    if(st->buttons & CONT_START){	//Applies until not held?
 			reset_grid(&Tiles.spritesheet_animation_array[2], logicGrid, coordGrid, frameGrid, mineProbability, gridX, gridY, gridStartX, gridStartY);
 	    }
@@ -97,16 +156,25 @@ int main(){
 				clickedCursorPos[__i * 2] = cursorPos[__i * 2];
 				clickedCursorPos[(__i * 2) + 1] = cursorPos[(__i * 2) + 1];
 			}
-			//graphics_frame_coordinates(&Tiles.spritesheet_animation_array[2], frameGrid + 70, frameGrid + 71, 15);
 	    }
 	    else{
-			//graphics_frame_coordinates(&Tiles.spritesheet_animation_array[2], frameGrid + 70, frameGrid + 71, 0);
 	    	//Maths needed to see if the pos-es allign, for now I'll just say they're equal
 	    	if(cursorPos[__i * 2] == clickedCursorPos[__i * 2] && cursorPos[(__i * 2) + 1] == clickedCursorPos[(__i * 2) + 1]){
-				graphics_frame_coordinates(&Tiles.spritesheet_animation_array[2], frameGrid + 70, frameGrid + 71, 15);
-				clickedCursorPos[__i * 2] = -1;
-	    		clickedCursorPos[(__i * 2) + 1] = -1;
+	    		int xPart;
+	    		int yPart;
+
+	    		//If the cursor is within the maze
+	    		if((cursorPos[__i] <= gridStartX + (gridX * 16)) && (cursorPos[__i + 1] <= gridStartY + (gridY * 16))){
+	    			//These two calls are supposed to floor it to the below multiple of 16, they contain the thing coords, not elements
+	    			xPart = (cursorPos[__i] - cursorPos[__i] % 16) - gridStartX;
+	    			yPart = (cursorPos[__i + 1] - cursorPos[__i + 1] % 16) - gridStartY;
+
+	    			int eleLogic = (xPart / 16) + (gridX * yPart / 16);
+	    			discoverTile(&Tiles.spritesheet_animation_array[2], frameGrid, logicGrid, eleLogic);
+	    		}
 	    	}
+	    	clickedCursorPos[__i * 2] = -1;
+	    	clickedCursorPos[(__i * 2) + 1] = -1;
 	    }
 
 	    if(st->buttons & CONT_B){
@@ -141,6 +209,9 @@ int main(){
 
    		pvr_wait_ready();
 		pvr_scene_begin();
+
+		sprintf(mineStr, "%d", numMines);
+		bfont_draw_str(vram_s, 640, 1, mineStr);	//Draw mine count
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
