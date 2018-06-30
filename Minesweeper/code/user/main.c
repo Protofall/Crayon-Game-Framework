@@ -173,15 +173,17 @@ int main(){
 		if(iter < 4){
 			heldB[iter] = 0;
 		}
+		cursorPos[iter] = 0;
 	}
-	cursorPos[0] = 50;
-	cursorPos[1] = 100;
-	cursorPos[2] = 50;
-	cursorPos[3] = 350;
-	cursorPos[4] = 590;
-	cursorPos[5] = 100;
-	cursorPos[6] = 590;
-	cursorPos[7] = 350;
+
+	// cursorPos[0] = 50;
+	// cursorPos[1] = 100;
+	// cursorPos[2] = 50;
+	// cursorPos[3] = 350;
+	// cursorPos[4] = 590;
+	// cursorPos[5] = 100;
+	// cursorPos[6] = 590;
+	// cursorPos[7] = 350;
 
 	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	memory_load_crayon_packer_sheet(&Tiles, "/Minesweeper/Tiles.dtex");
@@ -230,6 +232,7 @@ int main(){
 			if(clickedCursorPos[__i * 2] == -1 && clickedCursorPos[(__i * 2) + 1] == -1){
 				clickedCursorPos[__i * 2] = cursorPos[__i * 2];
 				clickedCursorPos[(__i * 2) + 1] = cursorPos[(__i * 2) + 1];
+				// error_freeze("%d, %d, %d", __i, clickedCursorPos[2 * __i], clickedCursorPos[(2 * __i) + 1]);
 			}
 	    }
 	    else{
@@ -239,10 +242,10 @@ int main(){
 	    		int yPart;
 
 	    		//If the cursor is within the maze
-	    		if((cursorPos[__i] <= gridStartX + (gridX * 16)) && (cursorPos[__i + 1] <= gridStartY + (gridY * 16))){
+	    		if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))){
 	    			//These two calls are supposed to floor it to the below multiple of 16, they contain the thing coords, not elements
-	    			xPart = (cursorPos[__i] - cursorPos[__i] % 16) - gridStartX;
-	    			yPart = (cursorPos[__i + 1] - cursorPos[__i + 1] % 16) - gridStartY;
+	    			xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
+	    			yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
 
 	    			int eleLogic = (xPart / 16) + (gridX * yPart / 16);
 	    			if(alive){
@@ -257,8 +260,8 @@ int main(){
 	    if(st->buttons & CONT_B){
 	    	//Press instantly makes flag
 	    	if(!heldB[__i]){
-		    	int xPart = (cursorPos[__i] - cursorPos[__i] % 16) - gridStartX;
-		    	int yPart = (cursorPos[__i + 1] - cursorPos[__i + 1] % 16) - gridStartY;
+		    	int xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
+		    	int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
 
 		    	int eleLogic = (xPart / 16) + (gridX * yPart / 16);
 		    	flag(&Tiles.spritesheet_animation_array[2], frameGrid, logicGrid, eleLogic);
