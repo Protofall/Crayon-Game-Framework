@@ -173,17 +173,17 @@ int main(){
 		if(iter < 4){
 			heldB[iter] = 0;
 		}
-		cursorPos[iter] = 0;
+		// cursorPos[iter] = 0;
 	}
 
-	// cursorPos[0] = 50;
-	// cursorPos[1] = 100;
-	// cursorPos[2] = 50;
-	// cursorPos[3] = 350;
-	// cursorPos[4] = 590;
-	// cursorPos[5] = 100;
-	// cursorPos[6] = 590;
-	// cursorPos[7] = 350;
+	cursorPos[0] = 50;
+	cursorPos[1] = 100;
+	cursorPos[2] = 50;
+	cursorPos[3] = 350;
+	cursorPos[4] = 590;
+	cursorPos[5] = 100;
+	cursorPos[6] = 590;
+	cursorPos[7] = 350;
 
 	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	memory_load_crayon_packer_sheet(&Tiles, "/Minesweeper/Tiles.dtex");
@@ -257,7 +257,7 @@ int main(){
 	    	clickedCursorPos[(__i * 2) + 1] = -1;
 	    }
 
-	    if(st->buttons & CONT_B){
+	    if((st->buttons & CONT_B) && alive){
 	    	//Press instantly makes flag
 	    	if(!heldB[__i]){
 		    	int xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
@@ -351,3 +351,14 @@ int main(){
 
     return 0;
 }
+
+/*
+
+Things about Minesweeper:
+
+	- You can Right click or double Left click (maybe?) a number to "left click" all the surrounding numbers that aren't flags/question marks
+	- The mine count is really a flag count, it starts at the number of mines and if too many flags have been placed, it can go negative
+	- Add proper "reveal map" logic and make the player unable to toggle flags then
+	- Don't forget to add question mark toggle
+
+*/
