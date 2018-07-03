@@ -6,6 +6,9 @@
 #include <dc/maple.h>
 #include <dc/maple/controller.h> //For the "Press start to exit" thing
 
+//For the timer
+#include <arch/timer.h>
+
 uint16_t minesLeft;	//Might be redundant
 
 uint16_t numMines;
@@ -14,6 +17,7 @@ int numFlags;	//More like "number of flags in the pool"
 
 uint8_t alive = 1;
 uint8_t questionEnabled = 1;	//Enable the use of question marking
+uint8_t gameLive;	//Is true when the timer is turning
 
 uint8_t gridX;
 uint8_t gridY;
@@ -63,6 +67,7 @@ uint8_t populate_logic(int x, uint8_t mode){
 
 //Call this to reset the grid
 void reset_grid(animation_t * anim, float mineProbability){
+	gameLive = 0;
 	numMines = 0;
 	int i;
 	uint16_t gridSize = gridX * gridY;
@@ -197,7 +202,6 @@ void digitDisplay(spritesheet_t * ss, animation_t * anim, int num, uint16_t x, u
 			graphics_frame_coordinates(anim, &frame_x, &frame_y, 10);
 		}
 		else{
-			// error_freeze("%d", (int)dispNum[i]);
 			graphics_frame_coordinates(anim, &frame_x, &frame_y, (int)dispNum[i] - 48);
 		}
 		graphics_draw_sprite(ss, anim, x + (i * 13), y, 11, 1, 1, frame_x, frame_y, 0);
@@ -234,6 +238,20 @@ int main(){
 	cursorPos[6] = 590;
 	cursorPos[7] = 350;
 
+	//Setting up the draw arrays for the top and bottom bars
+	uint16_t *coordTopBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
+	uint16_t *frameTopBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
+	uint16_t *coordTaskBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
+	uint16_t *frameTaskBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
+
+	for(iter = 0; iter < 4; iter++){
+		coordTaskBar[iter * 2] = 0 + (160 * iter);
+		coordTopBar[iter * 2] = 0 + (160 * iter);
+
+		coordTaskBar[(iter * 2) + 1] = 450;
+		coordTopBar[(iter * 2) + 1] = 0;
+	}
+
 	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	memory_load_crayon_packer_sheet(&Tiles, "/Minesweeper/Tiles.dtex");
 	fs_romdisk_unmount("/Minesweeper");
@@ -242,7 +260,15 @@ int main(){
 	memory_load_crayon_packer_sheet(&Windows, "/XP/Windows.dtex");
 	fs_romdisk_unmount("/XP");
 
-	int done = 0;
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[0], frameTaskBar, frameTaskBar + 1, 0);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[0], frameTaskBar + 2, frameTaskBar + 3, 1);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[0], frameTaskBar + 4, frameTaskBar + 5, 2);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[0], frameTaskBar + 6, frameTaskBar + 7, 3);
+
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar, frameTopBar + 1, 0);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar + 2, frameTopBar + 3, 1);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar + 4, frameTopBar + 5, 1);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar + 6, frameTopBar + 7, 2);
 
 	gridX = 30;
 	gridY = 20;
@@ -275,36 +301,44 @@ int main(){
 	uint16_t face_frame_x;
 	uint16_t face_frame_y;
 
-  	bfont_set_encoding(BFONT_CODE_ISO8859_1);
+	pvr_stats_t stats;
+	uint32_t currentTime = 0;
+	uint32_t startTime = 0;
+	int timeSec = 0;
+
+	bfont_set_encoding(BFONT_CODE_ISO8859_1);
   	char mineStr[80];
 
-	pvr_stats_t stats;
-
-	while(!done){
+	while(1){
 	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)	//Need to figure out how to get the loop increment
-	    if(st->buttons & CONT_START){	//Applies until not held?
+	    if(st->buttons & CONT_START){
 			reset_grid(&Tiles.spritesheet_animation_array[3], mineProbability);
 	    }
 	    if(st->buttons & CONT_A){
-			if(clickedCursorPos[__i * 2] == -1 && clickedCursorPos[(__i * 2) + 1] == -1){
-				clickedCursorPos[__i * 2] = cursorPos[__i * 2];
-				clickedCursorPos[(__i * 2) + 1] = cursorPos[(__i * 2) + 1];
+			if(clickedCursorPos[2 * __i] == -1 && clickedCursorPos[(2 * __i) + 1] == -1){
+				clickedCursorPos[2 * __i] = cursorPos[2 * __i];
+				clickedCursorPos[(2 * __i) + 1] = cursorPos[(2 * __i) + 1];
 			}
 	    }
 	    else{
 	    	//Maths needed to see if the pos-es allign, for now I'll just say they're equal
-	    	if(cursorPos[__i * 2] == clickedCursorPos[__i * 2] && cursorPos[(__i * 2) + 1] == clickedCursorPos[(__i * 2) + 1]){
+	    	if(cursorPos[2 * __i] == clickedCursorPos[2 * __i] && cursorPos[(2 * __i) + 1] == clickedCursorPos[(2 * __i) + 1]){
 	    		int xPart;
 	    		int yPart;
 
 	    		//If the cursor is within the maze
-	    		if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))){
+	    		if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
+	    			&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
 	    			//These two calls are supposed to floor it to the below multiple of 16, they contain the thing coords, not elements
 	    			xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
 	    			yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
 
 	    			int eleLogic = (xPart / 16) + (gridX * yPart / 16);
 	    			if(alive){
+	    				if(!gameLive){
+	    					timer_ms_gettime(&startTime, 0);
+	    					gameLive = 1;
+	    				}
 	    				discoverTile(&Tiles.spritesheet_animation_array[3], eleLogic);
 	    			}
 	    		}
@@ -316,39 +350,43 @@ int main(){
 	    if((st->buttons & CONT_B) && alive){
 	    	//Press instantly makes flag
 	    	if(!heldB[__i]){
-		    	int xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
-		    	int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
+	    		//If the cursor is within the maze
+	    		if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
+	    			&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){	//This check isn't complete
+			    	int xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
+			    	int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
 
-		    	int eleLogic = (xPart / 16) + (gridX * yPart / 16);
-		    	bPress(&Tiles.spritesheet_animation_array[3], eleLogic);
-		    	heldB[__i] = 1;
+			    	int eleLogic = (xPart / 16) + (gridX * yPart / 16);
+			    	bPress(&Tiles.spritesheet_animation_array[3], eleLogic);
+			    }
+			    heldB[__i] = 1;
 		    }
 	    }
 	    else{
 	    	heldB[__i] = 0;
 	    }
 	    if(st->buttons & CONT_DPAD_UP){
-			cursorPos[(__i * 2) + 1] -= 2;
-			if(cursorPos[(__i * 2) + 1] < 0){
-				cursorPos[(__i * 2) + 1] = 0;
+			cursorPos[(2 * __i) + 1] -= 2;
+			if(cursorPos[(2 * __i) + 1] < 0){
+				cursorPos[(2 * __i) + 1] = 0;
 			}
 	    }
 	    if(st->buttons & CONT_DPAD_DOWN){
-			cursorPos[(__i * 2) + 1] += 2;
-			if(cursorPos[(__i * 2) + 1] > 480){
-				cursorPos[(__i * 2) + 1] = 480;
+			cursorPos[(2 * __i) + 1] += 2;
+			if(cursorPos[(2 * __i) + 1] > 480){
+				cursorPos[(2 * __i) + 1] = 480;
 			}
 	    }
 	    if(st->buttons & CONT_DPAD_LEFT){
-			cursorPos[__i * 2] -= 2;
-			if(cursorPos[__i * 2] < 0){
-				cursorPos[__i * 2] = 0;
+			cursorPos[2 * __i] -= 2;
+			if(cursorPos[2 * __i] < 0){
+				cursorPos[2 * __i] = 0;
 			}
 	    }
 	    if(st->buttons & CONT_DPAD_RIGHT){
-			cursorPos[__i * 2] += 2;
-			if(cursorPos[__i * 2] > 640){
-				cursorPos[__i * 2] = 640;
+			cursorPos[2 * __i] += 2;
+			if(cursorPos[2 * __i] > 640){
+				cursorPos[2 * __i] = 640;
 			}
 	    }
 		
@@ -364,26 +402,28 @@ int main(){
 			graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, 0);
    		}
 
-   		pvr_wait_ready();
-		pvr_scene_begin();
+		timer_ms_gettime(&currentTime, 0);
+		if(gameLive){	//Change to compare with miliseconds too (For accurate "1st second")
+			timeSec = (int)(currentTime - startTime) + 1;
+		}
 
-		if(minesLeft != 0){
-			sprintf(mineStr, "F %d, M %d", numFlags, minesLeft);
-		}
-		else{
-			sprintf(mineStr, "Team Winning!");
-		}
-		bfont_draw_str(vram_s, 640, 1, mineStr);	//Draw message
+   		pvr_wait_ready();	//With the timer it crashes here or waits indefinately
+		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
 		//Setup the main palette
 		graphics_setup_palette(0, &Tiles);
 
-		digitDisplay(&Tiles, &Tiles.spritesheet_animation_array[2], numFlags, 550, 25);
+		//Draw top bar
+		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[1], coordTopBar, frameTopBar, 8, 4, 1, 1, 1, 0);
+
+		//Draw the flag count and timer
+		digitDisplay(&Tiles, &Tiles.spritesheet_animation_array[2], numFlags, 50, 35);
+		digitDisplay(&Tiles, &Tiles.spritesheet_animation_array[2], timeSec, 551, 35);
 
 		//Draw the reset button
-		graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[1], 307, 20, 1, 1, 1, face_frame_x, face_frame_y, 0);
+		graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[1], 307, 35, 1, 1, 1, face_frame_x, face_frame_y, 0);
 
 		for(iter = 0; iter < 8; iter = iter + 2){
 			graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[0], cursorPos[iter], cursorPos[iter + 1], 10, 1, 1, 0, 0, 0);
@@ -393,10 +433,7 @@ int main(){
 		graphics_draw_sprites(&Tiles, &Tiles.spritesheet_animation_array[3], coordGrid, frameGrid, 2 * gridSize, gridSize, 1, 1, 1, 0);
 
 		//Group the windows bar into a single draw later
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[0], 0, 450, 1, 1, 1, 0, 0, 0);
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[0], 160, 450, 1, 1, 1, 0, 30, 0);
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[0], 320, 450, 1, 1, 1, 0, 60, 0);
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[0], 480, 450, 1, 1, 1, 0, 90, 0);
+		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[0], coordTaskBar, frameTaskBar, 8, 4, 1, 1, 1, 0);
     	
 		pvr_list_finish();
 
@@ -421,30 +458,16 @@ Things about Minesweeper:
 	- Add proper "reveal map" logic and make the player unable to toggle flags then
 	- Don't forget to add question mark toggle
 
-*/
-
-
-/*
-
 	Bugs:
-
-		- Game doesn't lock when you win, will fix this when I fix the win condition (Only mines are unclicked)
-			- Game does lock when dead though
-			- Also says you win based on if all mines have been flagged, doesn't consider numFlags
-
-*/
-
-/*
+	- Game doesn't lock when you win, will fix this when I fix the win condition (Only mines are unclicked)
+		- Game does lock when dead though
+		- Also says you win based on if all mines have been flagged, doesn't consider numFlags
 
 	Difficulties:
-		- Beginner
-		- Intermediate
-		- Expert
-		- Legacy User (Largest grid)
-
-*/
-
-/*
+	- Beginner
+	- Intermediate
+	- Expert
+	- Legacy User (Largest grid)
 
 vahntitrio
 23 points
@@ -460,5 +483,3 @@ Thus allowing you to go finish faster.
 Do you automatically get a free lake?
 
 */
-
-// BUG: Can right click off screen and still interact with elements of the board
