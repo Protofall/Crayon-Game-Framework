@@ -6,17 +6,23 @@
 #include <dc/maple.h>
 #include <dc/maple/controller.h> //For the "Press start to exit" thing
 
+uint16_t minesLeft;	//Might be redundant
+
 uint16_t numMines;
-uint16_t minesLeft;
-uint16_t numFlags;
+uint16_t nonMinesLeft;	//When this variable equals zero, the game is won
+int numFlags;	//More like "number of flags in the pool"
+
 uint8_t alive = 1;
 uint8_t questionEnabled = 1;	//Enable the use of question marking
+
 uint8_t gridX;
 uint8_t gridY;
 uint16_t gridStartX;
 uint16_t gridStartY;
 
 uint8_t *logicGrid;
+uint16_t *coordGrid;	//Unless changing grid size, this won't need to be changed once set
+uint16_t *frameGrid;
 
 uint8_t true_prob(double p){
     return rand() < p * (RAND_MAX + 1.0);
@@ -56,8 +62,7 @@ uint8_t populate_logic(int x, uint8_t mode){
 }
 
 //Call this to reset the grid
-void reset_grid(animation_t * anim, uint16_t * coordGrid, uint16_t * frameGrid,
-		float mineProbability, uint8_t gridStartX, uint8_t gridStartY){
+void reset_grid(animation_t * anim, float mineProbability){
 	numMines = 0;
 	int i;
 	uint16_t gridSize = gridX * gridY;
@@ -80,6 +85,7 @@ void reset_grid(animation_t * anim, uint16_t * coordGrid, uint16_t * frameGrid,
 	alive = 1;
 	minesLeft = numMines;
 	numFlags = numMines;
+	nonMinesLeft = gridSize - numMines;
 
 	return;
 }
@@ -90,7 +96,7 @@ int bitExtraction(int number, int k, int p){
 	return (((1 << k) - 1) & (number >> (p - 1)));
 }
 
-void discoverTile(animation_t * anim, uint16_t * frameGrid, uint16_t eleLogic){
+void discoverTile(animation_t * anim, uint16_t eleLogic){
 	if(eleLogic < 0 || eleLogic > gridX * gridY){	//Out of bounds
 		return;
 	}
@@ -111,68 +117,92 @@ void discoverTile(animation_t * anim, uint16_t * frameGrid, uint16_t eleLogic){
 		if(bitExtraction(logicGrid[eleLogic], 4, 1) == 0){
 			//Make recursive calls to the neighbours
 
-			// error_freeze("haha!");
-
 			if(eleLogic % gridX != 0){
-				discoverTile(anim, frameGrid, eleLogic - 1);			//Left
-				discoverTile(anim, frameGrid, eleLogic - gridX - 1);	//Top Left
-				discoverTile(anim, frameGrid, eleLogic + gridX - 1);	//Bottom left
+				discoverTile(anim, eleLogic - 1);			//Left
+				discoverTile(anim, eleLogic - gridX - 1);	//Top Left
+				discoverTile(anim, eleLogic + gridX - 1);	//Bottom left
 			}
 			if(eleLogic % gridX != 29){
-				discoverTile(anim, frameGrid, eleLogic + 1);			//Right
-				discoverTile(anim, frameGrid, eleLogic - gridX + 1);	//Top right
-				discoverTile(anim, frameGrid, eleLogic + gridX + 1);	//Bottom right
+				discoverTile(anim, eleLogic + 1);			//Right
+				discoverTile(anim, eleLogic - gridX + 1);	//Top right
+				discoverTile(anim, eleLogic + gridX + 1);	//Bottom right
 			}
 
 			//These two are covered by the original OOB test
-			discoverTile(anim, frameGrid, eleLogic - gridX);		//Top centre
-			discoverTile(anim, frameGrid, eleLogic + gridX);		//Bottom centre
+			discoverTile(anim, eleLogic - gridX);		//Top centre
+			discoverTile(anim, eleLogic + gridX);		//Bottom centre
 		}
 	}
 	return;
 }
 
-//Called by bPress to modify the logic and describe what to do when marking a tile
-//0 = normal, 1 = flag, 2 = question
-uint8_t nextMarker(uint16_t eleLogic){
-	uint8_t retVal = 0;
-	uint8_t isMine = bitExtraction(logicGrid[eleLogic], 4, 1) == 9;
-
-	if(logicGrid[eleLogic] & (1<<6)){	//If flagged
-		logicGrid[eleLogic] &= ~(1<<6);	//Clears the flag bit
-		if(questionEnabled){
-			logicGrid[eleLogic] |= (1<<5);	//Sets the question bit
-			retVal = 2;
-		}
-		numFlags++;
-		if(isMine){
-			minesLeft++;
-		}
-	}
-	else{	//Not flagged, but maybe questioned
-		if(logicGrid[eleLogic] & (1<<5)){	//Normal it
-			logicGrid[eleLogic] &= ~(1<<5);
-			retVal = 0;
-		}
-		else{	//Flag it
-			logicGrid[eleLogic] |= (1<<6);
-			retVal = 1;
-			numFlags--;
-			if(isMine){
-				minesLeft--;
-			}
-		}
-	}
-	return retVal;
-}
 
 //If we use a flag that decrements the flag count, leaving flag will increment it
-void bPress(animation_t * anim, uint16_t * frameGrid, uint16_t eleLogic){
+void bPress(animation_t * anim, uint16_t eleLogic){
 	int ele = eleLogic * 2;
 	if(!(logicGrid[eleLogic] & 1<<7)){	//Not discovered
-		uint8_t status = nextMarker(eleLogic);
+		uint8_t status = 0;	//0 = normal, 1 = flag, 2 = question icons
+		uint8_t isMine = bitExtraction(logicGrid[eleLogic], 4, 1) == 9;
+
+		if(logicGrid[eleLogic] & (1<<6)){	//If flagged
+			logicGrid[eleLogic] &= ~(1<<6);	//Clears the flag bit
+			if(questionEnabled){
+				logicGrid[eleLogic] |= (1<<5);	//Sets the question bit
+				status = 2;
+			}
+			numFlags++;
+			if(isMine){
+				minesLeft++;
+			}
+		}
+		else{	//Not flagged, but maybe questioned
+			if(logicGrid[eleLogic] & (1<<5)){	//Normal it
+				logicGrid[eleLogic] &= ~(1<<5);
+				status = 0;
+			}
+			else{	//Flag it
+				logicGrid[eleLogic] |= (1<<6);
+				status = 1;
+				numFlags--;
+				if(isMine){
+					minesLeft--;
+				}
+			}
+		}
 		graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, status);
 	}
+	else{	//Clicking on something that was A pressed before (Number, blank pressed)
+		;
+	}
+	return;
+}
+
+//Must be called within a pvr_list_begin(), used for displaying the counter for flags and timer
+void digitDisplay(spritesheet_t * ss, animation_t * anim, int num, uint16_t x, uint16_t y){
+	if(num < -99){
+		num = -99;
+	}
+	else if(num > 999){
+		num = 999;
+	}
+
+	char dispNum[3];
+	sprintf(dispNum, "%03d", num);
+
+	int i;
+	uint16_t frame_x;
+	uint16_t frame_y;
+	for(i = 0; i < 3; i++){
+		if(dispNum[i] == '-'){
+			graphics_frame_coordinates(anim, &frame_x, &frame_y, 10);
+		}
+		else{
+			// error_freeze("%d", (int)dispNum[i]);
+			graphics_frame_coordinates(anim, &frame_x, &frame_y, (int)dispNum[i] - 48);
+		}
+		graphics_draw_sprite(ss, anim, x + (i * 13), y, 11, 1, 1, frame_x, frame_y, 0);
+	}
+
 	return;
 }
 
@@ -219,11 +249,17 @@ int main(){
 	gridStartX = 80;
 	gridStartY = 80;
 	uint16_t gridSize = gridX * gridY;
-	// float mineProbability = 0.175;
-	float mineProbability = 0.1;
-	uint16_t *coordGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));	//Unless changing grid size, this won't need to be reset
+	float mineProbability;
+	if(0){
+		mineProbability = 0.175;
+	}
+	else{
+		mineProbability = 0.1;
+	}
+
 	logicGrid = (uint8_t *) malloc(gridSize * sizeof(uint8_t));
-	uint16_t *frameGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
+	coordGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
+	frameGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
 
 	for(jiter = 0; jiter < gridY; jiter++){
 		for(iter = 0; iter < gridX; iter++){	//i is x, j is y
@@ -234,7 +270,7 @@ int main(){
 	}
 
 	//Set the grid's initial values
-	reset_grid(&Tiles.spritesheet_animation_array[2], coordGrid, frameGrid, mineProbability, gridStartX, gridStartY);
+	reset_grid(&Tiles.spritesheet_animation_array[3], mineProbability);
 
 	uint16_t face_frame_x;
 	uint16_t face_frame_y;
@@ -242,10 +278,12 @@ int main(){
   	bfont_set_encoding(BFONT_CODE_ISO8859_1);
   	char mineStr[80];
 
+	pvr_stats_t stats;
+
 	while(!done){
 	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)	//Need to figure out how to get the loop increment
 	    if(st->buttons & CONT_START){	//Applies until not held?
-			reset_grid(&Tiles.spritesheet_animation_array[2], coordGrid, frameGrid, mineProbability, gridStartX, gridStartY);
+			reset_grid(&Tiles.spritesheet_animation_array[3], mineProbability);
 	    }
 	    if(st->buttons & CONT_A){
 			if(clickedCursorPos[__i * 2] == -1 && clickedCursorPos[(__i * 2) + 1] == -1){
@@ -267,7 +305,7 @@ int main(){
 
 	    			int eleLogic = (xPart / 16) + (gridX * yPart / 16);
 	    			if(alive){
-	    				discoverTile(&Tiles.spritesheet_animation_array[2], frameGrid, eleLogic);
+	    				discoverTile(&Tiles.spritesheet_animation_array[3], eleLogic);
 	    			}
 	    		}
 	    	}
@@ -282,7 +320,7 @@ int main(){
 		    	int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
 
 		    	int eleLogic = (xPart / 16) + (gridX * yPart / 16);
-		    	bPress(&Tiles.spritesheet_animation_array[2], frameGrid, eleLogic);
+		    	bPress(&Tiles.spritesheet_animation_array[3], eleLogic);
 		    	heldB[__i] = 1;
 		    }
 	    }
@@ -316,6 +354,8 @@ int main(){
 		
    		MAPLE_FOREACH_END()
 
+    	pvr_get_stats(&stats);
+
    		//The face icon, this code needs updating
    		if(!alive){
 			graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, 2);
@@ -328,7 +368,6 @@ int main(){
 		pvr_scene_begin();
 
 		if(minesLeft != 0){
-			sprintf(mineStr, "%d", numFlags);
 			sprintf(mineStr, "F %d, M %d", numFlags, minesLeft);
 		}
 		else{
@@ -341,6 +380,8 @@ int main(){
 		//Setup the main palette
 		graphics_setup_palette(0, &Tiles);
 
+		digitDisplay(&Tiles, &Tiles.spritesheet_animation_array[2], numFlags, 550, 25);
+
 		//Draw the reset button
 		graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[1], 307, 20, 1, 1, 1, face_frame_x, face_frame_y, 0);
 
@@ -349,7 +390,7 @@ int main(){
 		}
 
 		//Draw the grid
-		graphics_draw_sprites(&Tiles, &Tiles.spritesheet_animation_array[2], coordGrid, frameGrid, 2 * gridSize, gridSize, 1, 1, 1, 0);
+		graphics_draw_sprites(&Tiles, &Tiles.spritesheet_animation_array[3], coordGrid, frameGrid, 2 * gridSize, gridSize, 1, 1, 1, 0);
 
 		//Group the windows bar into a single draw later
 		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[0], 0, 450, 1, 1, 1, 0, 0, 0);
@@ -392,3 +433,32 @@ Things about Minesweeper:
 			- Also says you win based on if all mines have been flagged, doesn't consider numFlags
 
 */
+
+/*
+
+	Difficulties:
+		- Beginner
+		- Intermediate
+		- Expert
+		- Legacy User (Largest grid)
+
+*/
+
+/*
+
+vahntitrio
+23 points
+·
+3 years ago
+·
+edited 3 years ago
+As soon as you've marked enough spaces, clicking both mouse buttons at once on a number uncovers all adjacent unflagged squares.
+Thus allowing you to go finish faster.
+
+(Confirm how to activate this feature)
+
+Do you automatically get a free lake?
+
+*/
+
+// BUG: Can right click off screen and still interact with elements of the board
