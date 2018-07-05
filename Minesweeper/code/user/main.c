@@ -9,14 +9,10 @@
 //For the timer
 #include <arch/timer.h>
 
-uint16_t minesLeft;	//Redundant
-
-uint16_t numMines;	//Redundant?
 uint16_t nonMinesLeft;	//When this variable equals zero, the game is won
 int numFlags;	//More like "number of flags in the pool"
 
 uint8_t overMode = 0;	//0 = ready for new game, 1 = loss (ded), 2 = win
-// uint8_t alive = 1;	//Redendant due to gameLive. Replace with a "homeNotLive" variable
 int timeSec;
 uint8_t questionEnabled = 1;	//Enable the use of question marking
 uint8_t gameLive = 0;	//Is true when the timer is turning
@@ -30,14 +26,27 @@ uint8_t *logicGrid;
 uint16_t *coordGrid;	//Unless changing grid size, this won't need to be changed once set
 uint16_t *frameGrid;
 
-uint8_t true_prob(double p){
-    return rand() < p * (RAND_MAX + 1.0);
-}
+//x is main tile, and we're checking if y is a neighbour
 
-uint8_t populate_logic(int x, uint8_t mode){
-	if(x < 0 || x > gridX * gridY){	//Out of bounds
+//Only correctly works when gridX = gridY
+uint8_t neighbouring_tile(int origin, int diverge){
+	//Check if y is OOB (-ve or over positive element value)
+	if(diverge < 0 || diverge > (gridX * gridY) - 1){
 		return 0;
 	}
+
+	//Convert x and y to 2D ids
+	int8_t diffX = (origin / gridX) - (diverge / gridX);	//x1 - x2
+	int8_t diffY = (origin % gridX) - (diverge % gridX);	//y1 - y2	(gridX was formerly gridY here)
+
+	if(diffX > -2 && diffX < 2 && diffY > -2 && diffY < 2){
+		return 1;
+	}
+	return 0;
+}
+
+//Initially called by reset_grid where x is always a valid number
+uint8_t populate_logic(int x, uint8_t mode){
 	if(logicGrid[x] == 9){	//Is mine
 		return 1;
 	}
@@ -45,39 +54,44 @@ uint8_t populate_logic(int x, uint8_t mode){
 		return 0;
 	}
 
-	//Sometimes its accidentally detecting right and left
-	uint8_t sum = 0;
-	if(x % gridX != 0){
-		sum += populate_logic(x - 1, 1);			//Left
-		sum += populate_logic(x - gridX - 1, 1);	//Top Left
-		sum += populate_logic(x + gridX - 1, 1);	//Bottom left
-	}
-	if(x % gridX != 29){
-		sum += populate_logic(x + 1, 1);			//Right
-		sum += populate_logic(x - gridX + 1, 1);	//Top right
-		sum += populate_logic(x + gridX + 1, 1);	//Bottom right
-	}
+	uint8_t sum = 0;	//A tiles value
 
-	//These two are covered by the original OOB test
-	sum += populate_logic(x - gridX, 1);		//Top centre
-	sum += populate_logic(x + gridX, 1);		//Bottom centre
+	/*
 
+	x - 1 - gridX, x - gridX, x + 1 - gridX
+	x - 1,                  , x + 1
+	x - 1 + gridX, x + gridX, x + 1 + gridX
+
+	*/
+	if(neighbouring_tile(x, x - 1 - gridX)){sum += populate_logic(x - 1 - gridX, 1);}	//Top Left
+	if(neighbouring_tile(x, x - 1)){sum += populate_logic(x - 1, 1);}					//Mid Left
+	if(neighbouring_tile(x, x - 1 + gridX)){sum += populate_logic(x - 1 + gridX, 1);}	//Bottom left
+
+	if(neighbouring_tile(x, x + 1 - gridX)){sum += populate_logic(x + 1 - gridX, 1);}	//Top right
+	if(neighbouring_tile(x, x + 1)){sum += populate_logic(x + 1, 1);}					//Mid Right
+	if(neighbouring_tile(x, x + 1 + gridX)){sum += populate_logic(x + 1 + gridX, 1);}	//Bottom right
+
+	if(neighbouring_tile(x, x - gridX)){sum += populate_logic(x - gridX, 1);}		//Top centre
+	if(neighbouring_tile(x, x + gridX)){sum += populate_logic(x + gridX, 1);}		//Bottom centre
+	
 	logicGrid[x] = sum;
 
 	return 0;
 }
 
+uint8_t true_prob(double p){
+    return rand() < p * (RAND_MAX + 1.0);
+}
+
 //Call this to reset the grid
 void reset_grid(animation_t * anim, float mineProbability){
-	gameLive = 0;
-	numMines = 0;
-	timeSec = 0;
+	numFlags = 0;
 	int i;
 	uint16_t gridSize = gridX * gridY;
 	for(i = 0; i < gridSize; i++){
-		logicGrid[i] = 9 * true_prob(mineProbability);	//I think 0 is safe, 1 is mine?
+		logicGrid[i] = 9 * true_prob(mineProbability);	//I think 0 is safe, 9 is mine
 		if(logicGrid[i] == 9){
-			numMines++;
+			numFlags++;
 		}
 	}
 
@@ -87,13 +101,21 @@ void reset_grid(animation_t * anim, float mineProbability){
 
 	//Iterates through whole loop
 	for(i = 0; i < gridSize; i++){
-		populate_logic(i, 0);
+		populate_logic(i, 0);	//This is generating values larger than 10 when it shouldn't
 	}
 
+	// for(i = 0; i < 2 * gridSize; i = i + 2){
+	// 	if(logicGrid[i/2] > 10){
+	// 		error_freeze("bad", logicGrid[i/2]);
+	// 	}
+	// 	graphics_frame_coordinates(anim, frameGrid + i, frameGrid + i + 1, logicGrid[i/2] + 6);
+	// }
+
+	gameLive = 0;
 	overMode = 0;
-	minesLeft = numMines;
-	numFlags = numMines;
-	nonMinesLeft = gridSize - numMines;
+
+	timeSec = 0;
+	nonMinesLeft = gridSize - numFlags;
 
 	return;
 }
@@ -105,16 +127,12 @@ int bitExtraction(int number, int k, int p){
 }
 
 void discoverTile(animation_t * anim, uint16_t eleLogic){
-	if(eleLogic < 0 || eleLogic > gridX * gridY){	//Out of bounds
-		return;
-	}
 	int ele = eleLogic * 2;
 	if(!(logicGrid[eleLogic] & 1<<6)){	//When not flagged
 		if(logicGrid[eleLogic] & 1<<7){	//Already discovered
 			return;
 		}
 		if(logicGrid[eleLogic] == 9){	//If mine
-			numMines--;
 			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 4);
 			gameLive = 0;
 			overMode = 1;
@@ -127,20 +145,14 @@ void discoverTile(animation_t * anim, uint16_t eleLogic){
 		if(bitExtraction(logicGrid[eleLogic], 4, 1) == 0){
 			//Make recursive calls to the neighbours
 
-			if(eleLogic % gridX != 0){
-				discoverTile(anim, eleLogic - 1);			//Left
-				discoverTile(anim, eleLogic - gridX - 1);	//Top Left
-				discoverTile(anim, eleLogic + gridX - 1);	//Bottom left
-			}
-			if(eleLogic % gridX != 29){
-				discoverTile(anim, eleLogic + 1);			//Right
-				discoverTile(anim, eleLogic - gridX + 1);	//Top right
-				discoverTile(anim, eleLogic + gridX + 1);	//Bottom right
-			}
-
-			//These two are covered by the original OOB test
-			discoverTile(anim, eleLogic - gridX);		//Top centre
-			discoverTile(anim, eleLogic + gridX);		//Bottom centre
+			if(neighbouring_tile(eleLogic, eleLogic - 1)){discoverTile(anim, eleLogic - 1);}						//Left
+			if(neighbouring_tile(eleLogic, eleLogic - 1 - gridX)){discoverTile(anim, eleLogic - 1 - gridX);}		//Top Left
+			if(neighbouring_tile(eleLogic, eleLogic - 1 + gridX)){discoverTile(anim, eleLogic - 1 + gridX);}		//Bottom Left
+			if(neighbouring_tile(eleLogic, eleLogic + 1)){discoverTile(anim, eleLogic + 1);}						//Right
+			if(neighbouring_tile(eleLogic, eleLogic + 1 - gridX)){discoverTile(anim, eleLogic + 1 - gridX);}		//Top Right
+			if(neighbouring_tile(eleLogic, eleLogic + 1 + gridX)){discoverTile(anim, eleLogic + 1 + gridX);}		//Bottom Right
+			if(neighbouring_tile(eleLogic, eleLogic - gridX)){discoverTile(anim, eleLogic - gridX);}				//Top centre
+			if(neighbouring_tile(eleLogic, eleLogic + gridX)){discoverTile(anim, eleLogic + gridX);}				//Bottom centre
 		}
 	}
 	return;
@@ -152,8 +164,6 @@ void bPress(animation_t * anim, uint16_t eleLogic){
 	int ele = eleLogic * 2;
 	if(!(logicGrid[eleLogic] & 1<<7)){	//Not discovered
 		uint8_t status = 0;	//0 = normal, 1 = flag, 2 = question icons
-		uint8_t isMine = bitExtraction(logicGrid[eleLogic], 4, 1) == 9;
-
 		if(logicGrid[eleLogic] & (1<<6)){	//If flagged
 			logicGrid[eleLogic] &= ~(1<<6);	//Clears the flag bit
 			if(questionEnabled){
@@ -161,9 +171,6 @@ void bPress(animation_t * anim, uint16_t eleLogic){
 				status = 2;
 			}
 			numFlags++;
-			if(isMine){
-				minesLeft++;
-			}
 		}
 		else{	//Not flagged, but maybe questioned
 			if(logicGrid[eleLogic] & (1<<5)){	//Normal it
@@ -174,15 +181,9 @@ void bPress(animation_t * anim, uint16_t eleLogic){
 				logicGrid[eleLogic] |= (1<<6);
 				status = 1;
 				numFlags--;
-				if(isMine){
-					minesLeft--;
-				}
 			}
 		}
 		graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, status);
-	}
-	else{	//Clicking on something that was A pressed before (Number, blank pressed)
-		;
 	}
 	return;
 }
@@ -275,13 +276,21 @@ int main(){
 	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar + 4, frameTopBar + 5, 1);
 	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar + 6, frameTopBar + 7, 2);
 
+	// gridX = 30;
+	// gridX = 20;
+	// gridY = 20;
+	// gridX = 10;
+	// gridY = 10;
+
 	gridX = 30;
 	gridY = 20;
+
 	gridStartX = 80;
 	gridStartY = 80;
 	uint16_t gridSize = gridX * gridY;
 	float mineProbability;
 	mineProbability = 0.175;
+	// mineProbability = 0.15;
 
 	logicGrid = (uint8_t *) malloc(gridSize * sizeof(uint8_t));
 	coordGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
@@ -311,7 +320,6 @@ int main(){
 	while(1){
 	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)	//Need to figure out how to get the loop increment
 	    if(st->buttons & CONT_START){
-	    	// error_freeze("non-mines: %d", nonMinesLeft);
 			reset_grid(&Tiles.spritesheet_animation_array[3], mineProbability);
 	    }
 	    if(st->buttons & CONT_A){
@@ -462,11 +470,6 @@ Things about Minesweeper:
 	- You can Right click or double Left click (maybe?) a number to "left click" all the surrounding numbers that aren't flags/question marks
 	- Add proper "reveal map" logic and make the player unable to toggle flags then
 
-	Bugs:
-	- Game doesn't lock when you win, will fix this when I fix the win condition (Only mines are unclicked)
-		- Game does lock when dead though
-		- Also says you win based on if all mines have been flagged, doesn't consider numFlags
-
 	Difficulties:
 	- Beginner
 	- Intermediate
@@ -477,15 +480,13 @@ vahntitrio:
 As soon as you've marked enough spaces, clicking both mouse buttons at once on a number uncovers all adjacent unflagged squares.
 Thus allowing you to go finish faster.
 
-(Confirm how to activate this feature) (Will probs make it B press only for simplicity sake)
+(Confirm how to activate this feature) (Will probs make it X press for simplicity sake)
 
 
 
 
 
 Stuff to implement
-- Proper game over mechanics. Pressing a mine = game over. number of non mines = number of flags left = 0 is a win.
-	Both should result in "gameLive" being set to false and a flag for win/loss being set
 	- When gameLive is false, you can't discover tiles, can't B press, but you can left click (On the face for a reset)
 	- When gameLive is false, the "revealMap" function is called and it changed the grid differently based on win/loss
 - Do you automatically get a free lake? Probs yes
