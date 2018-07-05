@@ -13,9 +13,10 @@ uint16_t nonMinesLeft;	//When this variable equals zero, the game is won
 int numFlags;	//More like "number of flags in the pool"
 
 uint8_t overMode = 0;	//0 = ready for new game, 1 = loss (ded), 2 = win
+uint8_t revealed;
 int timeSec;
-uint8_t questionEnabled = 1;	//Enable the use of question marking
 uint8_t gameLive = 0;	//Is true when the timer is turning
+uint8_t questionEnabled = 1;	//Enable the use of question marking
 
 uint8_t gridX;
 uint8_t gridY;
@@ -25,8 +26,6 @@ uint16_t gridStartY;
 uint8_t *logicGrid;
 uint16_t *coordGrid;	//Unless changing grid size, this won't need to be changed once set
 uint16_t *frameGrid;
-
-//x is main tile, and we're checking if y is a neighbour
 
 //Only correctly works when gridX = gridY
 uint8_t neighbouring_tile(int origin, int diverge){
@@ -56,13 +55,6 @@ uint8_t populate_logic(int x, uint8_t mode){
 
 	uint8_t sum = 0;	//A tiles value
 
-	/*
-
-	x - 1 - gridX, x - gridX, x + 1 - gridX
-	x - 1,                  , x + 1
-	x - 1 + gridX, x + gridX, x + 1 + gridX
-
-	*/
 	if(neighbouring_tile(x, x - 1 - gridX)){sum += populate_logic(x - 1 - gridX, 1);}	//Top Left
 	if(neighbouring_tile(x, x - 1)){sum += populate_logic(x - 1, 1);}					//Mid Left
 	if(neighbouring_tile(x, x - 1 + gridX)){sum += populate_logic(x - 1 + gridX, 1);}	//Bottom left
@@ -104,15 +96,9 @@ void reset_grid(animation_t * anim, float mineProbability){
 		populate_logic(i, 0);	//This is generating values larger than 10 when it shouldn't
 	}
 
-	// for(i = 0; i < 2 * gridSize; i = i + 2){
-	// 	if(logicGrid[i/2] > 10){
-	// 		error_freeze("bad", logicGrid[i/2]);
-	// 	}
-	// 	graphics_frame_coordinates(anim, frameGrid + i, frameGrid + i + 1, logicGrid[i/2] + 6);
-	// }
-
 	gameLive = 0;
 	overMode = 0;
+	revealed = 0;
 
 	timeSec = 0;
 	nonMinesLeft = gridSize - numFlags;
@@ -122,11 +108,36 @@ void reset_grid(animation_t * anim, float mineProbability){
 
 //Extracts k bits from "number" starting at index p from right (So number 25/11001, k 4, p 2 = 1100 (All but the 2^0 bit))
 //Note to do the whole number p = 1, k = num bits of number
-int bitExtraction(int number, int k, int p){
+int bit_extraction(int number, int k, int p){
 	return (((1 << k) - 1) & (number >> (p - 1)));
 }
 
-void discoverTile(animation_t * anim, uint16_t eleLogic){
+void reveal_map(animation_t * anim){
+	//It fills it out differently depending on overMode
+	//0 = ready for new game, 1 = loss (ded), 2 = win
+	int i;
+	if(overMode == 1){
+		for(i = 0; i < gridX * gridY; i++){
+			if(logicGrid[i] == 9 || logicGrid[i] == 41){	//Untouched or question marked
+				graphics_frame_coordinates(anim, frameGrid + (2 * i), frameGrid + (2 * i) + 1, 3);
+			}
+			if(logicGrid[i] != 73 && logicGrid[i] & 1<<6){	//Untouched or question marked
+				graphics_frame_coordinates(anim, frameGrid + (2 * i), frameGrid + (2 * i) + 1, 5);
+			}
+		}
+	}
+	else if(overMode == 2){
+		for(i = 0; i < gridX * gridY; i++){
+			if(bit_extraction(logicGrid[i], 4, 1) == 9){
+				graphics_frame_coordinates(anim, frameGrid + (2 * i), frameGrid + (2 * i) + 1, 1);
+			}
+		}
+	}
+	revealed = 1;
+	return;
+}
+
+void discover_tile(animation_t * anim, uint16_t eleLogic){
 	int ele = eleLogic * 2;
 	if(!(logicGrid[eleLogic] & 1<<6)){	//When not flagged
 		if(logicGrid[eleLogic] & 1<<7){	//Already discovered
@@ -142,17 +153,15 @@ void discoverTile(animation_t * anim, uint16_t eleLogic){
 			nonMinesLeft--;
 		}
 		logicGrid[eleLogic] |= (1<<7);
-		if(bitExtraction(logicGrid[eleLogic], 4, 1) == 0){
-			//Make recursive calls to the neighbours
-
-			if(neighbouring_tile(eleLogic, eleLogic - 1)){discoverTile(anim, eleLogic - 1);}						//Left
-			if(neighbouring_tile(eleLogic, eleLogic - 1 - gridX)){discoverTile(anim, eleLogic - 1 - gridX);}		//Top Left
-			if(neighbouring_tile(eleLogic, eleLogic - 1 + gridX)){discoverTile(anim, eleLogic - 1 + gridX);}		//Bottom Left
-			if(neighbouring_tile(eleLogic, eleLogic + 1)){discoverTile(anim, eleLogic + 1);}						//Right
-			if(neighbouring_tile(eleLogic, eleLogic + 1 - gridX)){discoverTile(anim, eleLogic + 1 - gridX);}		//Top Right
-			if(neighbouring_tile(eleLogic, eleLogic + 1 + gridX)){discoverTile(anim, eleLogic + 1 + gridX);}		//Bottom Right
-			if(neighbouring_tile(eleLogic, eleLogic - gridX)){discoverTile(anim, eleLogic - gridX);}				//Top centre
-			if(neighbouring_tile(eleLogic, eleLogic + gridX)){discoverTile(anim, eleLogic + gridX);}				//Bottom centre
+		if(bit_extraction(logicGrid[eleLogic], 4, 1) == 0){
+			if(neighbouring_tile(eleLogic, eleLogic - 1)){discover_tile(anim, eleLogic - 1);}					//Left
+			if(neighbouring_tile(eleLogic, eleLogic - 1 - gridX)){discover_tile(anim, eleLogic - 1 - gridX);}	//Top Left
+			if(neighbouring_tile(eleLogic, eleLogic - 1 + gridX)){discover_tile(anim, eleLogic - 1 + gridX);}	//Bottom Left
+			if(neighbouring_tile(eleLogic, eleLogic + 1)){discover_tile(anim, eleLogic + 1);}					//Right
+			if(neighbouring_tile(eleLogic, eleLogic + 1 - gridX)){discover_tile(anim, eleLogic + 1 - gridX);}	//Top Right
+			if(neighbouring_tile(eleLogic, eleLogic + 1 + gridX)){discover_tile(anim, eleLogic + 1 + gridX);}	//Bottom Right
+			if(neighbouring_tile(eleLogic, eleLogic - gridX)){discover_tile(anim, eleLogic - gridX);}			//Top centre
+			if(neighbouring_tile(eleLogic, eleLogic + gridX)){discover_tile(anim, eleLogic + gridX);}			//Bottom centre
 		}
 	}
 	return;
@@ -160,7 +169,7 @@ void discoverTile(animation_t * anim, uint16_t eleLogic){
 
 
 //If we use a flag that decrements the flag count, leaving flag will increment it
-void bPress(animation_t * anim, uint16_t eleLogic){
+void b_press(animation_t * anim, uint16_t eleLogic){
 	int ele = eleLogic * 2;
 	if(!(logicGrid[eleLogic] & 1<<7)){	//Not discovered
 		uint8_t status = 0;	//0 = normal, 1 = flag, 2 = question icons
@@ -189,7 +198,7 @@ void bPress(animation_t * anim, uint16_t eleLogic){
 }
 
 //Must be called within a pvr_list_begin(), used for displaying the counter for flags and timer
-void digitDisplay(spritesheet_t * ss, animation_t * anim, int num, uint16_t x, uint16_t y){
+void digit_display(spritesheet_t * ss, animation_t * anim, int num, uint16_t x, uint16_t y){
 	if(num < -99){
 		num = -99;
 	}
@@ -226,13 +235,13 @@ int main(){
 	spritesheet_t Tiles, Windows;
 	int cursorPos[8];
 	int clickedCursorPos[8];
-	uint8_t heldB[4];
+	uint8_t held[8];
 	int iter;
 	int jiter;
-	for(iter = 0; iter < 4; iter++){
-		clickedCursorPos[2 * iter] = -1;
-		clickedCursorPos[(2 * iter) + 1] = -1;
-		heldB[iter] = 0;
+	for(iter = 0; iter < 8; iter++){
+		clickedCursorPos[iter] = -1;
+		// clickedCursorPos[(2 * iter) + 1] = -1;
+		held[iter] = 0;
 	}
 
 	cursorPos[0] = 50;
@@ -276,21 +285,18 @@ int main(){
 	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar + 4, frameTopBar + 5, 1);
 	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar + 6, frameTopBar + 7, 2);
 
-	// gridX = 30;
-	// gridX = 20;
-	// gridY = 20;
-	// gridX = 10;
-	// gridY = 10;
 
-	gridX = 30;
-	gridY = 20;
+	// gridX = 30;
+	// gridY = 20;
+
+	gridX = 10;
+	gridY = 10;
 
 	gridStartX = 80;
 	gridStartY = 80;
 	uint16_t gridSize = gridX * gridY;
 	float mineProbability;
 	mineProbability = 0.175;
-	// mineProbability = 0.15;
 
 	logicGrid = (uint8_t *) malloc(gridSize * sizeof(uint8_t));
 	coordGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
@@ -318,9 +324,15 @@ int main(){
 	uint32_t startMSTime = 0;
 
 	while(1){
-	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)	//Need to figure out how to get the loop increment
+	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 	    if(st->buttons & CONT_START){
-			reset_grid(&Tiles.spritesheet_animation_array[3], mineProbability);
+	    	if(!held[__i + 4]){
+				reset_grid(&Tiles.spritesheet_animation_array[3], mineProbability);
+			    held[__i + 4] = 1;
+		    }
+	    }
+	    else{
+	    	held[__i + 4] = 0;
 	    }
 	    if(st->buttons & CONT_A){
 			if(clickedCursorPos[2 * __i] == -1 && clickedCursorPos[(2 * __i) + 1] == -1){
@@ -329,35 +341,37 @@ int main(){
 			}
 	    }
 	    else{
-	    	//Maths needed to see if the pos-es allign, for now I'll just say they're equal
-	    	if(cursorPos[2 * __i] == clickedCursorPos[2 * __i] && cursorPos[(2 * __i) + 1] == clickedCursorPos[(2 * __i) + 1]){
-	    		int xPart;
-	    		int yPart;
+	    	if(clickedCursorPos[__i * 2] != -1 && clickedCursorPos[(__i * 2) + 1] != -1){
+		    	int xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
+		    	int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
 
-	    		//If the cursor is within the maze
-	    		if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
-	    			&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
-	    			//These two calls are supposed to floor it to the below multiple of 16, they contain the thing coords, not elements
-	    			xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
-	    			yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
+		    	//Check that you're looking at the same tile you pressed on
+		    	if(xPart == (clickedCursorPos[2 * __i] - clickedCursorPos[2 * __i] % 16) - gridStartX
+		    		&& yPart == (clickedCursorPos[(2 * __i) + 1] - clickedCursorPos[(2 * __i) + 1] % 16) - gridStartY){
 
-	    			int eleLogic = (xPart / 16) + (gridX * yPart / 16);
-	    			if(overMode == 0){
-	    				if(!gameLive){
-	    					timer_ms_gettime(&startTime, &startMSTime);
-	    					gameLive = 1;
-	    				}
-	    				discoverTile(&Tiles.spritesheet_animation_array[3], eleLogic);
-	    			}
-	    		}
+		    		//If the cursor is within the maze
+		    		if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
+		    			&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
+		    			//These two calls are supposed to floor it to the below multiple of 16, they contain the thing coords, not elements
+
+		    			int eleLogic = (xPart / 16) + (gridX * yPart / 16);
+		    			if(overMode == 0){
+		    				if(!gameLive){
+		    					timer_ms_gettime(&startTime, &startMSTime);
+		    					gameLive = 1;
+		    				}
+		    				discover_tile(&Tiles.spritesheet_animation_array[3], eleLogic);
+		    			}
+		    		}
+		    	}
+		    	clickedCursorPos[__i * 2] = -1;
+		    	clickedCursorPos[(__i * 2) + 1] = -1;
 	    	}
-	    	clickedCursorPos[__i * 2] = -1;
-	    	clickedCursorPos[(__i * 2) + 1] = -1;
 	    }
 
 	    if((st->buttons & CONT_B) && (overMode == 0)){
 	    	//Press instantly makes flag
-	    	if(!heldB[__i]){
+	    	if(!held[__i]){
 	    		//If the cursor is within the maze
 	    		if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
 	    			&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){	//This check isn't complete
@@ -365,13 +379,13 @@ int main(){
 			    	int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
 
 			    	int eleLogic = (xPart / 16) + (gridX * yPart / 16);
-			    	bPress(&Tiles.spritesheet_animation_array[3], eleLogic);
+			    	b_press(&Tiles.spritesheet_animation_array[3], eleLogic);
 			    }
-			    heldB[__i] = 1;
+			    held[__i] = 1;
 		    }
 	    }
 	    else{
-	    	heldB[__i] = 0;
+	    	held[__i] = 0;
 	    }
 	    if(st->buttons & CONT_DPAD_UP){
 			cursorPos[(2 * __i) + 1] -= 2;
@@ -400,9 +414,14 @@ int main(){
 		
    		MAPLE_FOREACH_END()
 
-   		if(nonMinesLeft == 0){
+   		if(nonMinesLeft == 0 && gameLive && overMode == 0){
    			gameLive = 0;
    			overMode = 2;
+   		}
+
+   		//Right now this is always triggered when a game ends, I should do something so it only calls this once
+   		if(!revealed && !gameLive && overMode != 0){
+   			reveal_map(&Tiles.spritesheet_animation_array[3]);
    		}
 
    		//The face icon, this code needs updating
@@ -412,7 +431,7 @@ int main(){
    		else if(overMode == 1){
 			graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, 2);
    		}
-   		else{
+   		else if(overMode == 2){
 			graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, 3);
    		}
 
@@ -421,7 +440,7 @@ int main(){
 			timeSec = currentTime - startTime + (currentMSTime > startMSTime); //MS is there to account for the "1st second" inaccuracy
 		}
 
-   		pvr_wait_ready();	//With the timer it crashes here or waits indefinately
+   		pvr_wait_ready();
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
@@ -433,12 +452,13 @@ int main(){
 		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[1], coordTopBar, frameTopBar, 8, 4, 1, 1, 1, 0);
 
 		//Draw the flag count and timer
-		digitDisplay(&Tiles, &Tiles.spritesheet_animation_array[2], numFlags, 50, 35);
-		digitDisplay(&Tiles, &Tiles.spritesheet_animation_array[2], timeSec, 551, 35);
+		digit_display(&Tiles, &Tiles.spritesheet_animation_array[2], numFlags, 50, 35);
+		digit_display(&Tiles, &Tiles.spritesheet_animation_array[2], timeSec, 551, 35);
 
-		//Draw the reset button
+		//Draw the reset button face
 		graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[1], 307, 35, 1, 1, 1, face_frame_x, face_frame_y, 0);
 
+		//Draw the cursors
 		for(iter = 0; iter < 8; iter = iter + 2){
 			graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[0], cursorPos[iter], cursorPos[iter + 1], 10, 1, 1, 0, 0, 0);
 		}
@@ -468,7 +488,6 @@ int main(){
 Things about Minesweeper:
 
 	- You can Right click or double Left click (maybe?) a number to "left click" all the surrounding numbers that aren't flags/question marks
-	- Add proper "reveal map" logic and make the player unable to toggle flags then
 
 	Difficulties:
 	- Beginner
@@ -487,8 +506,6 @@ Thus allowing you to go finish faster.
 
 
 Stuff to implement
-	- When gameLive is false, you can't discover tiles, can't B press, but you can left click (On the face for a reset)
-	- When gameLive is false, the "revealMap" function is called and it changed the grid differently based on win/loss
 - Do you automatically get a free lake? Probs yes
 
 */
