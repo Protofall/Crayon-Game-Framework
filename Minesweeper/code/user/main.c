@@ -4,20 +4,22 @@
 #include "../crayon/dreamcast/graphics.h"
 
 #include <dc/maple.h>
-#include <dc/maple/controller.h> //For the "Press start to exit" thing
+#include <dc/maple/controller.h>
 
 //For the timer
 #include <arch/timer.h>
 
-uint16_t minesLeft;	//Might be redundant
+uint16_t minesLeft;	//Redundant
 
-uint16_t numMines;
+uint16_t numMines;	//Redundant?
 uint16_t nonMinesLeft;	//When this variable equals zero, the game is won
 int numFlags;	//More like "number of flags in the pool"
 
-uint8_t alive = 1;
+uint8_t overMode = 0;	//0 = ready for new game, 1 = loss (ded), 2 = win
+// uint8_t alive = 1;	//Redendant due to gameLive. Replace with a "homeNotLive" variable
+int timeSec;
 uint8_t questionEnabled = 1;	//Enable the use of question marking
-uint8_t gameLive;	//Is true when the timer is turning
+uint8_t gameLive = 0;	//Is true when the timer is turning
 
 uint8_t gridX;
 uint8_t gridY;
@@ -69,6 +71,7 @@ uint8_t populate_logic(int x, uint8_t mode){
 void reset_grid(animation_t * anim, float mineProbability){
 	gameLive = 0;
 	numMines = 0;
+	timeSec = 0;
 	int i;
 	uint16_t gridSize = gridX * gridY;
 	for(i = 0; i < gridSize; i++){
@@ -87,7 +90,7 @@ void reset_grid(animation_t * anim, float mineProbability){
 		populate_logic(i, 0);
 	}
 
-	alive = 1;
+	overMode = 0;
 	minesLeft = numMines;
 	numFlags = numMines;
 	nonMinesLeft = gridSize - numMines;
@@ -113,10 +116,12 @@ void discoverTile(animation_t * anim, uint16_t eleLogic){
 		if(logicGrid[eleLogic] == 9){	//If mine
 			numMines--;
 			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 4);
-			alive = 0;
+			gameLive = 0;
+			overMode = 1;
 		}
 		else{
 			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 6 + logicGrid[eleLogic]);
+			nonMinesLeft--;
 		}
 		logicGrid[eleLogic] |= (1<<7);
 		if(bitExtraction(logicGrid[eleLogic], 4, 1) == 0){
@@ -276,19 +281,14 @@ int main(){
 	gridStartY = 80;
 	uint16_t gridSize = gridX * gridY;
 	float mineProbability;
-	if(0){
-		mineProbability = 0.175;
-	}
-	else{
-		mineProbability = 0.1;
-	}
+	mineProbability = 0.175;
 
 	logicGrid = (uint8_t *) malloc(gridSize * sizeof(uint8_t));
 	coordGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
 	frameGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
 
 	for(jiter = 0; jiter < gridY; jiter++){
-		for(iter = 0; iter < gridX; iter++){	//i is x, j is y
+		for(iter = 0; iter < gridX; iter++){	//iter is x, jiter is y
 			uint16_t ele = (jiter * gridX * 2) + (2 * iter);
 			coordGrid[ele] = gridStartX + (iter * 16);
 			coordGrid[ele + 1] = gridStartY + (jiter * 16);
@@ -298,20 +298,20 @@ int main(){
 	//Set the grid's initial values
 	reset_grid(&Tiles.spritesheet_animation_array[3], mineProbability);
 
+	//The face frame coords
 	uint16_t face_frame_x;
 	uint16_t face_frame_y;
 
-	pvr_stats_t stats;
+	//For the timer
 	uint32_t currentTime = 0;
+	uint32_t currentMSTime = 0;
 	uint32_t startTime = 0;
-	int timeSec = 0;
-
-	bfont_set_encoding(BFONT_CODE_ISO8859_1);
-  	char mineStr[80];
+	uint32_t startMSTime = 0;
 
 	while(1){
 	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)	//Need to figure out how to get the loop increment
 	    if(st->buttons & CONT_START){
+	    	// error_freeze("non-mines: %d", nonMinesLeft);
 			reset_grid(&Tiles.spritesheet_animation_array[3], mineProbability);
 	    }
 	    if(st->buttons & CONT_A){
@@ -334,9 +334,9 @@ int main(){
 	    			yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
 
 	    			int eleLogic = (xPart / 16) + (gridX * yPart / 16);
-	    			if(alive){
+	    			if(overMode == 0){
 	    				if(!gameLive){
-	    					timer_ms_gettime(&startTime, 0);
+	    					timer_ms_gettime(&startTime, &startMSTime);
 	    					gameLive = 1;
 	    				}
 	    				discoverTile(&Tiles.spritesheet_animation_array[3], eleLogic);
@@ -347,7 +347,7 @@ int main(){
 	    	clickedCursorPos[(__i * 2) + 1] = -1;
 	    }
 
-	    if((st->buttons & CONT_B) && alive){
+	    if((st->buttons & CONT_B) && (overMode == 0)){
 	    	//Press instantly makes flag
 	    	if(!heldB[__i]){
 	    		//If the cursor is within the maze
@@ -392,19 +392,25 @@ int main(){
 		
    		MAPLE_FOREACH_END()
 
-    	pvr_get_stats(&stats);
+   		if(nonMinesLeft == 0){
+   			gameLive = 0;
+   			overMode = 2;
+   		}
 
    		//The face icon, this code needs updating
-   		if(!alive){
+   		if(overMode == 0){
+			graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, 0);
+   		}
+   		else if(overMode == 1){
 			graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, 2);
    		}
    		else{
-			graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, 0);
+			graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, 3);
    		}
 
-		timer_ms_gettime(&currentTime, 0);
-		if(gameLive){	//Change to compare with miliseconds too (For accurate "1st second")
-			timeSec = (int)(currentTime - startTime) + 1;
+		timer_ms_gettime(&currentTime, &currentMSTime);
+		if(gameLive && timeSec < 999){	//Prevent timer overflows
+			timeSec = currentTime - startTime + (currentMSTime > startMSTime); //MS is there to account for the "1st second" inaccuracy
 		}
 
    		pvr_wait_ready();	//With the timer it crashes here or waits indefinately
@@ -454,9 +460,7 @@ int main(){
 Things about Minesweeper:
 
 	- You can Right click or double Left click (maybe?) a number to "left click" all the surrounding numbers that aren't flags/question marks
-	- The mine count is really a flag count, it starts at the number of mines and if too many flags have been placed, it can go negative
 	- Add proper "reveal map" logic and make the player unable to toggle flags then
-	- Don't forget to add question mark toggle
 
 	Bugs:
 	- Game doesn't lock when you win, will fix this when I fix the win condition (Only mines are unclicked)
@@ -469,17 +473,21 @@ Things about Minesweeper:
 	- Expert
 	- Legacy User (Largest grid)
 
-vahntitrio
-23 points
-·
-3 years ago
-·
-edited 3 years ago
+vahntitrio:
 As soon as you've marked enough spaces, clicking both mouse buttons at once on a number uncovers all adjacent unflagged squares.
 Thus allowing you to go finish faster.
 
-(Confirm how to activate this feature)
+(Confirm how to activate this feature) (Will probs make it B press only for simplicity sake)
 
-Do you automatically get a free lake?
+
+
+
+
+Stuff to implement
+- Proper game over mechanics. Pressing a mine = game over. number of non mines = number of flags left = 0 is a win.
+	Both should result in "gameLive" being set to false and a flag for win/loss being set
+	- When gameLive is false, you can't discover tiles, can't B press, but you can left click (On the face for a reset)
+	- When gameLive is false, the "revealMap" function is called and it changed the grid differently based on win/loss
+- Do you automatically get a free lake? Probs yes
 
 */
