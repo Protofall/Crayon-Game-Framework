@@ -72,7 +72,7 @@ uint8_t populate_logic(int x, uint8_t mode){
 }
 
 uint8_t true_prob(double p){
-    return rand() < p * (RAND_MAX + 1.0);
+	return rand() < p * (RAND_MAX + 1.0);
 }
 
 //Call this to reset the grid
@@ -345,11 +345,9 @@ int main(){
 	gridX = 30;
 	gridY = 20;
 
-	// gridX = 10;
-	// gridY = 10;
-
 	gridStartX = 80;
-	gridStartY = 80;
+	gridStartY = 80; //+ 24 = 104
+	// gridStartY = 104;	//This messes stuff up
 	uint16_t gridSize = gridX * gridY;
 	float mineProbability;
 	mineProbability = 0.175;
@@ -376,7 +374,7 @@ int main(){
 	//Cursor Player icon frame coords
 	uint16_t p_frame_x = 0;
 	uint16_t p_frame_y = 0;
-	uint8_t playerActive = 0;;
+	uint8_t playerActive = 0;	//Used to confirm if a controller is being used
 	graphics_frame_coordinates(&Tiles.spritesheet_animation_array[3], &p_frame_x, &p_frame_y, 0);
 
 	//For the timer
@@ -386,127 +384,127 @@ int main(){
 	uint32_t startMSTime = 0;
 
 	while(1){
-	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-	    if(!(playerActive & (1 << __i)) && st->buttons != 0){
-	    	playerActive |= (1 << __i);
-	    	continue;
-	    }
-	    if(st->buttons & CONT_START){
-	    	if(!held[__i + 4]){
+		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
+		if(!(playerActive & (1 << __i)) && st->buttons != 0){
+			playerActive |= (1 << __i);
+			continue;
+		}
+		if(st->buttons & CONT_START){
+			if(!held[__i + 4]){
 				reset_grid(&Tiles.spritesheet_animation_array[4], mineProbability);
-			    held[__i + 4] = 1;
-		    }
-	    }
-	    else{
-	    	held[__i + 4] = 0;
-	    }
-	    if(st->buttons & CONT_A){
+				held[__i + 4] = 1;
+			}
+		}
+		else{
+			held[__i + 4] = 0;
+		}
+		if(st->buttons & CONT_A){
 			if(clickedCursorPos[2 * __i] == -1 && clickedCursorPos[(2 * __i) + 1] == -1){
 				clickedCursorPos[2 * __i] = cursorPos[2 * __i];
 				clickedCursorPos[(2 * __i) + 1] = cursorPos[(2 * __i) + 1];
 				held[8 + __i] = 1;
 			}
-	    }
-	    else{
-	    	if(clickedCursorPos[__i * 2] != -1 && clickedCursorPos[(__i * 2) + 1] != -1 && held[8 + __i] == 1){
-		    	int xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
-		    	int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
+		}
+		else{
+			if(clickedCursorPos[__i * 2] != -1 && clickedCursorPos[(__i * 2) + 1] != -1 && held[8 + __i] == 1){
+				int xPart = (cursorPos[2 * __i]  - gridStartX) / 16;
+				int yPart = (cursorPos[(2 * __i) + 1]  - gridStartY) / 16;
 
-		    	//Check that you're looking at the same tile you pressed on
-		    	if(xPart == (clickedCursorPos[2 * __i] - clickedCursorPos[2 * __i] % 16) - gridStartX
-		    		&& yPart == (clickedCursorPos[(2 * __i) + 1] - clickedCursorPos[(2 * __i) + 1] % 16) - gridStartY){
+				//Check that you're looking at the same tile you pressed on
+				if(xPart == (clickedCursorPos[2 * __i]  - gridStartX) / 16 && yPart == (clickedCursorPos[(2 * __i) + 1]  - gridStartY) / 16){
 
-		    		//If the cursor is within the maze
-		    		if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
-		    			&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
-		    			int eleLogic = (xPart / 16) + (gridX * yPart / 16);
-		    			if(overMode == 0){
-		    				if(!gameLive){
-		    					timer_ms_gettime(&startTime, &startMSTime);
-		    					gameLive = 1;
-		    				}
-		    				discover_tile(&Tiles.spritesheet_animation_array[4], eleLogic);
-		    			}
-		    		}
-		    	}
-		    	clickedCursorPos[__i * 2] = -1;
-		    	clickedCursorPos[(__i * 2) + 1] = -1;
-		    	held[8 + __i] = 0;
-	    	}
-	    }
-	    if(st->buttons & CONT_X){
+					//If the cursor is within the maze
+					if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
+						&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
+						// int eleLogic = (xPart / 16) + (gridX * yPart / 16);
+						int eleLogic = xPart + gridX * yPart;
+						// error_freeze("eleLogic %d", eleLogic);
+						if(overMode == 0){
+							if(!gameLive){
+								timer_ms_gettime(&startTime, &startMSTime);
+								gameLive = 1;
+							}
+							discover_tile(&Tiles.spritesheet_animation_array[4], eleLogic);
+						}
+					}
+				}
+				clickedCursorPos[__i * 2] = -1;
+				clickedCursorPos[(__i * 2) + 1] = -1;
+				held[8 + __i] = 0;
+			}
+		}
+		if(st->buttons & CONT_X){
 			if(clickedCursorPos[2 * __i] == -1 && clickedCursorPos[(2 * __i) + 1] == -1){
 				clickedCursorPos[2 * __i] = cursorPos[2 * __i];
 				clickedCursorPos[(2 * __i) + 1] = cursorPos[(2 * __i) + 1];
 				held[8 + __i] = 2;
 			}
-	    }
-	    else{
-	    	if(clickedCursorPos[__i * 2] != -1 && clickedCursorPos[(__i * 2) + 1] != -1 && held[8 + __i] == 2){
-		    	int xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
-		    	int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
+		}
+		else{
+			if(clickedCursorPos[__i * 2] != -1 && clickedCursorPos[(__i * 2) + 1] != -1 && held[8 + __i] == 2){
+				int xPart = (cursorPos[2 * __i]  - gridStartX) / 16;
+				int yPart = (cursorPos[(2 * __i) + 1]  - gridStartY) / 16;
 
-		    	//Check that you're looking at the same tile you pressed on
-		    	if(xPart == (clickedCursorPos[2 * __i] - clickedCursorPos[2 * __i] % 16) - gridStartX
-		    		&& yPart == (clickedCursorPos[(2 * __i) + 1] - clickedCursorPos[(2 * __i) + 1] % 16) - gridStartY){
+				//Check that you're looking at the same tile you pressed on
+				if(xPart == (clickedCursorPos[2 * __i]  - gridStartX) / 16 && yPart == (clickedCursorPos[(2 * __i) + 1]  - gridStartY) / 16){
 
-		    		//If the cursor is within the maze
-		    		if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
-		    			&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
-		    			int eleLogic = (xPart / 16) + (gridX * yPart / 16);
-		    			if(overMode == 0 && gameLive){
-		    				x_press(&Tiles.spritesheet_animation_array[4], eleLogic);
-		    			}
-		    		}
-		    	}
-		    	clickedCursorPos[__i * 2] = -1;
-		    	clickedCursorPos[(__i * 2) + 1] = -1;
-		    	held[8 + __i] = 0;
-	    	}
-	    }
+					//If the cursor is within the maze
+					if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
+						&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
+						int eleLogic = xPart + gridX * yPart;
+						if(overMode == 0 && gameLive){
+							x_press(&Tiles.spritesheet_animation_array[4], eleLogic);
+						}
+					}
+				}
+				clickedCursorPos[__i * 2] = -1;
+				clickedCursorPos[(__i * 2) + 1] = -1;
+				held[8 + __i] = 0;
+			}
+		}
 
-	    if((st->buttons & CONT_B) && (overMode == 0)){
-	    	//Press instantly makes flag
-	    	if(!held[__i]){
-	    		//If the cursor is within the maze
-	    		if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
-	    			&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){	//This check isn't complete
-			    	int xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
-			    	int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
+		if((st->buttons & CONT_B) && (overMode == 0)){
+			//Press instantly makes flag
+			if(!held[__i]){
+				//If the cursor is within the maze
+				if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
+					&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){	//This check isn't complete
+					int xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
+					int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
 
-			    	int eleLogic = (xPart / 16) + (gridX * yPart / 16);
-			    	b_press(&Tiles.spritesheet_animation_array[4], eleLogic);
-			    }
-			    held[__i] = 1;
-		    }
-	    }
-	    else{
-	    	held[__i] = 0;
-	    }
-	    if(st->buttons & CONT_DPAD_UP){
+					int eleLogic = (xPart / 16) + (gridX * yPart / 16);
+					b_press(&Tiles.spritesheet_animation_array[4], eleLogic);
+				}
+				held[__i] = 1;
+			}
+		}
+		else{
+			held[__i] = 0;
+		}
+		if(st->buttons & CONT_DPAD_UP){
 			cursorPos[(2 * __i) + 1] -= 2;
 			if(cursorPos[(2 * __i) + 1] < 0){
 				cursorPos[(2 * __i) + 1] = 0;
 			}
-	    }
-	    if(st->buttons & CONT_DPAD_DOWN){
+		}
+		if(st->buttons & CONT_DPAD_DOWN){
 			cursorPos[(2 * __i) + 1] += 2;
 			if(cursorPos[(2 * __i) + 1] > 480){
 				cursorPos[(2 * __i) + 1] = 480;
 			}
-	    }
-	    if(st->buttons & CONT_DPAD_LEFT){
+		}
+		if(st->buttons & CONT_DPAD_LEFT){
 			cursorPos[2 * __i] -= 2;
 			if(cursorPos[2 * __i] < 0){
 				cursorPos[2 * __i] = 0;
 			}
-	    }
-	    if(st->buttons & CONT_DPAD_RIGHT){
+		}
+		if(st->buttons & CONT_DPAD_RIGHT){
 			cursorPos[2 * __i] += 2;
 			if(cursorPos[2 * __i] > 640){
 				cursorPos[2 * __i] = 640;
 			}
-	    }
+		}
 		
    		MAPLE_FOREACH_END()
 
@@ -567,7 +565,7 @@ int main(){
 
 		//Group the windows bar into a single draw later
 		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[0], coordTaskBar, frameTaskBar, 8, 4, 1, 1, 1, 0);
-    	
+		
 		pvr_list_finish();
 
 		pvr_scene_finish();
@@ -579,7 +577,7 @@ int main(){
    	retVal += memory_free_crayon_packer_sheet(&Windows);
 	error_freeze("Free-ing result %d!\n", retVal);
 
-    return 0;
+	return 0;
 }
 
 /*
@@ -614,8 +612,4 @@ Stuff to implement
 
 
 
-//Note: You CAN A/X press on a question mark. The question mark is only there for the user, doesn't have extra behaviour
-//BUG sometimes x press fails when I don't think it should...maybe a screen wrap thing?
-	//Seems to be iffy when pressing mines too...need to check execution logic
-
-//Pressing on a fake mine with nothing around does nothing. Is that a bug?
+//X Pressing on a fake mine with nothing around does nothing. Is that a bug?
