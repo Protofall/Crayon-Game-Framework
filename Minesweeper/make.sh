@@ -36,7 +36,7 @@ packerSheet () {	#$3 is the format
 
 	texconv -i "$2/$name.crayon_temp.png" -o "$2/$name.dtex" -f "$3"
 
-	pngCount=$(wc -l "$2/$name.crayon_temp.txt" | cut -d' ' -f 1)
+	pngCount=$(wc -l "$2/$name.crayon_temp.txt" | xargs | cut -d' ' -f 1)
 	echo "$pngCount" >> "$2/$name.txt"
 
 	#Make the new and improved txt file based on the dims of the original png's and the packer txt (Also crop name to remove last 2 fields)

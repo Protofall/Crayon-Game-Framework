@@ -137,11 +137,16 @@ void reveal_map(animation_t * anim){
 	return;
 }
 
+//Doesn't handle questions correctly
 void discover_tile(animation_t * anim, uint16_t eleLogic){
-	int ele = eleLogic * 2;
 	if(!(logicGrid[eleLogic] & 1<<6)){	//When not flagged
 		if(logicGrid[eleLogic] & 1<<7){	//Already discovered
 			return;
+		}
+		int ele = eleLogic * 2;
+		if(logicGrid[eleLogic] & 1<<5){	//If questioned, remove the question mark and set it to a normal tile
+			logicGrid[eleLogic] &= ~(1<<5);
+			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 0);
 		}
 		if(logicGrid[eleLogic] == 9){	//If mine
 			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 4);
@@ -167,6 +172,55 @@ void discover_tile(animation_t * anim, uint16_t eleLogic){
 	return;
 }
 
+//Right clicking next to a question marked mine updates its sprite to a glitchy one
+
+/*
+
+1 2 (Blank)
+1 question(isMine) Flag(incorrect)
+1 1 2
+X clicking the centre bottom 1 results in glitchy question and no gameover
+
+*/
+
+void x_press(animation_t * anim, uint16_t eleLogic){
+	if((logicGrid[eleLogic] & 1<<7) || (logicGrid[eleLogic] & 1<<6) || (logicGrid[eleLogic] & 1<<5)){	//If revealed or flagged or questioned
+		int eles[8];
+		uint8_t successfuls = 0;
+		uint8_t invalidness = 0;
+		eles[0] = eleLogic - 1;
+		eles[1] = eleLogic - 1 - gridX;
+		eles[2] = eleLogic - 1 + gridX;
+		eles[3] = eleLogic + 1;
+		eles[4] = eleLogic + 1 - gridX;
+		eles[5] = eleLogic + 1 + gridX;
+		eles[6] = eleLogic - gridX;
+		eles[7] = eleLogic + gridX;
+		int i;
+		for(i = 0; i < 8; i++){
+			if(neighbouring_tile(eleLogic, eles[i])){	//If it is a neighbour
+				successfuls |= (1<<i);	//We'll traverse it later
+				if(logicGrid[eles[i]] == 9){	//Don't proceed if an unmarked mine is nearby)
+					invalidness |= (1<<0);
+				}
+				if(logicGrid[eles[i]] & (1<<6) && logicGrid[eles[i]] != 73){	//Do proceed if theres a false question mark within range
+					invalidness |= (1<<1);
+				}
+			}
+		}
+		if(invalidness == 1){
+			return;
+		}
+
+		//Discover the valid tiles
+		for(i = 0; i < 8; i++){
+			if(successfuls & (1<<i)){
+				discover_tile(anim, eles[i]);
+			}
+		}
+	}
+	return;
+}
 
 //If we use a flag that decrements the flag count, leaving flag will increment it
 void b_press(animation_t * anim, uint16_t eleLogic){
@@ -235,12 +289,14 @@ int main(){
 	spritesheet_t Tiles, Windows;
 	int cursorPos[8];
 	int clickedCursorPos[8];
-	uint8_t held[8];
+	uint8_t held[12];	//B's, START's, A/X's (0, 1, 2) (And Y later)
 	int iter;
 	int jiter;
 	for(iter = 0; iter < 8; iter++){
 		clickedCursorPos[iter] = -1;
-		// clickedCursorPos[(2 * iter) + 1] = -1;
+		held[iter] = 0;
+	}
+	for(iter = 8; iter < 12; iter++){
 		held[iter] = 0;
 	}
 
@@ -286,11 +342,11 @@ int main(){
 	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar + 6, frameTopBar + 7, 2);
 
 
-	// gridX = 30;
-	// gridY = 20;
+	gridX = 30;
+	gridY = 20;
 
-	gridX = 10;
-	gridY = 10;
+	// gridX = 10;
+	// gridY = 10;
 
 	gridStartX = 80;
 	gridStartY = 80;
@@ -338,10 +394,11 @@ int main(){
 			if(clickedCursorPos[2 * __i] == -1 && clickedCursorPos[(2 * __i) + 1] == -1){
 				clickedCursorPos[2 * __i] = cursorPos[2 * __i];
 				clickedCursorPos[(2 * __i) + 1] = cursorPos[(2 * __i) + 1];
+				held[8 + __i] = 1;
 			}
 	    }
 	    else{
-	    	if(clickedCursorPos[__i * 2] != -1 && clickedCursorPos[(__i * 2) + 1] != -1){
+	    	if(clickedCursorPos[__i * 2] != -1 && clickedCursorPos[(__i * 2) + 1] != -1 && held[8 + __i] == 1){
 		    	int xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
 		    	int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
 
@@ -352,8 +409,6 @@ int main(){
 		    		//If the cursor is within the maze
 		    		if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
 		    			&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
-		    			//These two calls are supposed to floor it to the below multiple of 16, they contain the thing coords, not elements
-
 		    			int eleLogic = (xPart / 16) + (gridX * yPart / 16);
 		    			if(overMode == 0){
 		    				if(!gameLive){
@@ -366,6 +421,37 @@ int main(){
 		    	}
 		    	clickedCursorPos[__i * 2] = -1;
 		    	clickedCursorPos[(__i * 2) + 1] = -1;
+		    	held[8 + __i] = 0;
+	    	}
+	    }
+	    if(st->buttons & CONT_X){
+			if(clickedCursorPos[2 * __i] == -1 && clickedCursorPos[(2 * __i) + 1] == -1){
+				clickedCursorPos[2 * __i] = cursorPos[2 * __i];
+				clickedCursorPos[(2 * __i) + 1] = cursorPos[(2 * __i) + 1];
+				held[8 + __i] = 2;
+			}
+	    }
+	    else{
+	    	if(clickedCursorPos[__i * 2] != -1 && clickedCursorPos[(__i * 2) + 1] != -1 && held[8 + __i] == 2){
+		    	int xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
+		    	int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
+
+		    	//Check that you're looking at the same tile you pressed on
+		    	if(xPart == (clickedCursorPos[2 * __i] - clickedCursorPos[2 * __i] % 16) - gridStartX
+		    		&& yPart == (clickedCursorPos[(2 * __i) + 1] - clickedCursorPos[(2 * __i) + 1] % 16) - gridStartY){
+
+		    		//If the cursor is within the maze
+		    		if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
+		    			&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
+		    			int eleLogic = (xPart / 16) + (gridX * yPart / 16);
+		    			if(overMode == 0 && gameLive){
+		    				x_press(&Tiles.spritesheet_animation_array[3], eleLogic);
+		    			}
+		    		}
+		    	}
+		    	clickedCursorPos[__i * 2] = -1;
+		    	clickedCursorPos[(__i * 2) + 1] = -1;
+		    	held[8 + __i] = 0;
 	    	}
 	    }
 
@@ -487,8 +573,6 @@ int main(){
 
 Things about Minesweeper:
 
-	- You can Right click or double Left click (maybe?) a number to "left click" all the surrounding numbers that aren't flags/question marks
-
 	Difficulties:
 	- Beginner
 	- Intermediate
@@ -509,3 +593,14 @@ Stuff to implement
 - Do you automatically get a free lake? Probs yes
 
 */
+
+//Add something to be displayed on the VMU screen
+
+
+
+
+
+
+//Note: You CAN A/X press on a question mark. The question mark is only there for the user, doesn't have extra behaviour
+//BUG sometimes x press fails when I don't think it should...maybe a screen wrap thing?
+	//Seems to be iffy when pressing mines too...need to check execution logic
