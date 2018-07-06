@@ -367,11 +367,17 @@ int main(){
 	}
 
 	//Set the grid's initial values
-	reset_grid(&Tiles.spritesheet_animation_array[3], mineProbability);
+	reset_grid(&Tiles.spritesheet_animation_array[4], mineProbability);
 
 	//The face frame coords
 	uint16_t face_frame_x;
 	uint16_t face_frame_y;
+
+	//Cursor Player icon frame coords
+	uint16_t p_frame_x = 0;
+	uint16_t p_frame_y = 0;
+	uint8_t playerActive = 0;;
+	graphics_frame_coordinates(&Tiles.spritesheet_animation_array[3], &p_frame_x, &p_frame_y, 0);
 
 	//For the timer
 	uint32_t currentTime = 0;
@@ -381,9 +387,13 @@ int main(){
 
 	while(1){
 	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
+	    if(!(playerActive & (1 << __i)) && st->buttons == 0){
+	    	playerActive |= (1 << __i);
+	    	continue;
+	    }
 	    if(st->buttons & CONT_START){
 	    	if(!held[__i + 4]){
-				reset_grid(&Tiles.spritesheet_animation_array[3], mineProbability);
+				reset_grid(&Tiles.spritesheet_animation_array[4], mineProbability);
 			    held[__i + 4] = 1;
 		    }
 	    }
@@ -415,7 +425,7 @@ int main(){
 		    					timer_ms_gettime(&startTime, &startMSTime);
 		    					gameLive = 1;
 		    				}
-		    				discover_tile(&Tiles.spritesheet_animation_array[3], eleLogic);
+		    				discover_tile(&Tiles.spritesheet_animation_array[4], eleLogic);
 		    			}
 		    		}
 		    	}
@@ -445,7 +455,7 @@ int main(){
 		    			&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
 		    			int eleLogic = (xPart / 16) + (gridX * yPart / 16);
 		    			if(overMode == 0 && gameLive){
-		    				x_press(&Tiles.spritesheet_animation_array[3], eleLogic);
+		    				x_press(&Tiles.spritesheet_animation_array[4], eleLogic);
 		    			}
 		    		}
 		    	}
@@ -465,7 +475,7 @@ int main(){
 			    	int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
 
 			    	int eleLogic = (xPart / 16) + (gridX * yPart / 16);
-			    	b_press(&Tiles.spritesheet_animation_array[3], eleLogic);
+			    	b_press(&Tiles.spritesheet_animation_array[4], eleLogic);
 			    }
 			    held[__i] = 1;
 		    }
@@ -507,7 +517,7 @@ int main(){
 
    		//Right now this is always triggered when a game ends, I should do something so it only calls this once
    		if(!revealed && !gameLive && overMode != 0){
-   			reveal_map(&Tiles.spritesheet_animation_array[3]);
+   			reveal_map(&Tiles.spritesheet_animation_array[4]);
    		}
 
    		//The face icon, this code needs updating
@@ -545,12 +555,15 @@ int main(){
 		graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[1], 307, 35, 1, 1, 1, face_frame_x, face_frame_y, 0);
 
 		//Draw the cursors
-		for(iter = 0; iter < 8; iter = iter + 2){
-			graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[0], cursorPos[iter], cursorPos[iter + 1], 10, 1, 1, 0, 0, 0);
+		for(iter = 0; iter < 4; iter++){
+			if(playerActive & (1 << iter)){
+				graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[0], cursorPos[2 * iter], cursorPos[(2 * iter) + 1], 10, 1, 1, 0, 0, 0);
+				graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[3], cursorPos[2 * iter] + 5, cursorPos[(2 * iter) + 1], 11, 1, 1, p_frame_x, p_frame_y + (iter * 10), 0);
+			}
 		}
 
 		//Draw the grid
-		graphics_draw_sprites(&Tiles, &Tiles.spritesheet_animation_array[3], coordGrid, frameGrid, 2 * gridSize, gridSize, 1, 1, 1, 0);
+		graphics_draw_sprites(&Tiles, &Tiles.spritesheet_animation_array[4], coordGrid, frameGrid, 2 * gridSize, gridSize, 1, 1, 1, 0);
 
 		//Group the windows bar into a single draw later
 		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[0], coordTaskBar, frameTaskBar, 8, 4, 1, 1, 1, 0);
@@ -604,3 +617,5 @@ Stuff to implement
 //Note: You CAN A/X press on a question mark. The question mark is only there for the user, doesn't have extra behaviour
 //BUG sometimes x press fails when I don't think it should...maybe a screen wrap thing?
 	//Seems to be iffy when pressing mines too...need to check execution logic
+
+//Pressing on a fake mine with nothing around does nothing. Is that a bug?
