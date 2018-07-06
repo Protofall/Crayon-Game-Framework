@@ -12,23 +12,23 @@ Note: texconv doesn't work with 2048 by 2048 textures :(
 
 ### Requirements:
 
-+ Romdisk Swapping support (!!!)
-+ Spritesheet support (!!!)
++ (DONE) Romdisk Swapping support (!!!)
++ (DONE) Spritesheet support (!!!)
 + Rendering lists of ease of use (!!!)
-+ 4bpp loading/rendering support (!!!)
-+ Maple/Controller support (!!!)
++ (DONE) 4bpp loading/rendering support (!!!)
++ (DONE BY DEFAULT?) Maple/Controller support (!!!)
 + Palette entry modification support (!!!)
 + Error display support (!!!)
 + Video mode support (!!!)
 + Selector to easily choose between "sd" and "cd" dirs (cd for CD-Rs, sd for the sdloader method) (!!)
 + Threading support (!!)
 + VGA/Progressive Scan support (!!)
-+ Non paletted ARGB4444 loading/rendering support (!!)
++ (DONE) Non paletted ARGB4444 loading/rendering support (!!)
 + VMU save/load support (!!)
 + VMU draw to screen support (!!)
 + Sound support (!!)
-+ 8bpp loading/rendering support (!)
-+ Non paletted RGB565 loading/rendering support (!)
++ (DONE) 8bpp loading/rendering support (!)
++ (DONE) Non paletted RGB565 loading/rendering support (!)
 + RAM/VRAM (And SRAM?) space debug (!)
 
 ### Developer's Directory Design

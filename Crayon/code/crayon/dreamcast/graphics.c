@@ -152,3 +152,7 @@ extern uint8_t graphics_draw_sprites(const struct spritesheet *ss,
 
 	return 0;
 }
+
+//Make a multi=draw function where you give it coord array, frame number array and an array containing the x and y for each frame.
+//This would help reduce the data usage for minesweeper where the frame number array is the board's memory
+//Not sure if this is the best way to do it or if I should remove the current multi-draw

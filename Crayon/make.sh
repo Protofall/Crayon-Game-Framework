@@ -30,13 +30,13 @@ packerSheet () {	#$3 is the format
 		if (( dimH < dimW ));then
 			convert "$2/$name.crayon_temp.png" -background none -extent "x"$dimW "$2/$name.crayon_temp.png"
 		else
-			convert "$2/$name.crayon_temp.png" -background none -extent "$dimsH" "$2/$name.crayon_temp.png"	#Note, this line has never been tested since I haven't had a case with a file thats too tall
+			convert "$2/$name.crayon_temp.png" -background none -extent "$dimH" "$2/$name.crayon_temp.png"
 		fi
 	fi
 
 	texconv -i "$2/$name.crayon_temp.png" -o "$2/$name.dtex" -f "$3"
 
-	pngCount=$(wc -l "$2/$name.crayon_temp.txt" | cut -d' ' -f 1)
+	pngCount=$(wc -l "$2/$name.crayon_temp.txt" | xargs | cut -d' ' -f 1)
 	echo "$pngCount" >> "$2/$name.txt"
 
 	#Make the new and improved txt file based on the dims of the original png's and the packer txt (Also crop name to remove last 2 fields)

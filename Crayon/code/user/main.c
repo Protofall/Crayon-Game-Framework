@@ -71,14 +71,10 @@ int main(){
 	fs_romdisk_unmount("/colourMod");
 
 	int done = 0;
-	uint8_t frame = 0;
+	uint8_t frame1 = 0;
 	uint8_t frame2 = 0;
 	uint16_t frame_x;
 	uint16_t frame_y;
-	// uint16_t frame_x2;
-	// uint16_t frame_y2;
-	// uint16_t blanka_frame_x;
-	// uint16_t blanka_frame_y;
 
 	//The coin positions
 	uint16_t draw_coords[6];	//3 sprites, format x,y,repeat
@@ -94,20 +90,20 @@ int main(){
 	//All 10 blanka coords (Just in top row)
 	uint16_t blanka_coords[20];
 	uint16_t blanka_frame_data[2];
-	uint16_t blanka_coord_entries;	//Will end up at 20
+	uint16_t blanka_coord_entries;
 	for(blanka_coord_entries = 0; blanka_coord_entries < 20; blanka_coord_entries = blanka_coord_entries + 2){
 		blanka_coords[blanka_coord_entries] = 0 + (64 * (blanka_coord_entries/2));	//Each Blanka has an x thats 64 greater than previous. Start at 0
 		blanka_coords[blanka_coord_entries + 1] = 0;	//Y = 0
 	}
 	blanka_coord_entries = 10;
 
+	pvr_stats_t stats;
+
 	while(!done){
 	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-
 	    if(st->buttons & CONT_START){ // Quits if start is pressed. Screen goes black (This code behaves weirdly, I don't get it)
 	      done = 1;
 	    }
-
    		MAPLE_FOREACH_END()
 
    		pvr_wait_ready();
@@ -118,52 +114,47 @@ int main(){
 		graphics_setup_palette(0, &Fade);
 		graphics_setup_palette(1, &Blanka);	//Blanka's palette needs to start at either 0, 256, 512 or 768... :(
 
-		pvr_stats_t stats;  //This can be defined outside the loop if you want
+		//Modify current frames
     	pvr_get_stats(&stats);
-    	int curframe = stats.frame_count%30;  //256 frames of transition (This is kinda like modulo, 0xff means take the bottom 8 bits)
-    	int curframe2 = stats.frame_count%10;
-    	if(curframe == 0){
-    		frame++;
-    		if(frame >= Fade.spritesheet_animation_array[2].animation_frames){
-    			frame = 0;
-    		}
-    		graphics_frame_coordinates(&Fade.spritesheet_animation_array[2], &frame_x, &frame_y, frame);	//Generates the new frame coordinates
+    	int cur_frame1 = stats.frame_count%30;  //256 frames of transition (This is kinda like modulo, 0xff means take the bottom 8 bits)
+    	int cur_frame2 = stats.frame_count%10;
+    	if(cur_frame1 == 0){
+    		frame1++;
+    		graphics_frame_coordinates(&Fade.spritesheet_animation_array[2], &frame_x, &frame_y, frame1 % 4);	//Generates the new frame coordinates
+    		//Note the "frame1 % 4" is really "frame1 % number of frames for this animation"
     	}
-    	if(curframe2 == 0){
+    	if(cur_frame2 == 0){
     		frame2++;
-    		// if(frame2 >= Fade.spritesheet_animation_array[4].animation_frames){
-    		// 	frame2 = 0;
-    		// }
-    		graphics_frame_coordinates(&Fade.spritesheet_animation_array[4], coin_frame_data, coin_frame_data + 1, frame2 % 4);	//Not being set right
-    		graphics_frame_coordinates(&Fade.spritesheet_animation_array[4], coin_frame_data + 2, coin_frame_data + 3, (frame2 + 1) % 4);	//Not being set right
-    		graphics_frame_coordinates(&Fade.spritesheet_animation_array[4], coin_frame_data + 4, coin_frame_data + 5, (frame2 + 2) % 4);	//Not being set right
-    		graphics_frame_coordinates(&Blanka.spritesheet_animation_array[0], blanka_frame_data, blanka_frame_data + 1, frame2 % 4);
-    	}
-    	// error_freeze("%d, %d, %d, %d, %d, %d", coin_frame_data[0], coin_frame_data[1], coin_frame_data[2], coin_frame_data[3], coin_frame_data[4], coin_frame_data[5]);
 
+    		//Blanka's frame
+			graphics_frame_coordinates(&Blanka.spritesheet_animation_array[0], blanka_frame_data, blanka_frame_data + 1, frame2 % 4);
+
+    		//Coin frames
+    		graphics_frame_coordinates(&Fade.spritesheet_animation_array[4], coin_frame_data, coin_frame_data + 1, frame2 % 4);
+    		graphics_frame_coordinates(&Fade.spritesheet_animation_array[4], coin_frame_data + 2, coin_frame_data + 3, (frame2 + 1) % 4);
+    		graphics_frame_coordinates(&Fade.spritesheet_animation_array[4], coin_frame_data + 4, coin_frame_data + 5, (frame2 + 2) % 4);
+    	}
+
+    	//Drawing
 		graphics_draw_sprite(&Enlarge, &Enlarge.spritesheet_animation_array[0], 384, 176, 1, 16, 16, 0, 0, 1);	//Draws the right sprite 16 times larger
-		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[0], 128, 176, 1, 1, 1, 0, 0, 0);	//The new draw-er for anims
+		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[0], 128, 176, 1, 1, 1, 0, 0, 0);	//Draws the "fade" icon
 		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[2], 295, 215, 1, 1, 1, frame_x, frame_y, 0);	//The "square wheel"
 		graphics_draw_sprite(&Fade, &Fade.spritesheet_animation_array[3], 192, 360, 1, 1, 1, Fade.spritesheet_animation_array[3].animation_x, Fade.spritesheet_animation_array[3].animation_y, 0);	//The "bottom message"
 		
-		//graphics_draw_sprite(&Blanka, &Blanka.spritesheet_animation_array[0], 0, 0, 1, 1, 1, blanka_frame_x, blanka_frame_y, 1);	//Draw Blanka idle anim
-		//graphics_draw_sprites(&Blanka, &Blanka.spritesheet_animation_array[0], blanka_coords, blanka_coord_entries, 1, 1, 1, blanka_frame_x, blanka_frame_y, 1);	//Draw Blanka idle anim
+		//These two use the "Multi-draw" function. Draws same animation at multiple points (Even with different frames)
 		graphics_draw_sprites(&Blanka, &Blanka.spritesheet_animation_array[0], blanka_coords, blanka_frame_data, 2, blanka_coord_entries, 1, 1, 1, 1);	//Draw Blanka idle anim
-
-		//Unsure if I'm passing draw_coords in right
-		//graphics_draw_sprites(&Fade, &Fade.spritesheet_animation_array[4], draw_coords, coord_entries, 1, 1, 1, frame_x2, frame_y2, 0);	//The pink coin
-		graphics_draw_sprites(&Fade, &Fade.spritesheet_animation_array[4], draw_coords, coin_frame_data, 6, coord_entries, 1, 1, 1, 0);	//The pink coin
+		graphics_draw_sprites(&Fade, &Fade.spritesheet_animation_array[4], draw_coords, coin_frame_data, 6, coord_entries, 1, 1, 1, 0);	//The pink coins with different frames
 
 		pvr_list_finish();
-
 		pvr_scene_finish();
    	}
 
-   	int retVal2 = 0;
-   	retVal2 += memory_free_crayon_packer_sheet(&Fade);
-   	retVal2 += memory_free_crayon_packer_sheet(&Enlarge);
-   	retVal2 += memory_free_crayon_packer_sheet(&Blanka);
-	error_freeze("Free-ing result %d!\n", retVal2);
+   	//Confirm everything was unloaded successfully (Should equal zero)
+   	int retVal = 0;
+   	retVal += memory_free_crayon_packer_sheet(&Fade);
+   	retVal += memory_free_crayon_packer_sheet(&Enlarge);
+   	retVal += memory_free_crayon_packer_sheet(&Blanka);
+	error_freeze("Free-ing result %d!\n", retVal);
 
     return 0;
 }

@@ -30,7 +30,7 @@ packerSheet () {	#$3 is the format
 		if (( dimH < dimW ));then
 			convert "$2/$name.crayon_temp.png" -background none -extent "x"$dimW "$2/$name.crayon_temp.png"
 		else
-			convert "$2/$name.crayon_temp.png" -background none -extent "$dimH" "$2/$name.crayon_temp.png"	#Note, this line has never been tested since I haven't had a case with a file thats too tall
+			convert "$2/$name.crayon_temp.png" -background none -extent "$dimH" "$2/$name.crayon_temp.png"
 		fi
 	fi
 

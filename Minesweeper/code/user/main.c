@@ -387,7 +387,7 @@ int main(){
 
 	while(1){
 	    MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-	    if(!(playerActive & (1 << __i)) && st->buttons == 0){
+	    if(!(playerActive & (1 << __i)) && st->buttons != 0){
 	    	playerActive |= (1 << __i);
 	    	continue;
 	    }
