@@ -310,7 +310,7 @@ int main(){
 	cursorPos[7] = 350;
 
 	//Setting up the draw arrays for the top and bottom bars
-	uint16_t *coordTopBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
+	uint16_t *coordTopBar = (uint16_t *) malloc(8 * sizeof(uint16_t));	//WHY ARE THESE DYNAMICALLY ALLOCATED? THEY DON'T CHANGE
 	uint16_t *frameTopBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
 	uint16_t *coordTaskBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
 	uint16_t *frameTaskBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
@@ -331,23 +331,29 @@ int main(){
 	memory_load_crayon_packer_sheet(&Windows, "/XP/Windows.dtex");
 	fs_romdisk_unmount("/XP");
 
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[0], frameTaskBar, frameTaskBar + 1, 0);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[0], frameTaskBar + 2, frameTaskBar + 3, 1);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[0], frameTaskBar + 4, frameTaskBar + 5, 2);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[0], frameTaskBar + 6, frameTaskBar + 7, 3);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[5], frameTaskBar, frameTaskBar + 1, 0);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[5], frameTaskBar + 2, frameTaskBar + 3, 1);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[5], frameTaskBar + 4, frameTaskBar + 5, 2);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[5], frameTaskBar + 6, frameTaskBar + 7, 3);
 
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar, frameTopBar + 1, 0);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar + 2, frameTopBar + 3, 1);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar + 4, frameTopBar + 5, 1);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], frameTopBar + 6, frameTopBar + 7, 2);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[6], frameTopBar, frameTopBar + 1, 0);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[6], frameTopBar + 2, frameTopBar + 3, 1);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[6], frameTopBar + 4, frameTopBar + 5, 1);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[6], frameTopBar + 6, frameTopBar + 7, 2);
+
+	uint16_t windowsFrame[10];	//The rest of the window boarders
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[3], windowsFrame, windowsFrame + 1, 0);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], windowsFrame + 2, windowsFrame + 3, 0);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[2], windowsFrame + 4, windowsFrame + 5, 0);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[0], windowsFrame + 6, windowsFrame + 7, 0);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[4], windowsFrame + 8, windowsFrame + 9, 0);
 
 
 	gridX = 30;
 	gridY = 20;
-
 	gridStartX = 80;
-	gridStartY = 80; //+ 24 = 104
-	// gridStartY = 104;	//This messes stuff up
+	gridStartY = 104;	//Never changes
+
 	uint16_t gridSize = gridX * gridY;
 	float mineProbability;
 	mineProbability = 0.175;
@@ -442,6 +448,7 @@ int main(){
 		}
 		else{
 			if(clickedCursorPos[__i * 2] != -1 && clickedCursorPos[(__i * 2) + 1] != -1 && held[8 + __i] == 2){
+				//elements (note I go from 2d to 1d to 2d (check if valid) to 1d again. I should fix that)
 				int xPart = (cursorPos[2 * __i]  - gridStartX) / 16;
 				int yPart = (cursorPos[(2 * __i) + 1]  - gridStartY) / 16;
 
@@ -468,11 +475,11 @@ int main(){
 			if(!held[__i]){
 				//If the cursor is within the maze
 				if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
-					&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){	//This check isn't complete
-					int xPart = (cursorPos[2 * __i] - cursorPos[2 * __i] % 16) - gridStartX;
-					int yPart = (cursorPos[(2 * __i) + 1] - cursorPos[(2 * __i) + 1] % 16) - gridStartY;
+					&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
+					int xPart = (cursorPos[2 * __i]  - gridStartX) / 16;
+					int yPart = (cursorPos[(2 * __i) + 1]  - gridStartY) / 16;
+					int eleLogic = xPart + gridX * yPart;
 
-					int eleLogic = (xPart / 16) + (gridX * yPart / 16);
 					b_press(&Tiles.spritesheet_animation_array[4], eleLogic);
 				}
 				held[__i] = 1;
@@ -542,15 +549,22 @@ int main(){
 		//Setup the main palette
 		graphics_setup_palette(0, &Tiles);
 
-		//Draw top bar
-		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[1], coordTopBar, frameTopBar, 8, 4, 1, 1, 1, 0);
+		//Draw windows graphics
+		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[6], coordTopBar, frameTopBar, 8, 4, 1, 1, 1, 0);	//Draw top bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[3], 0, 29, 1, 1, 418, windowsFrame[0], windowsFrame[1], 0);	//Draw left bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[1], 0, 447, 1, 1, 1, windowsFrame[2], windowsFrame[3], 0);	//Draw bottom left bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[2], 636, 447, 1, 1, 1, windowsFrame[4], windowsFrame[5], 0);	//Draw bottom right bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[0], 3, 447, 1, 633, 1, windowsFrame[6], windowsFrame[7], 0);	//Draw bottom bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[3], 637, 29, 1, 1, 418, windowsFrame[8], windowsFrame[9], 0);	//Draw right bar
+
+		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[5], coordTaskBar, frameTaskBar, 8, 4, 1, 1, 1, 0);	//Task bar
 
 		//Draw the flag count and timer
-		digit_display(&Tiles, &Tiles.spritesheet_animation_array[2], numFlags, 50, 35);
-		digit_display(&Tiles, &Tiles.spritesheet_animation_array[2], timeSec, 551, 35);
+		digit_display(&Tiles, &Tiles.spritesheet_animation_array[2], numFlags, 20, 65);
+		digit_display(&Tiles, &Tiles.spritesheet_animation_array[2], timeSec, 581, 65);
 
 		//Draw the reset button face
-		graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[1], 307, 35, 1, 1, 1, face_frame_x, face_frame_y, 0);
+		graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[1], 307, 64, 1, 1, 1, face_frame_x, face_frame_y, 0);
 
 		//Draw the cursors
 		for(iter = 0; iter < 4; iter++){
@@ -562,9 +576,6 @@ int main(){
 
 		//Draw the grid
 		graphics_draw_sprites(&Tiles, &Tiles.spritesheet_animation_array[4], coordGrid, frameGrid, 2 * gridSize, gridSize, 1, 1, 1, 0);
-
-		//Group the windows bar into a single draw later
-		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[0], coordTaskBar, frameTaskBar, 8, 4, 1, 1, 1, 0);
 		
 		pvr_list_finish();
 
