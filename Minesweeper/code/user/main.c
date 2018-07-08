@@ -556,7 +556,6 @@ int main(){
 		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[2], 636, 447, 1, 1, 1, windowsFrame[4], windowsFrame[5], 0);	//Draw bottom right bar
 		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[0], 3, 447, 1, 633, 1, windowsFrame[6], windowsFrame[7], 0);	//Draw bottom bar
 		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[3], 637, 29, 1, 1, 418, windowsFrame[8], windowsFrame[9], 0);	//Draw right bar
-
 		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[5], coordTaskBar, frameTaskBar, 8, 4, 1, 1, 1, 0);	//Task bar
 
 		//Draw the flag count and timer

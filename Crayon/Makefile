@@ -5,23 +5,23 @@ CFLAGS = $(KOS_CFLAGS)
 # CFLAGS += -I$(KOS_BASE)/addons/zlib	#Might need to add this to the bash script
 
 all:
-	./make.sh -preprocess -dreamcast -cd
+	./../Crayon/make.sh -preprocess -dreamcast -cd
 
 dreamcastCD:
-	./make.sh -preprocess -dreamcast -cd
+	./../Crayon/make.sh -preprocess -dreamcast -cd
 
 dreamcastSD:
-	./make.sh -preprocess -dreamcast -sd
+	./../Crayon/make.sh -preprocess -dreamcast -sd
 
 clean:
-	./make.sh -clean
+	./../Crayon/make.sh -clean
 
 help:
-	./make.sh -h
+	./../Crayon/make.sh -h
 
 check:
-	./make.sh -preprocess -noRM
+	./../Crayon/make.sh -preprocess -noRM
 
-# I should probs remove buildRun later on
+# I should probs remove buildRun later on or use a better emulator
 buildRun: clean all
 	lxdream Crayon.cdi

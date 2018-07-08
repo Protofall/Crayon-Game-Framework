@@ -15,7 +15,7 @@ helpInfo () {
 	exit 0
 }
 
-packerSheet () {	#$3 is the format
+packerSheet () {	#$3 is the format (Eg. RGB565)
 	cd "$1"
 
 	name=$(echo $1 | cut -d'.' -f 1)
