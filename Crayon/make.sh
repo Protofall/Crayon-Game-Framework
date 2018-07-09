@@ -137,7 +137,7 @@ buildPreProcessed () {	#$1 is asset, $2 is projectRoot/cdfs, $3 is the current f
 }
 
 buildDreamcastExecutable () {
-	files=$(echo $PWD/code/crayon/dreamcast/*.c)
+	files=$(echo $5/code/crayon/dreamcast/*.c)	#Compile the Crayon source code files
 	for x in $files; do
 		y=${x%.c}
 		z=${y##*/}
@@ -147,12 +147,9 @@ buildDreamcastExecutable () {
 			exit 1
 		fi
 	done
-	$(kos-cc $KOS_CFLAGS -c $PWD/code/user/main.c -o $PWD/main.o)	#Compile the main file
-	if [ "$?" == 1 ];then	#Checks to see if an error occurred
-		echo "main.o failed to build"
-		exit 1
-	fi
-	#echo "About to do elf"
+
+	find . -type f -name "*.c" -execdir kos-cc $KOS_CFLAGS -c {} -o $PWD/{}%.c.o \;	#This will compile all files in project dir
+	find . -type f -name "*.cpp" -execdir kos-cc $KOS_CFLAGS -c {} -o $PWD/{}%.cpp.o \;	#cpp/c++ files are untested
 
 	ofiles=$(ls *.o)
 
@@ -184,6 +181,7 @@ IPBIN="$KOS_BASE/../IP.BIN"	#Change this depending on where your IP.BIN file is 
 assets="assets"
 cdfs="cdfs"
 projectRoot="$PWD"	#Make sure bash script is called from the real project root
+crayonRoot="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"	#The directory of the crayon source code
 
 if [ $# = 0 ];then
 	echo 'No params, try "-h" for help'
@@ -236,7 +234,7 @@ if [ "$preprocess" = 1 ];then
 fi
 
 if [ "$platform" = 0 ]; then	#Dreamcast
-	buildDreamcastExecutable "$cdfs" "$bootMode" "$NAME" "$IPBIN"	#It will build cd or sd depending on bootMode
+	buildDreamcastExecutable "$cdfs" "$bootMode" "$NAME" "$IPBIN" "$crayonRoot"	#It will build cd or sd depending on bootMode
 fi
 
 exit 0

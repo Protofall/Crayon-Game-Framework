@@ -1,6 +1,0 @@
-#ifndef RENDER_STRUCTS_CRAYON_H
-#define RENDER_STRUCTS_CRAYON_H
-
-;
-
-#endif

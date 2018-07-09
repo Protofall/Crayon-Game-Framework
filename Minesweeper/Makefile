@@ -3,6 +3,7 @@
 
 CFLAGS = $(KOS_CFLAGS)
 # CFLAGS += -I$(KOS_BASE)/addons/zlib	#Might need to add this to the bash script
+cdiName = $(shell pwd | rev | cut -d'/' -f1 | rev).cdi
 
 all:
 	./../Crayon/make.sh -preprocess -dreamcast -cd
@@ -24,4 +25,4 @@ check:
 
 # I should probs remove buildRun later on or use a better emulator
 buildRun: clean all
-	lxdream Minesweeper.cdi
+	lxdream $(cdiName)

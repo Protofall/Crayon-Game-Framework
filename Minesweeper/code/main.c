@@ -1,7 +1,7 @@
 //Crayon libraries
-#include "../crayon/dreamcast/memory.h"
-#include "../crayon/dreamcast/debug.h"
-#include "../crayon/dreamcast/graphics.h"
+#include "../../Crayon/code/crayon/dreamcast/memory.h"
+#include "../../Crayon/code/crayon/dreamcast/debug.h"
+#include "../../Crayon/code/crayon/dreamcast/graphics.h"
 
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
