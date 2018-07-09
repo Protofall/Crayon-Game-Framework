@@ -3,10 +3,10 @@
 //There are 4 palettes for 8BPP and 64 palettes for 4BPP. palette_number is the id
 extern int graphics_setup_palette(uint8_t palette_number, const struct spritesheet *ss){
   int entries;
-  if(ss->spritesheet_format == 3){
+  if(ss->spritesheet_format == 5){
     entries = 16;
   }
-  else if(ss->spritesheet_format == 4){
+  else if(ss->spritesheet_format == 6){
     entries = 256;
   }
   else{
@@ -52,15 +52,15 @@ extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
   const float v1 = (frame_y + anim->animation_frame_height) / (float)ss->spritesheet_dims;
 
   pvr_sprite_cxt_t context;
-  if(ss->spritesheet_format == 4){  //PAL8BPP format
+  if(ss->spritesheet_format == 6){  //PAL8BPP format
     pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
     ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
   }
-  else if(ss->spritesheet_format == 3){ //PAL4BPP format
+  else if(ss->spritesheet_format == 5){ //PAL4BPP format
     pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
     ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
   }
-  else if(ss->spritesheet_format == 1 || ss->spritesheet_format == 2){  //RGB565 and RGB4444
+  else if(ss->spritesheet_format == 0 || ss->spritesheet_format == 1 || ss->spritesheet_format == 2){  //ARGB1555, RGB565 and RGB4444
     pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, (ss->spritesheet_format) << 27,
     ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
   }
@@ -100,15 +100,15 @@ extern uint8_t graphics_draw_sprites(const struct spritesheet *ss,
 	}
 
 	pvr_sprite_cxt_t context;
-	if(ss->spritesheet_format == 4){  //PAL8BPP format
+	if(ss->spritesheet_format == 6){  //PAL8BPP format
 		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
 		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
 	}
-	else if(ss->spritesheet_format == 3){ //PAL4BPP format
+	else if(ss->spritesheet_format == 5){ //PAL4BPP format
 		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
 		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
 	}
-	else if(ss->spritesheet_format == 1 || ss->spritesheet_format == 2){  //RGB565 and RGB4444
+	else if(ss->spritesheet_format == 0 || ss->spritesheet_format == 1 || ss->spritesheet_format == 2){  //ARGB1555, RGB565 and RGB4444
 		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, (ss->spritesheet_format) << 27,
 		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
 	}

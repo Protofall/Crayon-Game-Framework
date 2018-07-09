@@ -55,23 +55,25 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doe
     ss->spritesheet_dims = dtex_header.height;
   }
 
-  ss->spritesheet_texture     = texture;
+  ss->spritesheet_texture = texture;
 
   //This assumes no mip-mapping, no stride, twiddled on, uncompressed and no stride setting (I'm doing this to save on space)
-  if(dtex_header.type == 0x08000000){ //RGB565
+  if(dtex_header.type == 0x00000000){ //ARGB1555
+    ss->spritesheet_format = 0;
+  }
+  else if(dtex_header.type == 0x08000000){ //RGB565
     ss->spritesheet_format = 1;
   }
   else if(dtex_header.type == 0x10000000){ //ARGB4444
     ss->spritesheet_format = 2;
   }
   else if(dtex_header.type == 0x28000000){ //PAL4BPP
-    ss->spritesheet_format = 3;
+    ss->spritesheet_format = 5;
   }
   else if(dtex_header.type == 0x30000000){ //PAL8BPP
-    ss->spritesheet_format = 4;
+    ss->spritesheet_format = 6;
   }
   else{
-    ss->spritesheet_format = 0;
     ERROR(6);
   }
 
@@ -80,7 +82,7 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doe
 
   #define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
   
-  if(ss->spritesheet_format == 3 || ss->spritesheet_format == 4){
+  if(ss->spritesheet_format == 5 || ss->spritesheet_format == 6){
 
     char palName[84];
     sprintf(palName, "%s.dtex.pal", path);
@@ -172,6 +174,9 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
   ss->spritesheet_palette = NULL; //If we don't set it, memory_load_palette possibly won't work correctly
 
   //This assumes no mip-mapping, no stride, twiddled on, its uncompressed and no stride setting (I'm doing this to save on space)
+  if(dtex_header.type == 0x00000000){ //ARGB1555
+    ss->spritesheet_format = 0;
+  }
   if(dtex_header.type == 0x08000000){ //RGB565
     ss->spritesheet_format = 1;
   }
@@ -179,17 +184,28 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
     ss->spritesheet_format = 2;
   }
   else if(dtex_header.type == 0x28000000){ //PAL4BPP
-    ss->spritesheet_format = 3;
+    ss->spritesheet_format = 5;
   }
   else if(dtex_header.type == 0x30000000){ //PAL8BPP
-    ss->spritesheet_format = 4;
+    ss->spritesheet_format = 6;
   }
-  else{
+  else{    
     ERROR(6);
   }
+  /*
+  The correct formats are
+  bits 27-29 : Pixel format
+  0 = ARGB1555
+  1 = RGB565
+  2 = ARGB4444
+  3 = YUV422
+  4 = BUMPMAP
+  5 = PAL4BPP
+  6 = PAL8BPP
+  */
 
   int temp = strlen(path);
-  if(ss->spritesheet_format == 3 || ss->spritesheet_format == 4){
+  if(ss->spritesheet_format == 5 || ss->spritesheet_format == 6){
     char *pathPal = (char *) malloc((temp+5)*sizeof(char));  //Add a check here to see if it failed
     if(!pathPal){ERROR(7);}
     strcpy(pathPal, path);
@@ -294,7 +310,7 @@ extern int memory_load_palette(uint32_t **palette, uint16_t *colourCount, char *
 //Free Texture, anim array and palette (Maybe the anim/ss names later on?). Doesn't free the spritesheet struct itself
 extern int memory_free_crayon_packer_sheet(struct spritesheet *ss){
   if(ss){
-    if(ss->spritesheet_format == 3 || ss->spritesheet_format == 4){ //Paletted
+    if(ss->spritesheet_format == 5 || ss->spritesheet_format == 6){ //Paletted
       free(ss->spritesheet_palette);
     }
     pvr_mem_free(ss->spritesheet_texture);
