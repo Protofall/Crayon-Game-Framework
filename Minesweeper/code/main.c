@@ -623,3 +623,5 @@ Stuff to implement
 
 
 //X Pressing on a fake mine with nothing around does nothing. Is that a bug?
+
+//"Shuffle" logic array to "populate" it

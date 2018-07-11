@@ -148,8 +148,8 @@ buildDreamcastExecutable () {
 		fi
 	done
 
-	find . -type f -name "*.c" -execdir kos-cc $KOS_CFLAGS -c {} -o $PWD/{}%.c.o \;	#This will compile all files in project dir
-	find . -type f -name "*.cpp" -execdir kos-cc $KOS_CFLAGS -c {} -o $PWD/{}%.cpp.o \;	#cpp/c++ files are untested
+	find . -type f -name "*.c" -execdir bash -c "f={}; kos-cc $KOS_CFLAGS -c {} -o $PWD/\${f%.c}.o" \;	#This will compile all files in project dir
+	find . -type f -name "*.cpp" -execdir bash -c "f={}; kos-cc $KOS_CFLAGS -c {} -o $PWD/\${f%.cpp}.o" \;	#cpp/c++ files are untested
 
 	ofiles=$(ls *.o)
 
@@ -194,12 +194,12 @@ do
 		preprocess=1
 		shift
 	elif [ "$1" = "-clean" ];then
-		rm *.o	#Removes all object files
-		rm "$NAME.elf"	#Removes the elf
-		rm "$NAME.bin"	#Removes the normal binary
-		rm "$NAME.iso"	#Removes the iso
-		rm "$NAME.cdi"	#Removes the cdi
-		rm -R "$cdfs/"*
+		rm -f *.o	#Removes all object files
+		rm -f "$NAME.elf"	#Removes the elf
+		rm -f "$NAME.bin"	#Removes the normal binary
+		rm -f "$NAME.iso"	#Removes the iso
+		rm -f "$NAME.cdi"	#Removes the cdi
+		rm -rf "$cdfs/"*
 		echo "Clean complete"
 		exit 0
 	elif [ "$1" = "-dreamcast" ];then
