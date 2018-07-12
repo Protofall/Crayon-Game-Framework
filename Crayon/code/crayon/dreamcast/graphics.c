@@ -33,6 +33,53 @@ extern void graphics_frame_coordinates(const struct animation *anim, uint16_t *f
   return;
 }
 
+extern void graphics_draw_colour_poly(pvr_ptr_t name, uint16_t draw_x, uint16_t draw_y, uint16_t draw_z, uint16_t dim_x,
+  uint16_t dim_y, uint32_t colour){
+    pvr_poly_cxt_t cxt;
+    pvr_poly_hdr_t hdr;
+    pvr_vertex_t vert;
+
+    pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
+    pvr_poly_compile(&hdr, &cxt);
+    pvr_prim(&hdr, sizeof(hdr));
+
+    vert.argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f); //Modify this
+    //vert.argb = PVR_PACK_COLOR((float)alpha/100, r, g, b);  //Not quite this
+    vert.oargb = 0;
+    vert.flags = PVR_CMD_VERTEX;    //I think this is used to define the start of a new polygon
+
+    //These define the verticies of the triangles "strips" (One triangle uses verticies of other triangle)
+    vert.x = draw_x;
+    vert.y = draw_y;
+    vert.z = draw_z;
+    vert.u = 0.0;
+    vert.v = 0.0;
+    pvr_prim(&vert, sizeof(vert));
+
+    vert.x = draw_x + dim_x;
+    vert.y = draw_y;
+    vert.z = draw_z;
+    vert.u = 1.0;
+    vert.v = 0.0;
+    pvr_prim(&vert, sizeof(vert));
+
+    vert.x = draw_x;
+    vert.y = draw_y + dim_y;
+    vert.z = draw_z;
+    vert.u = 0.0;
+    vert.v = 1.0;
+    pvr_prim(&vert, sizeof(vert));
+
+    vert.x = draw_x + dim_x;
+    vert.y = draw_y + dim_y;
+    vert.z = draw_z;
+    vert.u = 1.0;
+    vert.v = 1.0;
+    vert.flags = PVR_CMD_VERTEX_EOL;
+    pvr_prim(&vert, sizeof(vert));
+    return;
+}
+
 extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
   const struct animation *anim, float draw_x, float draw_y, float draw_z,
   float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,

@@ -127,6 +127,7 @@ void reveal_map(animation_t * anim){
 		}
 	}
 	else if(overMode == 2){
+		numFlags = 0;
 		for(i = 0; i < gridX * gridY; i++){
 			if(bit_extraction(logicGrid[i], 4, 1) == 9){
 				graphics_frame_coordinates(anim, frameGrid + (2 * i), frameGrid + (2 * i) + 1, 1);
@@ -354,9 +355,13 @@ int main(){
 	gridStartX = 80;
 	gridStartY = 104;	//Never changes
 
+	// gridX = 40;
+	// gridY = 21;
+	// gridStartX = 0;
+	// gridStartY = 104;	//Never changes
+
 	uint16_t gridSize = gridX * gridY;
-	float mineProbability;
-	mineProbability = 0.175;
+	float mineProbability = 0.175;
 
 	logicGrid = (uint8_t *) malloc(gridSize * sizeof(uint8_t));
 	coordGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
@@ -520,7 +525,7 @@ int main(){
    			overMode = 2;
    		}
 
-   		//Right now this is always triggered when a game ends, I should do something so it only calls this once
+   		//Right now this is always triggered when a game ends and thanks to "revealed" it only triggers once
    		if(!revealed && !gameLive && overMode != 0){
    			reveal_map(&Tiles.spritesheet_animation_array[4]);
    		}
@@ -581,7 +586,7 @@ int main(){
 		pvr_scene_finish();
    	}
 
-   	//Confirm everything was unloaded successfully (Should equal zero)
+   	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
    	int retVal = 0;
    	retVal += memory_free_crayon_packer_sheet(&Tiles);
    	retVal += memory_free_crayon_packer_sheet(&Windows);
@@ -600,28 +605,22 @@ Things about Minesweeper:
 	- Expert
 	- Legacy User (Largest grid)
 
-vahntitrio:
-As soon as you've marked enough spaces, clicking both mouse buttons at once on a number uncovers all adjacent unflagged squares.
-Thus allowing you to go finish faster.
-
-(Confirm how to activate this feature) (Will probs make it X press for simplicity sake)
-
-
-
 
 
 Stuff to implement
-- Do you automatically get a free lake? Probs yes
+- Do you automatically get a free lake? In XP no, but I think I'll have a setting for free lake
 
 */
 
-//Add something to be displayed on the VMU screen
+//Add something to be displayed on the VMU screen. But what? Just a static mine/blown up mine
 
 
 
 
 
 
-//X Pressing on a fake mine with nothing around does nothing. Is that a bug?
+//X Pressing on a fake mine with nothing around does nothing. Is that a bug? Probably not since X press depends on the tile's value
 
-//"Shuffle" logic array to "populate" it
+//Set first n tiles in logic array as mines, then "Shuffle" it to "populate" it "nicely"
+
+//Ideas: When choosing an OS, make it boot up with a Dreamcast/Katana legacy BIOS
