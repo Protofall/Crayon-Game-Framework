@@ -319,8 +319,7 @@ extern int memory_free_crayon_packer_sheet(struct spritesheet *ss){
     for(i = 0; i < ss->spritesheet_animation_count; i++){
       free(ss->spritesheet_animation_array[i].animation_name);
     }
-    free(ss->spritesheet_animation_array);  //Is this really freeing all animations sheets? Maybe so
-    //Alocated with ss->spritesheet_animation_array = (animation_t *) malloc(sizeof(animation_t) * ss->spritesheet_animation_count);
+    free(ss->spritesheet_animation_array);
 
     //We don't free the ss because it could be on the stack and we can't confirm if a pointer points to the heap or stack.
     //If it were on the heap then we would free it

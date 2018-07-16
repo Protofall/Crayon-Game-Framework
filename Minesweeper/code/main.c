@@ -16,7 +16,11 @@ uint8_t overMode = 0;	//0 = ready for new game, 1 = loss (ded), 2 = win
 uint8_t revealed;
 int timeSec;
 uint8_t gameLive = 0;	//Is true when the timer is turning
+
 uint8_t questionEnabled = 1;	//Enable the use of question marking
+uint8_t soundEnabled = 0;
+uint8_t operatingSystem = 1;	//0 for 2000, 1 for XP
+uint8_t freeLake = 0;	//Initial click generates free lake
 
 uint8_t gridX;
 uint8_t gridY;
@@ -289,12 +293,18 @@ int main(){
 
 	spritesheet_t Tiles, Windows;
 	int cursorPos[8];
-	int clickedCursorPos[8];
+	// int clickedCursorPos[8];
 	uint8_t held[12];	//B's, START's, A/X's (0, 1, 2) (And Y later)
+
+	// uint8_t newHeld = 0;	//Why is held an array and not just something like ---S YBXA and only giver permission
+							//if = zero or something? Eventually start will be removed so we can ignore that.
+							//B and Y don't care about other buttons. Either A or X can be active at a time. (Use modulo 4 to get the value)
+	// uint8_t pressed = 0;
+
 	int iter;
 	int jiter;
 	for(iter = 0; iter < 8; iter++){
-		clickedCursorPos[iter] = -1;
+		// clickedCursorPos[iter] = -1;
 		held[iter] = 0;
 	}
 	for(iter = 8; iter < 12; iter++){
@@ -328,9 +338,17 @@ int main(){
 	memory_load_crayon_packer_sheet(&Tiles, "/Minesweeper/Tiles.dtex");
 	fs_romdisk_unmount("/Minesweeper");
 
-	memory_mount_romdisk("/cd/XP.img", "/XP");
-	memory_load_crayon_packer_sheet(&Windows, "/XP/Windows.dtex");
-	fs_romdisk_unmount("/XP");
+	//Load the OS assets
+	if(operatingSystem){
+		memory_mount_romdisk("/cd/XP.img", "/XP");
+		memory_load_crayon_packer_sheet(&Windows, "/XP/Windows.dtex");
+		fs_romdisk_unmount("/XP");
+	}
+	else{
+		memory_mount_romdisk("/cd/2000.img", "/2000");
+		memory_load_crayon_packer_sheet(&Windows, "/2000/Windows.dtex");
+		fs_romdisk_unmount("/2000");
+	}
 
 	graphics_frame_coordinates(&Windows.spritesheet_animation_array[5], frameTaskBar, frameTaskBar + 1, 0);
 	graphics_frame_coordinates(&Windows.spritesheet_animation_array[5], frameTaskBar + 2, frameTaskBar + 3, 1);
@@ -381,6 +399,7 @@ int main(){
 	//The face frame coords
 	uint16_t face_frame_x;
 	uint16_t face_frame_y;
+	uint8_t face_frame_id = 0;
 
 	//Cursor Player icon frame coords
 	uint16_t p_frame_x = 0;
@@ -394,12 +413,19 @@ int main(){
 	uint32_t startTime = 0;
 	uint32_t startMSTime = 0;
 
+	//Stores the button combination from the previous button press
+	uint32_t prevButtons[4] = {0};
+	uint8_t buttonAction = 0;	// ---- YBXA format, each maple loop the variable is overritten with released statuses
+
 	while(1){
+
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 		if(!(playerActive & (1 << __i)) && st->buttons != 0){
 			playerActive |= (1 << __i);
 			continue;
 		}
+
+		//Start is being removed later when the face button code is implemented
 		if(st->buttons & CONT_START){
 			if(!held[__i + 4]){
 				reset_grid(&Tiles.spritesheet_animation_array[4], mineProbability);
@@ -409,90 +435,58 @@ int main(){
 		else{
 			held[__i + 4] = 0;
 		}
-		if(st->buttons & CONT_A){
-			if(clickedCursorPos[2 * __i] == -1 && clickedCursorPos[(2 * __i) + 1] == -1){
-				clickedCursorPos[2 * __i] = cursorPos[2 * __i];
-				clickedCursorPos[(2 * __i) + 1] = cursorPos[(2 * __i) + 1];
-				held[8 + __i] = 1;
-			}
-		}
-		else{
-			if(clickedCursorPos[__i * 2] != -1 && clickedCursorPos[(__i * 2) + 1] != -1 && held[8 + __i] == 1){
-				int xPart = (cursorPos[2 * __i]  - gridStartX) / 16;
-				int yPart = (cursorPos[(2 * __i) + 1]  - gridStartY) / 16;
 
-				//Check that you're looking at the same tile you pressed on
-				if(xPart == (clickedCursorPos[2 * __i]  - gridStartX) / 16 && yPart == (clickedCursorPos[(2 * __i) + 1]  - gridStartY) / 16){
+		//Use the buttons previously pressed to control what happens here
+		buttonAction = 0;
+		buttonAction |= ((prevButtons[__i] & CONT_A) && !(st->buttons & CONT_A)) << 0;
+		buttonAction |= ((prevButtons[__i] & CONT_X) && !(st->buttons & CONT_X) && !overMode && gameLive) << 1;
+		buttonAction |= (!(prevButtons[__i] & CONT_B) && (st->buttons & CONT_B) && !overMode) << 2;
+		buttonAction |= (!(prevButtons[__i] & CONT_Y) && (st->buttons & CONT_Y) && !overMode) << 3;
 
-					//If the cursor is within the maze
-					if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
-						&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
-						// int eleLogic = (xPart / 16) + (gridX * yPart / 16);
-						int eleLogic = xPart + gridX * yPart;
-						// error_freeze("eleLogic %d", eleLogic);
-						if(overMode == 0){
-							if(!gameLive){
-								timer_ms_gettime(&startTime, &startMSTime);
-								gameLive = 1;
-							}
-							discover_tile(&Tiles.spritesheet_animation_array[4], eleLogic);
+		//Note that I think the press logic might be off. Going on a diagonal rapidly pressing B sometimes does nothing
+
+		//This block does the A, B, X and Y press/release stuff
+		if(buttonAction){
+			if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
+				&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
+				int xEle = (cursorPos[2 * __i]  - gridStartX) / 16;
+				int yEle = (cursorPos[(2 * __i) + 1]  - gridStartY) / 16;
+				int eleLogic = xEle + gridX * yEle;
+				if(buttonAction & (1 << 0)){	//For A press
+					if(overMode == 0){
+						if(!gameLive){
+							timer_ms_gettime(&startTime, &startMSTime);
+							gameLive = 1;
 						}
+						discover_tile(&Tiles.spritesheet_animation_array[4], eleLogic);
 					}
 				}
-				clickedCursorPos[__i * 2] = -1;
-				clickedCursorPos[(__i * 2) + 1] = -1;
-				held[8 + __i] = 0;
-			}
-		}
-		if(st->buttons & CONT_X){
-			if(clickedCursorPos[2 * __i] == -1 && clickedCursorPos[(2 * __i) + 1] == -1){
-				clickedCursorPos[2 * __i] = cursorPos[2 * __i];
-				clickedCursorPos[(2 * __i) + 1] = cursorPos[(2 * __i) + 1];
-				held[8 + __i] = 2;
-			}
-		}
-		else{
-			if(clickedCursorPos[__i * 2] != -1 && clickedCursorPos[(__i * 2) + 1] != -1 && held[8 + __i] == 2){
-				//elements (note I go from 2d to 1d to 2d (check if valid) to 1d again. I should fix that)
-				int xPart = (cursorPos[2 * __i]  - gridStartX) / 16;
-				int yPart = (cursorPos[(2 * __i) + 1]  - gridStartY) / 16;
-
-				//Check that you're looking at the same tile you pressed on
-				if(xPart == (clickedCursorPos[2 * __i]  - gridStartX) / 16 && yPart == (clickedCursorPos[(2 * __i) + 1]  - gridStartY) / 16){
-
-					//If the cursor is within the maze
-					if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
-						&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
-						int eleLogic = xPart + gridX * yPart;
-						if(overMode == 0 && gameLive){
-							x_press(&Tiles.spritesheet_animation_array[4], eleLogic);
-						}
-					}
+				if(buttonAction & (1 << 1)){	//For X press
+					x_press(&Tiles.spritesheet_animation_array[4], eleLogic);
 				}
-				clickedCursorPos[__i * 2] = -1;
-				clickedCursorPos[(__i * 2) + 1] = -1;
-				held[8 + __i] = 0;
-			}
-		}
-
-		if((st->buttons & CONT_B) && (overMode == 0)){
-			//Press instantly makes flag
-			if(!held[__i]){
-				//If the cursor is within the maze
-				if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
-					&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
-					int xPart = (cursorPos[2 * __i]  - gridStartX) / 16;
-					int yPart = (cursorPos[(2 * __i) + 1]  - gridStartY) / 16;
-					int eleLogic = xPart + gridX * yPart;
-
+				if(buttonAction & (1 << 2)){	//For B press
 					b_press(&Tiles.spritesheet_animation_array[4], eleLogic);
 				}
-				held[__i] = 1;
+			}
+			if(buttonAction & (1 << 3)){	//For Y press
+				;
+			}
+			//B/X presses always fail unless overMode == 0 and gameLive == 1 (B press might work when !gameLive), A press does work a bit differently
+			//For the grid, A press always works when overMode == 0, but the other actions (Face, options) always work
+		}
+
+		//Face logic code (Add a check for where the cursor is)
+		if((st->buttons & (CONT_A + CONT_X))){
+			//307, 64 with width/height of 26
+			if((cursorPos[2 * __i] <= 307 + 26) && (cursorPos[(2 * __i) + 1] <= 64 + 26)
+				&& cursorPos[2 * __i] >= 307 && cursorPos[(2 * __i) + 1] >= 64){
+				face_frame_id = 4;
+			}
+			if(!overMode && !face_frame_id){
+				face_frame_id = 1;	//Apply suprised face
 			}
 		}
-		else{
-			held[__i] = 0;
-		}
+
 		if(st->buttons & CONT_DPAD_UP){
 			cursorPos[(2 * __i) + 1] -= 2;
 			if(cursorPos[(2 * __i) + 1] < 0){
@@ -517,6 +511,8 @@ int main(){
 				cursorPos[2 * __i] = 640;
 			}
 		}
+
+		prevButtons[__i] = st->buttons;	//Store the previous button press
 		
    		MAPLE_FOREACH_END()
 
@@ -530,16 +526,18 @@ int main(){
    			reveal_map(&Tiles.spritesheet_animation_array[4]);
    		}
 
-   		//The face icon, this code needs updating
-   		if(overMode == 0){
-			graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, 0);
-   		}
-   		else if(overMode == 1){
-			graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, 2);
-   		}
-   		else if(overMode == 2){
-			graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, 3);
-   		}
+   		//The face frame id code. If not indented or suprised, then choose a face
+   		if(!face_frame_id){
+	   		if(overMode == 1){
+				face_frame_id = 2;
+	   		}
+	   		else if(overMode == 2){
+				face_frame_id = 3;
+	   		}
+	   	}
+
+		graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, face_frame_id);
+		face_frame_id = 0;	//Reset face
 
 		timer_ms_gettime(&currentTime, &currentMSTime);
 		if(gameLive && timeSec < 999){	//Prevent timer overflows
@@ -624,3 +622,16 @@ Stuff to implement
 //Set first n tiles in logic array as mines, then "Shuffle" it to "populate" it "nicely"
 
 //Ideas: When choosing an OS, make it boot up with a Dreamcast/Katana legacy BIOS
+
+/*
+
+Mouse actions:
+    left down -> "press" (do the "push down" animation) current cell and change face to surprised
+    left up -> open the current cell and change face to normal
+    right down -> toggle flag state on current cell
+    right up -> nothing
+    middle down -> "press" all neighbours and change face to surprised
+    middle up -> if num flags around the cell == the cell's number, open every other neighbour and change face to normal
+    left + right -> same as middle
+
+*/
