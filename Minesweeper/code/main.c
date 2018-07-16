@@ -31,49 +31,61 @@ uint8_t *logicGrid;
 uint16_t *coordGrid;	//Unless changing grid size, this won't need to be changed once set
 uint16_t *frameGrid;
 
-//Only correctly works when gridX = gridY
-uint8_t neighbouring_tile(int origin, int diverge){
-	//Check if y is OOB (-ve or over positive element value)
-	if(diverge < 0 || diverge > (gridX * gridY) - 1){
-		return 0;
+// N0 N1 N2
+// N3 S  N4
+// N5 N6 N7
+// N are neighbours, S is source (xEle, yEle)
+// The returned value is in the format
+// N0N1N2N3N4N5N6N7 where each bit is true if neighbour is valid
+uint8_t neighbouring_tiles(int xEle, int yEle){
+	uint8_t retVal = 255;
+	if(xEle == 0){
+		retVal &= ~(1 << 0);	//Clearing bits which can't be right
+		retVal &= ~(1 << 3);
+		retVal &= ~(1 << 5);
 	}
-
-	//Convert x and y to 2D ids
-	int8_t diffX = (origin / gridX) - (diverge / gridX);	//x1 - x2
-	int8_t diffY = (origin % gridX) - (diverge % gridX);	//y1 - y2	(gridX was formerly gridY here)
-
-	if(diffX > -2 && diffX < 2 && diffY > -2 && diffY < 2){
-		return 1;
+	else if(xEle >= gridX - 1){
+		retVal &= ~(1 << 2);
+		retVal &= ~(1 << 4);
+		retVal &= ~(1 << 7);
 	}
-	return 0;
+	if(yEle == 0){
+		retVal &= ~(1 << 0);
+		retVal &= ~(1 << 1);
+		retVal &= ~(1 << 2);
+	}
+	else if(yEle >= gridY - 1){
+		retVal &= ~(1 << 5);
+		retVal &= ~(1 << 6);
+		retVal &= ~(1 << 7);
+	}
+	return retVal;
 }
 
 //Initially called by reset_grid where x is always a valid number
-uint8_t populate_logic(int x, uint8_t mode){
-	if(logicGrid[x] == 9){	//Is mine
-		return 1;
-	}
-	else if(mode == 1){
-		return 0;
+void populate_logic(int xEle, int yEle){
+	int eleLogic = xEle + gridX * yEle;
+	if(logicGrid[eleLogic] == 9){	//Is mine
+		return;
 	}
 
+	uint8_t valids = neighbouring_tiles(xEle, yEle);
 	uint8_t sum = 0;	//A tiles value
 
-	if(neighbouring_tile(x, x - 1 - gridX)){sum += populate_logic(x - 1 - gridX, 1);}	//Top Left
-	if(neighbouring_tile(x, x - 1)){sum += populate_logic(x - 1, 1);}					//Mid Left
-	if(neighbouring_tile(x, x - 1 + gridX)){sum += populate_logic(x - 1 + gridX, 1);}	//Bottom left
+	if((valids & (1 << 0)) && logicGrid[xEle - 1 + ((yEle- 1) * gridX)] == 9){sum++;}	//Top Left
+	if((valids & (1 << 1)) && logicGrid[xEle + ((yEle - 1) * gridX)] == 9){sum++;}		//Top centre
+	if((valids & (1 << 2)) && logicGrid[xEle + 1 + ((yEle - 1) * gridX)] == 9){sum++;}	//Top right
+	if((valids & (1 << 3)) && logicGrid[xEle - 1 + (yEle * gridX)] == 9){sum++;}		//Mid Left
+	if((valids & (1 << 4)) && logicGrid[xEle + 1 + (yEle * gridX)] == 9){sum++;}		//Mid Right
+	if((valids & (1 << 5)) && logicGrid[xEle - 1 + ((yEle + 1) * gridX)] == 9){sum++;}	//Bottom left
+	if((valids & (1 << 6)) && logicGrid[xEle + ((yEle + 1) * gridX)] == 9){sum++;}		//Bottom centre
+	if((valids & (1 << 7)) && logicGrid[xEle + 1 + ((yEle + 1) * gridX)] == 9){sum++;}	//Bottom right
 
-	if(neighbouring_tile(x, x + 1 - gridX)){sum += populate_logic(x + 1 - gridX, 1);}	//Top right
-	if(neighbouring_tile(x, x + 1)){sum += populate_logic(x + 1, 1);}					//Mid Right
-	if(neighbouring_tile(x, x + 1 + gridX)){sum += populate_logic(x + 1 + gridX, 1);}	//Bottom right
+	logicGrid[eleLogic] = sum;
 
-	if(neighbouring_tile(x, x - gridX)){sum += populate_logic(x - gridX, 1);}		//Top centre
-	if(neighbouring_tile(x, x + gridX)){sum += populate_logic(x + gridX, 1);}		//Bottom centre
-	
-	logicGrid[x] = sum;
-
-	return 0;
+	return;
 }
+
 
 uint8_t true_prob(double p){
 	return rand() < p * (RAND_MAX + 1.0);
@@ -83,6 +95,7 @@ uint8_t true_prob(double p){
 void reset_grid(animation_t * anim, float mineProbability){
 	numFlags = 0;
 	int i;
+	int j;
 	uint16_t gridSize = gridX * gridY;
 	for(i = 0; i < gridSize; i++){
 		logicGrid[i] = 9 * true_prob(mineProbability);	//I think 0 is safe, 9 is mine
@@ -96,8 +109,10 @@ void reset_grid(animation_t * anim, float mineProbability){
 	}
 
 	//Iterates through whole loop
-	for(i = 0; i < gridSize; i++){
-		populate_logic(i, 0);	//This is generating values larger than 10 when it shouldn't
+	for(j = 0; j < gridY; j++){
+		for(i = 0; i < gridX; i++){
+			populate_logic(i, j);
+		}
 	}
 
 	gameLive = 0;
@@ -142,8 +157,8 @@ void reveal_map(animation_t * anim){
 	return;
 }
 
-//Doesn't handle questions correctly
-void discover_tile(animation_t * anim, uint16_t eleLogic){
+void discover_tile(animation_t * anim, int xEle, int yEle){
+	int eleLogic = xEle + gridX * yEle;
 	if(!(logicGrid[eleLogic] & 1<<6)){	//When not flagged
 		if(logicGrid[eleLogic] & 1<<7){	//Already discovered
 			return;
@@ -164,63 +179,69 @@ void discover_tile(animation_t * anim, uint16_t eleLogic){
 		}
 		logicGrid[eleLogic] |= (1<<7);
 		if(bit_extraction(logicGrid[eleLogic], 4, 1) == 0){
-			if(neighbouring_tile(eleLogic, eleLogic - 1)){discover_tile(anim, eleLogic - 1);}					//Left
-			if(neighbouring_tile(eleLogic, eleLogic - 1 - gridX)){discover_tile(anim, eleLogic - 1 - gridX);}	//Top Left
-			if(neighbouring_tile(eleLogic, eleLogic - 1 + gridX)){discover_tile(anim, eleLogic - 1 + gridX);}	//Bottom Left
-			if(neighbouring_tile(eleLogic, eleLogic + 1)){discover_tile(anim, eleLogic + 1);}					//Right
-			if(neighbouring_tile(eleLogic, eleLogic + 1 - gridX)){discover_tile(anim, eleLogic + 1 - gridX);}	//Top Right
-			if(neighbouring_tile(eleLogic, eleLogic + 1 + gridX)){discover_tile(anim, eleLogic + 1 + gridX);}	//Bottom Right
-			if(neighbouring_tile(eleLogic, eleLogic - gridX)){discover_tile(anim, eleLogic - gridX);}			//Top centre
-			if(neighbouring_tile(eleLogic, eleLogic + gridX)){discover_tile(anim, eleLogic + gridX);}			//Bottom centre
+			uint8_t valids = neighbouring_tiles(xEle, yEle);
+			int i;
+			for(i = 0; i < 8; i++){
+				if(valids & (1 << i)){	//If the tile is valid
+					int8_t xVarriant = 0;	//X is -1 if 0,3,5. +1 if 2,4,7 and 0 if 1 or 6
+					if(i == 0 || i == 3 || i == 5){
+						xVarriant = -1;
+					}
+					else if(i == 2 || i == 4 || i == 7){
+						xVarriant = 1;
+					}
+					int8_t yVariant = 0;	//Y is -1 if i < 3. +1 if i > 4, and 0 otherwise
+					if(i < 3){
+						yVariant = -1;
+					}
+					else if(i > 4){
+						yVariant = 1;
+					}
+					discover_tile(anim, xEle + xVarriant, yEle + yVariant);
+				}
+			}
 		}
 	}
 	return;
 }
 
-//Right clicking next to a question marked mine updates its sprite to a glitchy one
+void x_press(animation_t * anim, int xEle, int yEle){
+	int eleLogic = xEle + gridX * yEle;
+	if((logicGrid[eleLogic] & 1<<7)){	//If revealed
 
-/*
+		uint8_t valids = neighbouring_tiles(xEle, yEle);
+		uint8_t flagSum = 0;	//A tiles value
 
-1 2 (Blank)
-1 question(isMine) Flag(incorrect)
-1 1 2
-X clicking the centre bottom 1 results in glitchy question and no gameover
+		if((valids & (1 << 0)) && logicGrid[xEle - 1 + ((yEle- 1) * gridX)] & (1 << 6)){flagSum++;}		//Top Left
+		if((valids & (1 << 1)) && logicGrid[xEle + ((yEle - 1) * gridX)]  & (1 << 6)){flagSum++;}		//Top centre
+		if((valids & (1 << 2)) && logicGrid[xEle + 1 + ((yEle - 1) * gridX)]  & (1 << 6)){flagSum++;}	//Top right
+		if((valids & (1 << 3)) && logicGrid[xEle - 1 + (yEle * gridX)]  & (1 << 6)){flagSum++;}			//Mid Left
+		if((valids & (1 << 4)) && logicGrid[xEle + 1 + (yEle * gridX)]  & (1 << 6)){flagSum++;}			//Mid Right
+		if((valids & (1 << 5)) && logicGrid[xEle - 1 + ((yEle + 1) * gridX)]  & (1 << 6)){flagSum++;}	//Bottom left
+		if((valids & (1 << 6)) && logicGrid[xEle + ((yEle + 1) * gridX)]  & (1 << 6)){flagSum++;}		//Bottom centre
+		if((valids & (1 << 7)) && logicGrid[xEle + 1 + ((yEle + 1) * gridX)]  & (1 << 6)){flagSum++;}	//Bottom right
 
-*/
-
-void x_press(animation_t * anim, uint16_t eleLogic){
-	if((logicGrid[eleLogic] & 1<<7) || (logicGrid[eleLogic] & 1<<6) || (logicGrid[eleLogic] & 1<<5)){	//If revealed or flagged or questioned
-		int eles[8];
-		uint8_t successfuls = 0;
-		uint8_t invalidness = 0;
-		eles[0] = eleLogic - 1;
-		eles[1] = eleLogic - 1 - gridX;
-		eles[2] = eleLogic - 1 + gridX;
-		eles[3] = eleLogic + 1;
-		eles[4] = eleLogic + 1 - gridX;
-		eles[5] = eleLogic + 1 + gridX;
-		eles[6] = eleLogic - gridX;
-		eles[7] = eleLogic + gridX;
-		int i;
-		for(i = 0; i < 8; i++){
-			if(neighbouring_tile(eleLogic, eles[i])){	//If it is a neighbour
-				successfuls |= (1<<i);	//We'll traverse it later
-				if(logicGrid[eles[i]] == 9){	//Don't proceed if an unmarked mine is nearby)
-					invalidness |= (1<<0);
+		if(logicGrid[eleLogic] % (1 << 4) == flagSum){
+			//Execute the X-press on all adjacent
+			int i;
+			for(i = 0; i < 8; i++){
+				if(valids & (1 << i)){	//If the tile is valid
+					int8_t xVarriant = 0;	//X is -1 if 0,3,5. +1 if 2,4,7 and 0 if 1 or 6
+					if(i == 0 || i == 3 || i == 5){
+						xVarriant = -1;
+					}
+					else if(i == 2 || i == 4 || i == 7){
+						xVarriant = 1;
+					}
+					int8_t yVariant = 0;	//Y is -1 if i < 3. +1 if i > 4, and 0 otherwise
+					if(i < 3){
+						yVariant = -1;
+					}
+					else if(i > 4){
+						yVariant = 1;
+					}
+					discover_tile(anim, xEle + xVarriant, yEle + yVariant);
 				}
-				if(logicGrid[eles[i]] & (1<<6) && logicGrid[eles[i]] != 73){	//Do proceed if theres a false question mark within range
-					invalidness |= (1<<1);
-				}
-			}
-		}
-		if(invalidness == 1){
-			return;
-		}
-
-		//Discover the valid tiles
-		for(i = 0; i < 8; i++){
-			if(successfuls & (1<<i)){
-				discover_tile(anim, eles[i]);
 			}
 		}
 	}
@@ -293,23 +314,6 @@ int main(){
 
 	spritesheet_t Tiles, Windows;
 	int cursorPos[8];
-	// int clickedCursorPos[8];
-	uint8_t held[12];	//B's, START's, A/X's (0, 1, 2) (And Y later)
-
-	// uint8_t newHeld = 0;	//Why is held an array and not just something like ---S YBXA and only giver permission
-							//if = zero or something? Eventually start will be removed so we can ignore that.
-							//B and Y don't care about other buttons. Either A or X can be active at a time. (Use modulo 4 to get the value)
-	// uint8_t pressed = 0;
-
-	int iter;
-	int jiter;
-	for(iter = 0; iter < 8; iter++){
-		// clickedCursorPos[iter] = -1;
-		held[iter] = 0;
-	}
-	for(iter = 8; iter < 12; iter++){
-		held[iter] = 0;
-	}
 
 	cursorPos[0] = 50;
 	cursorPos[1] = 100;
@@ -325,6 +329,9 @@ int main(){
 	uint16_t *frameTopBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
 	uint16_t *coordTaskBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
 	uint16_t *frameTaskBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
+
+	int iter;
+	int jiter;
 
 	for(iter = 0; iter < 4; iter++){
 		coordTaskBar[iter * 2] = 0 + (160 * iter);
@@ -373,11 +380,6 @@ int main(){
 	gridStartX = 80;
 	gridStartY = 104;	//Never changes
 
-	// gridX = 40;
-	// gridY = 21;
-	// gridStartX = 0;
-	// gridStartY = 104;	//Never changes
-
 	uint16_t gridSize = gridX * gridY;
 	float mineProbability = 0.175;
 
@@ -417,23 +419,15 @@ int main(){
 	uint32_t prevButtons[4] = {0};
 	uint8_t buttonAction = 0;	// ---- YBXA format, each maple loop the variable is overritten with released statuses
 
-	while(1){
+	//1st element is type of click, 2nd element is x, 3rd element is y and repeat for all 4 controllers
+	//1st, 0 = none, 1 = A, 2 = X, X press has priority over A press
+	uint16_t pressData[12] = {0};
 
+	while(1){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-		if(!(playerActive & (1 << __i)) && st->buttons != 0){
+		if(!(playerActive & (1 << __i)) && st->buttons != 0){	//Player is there, but hasn't been activated yet
 			playerActive |= (1 << __i);
 			continue;
-		}
-
-		//Start is being removed later when the face button code is implemented
-		if(st->buttons & CONT_START){
-			if(!held[__i + 4]){
-				reset_grid(&Tiles.spritesheet_animation_array[4], mineProbability);
-				held[__i + 4] = 1;
-			}
-		}
-		else{
-			held[__i + 4] = 0;
 		}
 
 		//Use the buttons previously pressed to control what happens here
@@ -443,50 +437,47 @@ int main(){
 		buttonAction |= (!(prevButtons[__i] & CONT_B) && (st->buttons & CONT_B) && !overMode) << 2;
 		buttonAction |= (!(prevButtons[__i] & CONT_Y) && (st->buttons & CONT_Y) && !overMode) << 3;
 
-		//Note that I think the press logic might be off. Going on a diagonal rapidly pressing B sometimes does nothing
+		int xEle = -1;
+		int yEle = -1;
 
+		//Note that I think the press logic might be off. Going on a diagonal rapidly pressing B sometimes does nothing
 		//This block does the A, B, X and Y press/release stuff
 		if(buttonAction){
+			if((buttonAction & (1 << 0)) && (cursorPos[2 * __i] <= 307 + 26) && (cursorPos[(2 * __i) + 1] <= 64 + 26)
+				&& cursorPos[2 * __i] >= 307 && cursorPos[(2 * __i) + 1] >= 64){	//If face is pressed
+				reset_grid(&Tiles.spritesheet_animation_array[4], mineProbability);
+				prevButtons[__i] = st->buttons;	//Store the previous button press
+				break;	//Since we don't want these old presses interacting with the new board
+			}
 			if((cursorPos[2 * __i] <= gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] <= gridStartY + (gridY * 16))
 				&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY){
-				int xEle = (cursorPos[2 * __i]  - gridStartX) / 16;
-				int yEle = (cursorPos[(2 * __i) + 1]  - gridStartY) / 16;
-				int eleLogic = xEle + gridX * yEle;
+				xEle = (cursorPos[2 * __i]  - gridStartX) / 16;
+				yEle = (cursorPos[(2 * __i) + 1]  - gridStartY) / 16;
 				if(buttonAction & (1 << 0)){	//For A press
 					if(overMode == 0){
 						if(!gameLive){
 							timer_ms_gettime(&startTime, &startMSTime);
 							gameLive = 1;
 						}
-						discover_tile(&Tiles.spritesheet_animation_array[4], eleLogic);
+						discover_tile(&Tiles.spritesheet_animation_array[4], xEle, yEle);
 					}
 				}
 				if(buttonAction & (1 << 1)){	//For X press
-					x_press(&Tiles.spritesheet_animation_array[4], eleLogic);
+					x_press(&Tiles.spritesheet_animation_array[4], xEle, yEle);
 				}
-				if(buttonAction & (1 << 2)){	//For B press
-					b_press(&Tiles.spritesheet_animation_array[4], eleLogic);
+				if(buttonAction & (1 << 2)){	//For B press					
+					b_press(&Tiles.spritesheet_animation_array[4], xEle + gridX * yEle);
 				}
 			}
 			if(buttonAction & (1 << 3)){	//For Y press
 				;
 			}
-			//B/X presses always fail unless overMode == 0 and gameLive == 1 (B press might work when !gameLive), A press does work a bit differently
-			//For the grid, A press always works when overMode == 0, but the other actions (Face, options) always work
-		}
-
-		//Face logic code (Add a check for where the cursor is)
-		if((st->buttons & (CONT_A + CONT_X))){
-			//307, 64 with width/height of 26
-			if((cursorPos[2 * __i] <= 307 + 26) && (cursorPos[(2 * __i) + 1] <= 64 + 26)
-				&& cursorPos[2 * __i] >= 307 && cursorPos[(2 * __i) + 1] >= 64){
-				face_frame_id = 4;
-			}
-			if(!overMode && !face_frame_id){
-				face_frame_id = 1;	//Apply suprised face
+			if(buttonAction & (1 << 4)){	//For START press, might delete this later...
+				;
 			}
 		}
 
+		//Movement code
 		if(st->buttons & CONT_DPAD_UP){
 			cursorPos[(2 * __i) + 1] -= 2;
 			if(cursorPos[(2 * __i) + 1] < 0){
@@ -509,6 +500,28 @@ int main(){
 			cursorPos[2 * __i] += 2;
 			if(cursorPos[2 * __i] > 640){
 				cursorPos[2 * __i] = 640;
+			}
+		}
+
+		//Face logic code and indented blank tiles
+		if((st->buttons & (CONT_A + CONT_X))){
+			if((cursorPos[2 * __i] <= 307 + 26) && (cursorPos[(2 * __i) + 1] <= 64 + 26)
+				&& cursorPos[2 * __i] >= 307 && cursorPos[(2 * __i) + 1] >= 64){	//If hovering over face
+				face_frame_id = 4;
+			}
+			if(!overMode && !face_frame_id){
+				face_frame_id = 1;	//Apply suprised face
+			}
+
+			if(xEle >= 0 && yEle >= 0){
+				if(st->buttons & (CONT_A)){
+					pressData[4 * __i] = 1;
+				}
+				else{
+					pressData[4 * __i] = 2;
+				}
+				pressData[(4 * __i) + 1] = xEle;
+				pressData[(4 * __i) + 2] = yEle;
 			}
 		}
 
@@ -578,6 +591,9 @@ int main(){
 
 		//Draw the grid
 		graphics_draw_sprites(&Tiles, &Tiles.spritesheet_animation_array[4], coordGrid, frameGrid, 2 * gridSize, gridSize, 1, 1, 1, 0);
+
+		//Draw the indented tiles ontop of the grid
+		//INSERT CODE HERE
 		
 		pvr_list_finish();
 
@@ -606,7 +622,7 @@ Things about Minesweeper:
 
 
 Stuff to implement
-- Do you automatically get a free lake? In XP no, but I think I'll have a setting for free lake
+- Do you automatically get a free lake? In XP no, but I'll have a setting for free lake
 
 */
 
@@ -617,21 +633,9 @@ Stuff to implement
 
 
 
-//X Pressing on a fake mine with nothing around does nothing. Is that a bug? Probably not since X press depends on the tile's value
-
 //Set first n tiles in logic array as mines, then "Shuffle" it to "populate" it "nicely"
 
 //Ideas: When choosing an OS, make it boot up with a Dreamcast/Katana legacy BIOS
 
-/*
 
-Mouse actions:
-    left down -> "press" (do the "push down" animation) current cell and change face to surprised
-    left up -> open the current cell and change face to normal
-    right down -> toggle flag state on current cell
-    right up -> nothing
-    middle down -> "press" all neighbours and change face to surprised
-    middle up -> if num flags around the cell == the cell's number, open every other neighbour and change face to normal
-    left + right -> same as middle
-
-*/
+//Potential bug wih Crayon itself: Since the screen stuff is stored in a uint16_t, I can't move sprites partially off the top or left side of the screen (Because it can't go negative)
