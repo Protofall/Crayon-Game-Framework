@@ -178,7 +178,7 @@ void discover_tile(animation_t * anim, int xEle, int yEle){
 			overMode = 1;
 		}
 		else{
-			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 6 + logicGrid[eleLogic]);
+			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 7 + logicGrid[eleLogic]);
 			nonMinesLeft--;
 		}
 		logicGrid[eleLogic] |= (1<<7);
@@ -427,9 +427,9 @@ int main(){
 	//1st, 0 = none, 1 = A, 2 = X, X press has priority over A press
 	uint16_t pressData[12] = {0};
 	uint16_t indented_neighbours[18];	//For now I'm doing the centre independently, but later I'll add it here
-	uint16_t indented_frames[2];
+	// uint16_t indented_frames[2];
+	uint16_t indented_frames[18];
 	// graphics_frame_coordinates(&Tiles.spritesheet_animation_array[4], indented_frames, indented_frames + 1, 6);
-	graphics_frame_coordinates(&Tiles.spritesheet_animation_array[4], indented_frames, indented_frames + 1, 15);
 
 	while(1){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -627,6 +627,12 @@ int main(){
 				if(!(logicGrid[pressData[(3 * iter) + 1] + gridX * pressData[(3 * iter) + 2]] & ((1 << 7) + (1 << 6)))){	//If its not revealed/flagged
 					indented_neighbours[0] = top_left_x + gridStartX;
 					indented_neighbours[1] = top_left_y + gridStartY;
+					if(logicGrid[pressData[(3 * iter) + 1] + gridX * pressData[(3 * iter) + 2]] & (1 << 5)){	//If its question marked
+						graphics_frame_coordinates(&Tiles.spritesheet_animation_array[4], indented_frames, indented_frames + 1, 6);
+					}
+					else{
+						graphics_frame_coordinates(&Tiles.spritesheet_animation_array[4], indented_frames, indented_frames + 1, 7);
+					}
 					liter = 1;
 				}
 				if(pressData[3 * iter] == 2){	//For the X press
@@ -654,10 +660,17 @@ int main(){
 						}
 						indented_neighbours[2 * liter] = top_left_x + (16 * xVariant) + gridStartX;
 						indented_neighbours[(2 * liter) + 1] = top_left_y + (16 * yVariant) + gridStartY;
+						if(logicGrid[pressData[(3 * iter) + 1] + xVariant + ((pressData[(3 * iter) + 2] + yVariant) * gridX)] & (1 << 5)){	//Bottom right tile wrong
+							graphics_frame_coordinates(&Tiles.spritesheet_animation_array[4], indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
+						}
+						else{
+							graphics_frame_coordinates(&Tiles.spritesheet_animation_array[4], indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);
+						}
 						liter++;
 					}
 				}
-				graphics_draw_sprites(&Tiles, &Tiles.spritesheet_animation_array[4], indented_neighbours, indented_frames, 2, liter, 2, 1, 1, 0);
+				//Sometimes draws the wrong tiles
+				graphics_draw_sprites(&Tiles, &Tiles.spritesheet_animation_array[4], indented_neighbours, indented_frames, liter, liter, 2, 1, 1, 0);
 			}
 		}
 		
@@ -704,4 +717,4 @@ Stuff to implement
 //Ideas: When choosing an OS, make it boot up with a Dreamcast/Katana legacy BIOS
 
 
-//Potential bug wih Crayon itself: Since the screen stuff is stored in a uint16_t, I can't move sprites partially off the top or left side of the screen (Because it can't go negative)
+//Note: There's an indented question mark ;(

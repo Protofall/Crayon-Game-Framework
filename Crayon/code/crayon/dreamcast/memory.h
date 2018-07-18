@@ -2,12 +2,12 @@
 #define MEMORY_CRAYON_H
 
 #include "texture_structs.h"  //For the spritehseet and animation structs
+#include "render_structs.h"  //For the crayon_sprite_array struct
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <stdint.h> //Not sure if this is needed since texture_struct.h includes it
-//#include <dc/pvr.h> //Not sure if this is needed since texture_struct.h includes it
+
 #include <kos/fs_romdisk.h> //For romdisk swapping
 #include <zlib/zlib.h>  //Not too sure if I need this for the gz romdisk...
 
