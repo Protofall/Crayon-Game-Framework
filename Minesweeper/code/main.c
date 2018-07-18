@@ -316,7 +316,7 @@ int main(){
 
 	srand(time(0));
 
-	spritesheet_t Tiles, Windows;
+	spritesheet_t Board, Windows;
 	int cursorPos[8];
 
 	cursorPos[0] = 50;
@@ -346,7 +346,7 @@ int main(){
 	}
 
 	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
-	memory_load_crayon_packer_sheet(&Tiles, "/Minesweeper/Tiles.dtex");
+	memory_load_crayon_packer_sheet(&Board, "/Minesweeper/Board.dtex");
 	fs_romdisk_unmount("/Minesweeper");
 
 	//Load the OS assets
@@ -400,18 +400,18 @@ int main(){
 	}
 
 	//Set the grid's initial values
-	reset_grid(&Tiles.spritesheet_animation_array[4], mineProbability);
+	reset_grid(&Board.spritesheet_animation_array[4], mineProbability);
 
 	//The face frame coords
 	uint16_t face_frame_x;
 	uint16_t face_frame_y;
-	uint8_t face_frame_id = 0;
+	uint8_t face_frame_id = 0;	//0 normal, 1 suprised, 2 ded, 3 sunny, 4 indented
 
 	//Cursor Player icon frame coords
 	uint16_t p_frame_x = 0;
 	uint16_t p_frame_y = 0;
 	uint8_t playerActive = 0;	//Used to confirm if a controller is being used
-	graphics_frame_coordinates(&Tiles.spritesheet_animation_array[3], &p_frame_x, &p_frame_y, 0);
+	graphics_frame_coordinates(&Board.spritesheet_animation_array[3], &p_frame_x, &p_frame_y, 0);
 
 	//For the timer
 	uint32_t currentTime = 0;
@@ -427,23 +427,21 @@ int main(){
 	//1st, 0 = none, 1 = A, 2 = X, X press has priority over A press
 	uint16_t pressData[12] = {0};
 	uint16_t indented_neighbours[18];	//For now I'm doing the centre independently, but later I'll add it here
-	// uint16_t indented_frames[2];
 	uint16_t indented_frames[18];
-	// graphics_frame_coordinates(&Tiles.spritesheet_animation_array[4], indented_frames, indented_frames + 1, 6);
 
 	while(1){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-		if(!(playerActive & (1 << __i)) && st->buttons != 0){	//Player is there, but hasn't been activated yet
-			playerActive |= (1 << __i);
+		if(!(playerActive & (1 << __dev->port)) && st->buttons != 0){	//Player is there, but hasn't been activated yet
+			playerActive |= (1 << __dev->port);
 			continue;
 		}
 
 		//Use the buttons previously pressed to control what happens here
 		buttonAction = 0;
-		buttonAction |= ((prevButtons[__i] & CONT_A) && !(st->buttons & CONT_A)) << 0;
-		buttonAction |= ((prevButtons[__i] & CONT_X) && !(st->buttons & CONT_X) && !overMode && gameLive) << 1;
-		buttonAction |= (!(prevButtons[__i] & CONT_B) && (st->buttons & CONT_B) && !overMode) << 2;
-		buttonAction |= (!(prevButtons[__i] & CONT_Y) && (st->buttons & CONT_Y) && !overMode) << 3;
+		buttonAction |= ((prevButtons[__dev->port] & CONT_A) && !(st->buttons & CONT_A)) << 0;
+		buttonAction |= ((prevButtons[__dev->port] & CONT_X) && !(st->buttons & CONT_X) && !overMode && gameLive) << 1;
+		buttonAction |= (!(prevButtons[__dev->port] & CONT_B) && (st->buttons & CONT_B) && !overMode) << 2;
+		buttonAction |= (!(prevButtons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y) && !overMode) << 3;
 
 		//These two are only ever set if The cursor is in the grid and A/B/X is/was pressed
 		int xEle = -1;
@@ -451,21 +449,21 @@ int main(){
 		uint8_t inGrid = 0;
 		//Need to know if in the grid when releasing A/X, pressing B and when holding A/X
 		if((buttonAction % (1 << 3)) || (st->buttons & (CONT_A + CONT_X))){
-			inGrid = (cursorPos[2 * __i] < gridStartX + (gridX * 16)) && (cursorPos[(2 * __i) + 1] < gridStartY + (gridY * 16))
-				&& cursorPos[2 * __i] >= gridStartX && cursorPos[(2 * __i) + 1] >= gridStartY;
+			inGrid = (cursorPos[2 * __dev->port] < gridStartX + (gridX * 16)) && (cursorPos[(2 * __dev->port) + 1] < gridStartY + (gridY * 16))
+				&& cursorPos[2 * __dev->port] >= gridStartX && cursorPos[(2 * __dev->port) + 1] >= gridStartY;
 			if(inGrid){
-				xEle = (cursorPos[2 * __i]  - gridStartX) / 16;
-				yEle = (cursorPos[(2 * __i) + 1]  - gridStartY) / 16;
+				xEle = (cursorPos[2 * __dev->port]  - gridStartX) / 16;
+				yEle = (cursorPos[(2 * __dev->port) + 1]  - gridStartY) / 16;
 			}
 		}
 
 		//Note that I think the press logic might be off. Going on a diagonal rapidly pressing B sometimes does nothing
 		//This block does the A, B, X and Y press/release stuff
 		if(buttonAction){
-			if((buttonAction & (1 << 0)) && (cursorPos[2 * __i] <= 307 + 26) && (cursorPos[(2 * __i) + 1] <= 64 + 26)
-				&& cursorPos[2 * __i] >= 307 && cursorPos[(2 * __i) + 1] >= 64){	//If face is pressed
-				reset_grid(&Tiles.spritesheet_animation_array[4], mineProbability);
-				prevButtons[__i] = st->buttons;	//Store the previous button press
+			if((buttonAction & (1 << 0)) && (cursorPos[2 * __dev->port] <= 307 + 26) && (cursorPos[(2 * __dev->port) + 1] <= 64 + 26)
+				&& cursorPos[2 * __dev->port] >= 307 && cursorPos[(2 * __dev->port) + 1] >= 64){	//If face is pressed
+				reset_grid(&Board.spritesheet_animation_array[4], mineProbability);
+				prevButtons[__dev->port] = st->buttons;	//Store the previous button press
 				break;	//Since we don't want these old presses interacting with the new board
 			}
 			if(xEle != -1 && yEle != -1){	//If on the grid
@@ -475,14 +473,14 @@ int main(){
 							timer_ms_gettime(&startTime, &startMSTime);
 							gameLive = 1;
 						}
-						discover_tile(&Tiles.spritesheet_animation_array[4], xEle, yEle);
+						discover_tile(&Board.spritesheet_animation_array[4], xEle, yEle);
 					}
 				}
 				if(buttonAction & (1 << 1)){	//For X press
-					x_press(&Tiles.spritesheet_animation_array[4], xEle, yEle);
+					x_press(&Board.spritesheet_animation_array[4], xEle, yEle);
 				}
 				if(buttonAction & (1 << 2)){	//For B press
-					b_press(&Tiles.spritesheet_animation_array[4], xEle + gridX * yEle);
+					b_press(&Board.spritesheet_animation_array[4], xEle + gridX * yEle);
 				}
 			}
 			if(buttonAction & (1 << 3)){	//For Y press
@@ -495,27 +493,27 @@ int main(){
 
 		//Movement code
 		if(st->buttons & CONT_DPAD_UP){
-			cursorPos[(2 * __i) + 1] -= 2;
-			if(cursorPos[(2 * __i) + 1] < 0){
-				cursorPos[(2 * __i) + 1] = 0;
+			cursorPos[(2 * __dev->port) + 1] -= 2;
+			if(cursorPos[(2 * __dev->port) + 1] < 0){
+				cursorPos[(2 * __dev->port) + 1] = 0;
 			}
 		}
 		if(st->buttons & CONT_DPAD_DOWN){
-			cursorPos[(2 * __i) + 1] += 2;
-			if(cursorPos[(2 * __i) + 1] > 480){
-				cursorPos[(2 * __i) + 1] = 480;
+			cursorPos[(2 * __dev->port) + 1] += 2;
+			if(cursorPos[(2 * __dev->port) + 1] > 480){
+				cursorPos[(2 * __dev->port) + 1] = 480;
 			}
 		}
 		if(st->buttons & CONT_DPAD_LEFT){
-			cursorPos[2 * __i] -= 2;
-			if(cursorPos[2 * __i] < 0){
-				cursorPos[2 * __i] = 0;
+			cursorPos[2 * __dev->port] -= 2;
+			if(cursorPos[2 * __dev->port] < 0){
+				cursorPos[2 * __dev->port] = 0;
 			}
 		}
 		if(st->buttons & CONT_DPAD_RIGHT){
-			cursorPos[2 * __i] += 2;
-			if(cursorPos[2 * __i] > 640){
-				cursorPos[2 * __i] = 640;
+			cursorPos[2 * __dev->port] += 2;
+			if(cursorPos[2 * __dev->port] > 640){
+				cursorPos[2 * __dev->port] = 640;
 			}
 		}
 
@@ -524,33 +522,29 @@ int main(){
 			if(!overMode && !face_frame_id){
 				face_frame_id = 1;	//Apply suprised face
 			}
-			if((st->buttons & CONT_A) && (cursorPos[2 * __i] <= 307 + 26) && (cursorPos[(2 * __i) + 1] <= 64 + 26)
-				&& cursorPos[2 * __i] >= 307 && cursorPos[(2 * __i) + 1] >= 64){	//If hovering over face
+			if((st->buttons & CONT_A) && (cursorPos[2 * __dev->port] <= 307 + 26) && (cursorPos[(2 * __dev->port) + 1] <= 64 + 26)
+				&& cursorPos[2 * __dev->port] >= 307 && cursorPos[(2 * __dev->port) + 1] >= 64){	//If hovering over face
 				face_frame_id = 4;
 			}
 			if(xEle >= 0 && yEle >= 0 && inGrid){	//This code is only supposed to trigger if A/X is pressed and its over the grid
 				if(st->buttons & (CONT_X)){	//X press has priority
-					pressData[3 * __i] = 2;
+					pressData[3 * __dev->port] = 2;
 				}
 				else{
-					pressData[3 * __i] = 1;
+					pressData[3 * __dev->port] = 1;
 				}
-				pressData[(3 * __i) + 1] = xEle;
-				pressData[(3 * __i) + 2] = yEle;
+				pressData[(3 * __dev->port) + 1] = xEle;
+				pressData[(3 * __dev->port) + 2] = yEle;
 			}
-			else{	//inGrid isn't doing its job
-				pressData[(3 * __i)] = 0;
+			else{
+				pressData[(3 * __dev->port)] = 0;
 			}
 		}
 		else{
-			pressData[3 * __i] = 0;
+			pressData[3 * __dev->port] = 0;
 		}
-		// if(!inGrid && pressData[3 * __i] != 0){
-		// 	error_freeze("In grid, but not correcting");
-		// }
-		//Bug, if move off grid, the thing stays behind, need to reset pressData properly if off the grid
 
-		prevButtons[__i] = st->buttons;	//Store the previous button press
+		prevButtons[__dev->port] = st->buttons;	//Store the previous button press
 		
    		MAPLE_FOREACH_END()
 
@@ -561,24 +555,27 @@ int main(){
 
    		//Right now this is always triggered when a game ends and thanks to "revealed" it only triggers once
    		if(!revealed && !gameLive && overMode != 0){
-   			reveal_map(&Tiles.spritesheet_animation_array[4]);
+   			reveal_map(&Board.spritesheet_animation_array[4]);
    		}
 
    		//The face frame id code. If not indented or suprised, then choose a face
    		if(!face_frame_id){
 	   		if(overMode == 1){
+	   			//play bomb/death sound
 				face_frame_id = 2;
 	   		}
 	   		else if(overMode == 2){
+	   			//play "won" sound
 				face_frame_id = 3;
 	   		}
 	   	}
 
-		graphics_frame_coordinates(&Tiles.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, face_frame_id);
+		graphics_frame_coordinates(&Board.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, face_frame_id);
 		face_frame_id = 0;	//Reset face
 
 		timer_ms_gettime(&currentTime, &currentMSTime);
 		if(gameLive && timeSec < 999){	//Prevent timer overflows
+			//Play the "tick" sound effect
 			timeSec = currentTime - startTime + (currentMSTime > startMSTime); //MS is there to account for the "1st second" inaccuracy
 		}
 
@@ -588,7 +585,7 @@ int main(){
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
 		//Setup the main palette
-		graphics_setup_palette(0, &Tiles);
+		graphics_setup_palette(0, &Board);
 
 		//Draw windows graphics
 		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[6], coordTopBar, frameTopBar, 8, 4, 1, 1, 1, 0);	//Draw top bar
@@ -600,26 +597,22 @@ int main(){
 		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[5], coordTaskBar, frameTaskBar, 8, 4, 1, 1, 1, 0);	//Task bar
 
 		//Draw the flag count and timer
-		digit_display(&Tiles, &Tiles.spritesheet_animation_array[2], numFlags, 20, 65);
-		digit_display(&Tiles, &Tiles.spritesheet_animation_array[2], timeSec, 581, 65);
+		digit_display(&Board, &Board.spritesheet_animation_array[2], numFlags, 20, 65);
+		digit_display(&Board, &Board.spritesheet_animation_array[2], timeSec, 581, 65);
 
 		//Draw the reset button face
-		graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[1], 307, 64, 1, 1, 1, face_frame_x, face_frame_y, 0);
-
-		//Draw the cursors
-		for(iter = 0; iter < 4; iter++){
-			if(playerActive & (1 << iter)){
-				graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[0], cursorPos[2 * iter], cursorPos[(2 * iter) + 1], 10, 1, 1, 0, 0, 0);
-				graphics_draw_sprite(&Tiles, &Tiles.spritesheet_animation_array[3], cursorPos[2 * iter] + 5,
-					cursorPos[(2 * iter) + 1], 11, 1, 1, p_frame_x, p_frame_y + (iter * 10), 0);
-			}
-		}
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 1, 1, 1, face_frame_x, face_frame_y, 0);
 
 		//Draw the grid
-		graphics_draw_sprites(&Tiles, &Tiles.spritesheet_animation_array[4], coordGrid, frameGrid, 2 * gridSize, gridSize, 1, 1, 1, 0);
+		graphics_draw_sprites(&Board, &Board.spritesheet_animation_array[4], coordGrid, frameGrid, 2 * gridSize, gridSize, 1, 1, 1, 0);
 
-		//Draw the indented tiles ontop of the grid
+		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
+			if(playerActive & (1 << iter)){
+				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], cursorPos[2 * iter], cursorPos[(2 * iter) + 1], 10, 1, 1, 0, 0, 0);
+				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[3], cursorPos[2 * iter] + 5,
+					cursorPos[(2 * iter) + 1], 11, 1, 1, p_frame_x, p_frame_y + (iter * 10), 0);
+			}
 			if(pressData[3 * iter]){
 				uint16_t top_left_x = pressData[(3 * iter) + 1] * 16;
 				uint16_t top_left_y = pressData[(3 * iter) + 2] * 16;
@@ -628,10 +621,10 @@ int main(){
 					indented_neighbours[0] = top_left_x + gridStartX;
 					indented_neighbours[1] = top_left_y + gridStartY;
 					if(logicGrid[pressData[(3 * iter) + 1] + gridX * pressData[(3 * iter) + 2]] & (1 << 5)){	//If its question marked
-						graphics_frame_coordinates(&Tiles.spritesheet_animation_array[4], indented_frames, indented_frames + 1, 6);
+						graphics_frame_coordinates(&Board.spritesheet_animation_array[4], indented_frames, indented_frames + 1, 6);
 					}
 					else{
-						graphics_frame_coordinates(&Tiles.spritesheet_animation_array[4], indented_frames, indented_frames + 1, 7);
+						graphics_frame_coordinates(&Board.spritesheet_animation_array[4], indented_frames, indented_frames + 1, 7);
 					}
 					liter = 1;
 				}
@@ -660,17 +653,17 @@ int main(){
 						}
 						indented_neighbours[2 * liter] = top_left_x + (16 * xVariant) + gridStartX;
 						indented_neighbours[(2 * liter) + 1] = top_left_y + (16 * yVariant) + gridStartY;
-						if(logicGrid[pressData[(3 * iter) + 1] + xVariant + ((pressData[(3 * iter) + 2] + yVariant) * gridX)] & (1 << 5)){	//Bottom right tile wrong
-							graphics_frame_coordinates(&Tiles.spritesheet_animation_array[4], indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
+						if(logicGrid[pressData[(3 * iter) + 1] + xVariant + ((pressData[(3 * iter) + 2] + yVariant) * gridX)] & (1 << 5)){
+							graphics_frame_coordinates(&Board.spritesheet_animation_array[4], indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
 						}
 						else{
-							graphics_frame_coordinates(&Tiles.spritesheet_animation_array[4], indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);
+							graphics_frame_coordinates(&Board.spritesheet_animation_array[4], indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);
 						}
 						liter++;
 					}
 				}
 				//Sometimes draws the wrong tiles
-				graphics_draw_sprites(&Tiles, &Tiles.spritesheet_animation_array[4], indented_neighbours, indented_frames, liter, liter, 2, 1, 1, 0);
+				graphics_draw_sprites(&Board, &Board.spritesheet_animation_array[4], indented_neighbours, indented_frames, liter, liter, 2, 1, 1, 0);
 			}
 		}
 		
@@ -681,7 +674,7 @@ int main(){
 
    	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
    	int retVal = 0;
-   	retVal += memory_free_crayon_packer_sheet(&Tiles);
+   	retVal += memory_free_crayon_packer_sheet(&Board);
    	retVal += memory_free_crayon_packer_sheet(&Windows);
 	error_freeze("Free-ing result %d!\n", retVal);
 
