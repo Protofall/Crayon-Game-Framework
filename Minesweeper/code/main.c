@@ -9,6 +9,9 @@
 //For the timer
 #include <arch/timer.h>
 
+//To get region info (Not sure if this is needed)
+#include <dc/flashrom.h>
+
 uint16_t nonMinesLeft;	//When this variable equals zero, the game is won
 int numFlags;	//More like "number of flags in the pool"
 
@@ -20,6 +23,7 @@ uint8_t gameLive = 0;	//Is true when the timer is turning
 uint8_t questionEnabled = 1;	//Enable the use of question marking
 uint8_t soundEnabled = 0;
 uint8_t operatingSystem = 1;	//0 for 2000, 1 for XP
+uint8_t language = 1;	//0 for English, 1 for Italian
 uint8_t freeLake = 0;	//Initial click generates free lake
 
 uint8_t gridX;
@@ -316,9 +320,7 @@ int main(){
 
 	srand(time(0));
 
-	spritesheet_t Board, Windows;
 	int cursorPos[8];
-
 	cursorPos[0] = 50;
 	cursorPos[1] = 100;
 	cursorPos[2] = 50;
@@ -327,6 +329,37 @@ int main(){
 	cursorPos[5] = 100;
 	cursorPos[6] = 590;
 	cursorPos[7] = 350;
+
+	spritesheet_t Board, Windows;
+
+	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
+	memory_load_crayon_packer_sheet(&Board, "/Minesweeper/Board.dtex");
+	fs_romdisk_unmount("/Minesweeper");
+
+	//Load the OS assets
+	if(operatingSystem){
+		memory_mount_romdisk("/cd/XP.img", "/XP");
+		memory_load_crayon_packer_sheet(&Windows, "/XP/Windows.dtex");
+		fs_romdisk_unmount("/XP");
+	}
+	else{
+		memory_mount_romdisk("/cd/2000.img", "/2000");
+		memory_load_crayon_packer_sheet(&Windows, "/2000/Windows.dtex");
+		fs_romdisk_unmount("/2000");
+	}
+
+	//These two just allow me to easily change between Minesweeper and Prato fiorito
+	spritesheet_t TileSS;
+	animation_t TileANIM;
+
+	if(!language){
+		TileSS = Board;
+		TileANIM = Board.spritesheet_animation_array[5];
+	}
+	else{	//Italian mode is a little buggy right now for some reason...
+		TileSS = Windows;
+		TileANIM = Windows.spritesheet_animation_array[6];
+	}
 
 	//Setting up the draw arrays for the top and bottom bars
 	uint16_t *coordTopBar = (uint16_t *) malloc(8 * sizeof(uint16_t));	//WHY ARE THESE DYNAMICALLY ALLOCATED? THEY DON'T CHANGE
@@ -345,31 +378,15 @@ int main(){
 		coordTopBar[(iter * 2) + 1] = 0;
 	}
 
-	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
-	memory_load_crayon_packer_sheet(&Board, "/Minesweeper/Board.dtex");
-	fs_romdisk_unmount("/Minesweeper");
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[8], frameTaskBar, frameTaskBar + 1, 0);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[8], frameTaskBar + 2, frameTaskBar + 3, 1);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[8], frameTaskBar + 4, frameTaskBar + 5, 2);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[8], frameTaskBar + 6, frameTaskBar + 7, 3);
 
-	//Load the OS assets
-	if(operatingSystem){
-		memory_mount_romdisk("/cd/XP.img", "/XP");
-		memory_load_crayon_packer_sheet(&Windows, "/XP/Windows.dtex");
-		fs_romdisk_unmount("/XP");
-	}
-	else{
-		memory_mount_romdisk("/cd/2000.img", "/2000");
-		memory_load_crayon_packer_sheet(&Windows, "/2000/Windows.dtex");
-		fs_romdisk_unmount("/2000");
-	}
-
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[5], frameTaskBar, frameTaskBar + 1, 0);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[5], frameTaskBar + 2, frameTaskBar + 3, 1);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[5], frameTaskBar + 4, frameTaskBar + 5, 2);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[5], frameTaskBar + 6, frameTaskBar + 7, 3);
-
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[6], frameTopBar, frameTopBar + 1, 0);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[6], frameTopBar + 2, frameTopBar + 3, 1);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[6], frameTopBar + 4, frameTopBar + 5, 1);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[6], frameTopBar + 6, frameTopBar + 7, 2);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[9], frameTopBar, frameTopBar + 1, 0);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[9], frameTopBar + 2, frameTopBar + 3, 1);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[9], frameTopBar + 4, frameTopBar + 5, 1);
+	graphics_frame_coordinates(&Windows.spritesheet_animation_array[9], frameTopBar + 6, frameTopBar + 7, 2);
 
 	uint16_t windowsFrame[10];	//The rest of the window boarders
 	graphics_frame_coordinates(&Windows.spritesheet_animation_array[3], windowsFrame, windowsFrame + 1, 0);
@@ -400,7 +417,7 @@ int main(){
 	}
 
 	//Set the grid's initial values
-	reset_grid(&Board.spritesheet_animation_array[4], mineProbability);
+	reset_grid(&TileANIM, mineProbability);
 
 	//The face frame coords
 	uint16_t face_frame_x;
@@ -428,6 +445,22 @@ int main(){
 	uint16_t pressData[12] = {0};
 	uint16_t indented_neighbours[18];	//For now I'm doing the centre independently, but later I'll add it here
 	uint16_t indented_frames[18];
+
+	//The dreamcast logo to be displayed on the windows taskbar
+	uint16_t region_icon_x = 0;
+	uint16_t region_icon_y = 0;
+	int8_t region = flashrom_get_region() - 1;
+	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1 despite having a region
+		region = 3;
+	}
+	graphics_frame_coordinates(&Board.spritesheet_animation_array[4], &region_icon_x, &region_icon_y, region);
+
+	uint16_t lang_icon_x = 0;
+	uint16_t lang_icon_y = 0;
+	if(language){
+		graphics_frame_coordinates(&Windows.spritesheet_animation_array[5], &lang_icon_x, &lang_icon_y, 0);
+		graphics_frame_coordinates(&Windows.spritesheet_animation_array[7], frameTopBar, frameTopBar + 1, 0);
+	}
 
 	while(1){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -462,7 +495,7 @@ int main(){
 		if(buttonAction){
 			if((buttonAction & (1 << 0)) && (cursorPos[2 * __dev->port] <= 307 + 26) && (cursorPos[(2 * __dev->port) + 1] <= 64 + 26)
 				&& cursorPos[2 * __dev->port] >= 307 && cursorPos[(2 * __dev->port) + 1] >= 64){	//If face is pressed
-				reset_grid(&Board.spritesheet_animation_array[4], mineProbability);
+				reset_grid(&TileANIM, mineProbability);
 				prevButtons[__dev->port] = st->buttons;	//Store the previous button press
 				break;	//Since we don't want these old presses interacting with the new board
 			}
@@ -473,14 +506,14 @@ int main(){
 							timer_ms_gettime(&startTime, &startMSTime);
 							gameLive = 1;
 						}
-						discover_tile(&Board.spritesheet_animation_array[4], xEle, yEle);
+						discover_tile(&TileANIM, xEle, yEle);
 					}
 				}
 				if(buttonAction & (1 << 1)){	//For X press
-					x_press(&Board.spritesheet_animation_array[4], xEle, yEle);
+					x_press(&TileANIM, xEle, yEle);
 				}
 				if(buttonAction & (1 << 2)){	//For B press
-					b_press(&Board.spritesheet_animation_array[4], xEle + gridX * yEle);
+					b_press(&TileANIM, xEle + gridX * yEle);
 				}
 			}
 			if(buttonAction & (1 << 3)){	//For Y press
@@ -555,7 +588,7 @@ int main(){
 
    		//Right now this is always triggered when a game ends and thanks to "revealed" it only triggers once
    		if(!revealed && !gameLive && overMode != 0){
-   			reveal_map(&Board.spritesheet_animation_array[4]);
+   			reveal_map(&TileANIM);
    		}
 
    		//The face frame id code. If not indented or suprised, then choose a face
@@ -588,13 +621,14 @@ int main(){
 		graphics_setup_palette(0, &Board);
 
 		//Draw windows graphics
-		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[6], coordTopBar, frameTopBar, 8, 4, 1, 1, 1, 0);	//Draw top bar
+		graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[9], coordTopBar, frameTopBar, 8, 4, 1, 1, 1, 0);	//Draw top bar
 		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[3], 0, 29, 1, 1, 418, windowsFrame[0], windowsFrame[1], 0);	//Draw left bar
 		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[1], 0, 447, 1, 1, 1, windowsFrame[2], windowsFrame[3], 0);	//Draw bottom left bar
 		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[2], 636, 447, 1, 1, 1, windowsFrame[4], windowsFrame[5], 0);	//Draw bottom right bar
 		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[0], 3, 447, 1, 633, 1, windowsFrame[6], windowsFrame[7], 0);	//Draw bottom bar
 		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[3], 637, 29, 1, 1, 418, windowsFrame[8], windowsFrame[9], 0);	//Draw right bar
-		graphics_draw_sprites(&Windows, &Windows.spritesheet_animation_array[5], coordTaskBar, frameTaskBar, 8, 4, 1, 1, 1, 0);	//Task bar
+		graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[8], coordTaskBar, frameTaskBar, 8, 4, 1, 1, 1, 0);	//Task bar
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 455, 2, 1, 1, region_icon_x, region_icon_y, 0);	//Region icon
 
 		//Draw the flag count and timer
 		digit_display(&Board, &Board.spritesheet_animation_array[2], numFlags, 20, 65);
@@ -604,7 +638,7 @@ int main(){
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 1, 1, 1, face_frame_x, face_frame_y, 0);
 
 		//Draw the grid
-		graphics_draw_sprites(&Board, &Board.spritesheet_animation_array[4], coordGrid, frameGrid, 2 * gridSize, gridSize, 1, 1, 1, 0);
+		graphics_draw_sprites_OLD(&TileSS, &TileANIM, coordGrid, frameGrid, 2 * gridSize, gridSize, 1, 1, 1, 0);
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
@@ -621,10 +655,10 @@ int main(){
 					indented_neighbours[0] = top_left_x + gridStartX;
 					indented_neighbours[1] = top_left_y + gridStartY;
 					if(logicGrid[pressData[(3 * iter) + 1] + gridX * pressData[(3 * iter) + 2]] & (1 << 5)){	//If its question marked
-						graphics_frame_coordinates(&Board.spritesheet_animation_array[4], indented_frames, indented_frames + 1, 6);
+						graphics_frame_coordinates(&TileANIM, indented_frames, indented_frames + 1, 6);
 					}
 					else{
-						graphics_frame_coordinates(&Board.spritesheet_animation_array[4], indented_frames, indented_frames + 1, 7);
+						graphics_frame_coordinates(&TileANIM, indented_frames, indented_frames + 1, 7);
 					}
 					liter = 1;
 				}
@@ -654,17 +688,21 @@ int main(){
 						indented_neighbours[2 * liter] = top_left_x + (16 * xVariant) + gridStartX;
 						indented_neighbours[(2 * liter) + 1] = top_left_y + (16 * yVariant) + gridStartY;
 						if(logicGrid[pressData[(3 * iter) + 1] + xVariant + ((pressData[(3 * iter) + 2] + yVariant) * gridX)] & (1 << 5)){
-							graphics_frame_coordinates(&Board.spritesheet_animation_array[4], indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
+							graphics_frame_coordinates(&TileANIM, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
 						}
 						else{
-							graphics_frame_coordinates(&Board.spritesheet_animation_array[4], indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);
+							graphics_frame_coordinates(&TileANIM, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);
 						}
 						liter++;
 					}
 				}
 				//Sometimes draws the wrong tiles
-				graphics_draw_sprites(&Board, &Board.spritesheet_animation_array[4], indented_neighbours, indented_frames, liter, liter, 2, 1, 1, 0);
+				graphics_draw_sprites_OLD(&TileSS, &TileANIM, indented_neighbours, indented_frames, liter, liter, 2, 1, 1, 0);
 			}
+		}
+
+		if(language == 1){
+			graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[5], 521, 457, 2, 1, 1, lang_icon_x, lang_icon_y, 0);
 		}
 		
 		pvr_list_finish();
@@ -710,4 +748,5 @@ Stuff to implement
 //Ideas: When choosing an OS, make it boot up with a Dreamcast/Katana legacy BIOS
 
 
-//Note: There's an indented question mark ;(
+//CHANGE "Board" to "Common" and maybe "Windows" to "OS-Dependent"
+//Bug: Can still A/X press when dead

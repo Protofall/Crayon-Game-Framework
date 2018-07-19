@@ -22,11 +22,11 @@ extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
   uint8_t paletteNumber);
 
 //Testing drawing multiple of same thing (WIP) CHANGE fd_size TO "BOOLEAN" (0/1)
-extern uint8_t graphics_draw_sprites(const struct spritesheet *ss,
+extern uint8_t graphics_draw_sprites_OLD(const struct spritesheet *ss,
   const struct animation *anim, uint16_t *draw_coords, uint16_t *frame_data, uint16_t fd_size,
   uint16_t num_sprites, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber);
 
 //Testing the new render struct (Delete other sprite draws after)
-extern uint8_t graphics_draw_sprites_NEW(crayon_sprite_array_t *sprite_array);
+extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array);
 
 #endif
