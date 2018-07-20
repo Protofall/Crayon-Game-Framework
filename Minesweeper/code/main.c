@@ -3,6 +3,8 @@
 #include "../../Crayon/code/crayon/dreamcast/debug.h"
 #include "../../Crayon/code/crayon/dreamcast/graphics.h"
 
+#include "extra_structs.h"
+
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
 
@@ -23,7 +25,7 @@ uint8_t gameLive = 0;	//Is true when the timer is turning
 uint8_t questionEnabled = 1;	//Enable the use of question marking
 uint8_t soundEnabled = 0;
 uint8_t operatingSystem = 1;	//0 for 2000, 1 for XP
-uint8_t language = 1;	//0 for English, 1 for Italian
+uint8_t language = 0;	//0 for English, 1 for Italian. This also affects the Minesweeper/Prato fiorito themes
 uint8_t freeLake = 0;	//Initial click generates free lake
 
 uint8_t gridX;
@@ -63,9 +65,6 @@ uint8_t neighbouring_tiles(int xEle, int yEle){
 		retVal &= ~(1 << 6);
 		retVal &= ~(1 << 7);
 	}
-
-	//This is useful for debugging
-	// error_freeze("valids: %d%d%d%d%d%d%d%d", !!(retVal & (1 << 7)), !!(retVal & (1 << 6)), !!(retVal & (1 << 5)), !!(retVal & (1 << 4)), !!(retVal & (1 << 3)), !!(retVal & (1 << 2)), !!(retVal & (1 << 1)), !!(retVal & (1 << 0)));
 
 	return retVal;
 }
@@ -156,7 +155,8 @@ void reveal_map(animation_t * anim){
 	else if(overMode == 2){
 		numFlags = 0;
 		for(i = 0; i < gridX * gridY; i++){
-			if(bit_extraction(logicGrid[i], 4, 1) == 9){
+			// if(bit_extraction(logicGrid[i], 4, 1) == 9){
+			if(logicGrid[i] % (1 << 5) == 9){
 				graphics_frame_coordinates(anim, frameGrid + (2 * i), frameGrid + (2 * i) + 1, 1);
 			}
 		}
@@ -167,13 +167,13 @@ void reveal_map(animation_t * anim){
 
 void discover_tile(animation_t * anim, int xEle, int yEle){
 	int eleLogic = xEle + gridX * yEle;
-	if(!(logicGrid[eleLogic] & 1<<6)){	//When not flagged
-		if(logicGrid[eleLogic] & 1<<7){	//Already discovered
+	if(!(logicGrid[eleLogic] & 1 << 6)){	//When not flagged
+		if(logicGrid[eleLogic] & 1 << 7){	//Already discovered
 			return;
 		}
 		int ele = eleLogic * 2;
-		if(logicGrid[eleLogic] & 1<<5){	//If questioned, remove the question mark and set it to a normal tile
-			logicGrid[eleLogic] &= ~(1<<5);
+		if(logicGrid[eleLogic] & 1 << 5){	//If questioned, remove the question mark and set it to a normal tile
+			logicGrid[eleLogic] &= ~(1 << 5);
 			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 0);
 		}
 		if(logicGrid[eleLogic] == 9){	//If mine
@@ -185,8 +185,9 @@ void discover_tile(animation_t * anim, int xEle, int yEle){
 			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 7 + logicGrid[eleLogic]);
 			nonMinesLeft--;
 		}
-		logicGrid[eleLogic] |= (1<<7);
-		if(bit_extraction(logicGrid[eleLogic], 4, 1) == 0){
+		logicGrid[eleLogic] |= (1 << 7);
+		// if(bit_extraction(logicGrid[eleLogic], 4, 1) == 0){
+		if(logicGrid[eleLogic] % (1 << 5) == 0){
 			uint8_t valids = neighbouring_tiles(xEle, yEle);
 			int i;
 			for(i = 0; i < 8; i++){
@@ -356,45 +357,53 @@ int main(){
 		TileSS = Board;
 		TileANIM = Board.spritesheet_animation_array[5];
 	}
-	else{	//Italian mode is a little buggy right now for some reason...
+	else{
 		TileSS = Windows;
 		TileANIM = Windows.spritesheet_animation_array[6];
 	}
 
-	//Setting up the draw arrays for the top and bottom bars
-	uint16_t *coordTopBar = (uint16_t *) malloc(8 * sizeof(uint16_t));	//WHY ARE THESE DYNAMICALLY ALLOCATED? THEY DON'T CHANGE
-	uint16_t *frameTopBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
-	uint16_t *coordTaskBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
-	uint16_t *frameTaskBar = (uint16_t *) malloc(8 * sizeof(uint16_t));
+	//Setting up the draw arrays for the top, bottom bars and other windows related assets
+	uint16_t windowsFrames[30];
+
+	/*
+	As of now:
+	0	0,1 = aboutLogo
+	1	2,3 = boarderBottom
+	2	4,5 = boarderBottomLeft
+	3	6,7 = boarderBottomRight
+	4	8,9 = boarderLeft
+	5	10,11 = boarderRight
+	6	12,13 = italianIcon
+	//WE SKIP THE TILES ANIM
+	8	14,15 = taskbarCurrentTask
+	9	16,17 = taskbarFiller
+	10	18,19 = taskbarStart
+	11	20,21 = taskbarTime
+	12	22,23 = topbarAdjust
+	13	24,25 = topbarFiller
+	14	26,27 = topbarName
+	*/
+
+	//0, 8, 14
 
 	int iter;
 	int jiter;
 
-	for(iter = 0; iter < 4; iter++){
-		coordTaskBar[iter * 2] = 0 + (160 * iter);
-		coordTopBar[iter * 2] = 0 + (160 * iter);
-
-		coordTaskBar[(iter * 2) + 1] = 450;
-		coordTopBar[(iter * 2) + 1] = 0;
+	for(iter = 0; iter < 6; iter++){
+		uint8_t langFrame = 0;
+		if(iter == 0 && language){
+			langFrame = 1;
+		}
+		graphics_frame_coordinates(&Windows.spritesheet_animation_array[iter], windowsFrames + (2 * iter), windowsFrames + 1 + (2 * iter), langFrame);
 	}
 
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[8], frameTaskBar, frameTaskBar + 1, 0);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[8], frameTaskBar + 2, frameTaskBar + 3, 1);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[8], frameTaskBar + 4, frameTaskBar + 5, 2);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[8], frameTaskBar + 6, frameTaskBar + 7, 3);
-
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[9], frameTopBar, frameTopBar + 1, 0);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[9], frameTopBar + 2, frameTopBar + 3, 1);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[9], frameTopBar + 4, frameTopBar + 5, 1);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[9], frameTopBar + 6, frameTopBar + 7, 2);
-
-	uint16_t windowsFrame[10];	//The rest of the window boarders
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[3], windowsFrame, windowsFrame + 1, 0);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[1], windowsFrame + 2, windowsFrame + 3, 0);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[2], windowsFrame + 4, windowsFrame + 5, 0);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[0], windowsFrame + 6, windowsFrame + 7, 0);
-	graphics_frame_coordinates(&Windows.spritesheet_animation_array[4], windowsFrame + 8, windowsFrame + 9, 0);
-
+	for(iter = 6; iter < 14; iter++){
+		uint8_t langFrame = 0;
+		if((iter + 1 == 7 || iter + 1 == 8 || iter + 1 == 14) && language){	//iter + 1 because thats the sprite we are targetting
+			langFrame = 1;
+		}
+		graphics_frame_coordinates(&Windows.spritesheet_animation_array[iter + 1], windowsFrames + (2 * iter), windowsFrames + 1 + (2 * iter), langFrame);
+	}
 
 	gridX = 30;
 	gridY = 20;
@@ -454,13 +463,6 @@ int main(){
 		region = 3;
 	}
 	graphics_frame_coordinates(&Board.spritesheet_animation_array[4], &region_icon_x, &region_icon_y, region);
-
-	uint16_t lang_icon_x = 0;
-	uint16_t lang_icon_y = 0;
-	if(language){
-		graphics_frame_coordinates(&Windows.spritesheet_animation_array[5], &lang_icon_x, &lang_icon_y, 0);
-		graphics_frame_coordinates(&Windows.spritesheet_animation_array[7], frameTopBar, frameTopBar + 1, 0);
-	}
 
 	while(1){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -621,14 +623,24 @@ int main(){
 		graphics_setup_palette(0, &Board);
 
 		//Draw windows graphics
-		graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[9], coordTopBar, frameTopBar, 8, 4, 1, 1, 1, 0);	//Draw top bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[3], 0, 29, 1, 1, 418, windowsFrame[0], windowsFrame[1], 0);	//Draw left bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[1], 0, 447, 1, 1, 1, windowsFrame[2], windowsFrame[3], 0);	//Draw bottom left bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[2], 636, 447, 1, 1, 1, windowsFrame[4], windowsFrame[5], 0);	//Draw bottom right bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[0], 3, 447, 1, 633, 1, windowsFrame[6], windowsFrame[7], 0);	//Draw bottom bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[3], 637, 29, 1, 1, 418, windowsFrame[8], windowsFrame[9], 0);	//Draw right bar
-		graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[8], coordTaskBar, frameTaskBar, 8, 4, 1, 1, 1, 0);	//Task bar
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 455, 2, 1, 1, region_icon_x, region_icon_y, 0);	//Region icon
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[10], 0, 450, 2, 1, 1, windowsFrames[18], windowsFrames[19], 0);		//Task bar (Start)
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[8], 106, 450, 2, 1, 1, windowsFrames[14], windowsFrames[15], 0);	//Task bar (CurrentTask)
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[9], 266, 450, 1, 94, 1, windowsFrames[16], windowsFrames[17], 0);	//Task bar (Filler)
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[11], 547, 450, 2, 1, 1, windowsFrames[20], windowsFrames[21], 0);	//Task bar (Time)
+
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[14], 0, 0, 2, 1, 1, windowsFrames[26], windowsFrames[27], 0);		//Top bar (App name)
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[13], 105, 0, 1, 155, 1, windowsFrames[24], windowsFrames[25], 0);	//Top bar (Fillter)
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[12], 568, 0, 2, 1, 1, windowsFrames[22], windowsFrames[23], 0);		//Top bar (Adjusts)
+
+
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[4], 0, 29, 1, 1, 418, windowsFrames[8], windowsFrames[9], 0);		//Draw left bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[2], 0, 447, 1, 1, 1, windowsFrames[4], windowsFrames[5], 0);		//Draw bottom left bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[3], 636, 447, 1, 1, 1, windowsFrames[6], windowsFrames[7], 0);		//Draw bottom right bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[1], 3, 447, 1, 633, 1, windowsFrames[2], windowsFrames[3], 0);		//Draw bottom bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[5], 637, 29, 1, 1, 418, windowsFrames[10], windowsFrames[11], 0);	//Draw right bar
+
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[7], 521, 457, 2, 1, 1, windowsFrames[12], windowsFrames[13], 0);	//Draw EN/IL icon
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 455, 3, 1, 1, region_icon_x, region_icon_y, 0);				//Region icon
 
 		//Draw the flag count and timer
 		digit_display(&Board, &Board.spritesheet_animation_array[2], numFlags, 20, 65);
@@ -696,13 +708,8 @@ int main(){
 						liter++;
 					}
 				}
-				//Sometimes draws the wrong tiles
 				graphics_draw_sprites_OLD(&TileSS, &TileANIM, indented_neighbours, indented_frames, liter, liter, 2, 1, 1, 0);
 			}
-		}
-
-		if(language == 1){
-			graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[5], 521, 457, 2, 1, 1, lang_icon_x, lang_icon_y, 0);
 		}
 		
 		pvr_list_finish();
@@ -750,3 +757,4 @@ Stuff to implement
 
 //CHANGE "Board" to "Common" and maybe "Windows" to "OS-Dependent"
 //Bug: Can still A/X press when dead
+//Bug: Need to make a EN icon
