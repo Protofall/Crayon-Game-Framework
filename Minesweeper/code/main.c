@@ -132,15 +132,9 @@ void reset_grid(animation_t * anim, float mineProbability){
 	return;
 }
 
-//Extracts k bits from "number" starting at index p from right (So number 25/11001, k 4, p 2 = 1100 (All but the 2^0 bit))
-//Note to do the whole number p = 1, k = num bits of number
-int bit_extraction(int number, int k, int p){
-	return (((1 << k) - 1) & (number >> (p - 1)));
-}
-
+//It fills it out differently depending on overMode
+//0 = ready for new game, 1 = loss (ded), 2 = win
 void reveal_map(animation_t * anim){
-	//It fills it out differently depending on overMode
-	//0 = ready for new game, 1 = loss (ded), 2 = win
 	int i;
 	if(overMode == 1){
 		for(i = 0; i < gridX * gridY; i++){
@@ -155,7 +149,6 @@ void reveal_map(animation_t * anim){
 	else if(overMode == 2){
 		numFlags = 0;
 		for(i = 0; i < gridX * gridY; i++){
-			// if(bit_extraction(logicGrid[i], 4, 1) == 9){
 			if(logicGrid[i] % (1 << 5) == 9){
 				graphics_frame_coordinates(anim, frameGrid + (2 * i), frameGrid + (2 * i) + 1, 1);
 			}
@@ -186,7 +179,6 @@ void discover_tile(animation_t * anim, int xEle, int yEle){
 			nonMinesLeft--;
 		}
 		logicGrid[eleLogic] |= (1 << 7);
-		// if(bit_extraction(logicGrid[eleLogic], 4, 1) == 0){
 		if(logicGrid[eleLogic] % (1 << 5) == 0){
 			uint8_t valids = neighbouring_tiles(xEle, yEle);
 			int i;
@@ -308,7 +300,7 @@ void digit_display(spritesheet_t * ss, animation_t * anim, int num, uint16_t x, 
 		else{
 			graphics_frame_coordinates(anim, &frame_x, &frame_y, (int)dispNum[i] - 48);
 		}
-		graphics_draw_sprite(ss, anim, x + (i * 13), y, 11, 1, 1, frame_x, frame_y, 0);
+		graphics_draw_sprite(ss, anim, x + (i * 13), y, 5, 1, 1, frame_x, frame_y, 0);
 	}
 
 	return;
@@ -464,6 +456,11 @@ int main(){
 	}
 	graphics_frame_coordinates(&Board.spritesheet_animation_array[4], &region_icon_x, &region_icon_y, region);
 
+	//Set colours
+	uint32_t mainBackground = (255 << 24) + (192 << 16) + (192 << 8) + 192;
+	uint32_t lightGrey = (255 << 24) + (128 << 16) + (128 << 8) + 128;
+	uint32_t white = (255 << 24) + (255 << 16) + (255 << 8) + 255;
+
 	while(1){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 		if(!(playerActive & (1 << __dev->port)) && st->buttons != 0){	//Player is there, but hasn't been activated yet
@@ -477,6 +474,9 @@ int main(){
 		buttonAction |= ((prevButtons[__dev->port] & CONT_X) && !(st->buttons & CONT_X) && !overMode && gameLive) << 1;
 		buttonAction |= (!(prevButtons[__dev->port] & CONT_B) && (st->buttons & CONT_B) && !overMode) << 2;
 		buttonAction |= (!(prevButtons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y) && !overMode) << 3;
+
+		//Do something for Start press like "startPrimed" thats true only when start is the only button pressed?
+			//Why do I need a seperate var for that? I can just compare previous and current button presses
 
 		//These two are only ever set if The cursor is in the grid and A/B/X is/was pressed
 		int xEle = -1;
@@ -574,6 +574,9 @@ int main(){
 			else{
 				pressData[(3 * __dev->port)] = 0;
 			}
+			if(!gameLive){
+				pressData[3 * __dev->port] = 0;
+			}
 		}
 		else{
 			pressData[3 * __dev->port] = 0;
@@ -623,34 +626,43 @@ int main(){
 		graphics_setup_palette(0, &Board);
 
 		//Draw windows graphics
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[10], 0, 450, 2, 1, 1, windowsFrames[18], windowsFrames[19], 0);		//Task bar (Start)
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[8], 106, 450, 2, 1, 1, windowsFrames[14], windowsFrames[15], 0);	//Task bar (CurrentTask)
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[9], 266, 450, 1, 94, 1, windowsFrames[16], windowsFrames[17], 0);	//Task bar (Filler)
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[11], 547, 450, 2, 1, 1, windowsFrames[20], windowsFrames[21], 0);	//Task bar (Time)
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[10], 0, 450, 3, 1, 1, windowsFrames[18], windowsFrames[19], 0);		//Task bar (Start)
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[8], 106, 450, 3, 1, 1, windowsFrames[14], windowsFrames[15], 0);	//Task bar (CurrentTask)
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[9], 266, 450, 2, 94, 1, windowsFrames[16], windowsFrames[17], 0);	//Task bar (Filler)
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[11], 547, 450, 1, 1, 1, windowsFrames[20], windowsFrames[21], 0);	//Task bar (Time)
 
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[14], 0, 0, 2, 1, 1, windowsFrames[26], windowsFrames[27], 0);		//Top bar (App name)
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[13], 105, 0, 1, 155, 1, windowsFrames[24], windowsFrames[25], 0);	//Top bar (Fillter)
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[12], 568, 0, 2, 1, 1, windowsFrames[22], windowsFrames[23], 0);		//Top bar (Adjusts)
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[14], 0, 0, 3, 1, 1, windowsFrames[26], windowsFrames[27], 0);		//Top bar (App name)
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[13], 105, 0, 2, 155, 1, windowsFrames[24], windowsFrames[25], 0);	//Top bar (Fillter)
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[12], 568, 0, 3, 1, 1, windowsFrames[22], windowsFrames[23], 0);		//Top bar (Adjusts)
 
 
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[4], 0, 29, 1, 1, 418, windowsFrames[8], windowsFrames[9], 0);		//Draw left bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[2], 0, 447, 1, 1, 1, windowsFrames[4], windowsFrames[5], 0);		//Draw bottom left bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[3], 636, 447, 1, 1, 1, windowsFrames[6], windowsFrames[7], 0);		//Draw bottom right bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[1], 3, 447, 1, 633, 1, windowsFrames[2], windowsFrames[3], 0);		//Draw bottom bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[5], 637, 29, 1, 1, 418, windowsFrames[10], windowsFrames[11], 0);	//Draw right bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[4], 0, 29, 2, 1, 418, windowsFrames[8], windowsFrames[9], 0);		//Draw left bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[2], 0, 447, 2, 1, 1, windowsFrames[4], windowsFrames[5], 0);		//Draw bottom left bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[3], 636, 447, 2, 1, 1, windowsFrames[6], windowsFrames[7], 0);		//Draw bottom right bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[1], 3, 447, 2, 633, 1, windowsFrames[2], windowsFrames[3], 0);		//Draw bottom bar
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[5], 637, 29, 2, 1, 418, windowsFrames[10], windowsFrames[11], 0);	//Draw right bar
 
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[7], 521, 457, 2, 1, 1, windowsFrames[12], windowsFrames[13], 0);	//Draw EN/IL icon
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 455, 3, 1, 1, region_icon_x, region_icon_y, 0);				//Region icon
+		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[7], 521, 457, 3, 1, 1, windowsFrames[12], windowsFrames[13], 0);	//Draw EN/IL icon
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 455, 4, 1, 1, region_icon_x, region_icon_y, 0);				//Region icon
+
+		//Draw the main background colour
+		graphics_draw_colour_poly(0, 0, 1, 640, 480, mainBackground);
+
+		//Draw the reset button face
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 2, 1, 1, face_frame_x, face_frame_y, 0);
 
 		//Draw the flag count and timer
 		digit_display(&Board, &Board.spritesheet_animation_array[2], numFlags, 20, 65);
 		digit_display(&Board, &Board.spritesheet_animation_array[2], timeSec, 581, 65);
 
-		//Draw the reset button face
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 1, 1, 1, face_frame_x, face_frame_y, 0);
+		//Depth for digit displays
+		graphics_draw_colour_poly(19, 64, 4, 40, 24, lightGrey);
+		graphics_draw_colour_poly(21, 66, 4, 40, 24, white);
+		graphics_draw_colour_poly(580, 64, 4, 40, 24, lightGrey);
+		graphics_draw_colour_poly(582, 66, 4, 40, 24, white);
 
 		//Draw the grid
-		graphics_draw_sprites_OLD(&TileSS, &TileANIM, coordGrid, frameGrid, 2 * gridSize, gridSize, 1, 1, 1, 0);
+		graphics_draw_sprites_OLD(&TileSS, &TileANIM, coordGrid, frameGrid, 2 * gridSize, gridSize, 2, 1, 1, 0);
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
@@ -757,4 +769,3 @@ Stuff to implement
 
 //CHANGE "Board" to "Common" and maybe "Windows" to "OS-Dependent"
 //Bug: Can still A/X press when dead
-//Bug: Need to make a EN icon

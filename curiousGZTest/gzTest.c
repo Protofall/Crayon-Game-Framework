@@ -128,7 +128,7 @@ int mount_romdisk_gz(char *filename, char *mountpoint){
   printf("Attempting to mount the romdisk\n");
   void *buffer;
   int length = zlib_getlength(filename);
-  //fprintf(stdout, "Length: %d!\n", length);
+  // fprintf(stdout, "Length: %d!\n", length);  //Uncomment this line for it to work on lxdream
 
   // Check failure
   if(length == 0){

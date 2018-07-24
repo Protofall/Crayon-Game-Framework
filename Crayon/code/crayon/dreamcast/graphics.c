@@ -23,17 +23,17 @@ extern int graphics_setup_palette(uint8_t palette_number, const struct spriteshe
 }
 
 extern void graphics_frame_coordinates(const struct animation *anim, uint16_t *frame_x, uint16_t *frame_y, uint8_t frame){
-  int framesPerRow = anim->animation_sheet_width/anim->animation_frame_width;
-  int colNum = frame%framesPerRow; //Gets the column (Zero indexed)
-  int rowNum = frame/framesPerRow;  //Gets the row (Zero indexed)
+	int framesPerRow = anim->animation_sheet_width/anim->animation_frame_width;
+	int colNum = frame%framesPerRow; //Gets the column (Zero indexed)
+	int rowNum = frame/framesPerRow;  //Gets the row (Zero indexed)
 
-  *frame_x = anim->animation_x + (colNum) * anim->animation_frame_width;
-  *frame_y = anim->animation_y + (rowNum) * anim->animation_frame_height;
+	*frame_x = anim->animation_x + (colNum) * anim->animation_frame_width;
+	*frame_y = anim->animation_y + (rowNum) * anim->animation_frame_height;
 
-  return;
+	return;
 }
 
-extern void graphics_draw_colour_poly(pvr_ptr_t name, uint16_t draw_x, uint16_t draw_y, uint16_t draw_z, uint16_t dim_x,
+extern void graphics_draw_colour_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z, uint16_t dim_x,
   uint16_t dim_y, uint32_t colour){
     pvr_poly_cxt_t cxt;
     pvr_poly_hdr_t hdr;
@@ -43,9 +43,8 @@ extern void graphics_draw_colour_poly(pvr_ptr_t name, uint16_t draw_x, uint16_t 
     pvr_poly_compile(&hdr, &cxt);
     pvr_prim(&hdr, sizeof(hdr));
 
-    vert.argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f); //Modify this
-    //vert.argb = PVR_PACK_COLOR((float)alpha/100, r, g, b);  //Not quite this
-    vert.oargb = 0;
+    vert.argb = colour;
+    vert.oargb = 0;	//Not sure what this does
     vert.flags = PVR_CMD_VERTEX;    //I think this is used to define the start of a new polygon
 
     //These define the verticies of the triangles "strips" (One triangle uses verticies of other triangle)
@@ -81,56 +80,57 @@ extern void graphics_draw_colour_poly(pvr_ptr_t name, uint16_t draw_x, uint16_t 
 }
 
 extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
-  const struct animation *anim, float draw_x, float draw_y, float draw_z,
-  float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
-  uint8_t paletteNumber){
+	const struct animation *anim, float draw_x, float draw_y, float draw_z,
+	float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
+	uint8_t paletteNumber){
 
-  //Screen coords. letter0 is top left coord, letter1 is bottom right coord. Z is depth (Layer)
-  const float x0 = draw_x;  //Do these really need to be floats?
-  const float y0 = draw_y;
-  const float x1 = draw_x + (anim->animation_frame_width) * scale_x;
-  const float y1 = draw_y + (anim->animation_frame_height) * scale_y;
-  const float z = draw_z;
+	//Screen coords. letter0 is top left coord, letter1 is bottom right coord. Z is depth (Layer)
+	const float x0 = draw_x;  //Do these really need to be floats?
+	const float y0 = draw_y;
+	const float x1 = draw_x + (anim->animation_frame_width) * scale_x;
+	const float y1 = draw_y + (anim->animation_frame_height) * scale_y;
+	const float z = draw_z;
 
-  //Texture coords. letter0 and letter1 have same logic as before (CHECK)
-  const float u0 = frame_x / (float)ss->spritesheet_dims;
-  const float v0 = frame_y / (float)ss->spritesheet_dims;
-  const float u1 = (frame_x + anim->animation_frame_width) / (float)ss->spritesheet_dims;
-  const float v1 = (frame_y + anim->animation_frame_height) / (float)ss->spritesheet_dims;
+	//Texture coords. letter0 and letter1 have same logic as before (CHECK)
+	const float u0 = frame_x / (float)ss->spritesheet_dims;
+	const float v0 = frame_y / (float)ss->spritesheet_dims;
+	const float u1 = (frame_x + anim->animation_frame_width) / (float)ss->spritesheet_dims;
+	const float v1 = (frame_y + anim->animation_frame_height) / (float)ss->spritesheet_dims;
 
-  pvr_sprite_cxt_t context;
-  if(ss->spritesheet_format == 6){  //PAL8BPP format
-    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
-    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
-  }
-  else if(ss->spritesheet_format == 5){ //PAL4BPP format
-    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
-    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
-  }
-  else if(ss->spritesheet_format == 0 || ss->spritesheet_format == 1 || ss->spritesheet_format == 2){  //ARGB1555, RGB565 and RGB4444
-    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, (ss->spritesheet_format) << 27,
-    ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
-  }
-  else{ //Unknown format
-    return 1;
-  }
+	pvr_sprite_cxt_t context;
+	if(ss->spritesheet_format == 6){  //PAL8BPP format
+		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
+		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
+	}
+	else if(ss->spritesheet_format == 5){ //PAL4BPP format
+		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
+		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
+	}
+	else if(ss->spritesheet_format == 0 || ss->spritesheet_format == 1 || ss->spritesheet_format == 2){  //ARGB1555, RGB565 and RGB4444
+		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, (ss->spritesheet_format) << 27,
+		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
+	}
+	else{ //Unknown format
+		return 1;
+	}
 
-  pvr_sprite_hdr_t header;
-  pvr_sprite_compile(&header, &context);
-  pvr_prim(&header, sizeof(header));
+	pvr_sprite_hdr_t header;
+	pvr_sprite_compile(&header, &context);
+	pvr_prim(&header, sizeof(header));
 
-  pvr_sprite_txr_t vert = {
-    .flags = PVR_CMD_VERTEX_EOL,
-    .ax = x0, .ay = y0, .az = z, .auv = PVR_PACK_16BIT_UV(u0, v0),
-    .bx = x1, .by = y0, .bz = z, .buv = PVR_PACK_16BIT_UV(u1, v0),
-    .cx = x1, .cy = y1, .cz = z, .cuv = PVR_PACK_16BIT_UV(u1, v1),
-    .dx = x0, .dy = y1
-  };
-  pvr_prim(&vert, sizeof(vert));
+	pvr_sprite_txr_t vert = {
+		.flags = PVR_CMD_VERTEX_EOL,
+		.ax = x0, .ay = y0, .az = z, .auv = PVR_PACK_16BIT_UV(u0, v0),
+		.bx = x1, .by = y0, .bz = z, .buv = PVR_PACK_16BIT_UV(u1, v0),
+		.cx = x1, .cy = y1, .cz = z, .cuv = PVR_PACK_16BIT_UV(u1, v1),
+		.dx = x0, .dy = y1
+	};
+	pvr_prim(&vert, sizeof(vert));
 
-  return 0;
+	return 0;
 }
 
+//Note this always draws transparent textures sortal (look at pvr_sprite_cxt_txr() calls)
 extern uint8_t graphics_draw_sprites_OLD(const struct spritesheet *ss,
 	const struct animation *anim, uint16_t *draw_coords, uint16_t *frame_data, uint16_t fd_size,
 	uint16_t num_sprites, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber){
@@ -148,11 +148,13 @@ extern uint8_t graphics_draw_sprites_OLD(const struct spritesheet *ss,
 
 	pvr_sprite_cxt_t context;
 	if(ss->spritesheet_format == 6){  //PAL8BPP format
-		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
+    // pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
+    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | ((paletteNumber) << 25),
 		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
 	}
 	else if(ss->spritesheet_format == 5){ //PAL4BPP format
-		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
+    // pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
+    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | ((paletteNumber) << 21),
 		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
 	}
 	else if(ss->spritesheet_format == 0 || ss->spritesheet_format == 1 || ss->spritesheet_format == 2){  //ARGB1555, RGB565 and RGB4444
@@ -200,6 +202,34 @@ extern uint8_t graphics_draw_sprites_OLD(const struct spritesheet *ss,
 	return 0;
 }
 
-//Make a multi=draw function where you give it coord array, frame number array and an array containing the x and y for each frame.
-//This would help reduce the data usage for minesweeper where the frame number array is the board's memory
-//Not sure if this is the best way to do it or if I should remove the current multi-draw
+// draw "num_sprites" amount of times using all "draw_pos" and the relevant frames/scales/rotations (Read options)
+// options also includes filter mode and format is taken from spritesheet struct
+// draw_z, colour and palette_num are obvious
+// poly_list_mode is used to draw opaque, punchthrough or transparent stuff depending on current list
+extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
+	return 0;
+}
+
+/*
+
+typedef struct crayon_sprite_array{
+  uint16_t * draw_pos;  //Width then Height extracted from anim/frame data, Each group of 2 is for one sub-texture
+  uint16_t * frame_coords;  //Each group of 4 elements is one sub-texture to draw
+  uint8_t * scales; //I think 8 bits is good enough for most cases
+  float rotations;  //Poly uses angles to rotate on Z axis, sprite uses booleans/flip bits. Decide what type this should be...
+  uint16_t num_sprites; //This tells the draw function how many sprites/polys to draw.
+
+  uint8_t options;  //Format FSRX XFFF, Basically 3 booleans options relating to frameCoords, scales and rotations
+            //if that bit is set to true, then we use the first element of F/S/R array for all sub-textures
+            //Else we assume each sub-texture has its own unique F/S/R value
+            //The 3 F's at the end are for the filtering mode. Can easily access it with a modulo 8 operation
+            //0 = none, 2 = Bilinear, 4 = Trilinear1, 6 = Trilinear2
+
+  uint8_t draw_z; //The layer to help deal with overlapping sprites/polys
+  uint8_t palette_num;  //Also ask if palettes can start at not multiples of 16 or 256
+  uint32_t colour;  //For poly mode this dictates the rgb and alpha of a polygon
+  spritesheet_t * ss;
+  animation_t * anim;
+} crayon_sprite_array_t;
+
+*/

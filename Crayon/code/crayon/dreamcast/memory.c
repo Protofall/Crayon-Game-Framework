@@ -233,7 +233,7 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
   sheet_file = fopen(pathTxt, "rb");
   free(pathTxt);
   if(!sheet_file){ERROR(14);}
-  fscanf(sheet_file, "%d\n", &ss->spritesheet_animation_count);
+  fscanf(sheet_file, "%hhu\n", &ss->spritesheet_animation_count);
 
   ss->spritesheet_animation_array = (animation_t *) malloc(sizeof(animation_t) * ss->spritesheet_animation_count);
   if(!ss->spritesheet_animation_array){ERROR(15);}

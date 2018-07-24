@@ -7,7 +7,7 @@
 
 //As far as I know, the only thing that I'd need to watch out for with different OSes is the fact that the task bar is skinnier
 typedef struct minesweeper_OS{
-	uint16_t taskBarStart;
+	uint16_t taskBarY;
 } minesweeper_OS;
 
 #endif

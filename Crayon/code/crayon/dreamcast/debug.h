@@ -2,6 +2,7 @@
 #define DEBUG_CRAYON_H
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include <dc/biosfont.h>
 #include <dc/video.h>

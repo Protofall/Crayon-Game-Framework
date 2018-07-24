@@ -94,7 +94,7 @@ int mount_romdisk(char *filename, char *mountpoint){
     return 0;
   }
   else{
-    return -1;
+    return 1;
   }
 }
 
@@ -102,17 +102,17 @@ int main(){
   pvr_init_defaults();
 
   int res1 = mount_romdisk("/cd/level1.img", "/levels"); //Trying to mount the first img to the romdisk
-  //printf("Res1 = %d\n",res1);
+  printf("Res1 = %d\n",res1);
   faces_init(64, "/levels/image.png", &face1);
   fs_romdisk_unmount("/levels");
 
   int res2 = mount_romdisk("/cd/level2.img", "/levels"); //Trying to mount the second img to the romdisk
-  //printf("Res2 = %d\n",res2);
+  printf("Res2 = %d\n",res2);
   faces_init(64, "/levels/grump.png", &face2);
   fs_romdisk_unmount("/levels");
 
   int res3 = mount_romdisk("/cd/level3.img", "/levels"); //Trying to mount the second img to the romdisk
-  //printf("Res3 = %d\n",res3);
+  printf("Res3 = %d\n",res3);
   faces_init(128, "/levels/notMaccas.png", &face3);
   fs_romdisk_unmount("/levels");
 

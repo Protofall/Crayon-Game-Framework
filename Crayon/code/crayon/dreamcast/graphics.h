@@ -12,8 +12,8 @@ extern void graphics_frame_coordinates(const struct animation *anim, uint16_t *f
 	uint16_t *frame_y, uint8_t frame);
 
 //Queue a colour/alpha poly to be rendered (Incomplete)
-extern void graphics_draw_colour_poly(pvr_ptr_t name, uint16_t draw_x, uint16_t draw_y,
-	uint16_t draw_z, uint16_t dim_x, uint16_t dim_y, uint32_t colour);
+extern void graphics_draw_colour_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z,
+	uint16_t dim_x, uint16_t dim_y, uint32_t colour);
 
 //Queue a texture to be rendered (If RGB565 or ARGB4444 then paletteNumber is never read)
 extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
@@ -26,7 +26,8 @@ extern uint8_t graphics_draw_sprites_OLD(const struct spritesheet *ss,
   const struct animation *anim, uint16_t *draw_coords, uint16_t *frame_data, uint16_t fd_size,
   uint16_t num_sprites, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber);
 
-//Testing the new render struct (Delete other sprite draws after)
-extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array);
+//Testing the new render struct (Delete other multi sprite draw after and keep original as a basic prog for noobies)
+//poly_list mode is for the tr/pt/op render list macro we want to use. Might move this param into the struct...
+extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
 
 #endif
