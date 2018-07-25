@@ -9,7 +9,7 @@ If you want to draw a single thing with this struct then I think you'll still ne
 the multi-draw. It shouldn't be too much slower if any.
 */
 
-typedef struct crayon_sprite_array{
+typedef struct CrayonSpriteArray{
 	uint16_t * draw_pos;	//Width then Height extracted from anim/frame data, Each group of 2 is for one sub-texture
 	uint16_t * frame_coords;	//Each group of 4 elements is one sub-texture to draw
 	uint8_t * scales;	//I think 8 bits is good enough for most cases
@@ -27,6 +27,8 @@ typedef struct crayon_sprite_array{
 	uint32_t colour;	//For poly mode this dictates the rgb and alpha of a polygon
 	spritesheet_t * ss;
 	animation_t * anim;
-} crayon_sprite_array_t;
+} CrayonSpriteArray_t;
 
 #endif
+
+//Make an untextured draw array for drawing many untextured polys in one go

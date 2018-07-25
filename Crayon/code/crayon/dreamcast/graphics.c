@@ -206,7 +206,7 @@ extern uint8_t graphics_draw_sprites_OLD(const struct spritesheet *ss,
 // options also includes filter mode and format is taken from spritesheet struct
 // draw_z, colour and palette_num are obvious
 // poly_list_mode is used to draw opaque, punchthrough or transparent stuff depending on current list
-extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
+extern uint8_t graphics_draw_sprites(CrayonSpriteArray_t *sprite_array, uint8_t poly_list_mode){
 	return 0;
 }
 

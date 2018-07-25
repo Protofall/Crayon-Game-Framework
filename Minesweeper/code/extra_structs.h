@@ -1,13 +1,27 @@
-#ifndef EXTRA_STRUCTS_H
-#define EXTRA_STRUCTS_H
+#ifndef MS_EXTRA_STRUCTS_H
+#define MS_EXTRA_STRUCTS_H
 
 #include "../../Crayon/code/crayon/dreamcast/texture_structs.h"
 
 //This file exist just to make the main file a little bit more clean
 
 //As far as I know, the only thing that I'd need to watch out for with different OSes is the fact that the task bar is skinnier
-typedef struct minesweeper_OS{
-	uint16_t taskBarY;
-} minesweeper_OS;
+// typedef struct minesweeper_OS{
+// 	uint16_t taskBarY;
+// } minesweeper_OS;
+
+typedef struct MinesweeperOS{
+	uint8_t * ids;	//Animation ids
+	uint16_t * coords_pos;	//The x and y for placing it
+	uint16_t * coords_frame;	//The frame coordinates for UV
+	uint16_t * scale;	//The scale factor
+	uint8_t sprite_count;	//Number of sprites to draw
+	spritesheet_t * windows_ss;	//The spritesheet for the windows assets
+} MinesweeperOS_t;
+
+//Figure out what I need to do here
+typedef struct MinesweeperLang{
+	;
+} MinesweeperLang_t;
 
 #endif

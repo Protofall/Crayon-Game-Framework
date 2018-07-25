@@ -4,6 +4,7 @@
 #include "../../Crayon/code/crayon/dreamcast/graphics.h"
 
 #include "extra_structs.h"
+#include "setup.h"
 
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
@@ -351,56 +352,17 @@ int main(){
 	}
 	else{
 		TileSS = Windows;
-		TileANIM = Windows.spritesheet_animation_array[6];
+		TileANIM = Windows.spritesheet_animation_array[6];	//This changes based on OS
 	}
 
-	//Setting up the draw arrays for the top, bottom bars and other windows related assets
-	uint16_t windowsFrames[30];
-
-	/*
-	As of now:
-	0	0,1 = aboutLogo
-	1	2,3 = boarderBottom
-	2	4,5 = boarderBottomLeft
-	3	6,7 = boarderBottomRight
-	4	8,9 = boarderLeft
-	5	10,11 = boarderRight
-	6	12,13 = italianIcon
-	//WE SKIP THE TILES ANIM
-	8	14,15 = taskbarCurrentTask
-	9	16,17 = taskbarFiller
-	10	18,19 = taskbarStart
-	11	20,21 = taskbarTime
-	12	22,23 = topbarAdjust
-	13	24,25 = topbarFiller
-	14	26,27 = topbarName
-	*/
-
-	//0, 8, 14
-
-	int iter;
-	int jiter;
-
-	for(iter = 0; iter < 6; iter++){
-		uint8_t langFrame = 0;
-		if(iter == 0 && language){
-			langFrame = 1;
-		}
-		graphics_frame_coordinates(&Windows.spritesheet_animation_array[iter], windowsFrames + (2 * iter), windowsFrames + 1 + (2 * iter), langFrame);
-	}
-
-	for(iter = 6; iter < 14; iter++){
-		uint8_t langFrame = 0;
-		if((iter + 1 == 7 || iter + 1 == 8 || iter + 1 == 14) && language){	//iter + 1 because thats the sprite we are targetting
-			langFrame = 1;
-		}
-		graphics_frame_coordinates(&Windows.spritesheet_animation_array[iter + 1], windowsFrames + (2 * iter), windowsFrames + 1 + (2 * iter), langFrame);
-	}
+	//Make the OS struct and populate it
+	MinesweeperOS_t os;
+	setup_OS_assets(&os, &Windows, operatingSystem, language);
 
 	gridX = 30;
 	gridY = 20;
 	gridStartX = 80;
-	gridStartY = 104;	//Never changes
+	gridStartY = 104;	//Never changes for XP mode, but might in 2000
 
 	uint16_t gridSize = gridX * gridY;
 	float mineProbability = 0.175;
@@ -408,6 +370,9 @@ int main(){
 	logicGrid = (uint8_t *) malloc(gridSize * sizeof(uint8_t));
 	coordGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
 	frameGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
+
+	int iter;
+	int jiter;
 
 	for(jiter = 0; jiter < gridY; jiter++){
 		for(iter = 0; iter < gridX; iter++){	//iter is x, jiter is y
@@ -457,9 +422,24 @@ int main(){
 	graphics_frame_coordinates(&Board.spritesheet_animation_array[4], &region_icon_x, &region_icon_y, region);
 
 	//Set colours
-	uint32_t mainBackground = (255 << 24) + (192 << 16) + (192 << 8) + 192;
-	uint32_t lightGrey = (255 << 24) + (128 << 16) + (128 << 8) + 128;
-	uint32_t white = (255 << 24) + (255 << 16) + (255 << 8) + 255;
+	uint32_t mainBackground = (255 << 24) | (192 << 16) | (192 << 8) | 192;	//4290822336
+	uint32_t lightGrey = (255 << 24) | (128 << 16) | (128 << 8) | 128;	//4286611584
+	uint32_t white = (255 << 24) | (255 << 16) | (255 << 8) | 255;	//4294967295
+
+	/*
+	Depth plan:
+
+	Solution 1:
+		- 6 boxes, 2 big boxes like the digit displays, 4 "single pixel" boxes for overlap
+
+	Solution 2:
+		- 5 boxes, but 4 of them are partially transparent. their colour + their alpha + the bg colour equals what they should appear as
+		- The white box is the same, but there are 4 semi-transparent grey boxes...Is this worth it?
+
+	Might be simpler and easier to read by going with Solution 1 (Also make a function that given a box and z value and width,
+		it can create the boarders?)
+
+	*/
 
 	while(1){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -625,24 +605,17 @@ int main(){
 		//Setup the main palette
 		graphics_setup_palette(0, &Board);
 
-		//Draw windows graphics
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[10], 0, 450, 3, 1, 1, windowsFrames[18], windowsFrames[19], 0);		//Task bar (Start)
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[8], 106, 450, 3, 1, 1, windowsFrames[14], windowsFrames[15], 0);	//Task bar (CurrentTask)
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[9], 266, 450, 2, 94, 1, windowsFrames[16], windowsFrames[17], 0);	//Task bar (Filler)
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[11], 547, 450, 1, 1, 1, windowsFrames[20], windowsFrames[21], 0);	//Task bar (Time)
+		//Draw windows graphics using our MinesweeperOpSys struct
+		for(iter = 0; iter < os.sprite_count; iter++){
+			if(iter == 0){	//Don't want to draw aboutLogo yet
+				continue;
+			}
+			graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[os.ids[iter]],
+				os.coords_pos[3 * iter], os.coords_pos[(3 * iter) + 1], os.coords_pos[(3 * iter) + 2],
+				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 0);
+		}
 
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[14], 0, 0, 3, 1, 1, windowsFrames[26], windowsFrames[27], 0);		//Top bar (App name)
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[13], 105, 0, 2, 155, 1, windowsFrames[24], windowsFrames[25], 0);	//Top bar (Fillter)
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[12], 568, 0, 3, 1, 1, windowsFrames[22], windowsFrames[23], 0);		//Top bar (Adjusts)
 
-
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[4], 0, 29, 2, 1, 418, windowsFrames[8], windowsFrames[9], 0);		//Draw left bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[2], 0, 447, 2, 1, 1, windowsFrames[4], windowsFrames[5], 0);		//Draw bottom left bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[3], 636, 447, 2, 1, 1, windowsFrames[6], windowsFrames[7], 0);		//Draw bottom right bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[1], 3, 447, 2, 633, 1, windowsFrames[2], windowsFrames[3], 0);		//Draw bottom bar
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[5], 637, 29, 2, 1, 418, windowsFrames[10], windowsFrames[11], 0);	//Draw right bar
-
-		graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[7], 521, 457, 3, 1, 1, windowsFrames[12], windowsFrames[13], 0);	//Draw EN/IL icon
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 455, 4, 1, 1, region_icon_x, region_icon_y, 0);				//Region icon
 
 		//Draw the main background colour
@@ -768,4 +741,4 @@ Stuff to implement
 
 
 //CHANGE "Board" to "Common" and maybe "Windows" to "OS-Dependent"
-//Bug: Can still A/X press when dead
+//Bug: Can still have A/X press animation on flag
