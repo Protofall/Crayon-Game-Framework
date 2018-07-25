@@ -1,38 +1,49 @@
 #include "setup.h"
 
-void setup_free_OS_struct(MinesweeperOS_t *os){
-	free(os->ids);
-	free(os->coords_pos);
-	free(os->coords_frame);
-	free(os->scale);
+void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t anim_id){
+	// printf("Anims: %d\n", anim_id);
+	if(sys){
+		switch(anim_id){	//I should change to use name. Can switches do strings?
+			case 0:
+				break;
+			case 1:
+				break;
+			default:
+				break;
+		}
+	}
+	else{
+		;
+	}
 }
 
 void setup_OS_assets(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys, uint8_t lang){
 	os->sprite_count = ss->spritesheet_animation_count - 1;
-	os->ids = (uint8_t *) malloc(os->sprite_count * sizeof(uint8_t));
+	os->ids = (uint8_t *) malloc(os->sprite_count * sizeof(uint8_t));	//Because we don't include the ital-tiles, this makes other code easier
 	os->coords_pos = (uint16_t *) malloc(3 * os->sprite_count * sizeof(uint16_t));	//x, y, z
 	os->coords_frame = (uint16_t *) malloc(2 * os->sprite_count * sizeof(uint16_t));	//u, v
 	os->scale = (uint16_t *) malloc(2 * os->sprite_count * sizeof(uint16_t));	//scale x/y
 	os->windows_ss = ss;
-	if(!sys){	//2000
-		;
-	}
-	else{	//XP
-		uint8_t id_count = 0;
-		uint8_t iter;
-		for(iter = 0; iter < os->sprite_count; iter++){
-			uint8_t langFrame = 0;
-			if((id_count == 7 || id_count == 8 || id_count == 14) && lang){
-				langFrame = 1;
-			}
-			graphics_frame_coordinates(&ss->spritesheet_animation_array[id_count],
-				os->coords_frame + (2 * iter), os->coords_frame + (2 * iter) + 1, langFrame);
-			os->ids[iter] = id_count;
-			id_count++;
-			if(id_count == 6){
-				id_count++;
-			}
+	uint8_t id_count = 0;
+	uint8_t iter;
+	for(iter = 0; iter < os->sprite_count; iter++){
+		uint8_t langFrame = 0;
+		if(lang && ss->spritesheet_animation_array[id_count].animation_frames > 1){
+			langFrame = 1;
 		}
+		if(!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "italianTiles")){	//Figure out which library I need for this
+			id_count++;
+		}
+		graphics_frame_coordinates(&ss->spritesheet_animation_array[id_count],
+			os->coords_frame + (2 * iter), os->coords_frame + (2 * iter) + 1, langFrame);
+		os->ids[iter] = id_count;
+		id_count++;
+	}
+	if(sys){	//XP
+		for(iter = 0; iter < os->sprite_count; iter++){
+			setup_pos_lookup_table(os, sys, os->ids[iter]);
+		}
+		//Change this code to work with names incase more assets are added
 
 		//0	(Currently not using, but will use later)
 		// os->coords_pos[0] = ;
@@ -125,7 +136,6 @@ void setup_OS_assets(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys, uint8_
 		os->scale[24] = 155;
 		os->scale[25] = 1;
 
-
 		//14
 		os->coords_pos[39] = 0;
 		os->coords_pos[40] = 0;
@@ -133,4 +143,14 @@ void setup_OS_assets(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys, uint8_
 		os->scale[26] = 1;
 		os->scale[27] = 1;
 	}
+	else{	//2000
+		;
+	}
+}
+
+void setup_free_OS_struct(MinesweeperOS_t *os){
+	free(os->ids);
+	free(os->coords_pos);
+	free(os->coords_frame);
+	free(os->scale);
 }

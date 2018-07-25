@@ -4,8 +4,8 @@
 #include "texture_structs.h"  //For the spritehseet and anim structs
 
 /*
-Its designed for the multi-draw functions (I think I'll remove the single version after a while)
-If you want to draw a single thing with this struct then I think you'll still need to go through
+Its designed for the multi-draw functions. If you want to draw a single
+thing with this struct then I think you'll still need to go through
 the multi-draw. It shouldn't be too much slower if any.
 */
 

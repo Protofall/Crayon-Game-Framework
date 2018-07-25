@@ -5,11 +5,6 @@
 
 //This file exist just to make the main file a little bit more clean
 
-//As far as I know, the only thing that I'd need to watch out for with different OSes is the fact that the task bar is skinnier
-// typedef struct minesweeper_OS{
-// 	uint16_t taskBarY;
-// } minesweeper_OS;
-
 typedef struct MinesweeperOS{
 	uint8_t * ids;	//Animation ids
 	uint16_t * coords_pos;	//The x and y for placing it
@@ -19,7 +14,7 @@ typedef struct MinesweeperOS{
 	spritesheet_t * windows_ss;	//The spritesheet for the windows assets
 } MinesweeperOS_t;
 
-//Figure out what I need to do here
+//Figure out what I need to do here if anything
 typedef struct MinesweeperLang{
 	;
 } MinesweeperLang_t;

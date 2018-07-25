@@ -604,10 +604,13 @@ int main(){
 
 		//Setup the main palette
 		graphics_setup_palette(0, &Board);
+		if(!os){	//Since it uses palettes and XP doesn't, we do this
+			graphics_setup_palette(1, &Windows);
+		}
 
 		//Draw windows graphics using our MinesweeperOpSys struct
 		for(iter = 0; iter < os.sprite_count; iter++){
-			if(iter == 0){	//Don't want to draw aboutLogo yet
+			if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "aboutLogo")){	//We don't want to draw that here so we skip
 				continue;
 			}
 			graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[os.ids[iter]],
@@ -615,11 +618,7 @@ int main(){
 				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 0);
 		}
 
-
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 455, 4, 1, 1, region_icon_x, region_icon_y, 0);				//Region icon
-
-		//Draw the main background colour
-		graphics_draw_colour_poly(0, 0, 1, 640, 480, mainBackground);
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 455, 4, 1, 1, region_icon_x, region_icon_y, 0);	//Region icon
 
 		//Draw the reset button face
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 2, 1, 1, face_frame_x, face_frame_y, 0);
@@ -627,6 +626,9 @@ int main(){
 		//Draw the flag count and timer
 		digit_display(&Board, &Board.spritesheet_animation_array[2], numFlags, 20, 65);
 		digit_display(&Board, &Board.spritesheet_animation_array[2], timeSec, 581, 65);
+
+		//Draw the main background colour
+		graphics_draw_colour_poly(0, 0, 1, 640, 480, mainBackground);
 
 		//Depth for digit displays
 		graphics_draw_colour_poly(19, 64, 4, 40, 24, lightGrey);
