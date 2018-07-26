@@ -1,19 +1,201 @@
 #include "setup.h"
 
-void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t anim_id){
+void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys, uint8_t anim_id){
 	// printf("Anims: %d\n", anim_id);
-	if(sys){
-		switch(anim_id){	//I should change to use name. Can switches do strings?
-			case 0:
-				break;
-			case 1:
-				break;
-			default:
-				break;
+	if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "aboutLogo")){
+		if(sys){	//Populate this later
+			os->coords_pos[anim_id * 3] = 0;
+			os->coords_pos[(anim_id * 3) + 1] = 0;
+			os->coords_pos[(anim_id * 3) + 2] = 0;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+		else{
+			// os->coords_pos[anim_id * 3] = ;
+			// os->coords_pos[(anim_id * 3) + 1] = ;
+			// os->coords_pos[(anim_id * 3) + 2] = ;
+			// os->scale[anim_id * 2] = ;
+			// os->scale[(anim_id * 2) + 1] = ;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "boarderBottom")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 3;
+			os->coords_pos[(anim_id * 3) + 1] = 447;
+			os->coords_pos[(anim_id * 3) + 2] = 2;
+			os->scale[anim_id * 2] = 633;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+		else{
+			;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "boarderBottomLeft")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 0;
+			os->coords_pos[(anim_id * 3) + 1] = 447;
+			os->coords_pos[(anim_id * 3) + 2] = 2;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+		else{
+			;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "boarderBottomRight")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 636;
+			os->coords_pos[(anim_id * 3) + 1] = 447;
+			os->coords_pos[(anim_id * 3) + 2] = 2;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+		else{
+			;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "boarderLeft")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 0;
+			os->coords_pos[(anim_id * 3) + 1] = 29;
+			os->coords_pos[(anim_id * 3) + 2] = 2;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 418;
+		}
+		else{
+			;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "boarderRight")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 637;
+			os->coords_pos[(anim_id * 3) + 1] = 29;
+			os->coords_pos[(anim_id * 3) + 2] = 2;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 418;
+		}
+		else{
+			;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "langIcon")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 521;
+			os->coords_pos[(anim_id * 3) + 1] = 457;
+			os->coords_pos[(anim_id * 3) + 2] = 3;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+		else{
+			os->coords_pos[anim_id * 3] = 512;
+			os->coords_pos[(anim_id * 3) + 1] = 459;
+			os->coords_pos[(anim_id * 3) + 2] = 3;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "taskbarCurrentTask")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 106;
+			os->coords_pos[(anim_id * 3) + 1] = 450;
+			os->coords_pos[(anim_id * 3) + 2] = 3;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+		else{
+			os->coords_pos[anim_id * 3] = 69;
+			os->coords_pos[(anim_id * 3) + 1] = 458;
+			os->coords_pos[(anim_id * 3) + 2] = 2;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "taskbarFiller")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 266;
+			os->coords_pos[(anim_id * 3) + 1] = 450;
+			os->coords_pos[(anim_id * 3) + 2] = 2;
+			os->scale[anim_id * 2] = 94;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+		else{
+			;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "taskbarStart")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 0;
+			os->coords_pos[(anim_id * 3) + 1] = 450;
+			os->coords_pos[(anim_id * 3) + 2] = 3;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+		else{
+			os->coords_pos[anim_id * 3] = 0;
+			os->coords_pos[(anim_id * 3) + 1] = 458;
+			os->coords_pos[(anim_id * 3) + 2] = 2;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "taskbarTime")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 547;
+			os->coords_pos[(anim_id * 3) + 1] = 450;
+			os->coords_pos[(anim_id * 3) + 2] = 1;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+		else{
+			;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "topbarAdjusts")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 568;
+			os->coords_pos[(anim_id * 3) + 1] = 0;
+			os->coords_pos[(anim_id * 3) + 2] = 3;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+		else{
+			os->coords_pos[anim_id * 3] = 588;	//Modify this later?
+			os->coords_pos[(anim_id * 3) + 1] = 2;
+			os->coords_pos[(anim_id * 3) + 2] = 2;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "topbarFiller")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 105;
+			os->coords_pos[(anim_id * 3) + 1] = 0;
+			os->coords_pos[(anim_id * 3) + 2] = 2;
+			os->scale[anim_id * 2] = 155;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+		else{
+			;
+		}
+	}
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "topbarName")){
+		if(sys){
+			os->coords_pos[anim_id * 3] = 0;
+			os->coords_pos[(anim_id * 3) + 1] = 0;
+			os->coords_pos[(anim_id * 3) + 2] = 3;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
+		}
+		else{
+			os->coords_pos[anim_id * 3] = 3;
+			os->coords_pos[(anim_id * 3) + 1] = 2;
+			os->coords_pos[(anim_id * 3) + 2] = 2;
+			os->scale[anim_id * 2] = 1;
+			os->scale[(anim_id * 2) + 1] = 1;
 		}
 	}
 	else{
-		;
+		error_freeze("Unlisted file detected. %s", ss->spritesheet_animation_array[os->ids[anim_id]].animation_name);
 	}
 }
 
@@ -39,113 +221,14 @@ void setup_OS_assets(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys, uint8_
 		os->ids[iter] = id_count;
 		id_count++;
 	}
-	if(sys){	//XP
-		for(iter = 0; iter < os->sprite_count; iter++){
-			setup_pos_lookup_table(os, sys, os->ids[iter]);
-		}
-		//Change this code to work with names incase more assets are added
-
-		//0	(Currently not using, but will use later)
-		// os->coords_pos[0] = ;
-		// os->coords_pos[1] = ;
-		// os->coords_pos[2] = ;
-		// os->scale[0] = ;
-		// os->scale[1] = ;
-
-		//1
-		os->coords_pos[3] = 3;
-		os->coords_pos[4] = 447;
-		os->coords_pos[5] = 2;
-		os->scale[2] = 633;
-		os->scale[3] = 1;
-
-		//2
-		os->coords_pos[6] = 0;
-		os->coords_pos[7] = 447;
-		os->coords_pos[8] = 2;
-		os->scale[4] = 1;
-		os->scale[5] = 1;
-
-		//3
-		os->coords_pos[9] = 636;
-		os->coords_pos[10] = 447;
-		os->coords_pos[11] = 2;
-		os->scale[6] = 1;
-		os->scale[7] = 1;
-
-		//4
-		os->coords_pos[12] = 0;
-		os->coords_pos[13] = 29;
-		os->coords_pos[14] = 2;
-		os->scale[8] = 1;
-		os->scale[9] = 418;
-
-		//5
-		os->coords_pos[15] = 637;
-		os->coords_pos[16] = 29;
-		os->coords_pos[17] = 2;
-		os->scale[10] = 1;
-		os->scale[11] = 418;
-
-		//7
-		os->coords_pos[18] = 521;
-		os->coords_pos[19] = 457;
-		os->coords_pos[20] = 3;
-		os->scale[12] = 1;
-		os->scale[13] = 1;
-
-		//8
-		os->coords_pos[21] = 106;
-		os->coords_pos[22] = 450;
-		os->coords_pos[23] = 3;
-		os->scale[14] = 1;
-		os->scale[15] = 1;
-
-		//9
-		os->coords_pos[24] = 266;
-		os->coords_pos[25] = 450;
-		os->coords_pos[26] = 2;
-		os->scale[16] = 94;
-		os->scale[17] = 1;
-
-		//10
-		os->coords_pos[27] = 0;
-		os->coords_pos[28] = 450;
-		os->coords_pos[29] = 3;
-		os->scale[18] = 1;
-		os->scale[19] = 1;
-
-		//11
-		os->coords_pos[30] = 547;
-		os->coords_pos[31] = 450;
-		os->coords_pos[32] = 1;
-		os->scale[20] = 1;
-		os->scale[21] = 1;
-
-		//12
-		os->coords_pos[33] = 568;
-		os->coords_pos[34] = 0;
-		os->coords_pos[35] = 3;
-		os->scale[22] = 1;
-		os->scale[23] = 1;
-
-		//13
-		os->coords_pos[36] = 105;
-		os->coords_pos[37] = 0;
-		os->coords_pos[38] = 2;
-		os->scale[24] = 155;
-		os->scale[25] = 1;
-
-		//14
-		os->coords_pos[39] = 0;
-		os->coords_pos[40] = 0;
-		os->coords_pos[41] = 3;
-		os->scale[26] = 1;
-		os->scale[27] = 1;
+	// if(sys){	//XP
+	for(iter = 0; iter < os->sprite_count; iter++){
+		setup_pos_lookup_table(os, ss, sys, os->ids[iter]);
 	}
-	else{	//2000
-		;
-	}
+	// }
+	// else{	//2000
+		// ;
+	// }
 }
 
 void setup_free_OS_struct(MinesweeperOS_t *os){

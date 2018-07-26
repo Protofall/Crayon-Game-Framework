@@ -1,7 +1,5 @@
 //Crayon libraries
 #include "../../Crayon/code/crayon/dreamcast/memory.h"
-#include "../../Crayon/code/crayon/dreamcast/debug.h"
-#include "../../Crayon/code/crayon/dreamcast/graphics.h"
 
 #include "extra_structs.h"
 #include "setup.h"
@@ -23,11 +21,11 @@ uint8_t revealed;
 int timeSec;
 uint8_t gameLive = 0;	//Is true when the timer is turning
 
+uint8_t freeLake = 0;	//Initial click generates free lake
 uint8_t questionEnabled = 1;	//Enable the use of question marking
 uint8_t soundEnabled = 0;
-uint8_t operatingSystem = 1;	//0 for 2000, 1 for XP
-uint8_t language = 0;	//0 for English, 1 for Italian. This also affects the Minesweeper/Prato fiorito themes
-uint8_t freeLake = 0;	//Initial click generates free lake
+uint8_t operatingSystem = 0;	//0 for 2000, 1 for XP
+uint8_t language = 1;	//0 for English, 1 for Italian. This also affects the Minesweeper/Prato fiorito themes
 
 uint8_t gridX;
 uint8_t gridY;
@@ -342,19 +340,6 @@ int main(){
 		fs_romdisk_unmount("/2000");
 	}
 
-	//These two just allow me to easily change between Minesweeper and Prato fiorito
-	spritesheet_t TileSS;
-	animation_t TileANIM;
-
-	if(!language){
-		TileSS = Board;
-		TileANIM = Board.spritesheet_animation_array[5];
-	}
-	else{
-		TileSS = Windows;
-		TileANIM = Windows.spritesheet_animation_array[6];	//This changes based on OS
-	}
-
 	//Make the OS struct and populate it
 	MinesweeperOS_t os;
 	setup_OS_assets(&os, &Windows, operatingSystem, language);
@@ -373,6 +358,36 @@ int main(){
 
 	int iter;
 	int jiter;
+
+	//These two just allow me to easily change between Minesweeper and Prato fiorito
+	spritesheet_t TileSS;
+	animation_t TileANIM;
+
+	//The commented code below is doing something very wrong...
+	uint8_t tileID = 5;
+	if(!language){
+		TileSS = Board;
+	}
+	else{
+		TileSS = Windows;
+		for(iter = 0; iter < TileSS.spritesheet_animation_count; iter++){
+			if(!strcmp(TileSS.spritesheet_animation_array[iter].animation_name, "italianTiles")){
+				tileID = iter;
+				break;
+			}
+		}
+	}
+	TileANIM = TileSS.spritesheet_animation_array[tileID];
+	// // error_freeze("%d", tileID);
+
+	// if(!language){
+	// 	TileSS = Board;
+	// 	TileANIM = Board.spritesheet_animation_array[5];
+	// }
+	// else{
+	// 	TileSS = Windows;
+	// 	TileANIM = Windows.spritesheet_animation_array[6];
+	// }
 
 	for(jiter = 0; jiter < gridY; jiter++){
 		for(iter = 0; iter < gridX; iter++){	//iter is x, jiter is y
@@ -451,7 +466,7 @@ int main(){
 		//Use the buttons previously pressed to control what happens here
 		buttonAction = 0;
 		buttonAction |= ((prevButtons[__dev->port] & CONT_A) && !(st->buttons & CONT_A)) << 0;
-		buttonAction |= ((prevButtons[__dev->port] & CONT_X) && !(st->buttons & CONT_X) && !overMode && gameLive) << 1;
+		buttonAction |= ((prevButtons[__dev->port] & CONT_X) && !(st->buttons & CONT_X) && !overMode) << 1;
 		buttonAction |= (!(prevButtons[__dev->port] & CONT_B) && (st->buttons & CONT_B) && !overMode) << 2;
 		buttonAction |= (!(prevButtons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y) && !overMode) << 3;
 
@@ -492,6 +507,10 @@ int main(){
 					}
 				}
 				if(buttonAction & (1 << 1)){	//For X press
+					if(!gameLive){
+						timer_ms_gettime(&startTime, &startMSTime);
+						gameLive = 1;
+					}
 					x_press(&TileANIM, xEle, yEle);
 				}
 				if(buttonAction & (1 << 2)){	//For B press
@@ -554,7 +573,7 @@ int main(){
 			else{
 				pressData[(3 * __dev->port)] = 0;
 			}
-			if(!gameLive){
+			if(overMode != 0){
 				pressData[3 * __dev->port] = 0;
 			}
 		}
@@ -604,7 +623,7 @@ int main(){
 
 		//Setup the main palette
 		graphics_setup_palette(0, &Board);
-		if(!os){	//Since it uses palettes and XP doesn't, we do this
+		if(!operatingSystem){	//Since it uses palettes and XP doesn't, we do this
 			graphics_setup_palette(1, &Windows);
 		}
 
@@ -615,7 +634,8 @@ int main(){
 			}
 			graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[os.ids[iter]],
 				os.coords_pos[3 * iter], os.coords_pos[(3 * iter) + 1], os.coords_pos[(3 * iter) + 2],
-				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 0);
+				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 1);
+			//We choose palette 1 because that's 2000's palette and XP uses RGB565
 		}
 
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 455, 4, 1, 1, region_icon_x, region_icon_y, 0);	//Region icon
@@ -637,7 +657,7 @@ int main(){
 		graphics_draw_colour_poly(582, 66, 4, 40, 24, white);
 
 		//Draw the grid
-		graphics_draw_sprites_OLD(&TileSS, &TileANIM, coordGrid, frameGrid, 2 * gridSize, gridSize, 2, 1, 1, 0);
+		graphics_draw_sprites_OLD(&TileSS, &TileANIM, coordGrid, frameGrid, 2 * gridSize, gridSize, 2, 1, 1, !operatingSystem);
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
@@ -695,7 +715,7 @@ int main(){
 						liter++;
 					}
 				}
-				graphics_draw_sprites_OLD(&TileSS, &TileANIM, indented_neighbours, indented_frames, liter, liter, 2, 1, 1, 0);
+				graphics_draw_sprites_OLD(&TileSS, &TileANIM, indented_neighbours, indented_frames, liter, liter, 3, 1, 1, !operatingSystem);
 			}
 		}
 		
@@ -735,12 +755,11 @@ Stuff to implement
 
 
 
-
-
 //Set first n tiles in logic array as mines, then "Shuffle" it to "populate" it "nicely"
 
 //Ideas: When choosing an OS, make it boot up with a Dreamcast/Katana legacy BIOS
 
-
 //CHANGE "Board" to "Common" and maybe "Windows" to "OS-Dependent"
-//Bug: Can still have A/X press animation on flag
+
+
+//Can you B-press a number to flag all neighbour tiles if the num of unrevealed neighbours = number?
