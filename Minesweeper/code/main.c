@@ -25,7 +25,7 @@ uint8_t freeLake = 0;	//Initial click generates free lake
 uint8_t questionEnabled = 1;	//Enable the use of question marking
 uint8_t soundEnabled = 0;
 uint8_t operatingSystem = 0;	//0 for 2000, 1 for XP
-uint8_t language = 1;	//0 for English, 1 for Italian. This also affects the Minesweeper/Prato fiorito themes
+uint8_t language = 0;	//0 for English, 1 for Italian. This also affects the Minesweeper/Prato fiorito themes
 
 uint8_t gridX;
 uint8_t gridY;

@@ -1,14 +1,10 @@
 # Crayon, framework for a new KOS project
 
-Note: texconv doesn't work with 2048 by 2048 textures :(
-
-(But at least it works with 1024 by 1024 textures)
-
 ### Priority:
 
-+ ! = Can wait till after final Dino runner build
-+ !! = Can wait till after initial Dino runner demo
-+ !!! = Most important, needed for initial Dino runner demo
++ ! = Can wait till after final Minesweeper build
++ !! = Can wait till after initial Minesweeper demo
++ !!! = Most important, needed for initial Minesweeper demo
 
 ### Requirements:
 
@@ -18,7 +14,7 @@ Note: texconv doesn't work with 2048 by 2048 textures :(
 + (DONE) 4bpp loading/rendering support (!!!)
 + (DONE BY DEFAULT?) Maple/Controller support (!!!)
 + Palette entry modification support (!!!)
-+ Error display support (!!!)
++ (Error_Freeze() Isn't enough) Error display support (!!!)
 + Video mode support (!!!)
 + Selector to easily choose between "sd" and "cd" dirs (cd for CD-Rs, sd for the sdloader method) (!!)
 + Threading support (!!)
@@ -31,26 +27,31 @@ Note: texconv doesn't work with 2048 by 2048 textures :(
 + (DONE) Non paletted RGB565 loading/rendering support (!)
 + RAM/VRAM (And SRAM?) space debug (!)
 
-### Developer's Directory Design
+## Instructions on usage
 
-root:
+As of now when making a new project, you'll need to link the exact path to a crayon library (Unlike in real library where you can just do "graphics.h"). Also I think your project directory and the Crayon directory need to have the same parent directory unless you modify the makefile to properly call Crayon's bash file
+
+Crayon's root:
+
+	+ code	//Contains crayon library stuff
+	+ makefile
+	+ make.sh
+
+Your Project's root:
 
 	+ assets/
 	+ cdfs/
-	+ code/crayon/	//Contains crayon library stuff
-	+ code/user/	//Contains the user's code
-	+ makefile
-	+ make.sh
+	+ makefile	//Same makefile from Crayon directory
 
 assets can contain a normal file system, but files/folders with crayon_x fields will be pre-processed. Basically the stuff inside there dirs will get processed and the processed result will be the cdfs directory.
 
 (Explain later what each field means)
 
-The picture formats are PAL4BPP, PAL8BPP, RGB565 (Opqaue) or ARGB4444 (Transparent).
+The picture formats are PAL4BPP, PAL8BPP, RGB565 (Opqaue), ARGB4444 (Transparent) or ARGB1555 (Punch-Through).
 
-Note: Its up to the artist/developers to make sure that the art assets meet the BPP requirements (OPAQUE and TRANSPARENT are 16BPP) and that the romdisk/textures/sound files will all fit in the Dreamcast's RAM nicely (ie. Not crash)
+Note: Its up to the artist/developers to make sure that the art assets meet the BPP requirements (OPAQUE and TRANSPARENT are 16BPP) and that the romdisk/textures/sound files will all fit in the Dreamcast's RAM nicely (Not crash)
 
-The crayon/ directory contains all the .c and .h crayon files used by the program
+The Crayon/code/ directory contains all the .c and .h crayon files used by the program, and every .c/.cpp file in "Your Project"s directory will also be compiled
 
 ### In assets
 
@@ -90,23 +91,25 @@ cd/(mount name)	#Note, this might be attached to the sd dir instead
 Notes:
 
 	+ crayon_x field is a hint to do something with the file/dir in preprocessing
-	+ The crayon_anim found in crayon_packer_sheet dirs contains "height width number_of_sprites" and is used to help make the final txt for that dir
+	+ The crayon_anim found in crayon_packer_sheet dirs contains "frame_width frame_height number_of_sprites" and is used to help make the final txt for that dir. It also assumes each frame has the same width and height and all the frames are tightly packed in an 2D representation of a 1D array-like grid
 	+ A dir with the crayon_packer_sheet field may only contain n png's and n or less crayon_anim's (Each crayon_anim has a png of the same name, but if a png doesn't have a corresponding crayon_anim then its assumed the png is a single frame/just a sprite). Any other files and directories will be ignored
 	+ files that aren't involved in preprocessing (Except gziped ones) are hardlinked
 	+ crayon_img means "Make this into a romdisk"
 	+ crayon_gz means "GZ compress this file/romdisk", can be combined with crayon_img
+	+ **TODO** Make crayon_ignore so the bash script doesn't explore those directories
+	+ **TODO** Make crayon_PAL4BPP and crayon_8BPP to generate only the palette file everything in the dir (Think more how exactly this will work to make it intuitive so it can be used for easily swappable palettes)
 
 ### Code Structure
 
 First some definitions:
 
-+ A spritesheet (SS): Contains 1 to many animations
-+ An animation: Contains 1 to many sprites/frames
-+ A sprite is the individual textures that you see when playing the game
++ A spritesheet (SS): Contains 1 or more animations
++ An animation: Contains 1 or more sprites/frames
++ A sprite is the individual sub-textures/UV-coords-of-texture that you see when playing the game
 
-Ofc we have the basics, romdisk un/mount, setup_palette, all the draw/render functions for each format, load_texture(DTEX \*, DPAL \*) (Nothing is passed in for the DPAL pointer if its not paletted). Each texture it can load must be in the .dtex or .dtex.pal formats to work with the load texture functions.
+Ofc we have the basics, romdisk un/mount, setup_palette, all the draw functions for each format, load_texture(DTEX \*, DPAL \*) (Nothing is passed in for the DPAL pointer if its not paletted). Each texture it can load must be in the .dtex or .dtex.pal formats to work with the load texture functions.
 
-Each .dtex is actually a SS that contains 1 to many animations. So here's my proposed structs for storing the SS info
+Each .dtex is actually a SS that contains 1 or more animations. So here's my proposed structs for storing the SS info **NOTE TO SELF** This has probably changed a bit, update it later
 
 ```c
 ss{
@@ -161,7 +164,7 @@ This would be useful for splitscreen (And maybe views too?). I feel this view id
 
 objectLogicID is basically the general behaviour of a texture. So a background has none, but a sprite might have weight, immunity level, etc. The id is used to refer to the "logic list" that I'll decide on its specifics later.
 
-Note to self: Think about palette structs instead of locking one palette to a texture/ss
+**Note to self:** The view struct probably won't be a part of Crayon and instead part of the project code
 
 ### Pre-requisites
 
@@ -172,17 +175,41 @@ Note to self: Think about palette structs instead of locking one palette to a te
 	+ QT is required to build the Texconv executable
 + cdi4dc (Unix build)
 
+### Installing Pre-requisites
+
+Assuming you have a working clone of KOS.
+
+For cdi4dc:
+`git clone https://github.com/Kazade/img4dc.git`
+`cd img4dc`
+`cmake`
+`make`
+
+For texconv:
+`sudo apt-get install qt5-default qtbase5-dev`
+`git clone https://github.com/tvspelsfreak/texconv`
+`cd texconv`
+`qmake`
+`make`
+
+Copy the executables for texconv and cdi4dc into a directory whose path is listed in the ~.profile file (Or add you own directory path)
+
+**CHECK** Do we also require the `convert` command?
+
+For TexturePacker:
++ Go onto their website and download the free .deb file
++ Install it
++ Run it once, read the legal stuff (Or not) and type "agree"
+
+If I remembered that correctly, now you should have an up and running Crayon framework.
+
 ### Random notes
 
 Force vid_set_mode(DM_640x480_VGA, PM_RGB565); for VGA mode...I think RGB888 might not be compatible with the pvr system (Only RGB565)
 
 Sprite mode might only be able to reliably do a maximum dimension of 256 by 256 textures. Any larger could cause "Jitter" effects
 
+### Useful for identifying colour count
 
+`identify -format %k "filename" && echo` (includes alphas as seperate colours)
 
-
-
-
-
-`identify -format %k "filename" && echo` useful for getting number of colours in png (includes alphas as seperate colours)
-Also we require the `convert` command
