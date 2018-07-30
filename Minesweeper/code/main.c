@@ -21,10 +21,9 @@ uint8_t revealed;
 int timeSec;
 uint8_t gameLive = 0;	//Is true when the timer is turning
 
-uint8_t freeLake = 0;	//Initial click generates free lake
 uint8_t questionEnabled = 1;	//Enable the use of question marking
 uint8_t soundEnabled = 0;
-uint8_t operatingSystem = 0;	//0 for 2000, 1 for XP
+uint8_t operatingSystem = 1;	//0 for 2000, 1 for XP
 uint8_t language = 0;	//0 for English, 1 for Italian. This also affects the Minesweeper/Prato fiorito themes
 
 uint8_t gridX;
@@ -378,16 +377,6 @@ int main(){
 		}
 	}
 	TileANIM = TileSS.spritesheet_animation_array[tileID];
-	// // error_freeze("%d", tileID);
-
-	// if(!language){
-	// 	TileSS = Board;
-	// 	TileANIM = Board.spritesheet_animation_array[5];
-	// }
-	// else{
-	// 	TileSS = Windows;
-	// 	TileANIM = Windows.spritesheet_animation_array[6];
-	// }
 
 	for(jiter = 0; jiter < gridY; jiter++){
 		for(iter = 0; iter < gridX; iter++){	//iter is x, jiter is y
@@ -417,9 +406,15 @@ int main(){
 	uint32_t startTime = 0;
 	uint32_t startMSTime = 0;
 
+	//For the "start to reset"
+	uint32_t sButtonTime = 0;
+	uint32_t sButtonMSTime = 0;
+	uint8_t start_primed = 0;	//Format -PVA 4321 where the numbers are if the player is holding either nothing or just start,
+								//A is active. V is invalidated, P is someone pressed combo
+
 	//Stores the button combination from the previous button press
 	uint32_t prevButtons[4] = {0};
-	uint8_t buttonAction = 0;	// ---- YBXA format, each maple loop the variable is overritten with released statuses
+	uint8_t buttonAction = 0;	// ---S YBXA format, each maple loop the variable is overritten with released statuses
 
 	//1st element is type of click, 2nd element is x, 3rd element is y and repeat for all 4 controllers
 	//1st, 0 = none, 1 = A, 2 = X, X press has priority over A press
@@ -456,11 +451,25 @@ int main(){
 
 	*/
 
-	while(1){
+	while(1){		
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-		if(!(playerActive & (1 << __dev->port)) && st->buttons != 0){	//Player is there, but hasn't been activated yet
-			playerActive |= (1 << __dev->port);
-			continue;
+
+
+		if(start_primed && st->buttons != CONT_START && (st->buttons & CONT_START)){	//Player is pressing inpure start
+			start_primed |= (1 << (__dev->port));	//Number bits
+		}
+
+		if(st->buttons == CONT_START){	//Atleast someone is only pressing start
+			start_primed |= (1 << 6);	//P bit
+		}
+
+		if(!(playerActive & (1 << __dev->port))){	//Player is there, but hasn't been activated yet
+			if(st->buttons != 0){	//Input detected
+				playerActive |= (1 << __dev->port);
+			}
+			else{
+				continue;
+			}
 		}
 
 		//Use the buttons previously pressed to control what happens here
@@ -469,9 +478,7 @@ int main(){
 		buttonAction |= ((prevButtons[__dev->port] & CONT_X) && !(st->buttons & CONT_X) && !overMode) << 1;
 		buttonAction |= (!(prevButtons[__dev->port] & CONT_B) && (st->buttons & CONT_B) && !overMode) << 2;
 		buttonAction |= (!(prevButtons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y) && !overMode) << 3;
-
-		//Do something for Start press like "startPrimed" thats true only when start is the only button pressed?
-			//Why do I need a seperate var for that? I can just compare previous and current button presses
+		buttonAction |= ((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && !(start_primed & (1 << 4))) << 4;	//If we press start, but we haven't done active prime yet and we aren't invalidated
 
 		//These two are only ever set if The cursor is in the grid and A/B/X is/was pressed
 		int xEle = -1;
@@ -489,14 +496,15 @@ int main(){
 
 		//Note that I think the press logic might be off. Going on a diagonal rapidly pressing B sometimes does nothing
 		//This block does the A, B, X and Y press/release stuff
-		if(buttonAction){
+		if(buttonAction % (1 << 3) != 0){
 			if((buttonAction & (1 << 0)) && (cursorPos[2 * __dev->port] <= 307 + 26) && (cursorPos[(2 * __dev->port) + 1] <= 64 + 26)
-				&& cursorPos[2 * __dev->port] >= 307 && cursorPos[(2 * __dev->port) + 1] >= 64){	//If face is pressed
+				&& cursorPos[2 * __dev->port] >= 307 && cursorPos[(2 * __dev->port) + 1] >= 64){	//If face is released on
 				reset_grid(&TileANIM, mineProbability);
 				prevButtons[__dev->port] = st->buttons;	//Store the previous button press
+				face_frame_id = 0;
 				break;	//Since we don't want these old presses interacting with the new board
 			}
-			if(xEle != -1 && yEle != -1){	//If on the grid
+			if(buttonAction % (1 << 3) && xEle != -1 && yEle != -1){	//If on the grid with an A/B/X press
 				if(buttonAction & (1 << 0)){	//For A press
 					if(overMode == 0){
 						if(!gameLive){
@@ -517,11 +525,14 @@ int main(){
 					b_press(&TileANIM, xEle + gridX * yEle);
 				}
 			}
+		}
+		else if(buttonAction){
 			if(buttonAction & (1 << 3)){	//For Y press
 				;
 			}
-			if(buttonAction & (1 << 4)){	//For START press, might delete this later...
-				;
+			if(buttonAction & (1 << 4)){	//Valid start press starts a mini-timer for the reset
+				start_primed |= (1 << 4);	//A bit
+				timer_ms_gettime(&sButtonTime, &sButtonMSTime);
 			}
 		}
 
@@ -583,32 +594,54 @@ int main(){
 
 		prevButtons[__dev->port] = st->buttons;	//Store the previous button press
 		
-   		MAPLE_FOREACH_END()
+		MAPLE_FOREACH_END()
 
-   		if(nonMinesLeft == 0 && gameLive && overMode == 0){
-   			gameLive = 0;
-   			overMode = 2;
-   		}
+		//XX01 XXXX (Where every controller is doing an impure press)
+		if(!(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && (start_primed % (1 << 4))){
+			start_primed |= (1 << 5);	//Now an invalid press
+		}
 
-   		//Right now this is always triggered when a game ends and thanks to "revealed" it only triggers once
-   		if(!revealed && !gameLive && overMode != 0){
-   			reveal_map(&TileANIM);
-   		}
+		//X011 0000
+		if(!(start_primed & (1 << 6)) && (start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
+			start_primed = 0;	//This isn't enough to continue making it invalid. Since first 4 bits just say its invalid
+		}
 
-   		//The face frame id code. If not indented or suprised, then choose a face
-   		if(!face_frame_id){
-	   		if(overMode == 1){
-	   			//play bomb/death sound
+		//X001 0000
+		if(!(start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
+			timer_ms_gettime(&currentTime, &currentMSTime);
+			if(currentTime - sButtonTime + (currentMSTime > sButtonMSTime) >= 2){
+				reset_grid(&TileANIM, mineProbability);
+			}
+			start_primed = 0;
+		}
+		//Fix the face too
+
+		start_primed = start_primed & ((1 << 5) + (1 << 4));	//Clears all bits except active and invalidness
+
+		if(nonMinesLeft == 0 && gameLive && overMode == 0){
+			gameLive = 0;
+			overMode = 2;
+		}
+
+		//Right now this is always triggered when a game ends and thanks to "revealed" it only triggers once
+		if(!revealed && !gameLive && overMode != 0){
+			reveal_map(&TileANIM);
+		}
+
+		//The face frame id code. If not indented or suprised, then choose a face
+		if(!face_frame_id){
+			if(overMode == 1){
+				//play bomb/death sound
 				face_frame_id = 2;
-	   		}
-	   		else if(overMode == 2){
-	   			//play "won" sound
+			}
+			else if(overMode == 2){
+				//play "won" sound
 				face_frame_id = 3;
-	   		}
-	   	}
+			}
+		}
 
 		graphics_frame_coordinates(&Board.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, face_frame_id);
-		face_frame_id = 0;	//Reset face
+		face_frame_id = 0;	//Reset face for new frame
 
 		timer_ms_gettime(&currentTime, &currentMSTime);
 		if(gameLive && timeSec < 999){	//Prevent timer overflows
@@ -616,7 +649,7 @@ int main(){
 			timeSec = currentTime - startTime + (currentMSTime > startMSTime); //MS is there to account for the "1st second" inaccuracy
 		}
 
-   		pvr_wait_ready();
+		pvr_wait_ready();
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
@@ -657,7 +690,7 @@ int main(){
 		graphics_draw_colour_poly(582, 66, 4, 40, 24, white);
 
 		//Draw the grid
-		graphics_draw_sprites_OLD(&TileSS, &TileANIM, coordGrid, frameGrid, 2 * gridSize, gridSize, 2, 1, 1, !operatingSystem);
+		graphics_draw_sprites_OLD(&TileSS, &TileANIM, coordGrid, frameGrid, 2 * gridSize, gridSize, 2, 1, 1, !operatingSystem && language);
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
@@ -715,19 +748,19 @@ int main(){
 						liter++;
 					}
 				}
-				graphics_draw_sprites_OLD(&TileSS, &TileANIM, indented_neighbours, indented_frames, liter, liter, 3, 1, 1, !operatingSystem);
+				graphics_draw_sprites_OLD(&TileSS, &TileANIM, indented_neighbours, indented_frames, liter, liter, 3, 1, 1, !operatingSystem && language);
 			}
 		}
 		
 		pvr_list_finish();
 
 		pvr_scene_finish();
-   	}
+	}
 
-   	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
-   	int retVal = 0;
-   	retVal += memory_free_crayon_packer_sheet(&Board);
-   	retVal += memory_free_crayon_packer_sheet(&Windows);
+	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
+	int retVal = 0;
+	retVal += memory_free_crayon_packer_sheet(&Board);
+	retVal += memory_free_crayon_packer_sheet(&Windows);
 	error_freeze("Free-ing result %d!\n", retVal);
 
 	return 0;
