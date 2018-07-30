@@ -596,23 +596,32 @@ int main(){
 		
 		MAPLE_FOREACH_END()
 
+		//X101 0000 (Where every controller is doing an impure press)
+		if((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
+			face_frame_id = 4;
+		}
+
+
 		//XX01 XXXX (Where every controller is doing an impure press)
 		if(!(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && (start_primed % (1 << 4))){
 			start_primed |= (1 << 5);	//Now an invalid press
+			face_frame_id = 0;
 		}
 
 		//X011 0000
 		if(!(start_primed & (1 << 6)) && (start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
-			start_primed = 0;	//This isn't enough to continue making it invalid. Since first 4 bits just say its invalid
+			start_primed = 0;
+			face_frame_id = 0;
 		}
 
 		//X001 0000
 		if(!(start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
 			timer_ms_gettime(&currentTime, &currentMSTime);
-			if(currentTime - sButtonTime + (currentMSTime > sButtonMSTime) >= 2){
+			// if(currentTime - sButtonTime + (currentMSTime > sButtonMSTime) >= 1.5){
 				reset_grid(&TileANIM, mineProbability);
-			}
+			// }
 			start_primed = 0;
+			face_frame_id = 0;
 		}
 		//Fix the face too
 
