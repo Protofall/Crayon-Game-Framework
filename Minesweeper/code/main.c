@@ -23,8 +23,8 @@ int time_sec;
 
 uint8_t question_enabled = 1;	//Enable the use of question marking
 uint8_t sound_enabled = 0;
-uint8_t operating_system = 0;	//0 for 2000, 1 for XP
-uint8_t language = 1;	//0 for English, 1 for Italian. This also affects the Minesweeper/Prato fiorito themes
+uint8_t operating_system = 1;	//0 for 2000, 1 for XP
+uint8_t language = 0;	//0 for English, 1 for Italian. This also affects the Minesweeper/Prato fiorito themes
 
 uint8_t gridX;
 uint8_t gridY;
@@ -682,9 +682,6 @@ int main(){
 			if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "aboutLogo")){	//We don't want to draw that here so we skip
 				continue;
 			}
-			// if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "langIcon")){	//We don't want to draw that here so we skip
-			// 	error_freeze("Data: %d, %d, %d", os.coords_pos[3 * iter], os.coords_pos[(3 * iter) + 1], os.coords_pos[(3 * iter) + 2]);
-			// }
 			graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[os.ids[iter]],
 				os.coords_pos[3 * iter], os.coords_pos[(3 * iter) + 1], os.coords_pos[(3 * iter) + 2],
 				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 1);
