@@ -39,27 +39,27 @@ uint16_t *frameGrid;
 // N0 N1 N2
 // N3 S  N4
 // N5 N6 N7
-// N are neighbours, S is source (xEle, yEle)
+// N are neighbours, S is source (ele_x, ele_y)
 // The returned value is in the format
 // N7N6N5N4N3N2N1N0 where each bit is true if neighbour is valid
-uint8_t neighbouring_tiles(int xEle, int yEle){
+uint8_t neighbouring_tiles(int ele_x, int ele_y){
 	uint8_t ret_val = 255;
-	if(xEle == 0){
+	if(ele_x == 0){
 		ret_val &= ~(1 << 0);	//Clearing bits which can't be right
 		ret_val &= ~(1 << 3);
 		ret_val &= ~(1 << 5);
 	}
-	else if(xEle >= gridX - 1){
+	else if(ele_x >= gridX - 1){
 		ret_val &= ~(1 << 2);
 		ret_val &= ~(1 << 4);
 		ret_val &= ~(1 << 7);
 	}
-	if(yEle == 0){
+	if(ele_y == 0){
 		ret_val &= ~(1 << 0);
 		ret_val &= ~(1 << 1);
 		ret_val &= ~(1 << 2);
 	}
-	else if(yEle >= gridY - 1){
+	else if(ele_y >= gridY - 1){
 		ret_val &= ~(1 << 5);
 		ret_val &= ~(1 << 6);
 		ret_val &= ~(1 << 7);
@@ -69,23 +69,23 @@ uint8_t neighbouring_tiles(int xEle, int yEle){
 }
 
 //Initially called by reset_grid where x is always a valid number
-void populate_logic(int xEle, int yEle){
-	int ele_logic = xEle + gridX * yEle;
+void populate_logic(int ele_x, int ele_y){
+	int ele_logic = ele_x + gridX * ele_y;
 	if(logicGrid[ele_logic] == 9){	//Is mine
 		return;
 	}
 
-	uint8_t valids = neighbouring_tiles(xEle, yEle);
+	uint8_t valids = neighbouring_tiles(ele_x, ele_y);
 	uint8_t sum = 0;	//A tiles value
 
-	if((valids & (1 << 0)) && logicGrid[xEle - 1 + ((yEle- 1) * gridX)] == 9){sum++;}	//Top Left
-	if((valids & (1 << 1)) && logicGrid[xEle + ((yEle - 1) * gridX)] == 9){sum++;}		//Top centre
-	if((valids & (1 << 2)) && logicGrid[xEle + 1 + ((yEle - 1) * gridX)] == 9){sum++;}	//Top right
-	if((valids & (1 << 3)) && logicGrid[xEle - 1 + (yEle * gridX)] == 9){sum++;}		//Mid Left
-	if((valids & (1 << 4)) && logicGrid[xEle + 1 + (yEle * gridX)] == 9){sum++;}		//Mid Right
-	if((valids & (1 << 5)) && logicGrid[xEle - 1 + ((yEle + 1) * gridX)] == 9){sum++;}	//Bottom left
-	if((valids & (1 << 6)) && logicGrid[xEle + ((yEle + 1) * gridX)] == 9){sum++;}		//Bottom centre
-	if((valids & (1 << 7)) && logicGrid[xEle + 1 + ((yEle + 1) * gridX)] == 9){sum++;}	//Bottom right
+	if((valids & (1 << 0)) && logicGrid[ele_x - 1 + ((ele_y- 1) * gridX)] == 9){sum++;}		//Top Left
+	if((valids & (1 << 1)) && logicGrid[ele_x + ((ele_y - 1) * gridX)] == 9){sum++;}		//Top centre
+	if((valids & (1 << 2)) && logicGrid[ele_x + 1 + ((ele_y - 1) * gridX)] == 9){sum++;}	//Top right
+	if((valids & (1 << 3)) && logicGrid[ele_x - 1 + (ele_y * gridX)] == 9){sum++;}			//Mid Left
+	if((valids & (1 << 4)) && logicGrid[ele_x + 1 + (ele_y * gridX)] == 9){sum++;}			//Mid Right
+	if((valids & (1 << 5)) && logicGrid[ele_x - 1 + ((ele_y + 1) * gridX)] == 9){sum++;}	//Bottom left
+	if((valids & (1 << 6)) && logicGrid[ele_x + ((ele_y + 1) * gridX)] == 9){sum++;}		//Bottom centre
+	if((valids & (1 << 7)) && logicGrid[ele_x + 1 + ((ele_y + 1) * gridX)] == 9){sum++;}	//Bottom right
 
 	logicGrid[ele_logic] = sum;
 
@@ -98,7 +98,7 @@ uint8_t true_prob(double p){
 }
 
 //Call this to reset the grid
-void reset_grid(animation_t * anim, float mineProbability){
+void reset_grid(animation_t * anim){
 	num_flags = 0;
 	uint16_t grid_size = gridX * gridY;
 
@@ -166,8 +166,8 @@ void reveal_map(animation_t * anim){
 	return;
 }
 
-void discover_tile(animation_t * anim, int xEle, int yEle){
-	int ele_logic = xEle + gridX * yEle;
+void discover_tile(animation_t * anim, int ele_x, int ele_y){
+	int ele_logic = ele_x + gridX * ele_y;
 	if(!(logicGrid[ele_logic] & 1 << 6)){	//When not flagged
 		if(logicGrid[ele_logic] & 1 << 7){	//Already discovered
 			return;
@@ -188,7 +188,7 @@ void discover_tile(animation_t * anim, int xEle, int yEle){
 		}
 		logicGrid[ele_logic] |= (1 << 7);
 		if(logicGrid[ele_logic] % (1 << 5) == 0){
-			uint8_t valids = neighbouring_tiles(xEle, yEle);
+			uint8_t valids = neighbouring_tiles(ele_x, ele_y);
 			int i;
 			for(i = 0; i < 8; i++){
 				if(valids & (1 << i)){	//If the tile is valid
@@ -206,7 +206,7 @@ void discover_tile(animation_t * anim, int xEle, int yEle){
 					else if(i > 4){
 						yVariant = 1;
 					}
-					discover_tile(anim, xEle + xVarriant, yEle + yVariant);
+					discover_tile(anim, ele_x + xVarriant, ele_y + yVariant);
 				}
 			}
 		}
@@ -214,21 +214,21 @@ void discover_tile(animation_t * anim, int xEle, int yEle){
 	return;
 }
 
-void x_press(animation_t * anim, int xEle, int yEle){
-	int ele_logic = xEle + gridX * yEle;
+void x_press(animation_t * anim, int ele_x, int ele_y){
+	int ele_logic = ele_x + gridX * ele_y;
 	if((logicGrid[ele_logic] & 1<<7)){	//If revealed
 
-		uint8_t valids = neighbouring_tiles(xEle, yEle);
+		uint8_t valids = neighbouring_tiles(ele_x, ele_y);
 		uint8_t flag_sum = 0;	//A tiles value
 
-		if((valids & (1 << 0)) && logicGrid[xEle - 1 + ((yEle- 1) * gridX)] & (1 << 6)){flag_sum++;}		//Top Left
-		if((valids & (1 << 1)) && logicGrid[xEle + ((yEle - 1) * gridX)]  & (1 << 6)){flag_sum++;}		//Top centre
-		if((valids & (1 << 2)) && logicGrid[xEle + 1 + ((yEle - 1) * gridX)]  & (1 << 6)){flag_sum++;}	//Top right
-		if((valids & (1 << 3)) && logicGrid[xEle - 1 + (yEle * gridX)]  & (1 << 6)){flag_sum++;}			//Mid Left
-		if((valids & (1 << 4)) && logicGrid[xEle + 1 + (yEle * gridX)]  & (1 << 6)){flag_sum++;}			//Mid Right
-		if((valids & (1 << 5)) && logicGrid[xEle - 1 + ((yEle + 1) * gridX)]  & (1 << 6)){flag_sum++;}	//Bottom left
-		if((valids & (1 << 6)) && logicGrid[xEle + ((yEle + 1) * gridX)]  & (1 << 6)){flag_sum++;}		//Bottom centre
-		if((valids & (1 << 7)) && logicGrid[xEle + 1 + ((yEle + 1) * gridX)]  & (1 << 6)){flag_sum++;}	//Bottom right
+		if((valids & (1 << 0)) && logicGrid[ele_x - 1 + ((ele_y- 1) * gridX)] & (1 << 6)){flag_sum++;}		//Top Left
+		if((valids & (1 << 1)) && logicGrid[ele_x + ((ele_y - 1) * gridX)]  & (1 << 6)){flag_sum++;}		//Top centre
+		if((valids & (1 << 2)) && logicGrid[ele_x + 1 + ((ele_y - 1) * gridX)]  & (1 << 6)){flag_sum++;}	//Top right
+		if((valids & (1 << 3)) && logicGrid[ele_x - 1 + (ele_y * gridX)]  & (1 << 6)){flag_sum++;}			//Mid Left
+		if((valids & (1 << 4)) && logicGrid[ele_x + 1 + (ele_y * gridX)]  & (1 << 6)){flag_sum++;}			//Mid Right
+		if((valids & (1 << 5)) && logicGrid[ele_x - 1 + ((ele_y + 1) * gridX)]  & (1 << 6)){flag_sum++;}	//Bottom left
+		if((valids & (1 << 6)) && logicGrid[ele_x + ((ele_y + 1) * gridX)]  & (1 << 6)){flag_sum++;}		//Bottom centre
+		if((valids & (1 << 7)) && logicGrid[ele_x + 1 + ((ele_y + 1) * gridX)]  & (1 << 6)){flag_sum++;}	//Bottom right
 
 		if(logicGrid[ele_logic] % (1 << 4) == flag_sum){
 			//Execute the X-press on all adjacent
@@ -249,7 +249,7 @@ void x_press(animation_t * anim, int xEle, int yEle){
 					else if(i > 4){
 						yVariant = 1;
 					}
-					discover_tile(anim, xEle + xVarriant, yEle + yVariant);
+					discover_tile(anim, ele_x + xVarriant, ele_y + yVariant);
 				}
 			}
 		}
@@ -315,7 +315,12 @@ void digit_display(spritesheet_t * ss, animation_t * anim, int num, uint16_t x, 
 }
 
 int main(){
-	vid_set_mode(DM_640x480_VGA, PM_RGB565);
+	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
+		vid_set_mode(DM_640x480_VGA, PM_RGB565);
+	}
+	else{	//Else its RGB and we default to NTSC interlace (Make a 50/60 Hz menu later). This handles composite
+		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
+	}
 
 	pvr_init_defaults();
 
@@ -361,7 +366,6 @@ int main(){
 	gridStartY = 104;	//Never changes for XP mode, but might in 2000
 
 	uint16_t gridSize = gridX * gridY;
-	float mineProbability = 0.175;
 
 	logicGrid = (uint8_t *) malloc(gridSize * sizeof(uint8_t));
 	coordGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
@@ -399,7 +403,7 @@ int main(){
 	}
 
 	//Set the grid's initial values
-	reset_grid(&TileANIM, mineProbability);
+	reset_grid(&TileANIM);
 
 	//The face frame coords
 	uint16_t face_frame_x;
@@ -511,7 +515,7 @@ int main(){
 		if(buttonAction % (1 << 3) != 0){
 			if((buttonAction & (1 << 0)) && (cursorPos[2 * __dev->port] <= 307 + 26) && (cursorPos[(2 * __dev->port) + 1] <= 64 + 26)
 				&& cursorPos[2 * __dev->port] >= 307 && cursorPos[(2 * __dev->port) + 1] >= 64){	//If face is released on
-				reset_grid(&TileANIM, mineProbability);
+				reset_grid(&TileANIM);
 				prevButtons[__dev->port] = st->buttons;	//Store the previous button press
 				face_frame_id = 0;
 				break;	//Since we don't want these old presses interacting with the new board
@@ -628,7 +632,7 @@ int main(){
 
 		//X001 0000
 		if(!(start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
-			reset_grid(&TileANIM, mineProbability);
+			reset_grid(&TileANIM);
 			start_primed = 0;
 			face_frame_id = 0;
 		}
