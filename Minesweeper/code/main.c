@@ -13,23 +13,24 @@
 //To get region info (Not sure if this is needed)
 #include <dc/flashrom.h>
 
-uint16_t nonMinesLeft;	//When this variable equals zero, the game is won
-int numFlags;	//More like "number of flags in the pool"
+uint16_t non_mines_left;	//When this variable equals zero, the game is won
+int num_flags;	//More like "number of flags in the pool"
 
-uint8_t overMode = 0;	//0 = ready for new game, 1 = loss (ded), 2 = win
+uint8_t over_mode = 0;	//0 = ready for new game, 1 = loss (ded), 2 = win
+uint8_t game_live = 0;	//Is true when the timer is turning
 uint8_t revealed;
-int timeSec;
-uint8_t gameLive = 0;	//Is true when the timer is turning
+int time_sec;
 
-uint8_t questionEnabled = 1;	//Enable the use of question marking
-uint8_t soundEnabled = 0;
-uint8_t operatingSystem = 1;	//0 for 2000, 1 for XP
-uint8_t language = 0;	//0 for English, 1 for Italian. This also affects the Minesweeper/Prato fiorito themes
+uint8_t question_enabled = 1;	//Enable the use of question marking
+uint8_t sound_enabled = 0;
+uint8_t operating_system = 0;	//0 for 2000, 1 for XP
+uint8_t language = 1;	//0 for English, 1 for Italian. This also affects the Minesweeper/Prato fiorito themes
 
 uint8_t gridX;
 uint8_t gridY;
 uint16_t gridStartX;
 uint16_t gridStartY;
+uint16_t num_mines;
 
 uint8_t *logicGrid;
 uint16_t *coordGrid;	//Unless changing grid size, this won't need to be changed once set
@@ -42,35 +43,35 @@ uint16_t *frameGrid;
 // The returned value is in the format
 // N7N6N5N4N3N2N1N0 where each bit is true if neighbour is valid
 uint8_t neighbouring_tiles(int xEle, int yEle){
-	uint8_t retVal = 255;
+	uint8_t ret_val = 255;
 	if(xEle == 0){
-		retVal &= ~(1 << 0);	//Clearing bits which can't be right
-		retVal &= ~(1 << 3);
-		retVal &= ~(1 << 5);
+		ret_val &= ~(1 << 0);	//Clearing bits which can't be right
+		ret_val &= ~(1 << 3);
+		ret_val &= ~(1 << 5);
 	}
 	else if(xEle >= gridX - 1){
-		retVal &= ~(1 << 2);
-		retVal &= ~(1 << 4);
-		retVal &= ~(1 << 7);
+		ret_val &= ~(1 << 2);
+		ret_val &= ~(1 << 4);
+		ret_val &= ~(1 << 7);
 	}
 	if(yEle == 0){
-		retVal &= ~(1 << 0);
-		retVal &= ~(1 << 1);
-		retVal &= ~(1 << 2);
+		ret_val &= ~(1 << 0);
+		ret_val &= ~(1 << 1);
+		ret_val &= ~(1 << 2);
 	}
 	else if(yEle >= gridY - 1){
-		retVal &= ~(1 << 5);
-		retVal &= ~(1 << 6);
-		retVal &= ~(1 << 7);
+		ret_val &= ~(1 << 5);
+		ret_val &= ~(1 << 6);
+		ret_val &= ~(1 << 7);
 	}
 
-	return retVal;
+	return ret_val;
 }
 
 //Initially called by reset_grid where x is always a valid number
 void populate_logic(int xEle, int yEle){
-	int eleLogic = xEle + gridX * yEle;
-	if(logicGrid[eleLogic] == 9){	//Is mine
+	int ele_logic = xEle + gridX * yEle;
+	if(logicGrid[ele_logic] == 9){	//Is mine
 		return;
 	}
 
@@ -86,7 +87,7 @@ void populate_logic(int xEle, int yEle){
 	if((valids & (1 << 6)) && logicGrid[xEle + ((yEle + 1) * gridX)] == 9){sum++;}		//Bottom centre
 	if((valids & (1 << 7)) && logicGrid[xEle + 1 + ((yEle + 1) * gridX)] == 9){sum++;}	//Bottom right
 
-	logicGrid[eleLogic] = sum;
+	logicGrid[ele_logic] = sum;
 
 	return;
 }
@@ -98,18 +99,27 @@ uint8_t true_prob(double p){
 
 //Call this to reset the grid
 void reset_grid(animation_t * anim, float mineProbability){
-	numFlags = 0;
-	int i;
-	int j;
-	uint16_t gridSize = gridX * gridY;
-	for(i = 0; i < gridSize; i++){
-		logicGrid[i] = 9 * true_prob(mineProbability);	//I think 0 is safe, 9 is mine
-		if(logicGrid[i] == 9){
-			numFlags++;
+	num_flags = 0;
+	uint16_t grid_size = gridX * gridY;
+
+	int i = 0;
+	int j = 0;
+	uint16_t mines_left = num_mines;
+	uint16_t tiles_left = grid_size;
+
+	while(i < grid_size){
+		double prob = (double)mines_left / (double)tiles_left;
+		logicGrid[i] = 9 * true_prob(prob);
+		// logicGrid[i] = 9 * new_prob(mines_left, tiles_left);
+		if(logicGrid[i]){
+			mines_left--;
+			num_flags++;	//Is being set right
 		}
+		tiles_left--;
+		i++;
 	}
 
-	for(i = 0; i < 2 * gridSize; i = i + 2){
+	for(i = 0; i < 2 * grid_size; i = i + 2){
 		graphics_frame_coordinates(anim, frameGrid + i, frameGrid + i + 1, 0);
 	}
 
@@ -120,21 +130,21 @@ void reset_grid(animation_t * anim, float mineProbability){
 		}
 	}
 
-	gameLive = 0;
-	overMode = 0;
+	game_live = 0;
+	over_mode = 0;
 	revealed = 0;
+	time_sec = 0;
 
-	timeSec = 0;
-	nonMinesLeft = gridSize - numFlags;
+	non_mines_left = grid_size - num_flags;
 
 	return;
 }
 
-//It fills it out differently depending on overMode
+//It fills it out differently depending on over_mode
 //0 = ready for new game, 1 = loss (ded), 2 = win
 void reveal_map(animation_t * anim){
 	int i;
-	if(overMode == 1){
+	if(over_mode == 1){
 		for(i = 0; i < gridX * gridY; i++){
 			if(logicGrid[i] == 9 || logicGrid[i] == 41){	//Untouched or question marked
 				graphics_frame_coordinates(anim, frameGrid + (2 * i), frameGrid + (2 * i) + 1, 3);
@@ -144,8 +154,8 @@ void reveal_map(animation_t * anim){
 			}
 		}
 	}
-	else if(overMode == 2){
-		numFlags = 0;
+	else if(over_mode == 2){
+		num_flags = 0;
 		for(i = 0; i < gridX * gridY; i++){
 			if(logicGrid[i] % (1 << 5) == 9){
 				graphics_frame_coordinates(anim, frameGrid + (2 * i), frameGrid + (2 * i) + 1, 1);
@@ -157,27 +167,27 @@ void reveal_map(animation_t * anim){
 }
 
 void discover_tile(animation_t * anim, int xEle, int yEle){
-	int eleLogic = xEle + gridX * yEle;
-	if(!(logicGrid[eleLogic] & 1 << 6)){	//When not flagged
-		if(logicGrid[eleLogic] & 1 << 7){	//Already discovered
+	int ele_logic = xEle + gridX * yEle;
+	if(!(logicGrid[ele_logic] & 1 << 6)){	//When not flagged
+		if(logicGrid[ele_logic] & 1 << 7){	//Already discovered
 			return;
 		}
-		int ele = eleLogic * 2;
-		if(logicGrid[eleLogic] & 1 << 5){	//If questioned, remove the question mark and set it to a normal tile
-			logicGrid[eleLogic] &= ~(1 << 5);
+		int ele = ele_logic * 2;
+		if(logicGrid[ele_logic] & 1 << 5){	//If questioned, remove the question mark and set it to a normal tile
+			logicGrid[ele_logic] &= ~(1 << 5);
 			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 0);
 		}
-		if(logicGrid[eleLogic] == 9){	//If mine
+		if(logicGrid[ele_logic] == 9){	//If mine
 			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 4);
-			gameLive = 0;
-			overMode = 1;
+			game_live = 0;
+			over_mode = 1;
 		}
 		else{
-			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 7 + logicGrid[eleLogic]);
-			nonMinesLeft--;
+			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 7 + logicGrid[ele_logic]);
+			non_mines_left--;
 		}
-		logicGrid[eleLogic] |= (1 << 7);
-		if(logicGrid[eleLogic] % (1 << 5) == 0){
+		logicGrid[ele_logic] |= (1 << 7);
+		if(logicGrid[ele_logic] % (1 << 5) == 0){
 			uint8_t valids = neighbouring_tiles(xEle, yEle);
 			int i;
 			for(i = 0; i < 8; i++){
@@ -205,22 +215,22 @@ void discover_tile(animation_t * anim, int xEle, int yEle){
 }
 
 void x_press(animation_t * anim, int xEle, int yEle){
-	int eleLogic = xEle + gridX * yEle;
-	if((logicGrid[eleLogic] & 1<<7)){	//If revealed
+	int ele_logic = xEle + gridX * yEle;
+	if((logicGrid[ele_logic] & 1<<7)){	//If revealed
 
 		uint8_t valids = neighbouring_tiles(xEle, yEle);
-		uint8_t flagSum = 0;	//A tiles value
+		uint8_t flag_sum = 0;	//A tiles value
 
-		if((valids & (1 << 0)) && logicGrid[xEle - 1 + ((yEle- 1) * gridX)] & (1 << 6)){flagSum++;}		//Top Left
-		if((valids & (1 << 1)) && logicGrid[xEle + ((yEle - 1) * gridX)]  & (1 << 6)){flagSum++;}		//Top centre
-		if((valids & (1 << 2)) && logicGrid[xEle + 1 + ((yEle - 1) * gridX)]  & (1 << 6)){flagSum++;}	//Top right
-		if((valids & (1 << 3)) && logicGrid[xEle - 1 + (yEle * gridX)]  & (1 << 6)){flagSum++;}			//Mid Left
-		if((valids & (1 << 4)) && logicGrid[xEle + 1 + (yEle * gridX)]  & (1 << 6)){flagSum++;}			//Mid Right
-		if((valids & (1 << 5)) && logicGrid[xEle - 1 + ((yEle + 1) * gridX)]  & (1 << 6)){flagSum++;}	//Bottom left
-		if((valids & (1 << 6)) && logicGrid[xEle + ((yEle + 1) * gridX)]  & (1 << 6)){flagSum++;}		//Bottom centre
-		if((valids & (1 << 7)) && logicGrid[xEle + 1 + ((yEle + 1) * gridX)]  & (1 << 6)){flagSum++;}	//Bottom right
+		if((valids & (1 << 0)) && logicGrid[xEle - 1 + ((yEle- 1) * gridX)] & (1 << 6)){flag_sum++;}		//Top Left
+		if((valids & (1 << 1)) && logicGrid[xEle + ((yEle - 1) * gridX)]  & (1 << 6)){flag_sum++;}		//Top centre
+		if((valids & (1 << 2)) && logicGrid[xEle + 1 + ((yEle - 1) * gridX)]  & (1 << 6)){flag_sum++;}	//Top right
+		if((valids & (1 << 3)) && logicGrid[xEle - 1 + (yEle * gridX)]  & (1 << 6)){flag_sum++;}			//Mid Left
+		if((valids & (1 << 4)) && logicGrid[xEle + 1 + (yEle * gridX)]  & (1 << 6)){flag_sum++;}			//Mid Right
+		if((valids & (1 << 5)) && logicGrid[xEle - 1 + ((yEle + 1) * gridX)]  & (1 << 6)){flag_sum++;}	//Bottom left
+		if((valids & (1 << 6)) && logicGrid[xEle + ((yEle + 1) * gridX)]  & (1 << 6)){flag_sum++;}		//Bottom centre
+		if((valids & (1 << 7)) && logicGrid[xEle + 1 + ((yEle + 1) * gridX)]  & (1 << 6)){flag_sum++;}	//Bottom right
 
-		if(logicGrid[eleLogic] % (1 << 4) == flagSum){
+		if(logicGrid[ele_logic] % (1 << 4) == flag_sum){
 			//Execute the X-press on all adjacent
 			int i;
 			for(i = 0; i < 8; i++){
@@ -248,27 +258,27 @@ void x_press(animation_t * anim, int xEle, int yEle){
 }
 
 //If we use a flag that decrements the flag count, leaving flag will increment it
-void b_press(animation_t * anim, uint16_t eleLogic){
-	int ele = eleLogic * 2;
-	if(!(logicGrid[eleLogic] & 1<<7)){	//Not discovered
+void b_press(animation_t * anim, uint16_t ele_logic){
+	int ele = ele_logic * 2;
+	if(!(logicGrid[ele_logic] & (1 << 7))){	//Not discovered
 		uint8_t status = 0;	//0 = normal, 1 = flag, 2 = question icons
-		if(logicGrid[eleLogic] & (1<<6)){	//If flagged
-			logicGrid[eleLogic] &= ~(1<<6);	//Clears the flag bit
-			if(questionEnabled){
-				logicGrid[eleLogic] |= (1<<5);	//Sets the question bit
+		if(logicGrid[ele_logic] & (1 << 6)){	//If flagged
+			logicGrid[ele_logic] &= ~(1 << 6);	//Clears the flag bit
+			if(question_enabled){
+				logicGrid[ele_logic] |= (1 << 5);	//Sets the question bit
 				status = 2;
 			}
-			numFlags++;
+			num_flags++;
 		}
 		else{	//Not flagged, but maybe questioned
-			if(logicGrid[eleLogic] & (1<<5)){	//Normal it
-				logicGrid[eleLogic] &= ~(1<<5);
+			if(logicGrid[ele_logic] & (1 << 5)){	//Normal it
+				logicGrid[ele_logic] &= ~(1 << 5);
 				status = 0;
 			}
 			else{	//Flag it
-				logicGrid[eleLogic] |= (1<<6);
+				logicGrid[ele_logic] |= (1 << 6);
 				status = 1;
-				numFlags--;
+				num_flags--;
 			}
 		}
 		graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, status);
@@ -285,18 +295,18 @@ void digit_display(spritesheet_t * ss, animation_t * anim, int num, uint16_t x, 
 		num = 999;
 	}
 
-	char dispNum[3];
-	sprintf(dispNum, "%03d", num);
+	char disp_num[3];
+	sprintf(disp_num, "%03d", num);
 
 	int i;
 	uint16_t frame_x;
 	uint16_t frame_y;
 	for(i = 0; i < 3; i++){
-		if(dispNum[i] == '-'){
+		if(disp_num[i] == '-'){
 			graphics_frame_coordinates(anim, &frame_x, &frame_y, 10);
 		}
 		else{
-			graphics_frame_coordinates(anim, &frame_x, &frame_y, (int)dispNum[i] - 48);
+			graphics_frame_coordinates(anim, &frame_x, &frame_y, (int)disp_num[i] - 48);
 		}
 		graphics_draw_sprite(ss, anim, x + (i * 13), y, 5, 1, 1, frame_x, frame_y, 0);
 	}
@@ -328,7 +338,7 @@ int main(){
 	fs_romdisk_unmount("/Minesweeper");
 
 	//Load the OS assets
-	if(operatingSystem){
+	if(operating_system){
 		memory_mount_romdisk("/cd/XP.img", "/XP");
 		memory_load_crayon_packer_sheet(&Windows, "/XP/Windows.dtex");
 		fs_romdisk_unmount("/XP");
@@ -341,10 +351,12 @@ int main(){
 
 	//Make the OS struct and populate it
 	MinesweeperOS_t os;
-	setup_OS_assets(&os, &Windows, operatingSystem, language);
+	setup_OS_assets(&os, &Windows, operating_system, language);
 
 	gridX = 30;
 	gridY = 20;
+	num_mines = 99;
+
 	gridStartX = 80;
 	gridStartY = 104;	//Never changes for XP mode, but might in 2000
 
@@ -475,9 +487,9 @@ int main(){
 		//Use the buttons previously pressed to control what happens here
 		buttonAction = 0;
 		buttonAction |= ((prevButtons[__dev->port] & CONT_A) && !(st->buttons & CONT_A)) << 0;
-		buttonAction |= ((prevButtons[__dev->port] & CONT_X) && !(st->buttons & CONT_X) && !overMode) << 1;
-		buttonAction |= (!(prevButtons[__dev->port] & CONT_B) && (st->buttons & CONT_B) && !overMode) << 2;
-		buttonAction |= (!(prevButtons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y) && !overMode) << 3;
+		buttonAction |= ((prevButtons[__dev->port] & CONT_X) && !(st->buttons & CONT_X) && !over_mode) << 1;
+		buttonAction |= (!(prevButtons[__dev->port] & CONT_B) && (st->buttons & CONT_B) && !over_mode) << 2;
+		buttonAction |= (!(prevButtons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y) && !over_mode) << 3;
 		buttonAction |= ((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && !(start_primed & (1 << 4))) << 4;	//If we press start, but we haven't done active prime yet and we aren't invalidated
 
 		//These two are only ever set if The cursor is in the grid and A/B/X is/was pressed
@@ -506,18 +518,18 @@ int main(){
 			}
 			if(buttonAction % (1 << 3) && xEle != -1 && yEle != -1){	//If on the grid with an A/B/X press
 				if(buttonAction & (1 << 0)){	//For A press
-					if(overMode == 0){
-						if(!gameLive){
+					if(over_mode == 0){
+						if(!game_live){
 							timer_ms_gettime(&startTime, &startMSTime);
-							gameLive = 1;
+							game_live = 1;
 						}
 						discover_tile(&TileANIM, xEle, yEle);
 					}
 				}
 				if(buttonAction & (1 << 1)){	//For X press
-					if(!gameLive){
+					if(!game_live){
 						timer_ms_gettime(&startTime, &startMSTime);
-						gameLive = 1;
+						game_live = 1;
 					}
 					x_press(&TileANIM, xEle, yEle);
 				}
@@ -564,7 +576,7 @@ int main(){
 
 		//Face logic code and indented blank tiles
 		if((st->buttons & (CONT_A + CONT_X))){
-			if(!overMode && !face_frame_id){
+			if(!over_mode && !face_frame_id){
 				face_frame_id = 1;	//Apply suprised face
 			}
 			if((st->buttons & CONT_A) && (cursorPos[2 * __dev->port] <= 307 + 26) && (cursorPos[(2 * __dev->port) + 1] <= 64 + 26)
@@ -584,7 +596,7 @@ int main(){
 			else{
 				pressData[(3 * __dev->port)] = 0;
 			}
-			if(overMode != 0){
+			if(over_mode != 0){
 				pressData[3 * __dev->port] = 0;
 			}
 		}
@@ -616,34 +628,30 @@ int main(){
 
 		//X001 0000
 		if(!(start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
-			timer_ms_gettime(&currentTime, &currentMSTime);
-			// if(currentTime - sButtonTime + (currentMSTime > sButtonMSTime) >= 1.5){
-				reset_grid(&TileANIM, mineProbability);
-			// }
+			reset_grid(&TileANIM, mineProbability);
 			start_primed = 0;
 			face_frame_id = 0;
 		}
-		//Fix the face too
 
 		start_primed = start_primed & ((1 << 5) + (1 << 4));	//Clears all bits except active and invalidness
 
-		if(nonMinesLeft == 0 && gameLive && overMode == 0){
-			gameLive = 0;
-			overMode = 2;
+		if(non_mines_left == 0 && game_live && over_mode == 0){
+			game_live = 0;
+			over_mode = 2;
 		}
 
 		//Right now this is always triggered when a game ends and thanks to "revealed" it only triggers once
-		if(!revealed && !gameLive && overMode != 0){
+		if(!revealed && !game_live && over_mode != 0){
 			reveal_map(&TileANIM);
 		}
 
 		//The face frame id code. If not indented or suprised, then choose a face
 		if(!face_frame_id){
-			if(overMode == 1){
+			if(over_mode == 1){
 				//play bomb/death sound
 				face_frame_id = 2;
 			}
-			else if(overMode == 2){
+			else if(over_mode == 2){
 				//play "won" sound
 				face_frame_id = 3;
 			}
@@ -653,9 +661,9 @@ int main(){
 		face_frame_id = 0;	//Reset face for new frame
 
 		timer_ms_gettime(&currentTime, &currentMSTime);
-		if(gameLive && timeSec < 999){	//Prevent timer overflows
+		if(game_live && time_sec < 999){	//Prevent timer overflows
 			//Play the "tick" sound effect
-			timeSec = currentTime - startTime + (currentMSTime > startMSTime); //MS is there to account for the "1st second" inaccuracy
+			time_sec = currentTime - startTime + (currentMSTime > startMSTime); //MS is there to account for the "1st second" inaccuracy
 		}
 
 		pvr_wait_ready();
@@ -665,7 +673,7 @@ int main(){
 
 		//Setup the main palette
 		graphics_setup_palette(0, &Board);
-		if(!operatingSystem){	//Since it uses palettes and XP doesn't, we do this
+		if(!operating_system){	//Since it uses palettes and XP doesn't, we do this
 			graphics_setup_palette(1, &Windows);
 		}
 
@@ -674,6 +682,9 @@ int main(){
 			if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "aboutLogo")){	//We don't want to draw that here so we skip
 				continue;
 			}
+			// if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "langIcon")){	//We don't want to draw that here so we skip
+			// 	error_freeze("Data: %d, %d, %d", os.coords_pos[3 * iter], os.coords_pos[(3 * iter) + 1], os.coords_pos[(3 * iter) + 2]);
+			// }
 			graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[os.ids[iter]],
 				os.coords_pos[3 * iter], os.coords_pos[(3 * iter) + 1], os.coords_pos[(3 * iter) + 2],
 				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 1);
@@ -686,8 +697,8 @@ int main(){
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 2, 1, 1, face_frame_x, face_frame_y, 0);
 
 		//Draw the flag count and timer
-		digit_display(&Board, &Board.spritesheet_animation_array[2], numFlags, 20, 65);
-		digit_display(&Board, &Board.spritesheet_animation_array[2], timeSec, 581, 65);
+		digit_display(&Board, &Board.spritesheet_animation_array[2], num_flags, 20, 65);
+		digit_display(&Board, &Board.spritesheet_animation_array[2], time_sec, 581, 65);
 
 		//Draw the main background colour
 		graphics_draw_colour_poly(0, 0, 1, 640, 480, mainBackground);
@@ -699,7 +710,7 @@ int main(){
 		graphics_draw_colour_poly(582, 66, 4, 40, 24, white);
 
 		//Draw the grid
-		graphics_draw_sprites_OLD(&TileSS, &TileANIM, coordGrid, frameGrid, 2 * gridSize, gridSize, 2, 1, 1, !operatingSystem && language);
+		graphics_draw_sprites_OLD(&TileSS, &TileANIM, coordGrid, frameGrid, 2 * gridSize, gridSize, 2, 1, 1, !operating_system && language);
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
@@ -757,7 +768,7 @@ int main(){
 						liter++;
 					}
 				}
-				graphics_draw_sprites_OLD(&TileSS, &TileANIM, indented_neighbours, indented_frames, liter, liter, 3, 1, 1, !operatingSystem && language);
+				graphics_draw_sprites_OLD(&TileSS, &TileANIM, indented_neighbours, indented_frames, liter, liter, 3, 1, 1, !operating_system && language);
 			}
 		}
 		

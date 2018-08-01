@@ -94,7 +94,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 			os->scale[(anim_id * 2) + 1] = 1;
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "taskbarCurrentTask")){
+	else if(!strcmp(ss->spritesheet_animation_array[os->ids[anim_id]].animation_name, "taskbarCurrentTask")){	//For some reason the langIcon uses this for drawing?
 		if(sys){
 			os->coords_pos[anim_id * 3] = 106;
 			os->coords_pos[(anim_id * 3) + 1] = 450;
@@ -142,7 +142,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[anim_id * 3] = 547;
 			os->coords_pos[(anim_id * 3) + 1] = 450;
-			os->coords_pos[(anim_id * 3) + 2] = 1;
+			os->coords_pos[(anim_id * 3) + 2] = 3;
 			os->scale[anim_id * 2] = 1;
 			os->scale[(anim_id * 2) + 1] = 1;
 		}
