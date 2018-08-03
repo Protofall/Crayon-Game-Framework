@@ -26,15 +26,15 @@ uint8_t sound_enabled = 0;
 uint8_t operating_system = 1;	//0 for 2000, 1 for XP
 uint8_t language = 0;	//0 for English, 1 for Italian. This also affects the Minesweeper/Prato fiorito themes
 
-uint8_t gridX;
-uint8_t gridY;
-uint16_t gridStartX;
-uint16_t gridStartY;
+uint8_t grid_x;
+uint8_t grid_y;
+uint16_t grid_start_x;
+uint16_t grid_start_y;
 uint16_t num_mines;
 
-uint8_t *logicGrid;
-uint16_t *coordGrid;	//Unless changing grid size, this won't need to be changed once set
-uint16_t *frameGrid;
+uint8_t *logic_grid;
+uint16_t *coord_grid;	//Unless changing grid size, this won't need to be changed once set
+uint16_t *frame_grid;
 
 // N0 N1 N2
 // N3 S  N4
@@ -49,7 +49,7 @@ uint8_t neighbouring_tiles(int ele_x, int ele_y){
 		ret_val &= ~(1 << 3);
 		ret_val &= ~(1 << 5);
 	}
-	else if(ele_x >= gridX - 1){
+	else if(ele_x >= grid_x - 1){
 		ret_val &= ~(1 << 2);
 		ret_val &= ~(1 << 4);
 		ret_val &= ~(1 << 7);
@@ -59,7 +59,7 @@ uint8_t neighbouring_tiles(int ele_x, int ele_y){
 		ret_val &= ~(1 << 1);
 		ret_val &= ~(1 << 2);
 	}
-	else if(ele_y >= gridY - 1){
+	else if(ele_y >= grid_y - 1){
 		ret_val &= ~(1 << 5);
 		ret_val &= ~(1 << 6);
 		ret_val &= ~(1 << 7);
@@ -70,24 +70,24 @@ uint8_t neighbouring_tiles(int ele_x, int ele_y){
 
 //Initially called by reset_grid where x is always a valid number
 void populate_logic(int ele_x, int ele_y){
-	int ele_logic = ele_x + gridX * ele_y;
-	if(logicGrid[ele_logic] == 9){	//Is mine
+	int ele_logic = ele_x + grid_x * ele_y;
+	if(logic_grid[ele_logic] == 9){	//Is mine
 		return;
 	}
 
 	uint8_t valids = neighbouring_tiles(ele_x, ele_y);
 	uint8_t sum = 0;	//A tiles value
 
-	if((valids & (1 << 0)) && logicGrid[ele_x - 1 + ((ele_y- 1) * gridX)] == 9){sum++;}		//Top Left
-	if((valids & (1 << 1)) && logicGrid[ele_x + ((ele_y - 1) * gridX)] == 9){sum++;}		//Top centre
-	if((valids & (1 << 2)) && logicGrid[ele_x + 1 + ((ele_y - 1) * gridX)] == 9){sum++;}	//Top right
-	if((valids & (1 << 3)) && logicGrid[ele_x - 1 + (ele_y * gridX)] == 9){sum++;}			//Mid Left
-	if((valids & (1 << 4)) && logicGrid[ele_x + 1 + (ele_y * gridX)] == 9){sum++;}			//Mid Right
-	if((valids & (1 << 5)) && logicGrid[ele_x - 1 + ((ele_y + 1) * gridX)] == 9){sum++;}	//Bottom left
-	if((valids & (1 << 6)) && logicGrid[ele_x + ((ele_y + 1) * gridX)] == 9){sum++;}		//Bottom centre
-	if((valids & (1 << 7)) && logicGrid[ele_x + 1 + ((ele_y + 1) * gridX)] == 9){sum++;}	//Bottom right
+	if((valids & (1 << 0)) && logic_grid[ele_x - 1 + ((ele_y- 1) * grid_x)] == 9){sum++;}		//Top Left
+	if((valids & (1 << 1)) && logic_grid[ele_x + ((ele_y - 1) * grid_x)] == 9){sum++;}		//Top centre
+	if((valids & (1 << 2)) && logic_grid[ele_x + 1 + ((ele_y - 1) * grid_x)] == 9){sum++;}	//Top right
+	if((valids & (1 << 3)) && logic_grid[ele_x - 1 + (ele_y * grid_x)] == 9){sum++;}			//Mid Left
+	if((valids & (1 << 4)) && logic_grid[ele_x + 1 + (ele_y * grid_x)] == 9){sum++;}			//Mid Right
+	if((valids & (1 << 5)) && logic_grid[ele_x - 1 + ((ele_y + 1) * grid_x)] == 9){sum++;}	//Bottom left
+	if((valids & (1 << 6)) && logic_grid[ele_x + ((ele_y + 1) * grid_x)] == 9){sum++;}		//Bottom centre
+	if((valids & (1 << 7)) && logic_grid[ele_x + 1 + ((ele_y + 1) * grid_x)] == 9){sum++;}	//Bottom right
 
-	logicGrid[ele_logic] = sum;
+	logic_grid[ele_logic] = sum;
 
 	return;
 }
@@ -100,7 +100,7 @@ uint8_t true_prob(double p){
 //Call this to reset the grid
 void reset_grid(animation_t * anim){
 	num_flags = 0;
-	uint16_t grid_size = gridX * gridY;
+	uint16_t grid_size = grid_x * grid_y;
 
 	int i = 0;
 	int j = 0;
@@ -109,9 +109,9 @@ void reset_grid(animation_t * anim){
 
 	while(i < grid_size){
 		double prob = (double)mines_left / (double)tiles_left;
-		logicGrid[i] = 9 * true_prob(prob);
-		// logicGrid[i] = 9 * new_prob(mines_left, tiles_left);
-		if(logicGrid[i]){
+		logic_grid[i] = 9 * true_prob(prob);
+		// logic_grid[i] = 9 * new_prob(mines_left, tiles_left);
+		if(logic_grid[i]){
 			mines_left--;
 			num_flags++;	//Is being set right
 		}
@@ -120,12 +120,12 @@ void reset_grid(animation_t * anim){
 	}
 
 	for(i = 0; i < 2 * grid_size; i = i + 2){
-		graphics_frame_coordinates(anim, frameGrid + i, frameGrid + i + 1, 0);
+		graphics_frame_coordinates(anim, frame_grid + i, frame_grid + i + 1, 0);
 	}
 
 	//Iterates through whole loop
-	for(j = 0; j < gridY; j++){
-		for(i = 0; i < gridX; i++){
+	for(j = 0; j < grid_y; j++){
+		for(i = 0; i < grid_x; i++){
 			populate_logic(i, j);
 		}
 	}
@@ -145,20 +145,20 @@ void reset_grid(animation_t * anim){
 void reveal_map(animation_t * anim){
 	int i;
 	if(over_mode == 1){
-		for(i = 0; i < gridX * gridY; i++){
-			if(logicGrid[i] == 9 || logicGrid[i] == 41){	//Untouched or question marked
-				graphics_frame_coordinates(anim, frameGrid + (2 * i), frameGrid + (2 * i) + 1, 3);
+		for(i = 0; i < grid_x * grid_y; i++){
+			if(logic_grid[i] == 9 || logic_grid[i] == 41){	//Untouched or question marked
+				graphics_frame_coordinates(anim, frame_grid + (2 * i), frame_grid + (2 * i) + 1, 3);
 			}
-			if(logicGrid[i] != 73 && logicGrid[i] & 1<<6){	//Untouched or question marked
-				graphics_frame_coordinates(anim, frameGrid + (2 * i), frameGrid + (2 * i) + 1, 5);
+			if(logic_grid[i] != 73 && logic_grid[i] & 1<<6){	//Untouched or question marked
+				graphics_frame_coordinates(anim, frame_grid + (2 * i), frame_grid + (2 * i) + 1, 5);
 			}
 		}
 	}
 	else if(over_mode == 2){
 		num_flags = 0;
-		for(i = 0; i < gridX * gridY; i++){
-			if(logicGrid[i] % (1 << 5) == 9){
-				graphics_frame_coordinates(anim, frameGrid + (2 * i), frameGrid + (2 * i) + 1, 1);
+		for(i = 0; i < grid_x * grid_y; i++){
+			if(logic_grid[i] % (1 << 5) == 9){
+				graphics_frame_coordinates(anim, frame_grid + (2 * i), frame_grid + (2 * i) + 1, 1);
 			}
 		}
 	}
@@ -167,27 +167,27 @@ void reveal_map(animation_t * anim){
 }
 
 void discover_tile(animation_t * anim, int ele_x, int ele_y){
-	int ele_logic = ele_x + gridX * ele_y;
-	if(!(logicGrid[ele_logic] & 1 << 6)){	//When not flagged
-		if(logicGrid[ele_logic] & 1 << 7){	//Already discovered
+	int ele_logic = ele_x + grid_x * ele_y;
+	if(!(logic_grid[ele_logic] & 1 << 6)){	//When not flagged
+		if(logic_grid[ele_logic] & 1 << 7){	//Already discovered
 			return;
 		}
 		int ele = ele_logic * 2;
-		if(logicGrid[ele_logic] & 1 << 5){	//If questioned, remove the question mark and set it to a normal tile
-			logicGrid[ele_logic] &= ~(1 << 5);
-			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 0);
+		if(logic_grid[ele_logic] & 1 << 5){	//If questioned, remove the question mark and set it to a normal tile
+			logic_grid[ele_logic] &= ~(1 << 5);
+			graphics_frame_coordinates(anim, frame_grid + ele, frame_grid + ele + 1, 0);
 		}
-		if(logicGrid[ele_logic] == 9){	//If mine
-			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 4);
+		if(logic_grid[ele_logic] == 9){	//If mine
+			graphics_frame_coordinates(anim, frame_grid + ele, frame_grid + ele + 1, 4);
 			game_live = 0;
 			over_mode = 1;
 		}
 		else{
-			graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, 7 + logicGrid[ele_logic]);
+			graphics_frame_coordinates(anim, frame_grid + ele, frame_grid + ele + 1, 7 + logic_grid[ele_logic]);
 			non_mines_left--;
 		}
-		logicGrid[ele_logic] |= (1 << 7);
-		if(logicGrid[ele_logic] % (1 << 5) == 0){
+		logic_grid[ele_logic] |= (1 << 7);
+		if(logic_grid[ele_logic] % (1 << 5) == 0){
 			uint8_t valids = neighbouring_tiles(ele_x, ele_y);
 			int i;
 			for(i = 0; i < 8; i++){
@@ -215,22 +215,22 @@ void discover_tile(animation_t * anim, int ele_x, int ele_y){
 }
 
 void x_press(animation_t * anim, int ele_x, int ele_y){
-	int ele_logic = ele_x + gridX * ele_y;
-	if((logicGrid[ele_logic] & 1<<7)){	//If revealed
+	int ele_logic = ele_x + grid_x * ele_y;
+	if((logic_grid[ele_logic] & 1<<7)){	//If revealed
 
 		uint8_t valids = neighbouring_tiles(ele_x, ele_y);
 		uint8_t flag_sum = 0;	//A tiles value
 
-		if((valids & (1 << 0)) && logicGrid[ele_x - 1 + ((ele_y- 1) * gridX)] & (1 << 6)){flag_sum++;}		//Top Left
-		if((valids & (1 << 1)) && logicGrid[ele_x + ((ele_y - 1) * gridX)]  & (1 << 6)){flag_sum++;}		//Top centre
-		if((valids & (1 << 2)) && logicGrid[ele_x + 1 + ((ele_y - 1) * gridX)]  & (1 << 6)){flag_sum++;}	//Top right
-		if((valids & (1 << 3)) && logicGrid[ele_x - 1 + (ele_y * gridX)]  & (1 << 6)){flag_sum++;}			//Mid Left
-		if((valids & (1 << 4)) && logicGrid[ele_x + 1 + (ele_y * gridX)]  & (1 << 6)){flag_sum++;}			//Mid Right
-		if((valids & (1 << 5)) && logicGrid[ele_x - 1 + ((ele_y + 1) * gridX)]  & (1 << 6)){flag_sum++;}	//Bottom left
-		if((valids & (1 << 6)) && logicGrid[ele_x + ((ele_y + 1) * gridX)]  & (1 << 6)){flag_sum++;}		//Bottom centre
-		if((valids & (1 << 7)) && logicGrid[ele_x + 1 + ((ele_y + 1) * gridX)]  & (1 << 6)){flag_sum++;}	//Bottom right
+		if((valids & (1 << 0)) && logic_grid[ele_x - 1 + ((ele_y- 1) * grid_x)] & (1 << 6)){flag_sum++;}		//Top Left
+		if((valids & (1 << 1)) && logic_grid[ele_x + ((ele_y - 1) * grid_x)]  & (1 << 6)){flag_sum++;}		//Top centre
+		if((valids & (1 << 2)) && logic_grid[ele_x + 1 + ((ele_y - 1) * grid_x)]  & (1 << 6)){flag_sum++;}	//Top right
+		if((valids & (1 << 3)) && logic_grid[ele_x - 1 + (ele_y * grid_x)]  & (1 << 6)){flag_sum++;}			//Mid Left
+		if((valids & (1 << 4)) && logic_grid[ele_x + 1 + (ele_y * grid_x)]  & (1 << 6)){flag_sum++;}			//Mid Right
+		if((valids & (1 << 5)) && logic_grid[ele_x - 1 + ((ele_y + 1) * grid_x)]  & (1 << 6)){flag_sum++;}	//Bottom left
+		if((valids & (1 << 6)) && logic_grid[ele_x + ((ele_y + 1) * grid_x)]  & (1 << 6)){flag_sum++;}		//Bottom centre
+		if((valids & (1 << 7)) && logic_grid[ele_x + 1 + ((ele_y + 1) * grid_x)]  & (1 << 6)){flag_sum++;}	//Bottom right
 
-		if(logicGrid[ele_logic] % (1 << 4) == flag_sum){
+		if(logic_grid[ele_logic] % (1 << 4) == flag_sum){
 			//Execute the X-press on all adjacent
 			int i;
 			for(i = 0; i < 8; i++){
@@ -260,28 +260,28 @@ void x_press(animation_t * anim, int ele_x, int ele_y){
 //If we use a flag that decrements the flag count, leaving flag will increment it
 void b_press(animation_t * anim, uint16_t ele_logic){
 	int ele = ele_logic * 2;
-	if(!(logicGrid[ele_logic] & (1 << 7))){	//Not discovered
+	if(!(logic_grid[ele_logic] & (1 << 7))){	//Not discovered
 		uint8_t status = 0;	//0 = normal, 1 = flag, 2 = question icons
-		if(logicGrid[ele_logic] & (1 << 6)){	//If flagged
-			logicGrid[ele_logic] &= ~(1 << 6);	//Clears the flag bit
+		if(logic_grid[ele_logic] & (1 << 6)){	//If flagged
+			logic_grid[ele_logic] &= ~(1 << 6);	//Clears the flag bit
 			if(question_enabled){
-				logicGrid[ele_logic] |= (1 << 5);	//Sets the question bit
+				logic_grid[ele_logic] |= (1 << 5);	//Sets the question bit
 				status = 2;
 			}
 			num_flags++;
 		}
 		else{	//Not flagged, but maybe questioned
-			if(logicGrid[ele_logic] & (1 << 5)){	//Normal it
-				logicGrid[ele_logic] &= ~(1 << 5);
+			if(logic_grid[ele_logic] & (1 << 5)){	//Normal it
+				logic_grid[ele_logic] &= ~(1 << 5);
 				status = 0;
 			}
 			else{	//Flag it
-				logicGrid[ele_logic] |= (1 << 6);
+				logic_grid[ele_logic] |= (1 << 6);
 				status = 1;
 				num_flags--;
 			}
 		}
-		graphics_frame_coordinates(anim, frameGrid + ele, frameGrid + ele + 1, status);
+		graphics_frame_coordinates(anim, frame_grid + ele, frame_grid + ele + 1, status);
 	}
 	return;
 }
@@ -326,15 +326,15 @@ int main(){
 
 	srand(time(0));
 
-	int cursorPos[8];
-	cursorPos[0] = 50;
-	cursorPos[1] = 100;
-	cursorPos[2] = 50;
-	cursorPos[3] = 350;
-	cursorPos[4] = 590;
-	cursorPos[5] = 100;
-	cursorPos[6] = 590;
-	cursorPos[7] = 350;
+	int cursor_position[8];
+	cursor_position[0] = 50;
+	cursor_position[1] = 100;
+	cursor_position[2] = 50;
+	cursor_position[3] = 350;
+	cursor_position[4] = 590;
+	cursor_position[5] = 100;
+	cursor_position[6] = 590;
+	cursor_position[7] = 350;
 
 	spritesheet_t Board, Windows;
 
@@ -358,52 +358,52 @@ int main(){
 	MinesweeperOS_t os;
 	setup_OS_assets(&os, &Windows, operating_system, language);
 
-	gridX = 30;
-	gridY = 20;
+	grid_x = 30;
+	grid_y = 20;
 	num_mines = 99;
 
-	gridStartX = 80;
-	gridStartY = 104;	//Never changes for XP mode, but might in 2000
+	grid_start_x = 80;
+	grid_start_y = 104;	//Never changes for XP mode, but might in 2000
 
-	uint16_t gridSize = gridX * gridY;
+	uint16_t grid_size = grid_x * grid_y;
 
-	logicGrid = (uint8_t *) malloc(gridSize * sizeof(uint8_t));
-	coordGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
-	frameGrid = (uint16_t *) malloc(2 * gridSize * sizeof(uint16_t));
+	logic_grid = (uint8_t *) malloc(grid_size * sizeof(uint8_t));
+	coord_grid = (uint16_t *) malloc(2 * grid_size * sizeof(uint16_t));
+	frame_grid = (uint16_t *) malloc(2 * grid_size * sizeof(uint16_t));
 
 	int iter;
 	int jiter;
 
 	//These two just allow me to easily change between Minesweeper and Prato fiorito
-	spritesheet_t TileSS;
-	animation_t TileANIM;
+	spritesheet_t tile_ss;
+	animation_t tile_anim;
 
 	//The commented code below is doing something very wrong...
-	uint8_t tileID = 5;
+	uint8_t tile_id = 5;
 	if(!language){
-		TileSS = Board;
+		tile_ss = Board;
 	}
 	else{
-		TileSS = Windows;
-		for(iter = 0; iter < TileSS.spritesheet_animation_count; iter++){
-			if(!strcmp(TileSS.spritesheet_animation_array[iter].animation_name, "italianTiles")){
-				tileID = iter;
+		tile_ss = Windows;
+		for(iter = 0; iter < tile_ss.spritesheet_animation_count; iter++){
+			if(!strcmp(tile_ss.spritesheet_animation_array[iter].animation_name, "italianTiles")){
+				tile_id = iter;
 				break;
 			}
 		}
 	}
-	TileANIM = TileSS.spritesheet_animation_array[tileID];
+	tile_anim = tile_ss.spritesheet_animation_array[tile_id];
 
-	for(jiter = 0; jiter < gridY; jiter++){
-		for(iter = 0; iter < gridX; iter++){	//iter is x, jiter is y
-			uint16_t ele = (jiter * gridX * 2) + (2 * iter);
-			coordGrid[ele] = gridStartX + (iter * 16);
-			coordGrid[ele + 1] = gridStartY + (jiter * 16);
+	for(jiter = 0; jiter < grid_y; jiter++){
+		for(iter = 0; iter < grid_x; iter++){	//iter is x, jiter is y
+			uint16_t ele = (jiter * grid_x * 2) + (2 * iter);
+			coord_grid[ele] = grid_start_x + (iter * 16);
+			coord_grid[ele + 1] = grid_start_y + (jiter * 16);
 		}
 	}
 
 	//Set the grid's initial values
-	reset_grid(&TileANIM);
+	reset_grid(&tile_anim);
 
 	//The face frame coords
 	uint16_t face_frame_x;
@@ -413,28 +413,28 @@ int main(){
 	//Cursor Player icon frame coords
 	uint16_t p_frame_x = 0;
 	uint16_t p_frame_y = 0;
-	uint8_t playerActive = 0;	//Used to confirm if a controller is being used
+	uint8_t player_active = 0;	//Used to confirm if a controller is being used
 	graphics_frame_coordinates(&Board.spritesheet_animation_array[3], &p_frame_x, &p_frame_y, 0);
 
 	//For the timer
-	uint32_t currentTime = 0;
-	uint32_t currentMSTime = 0;
-	uint32_t startTime = 0;
-	uint32_t startMSTime = 0;
+	uint32_t current_time = 0;
+	uint32_t current_ms_time = 0;
+	uint32_t start_time = 0;
+	uint32_t start_ms_time = 0;
 
 	//For the "start to reset"
-	uint32_t sButtonTime = 0;
-	uint32_t sButtonMSTime = 0;
+	uint32_t start_button_time = 0;
+	uint32_t start_button_ms_time = 0;
 	uint8_t start_primed = 0;	//Format -PVA 4321 where the numbers are if the player is holding either nothing or just start,
 								//A is active. V is invalidated, P is someone pressed combo
 
 	//Stores the button combination from the previous button press
-	uint32_t prevButtons[4] = {0};
-	uint8_t buttonAction = 0;	// ---S YBXA format, each maple loop the variable is overritten with released statuses
+	uint32_t previous_buttons[4] = {0};
+	uint8_t button_action = 0;	// ---S YBXA format, each maple loop the variable is overritten with released statuses
 
 	//1st element is type of click, 2nd element is x, 3rd element is y and repeat for all 4 controllers
 	//1st, 0 = none, 1 = A, 2 = X, X press has priority over A press
-	uint16_t pressData[12] = {0};
+	uint16_t press_data[12] = {0};
 	uint16_t indented_neighbours[18];	//For now I'm doing the centre independently, but later I'll add it here
 	uint16_t indented_frames[18];
 
@@ -448,8 +448,8 @@ int main(){
 	graphics_frame_coordinates(&Board.spritesheet_animation_array[4], &region_icon_x, &region_icon_y, region);
 
 	//Set colours
-	uint32_t mainBackground = (255 << 24) | (192 << 16) | (192 << 8) | 192;	//4290822336
-	uint32_t lightGrey = (255 << 24) | (128 << 16) | (128 << 8) | 128;	//4286611584
+	uint32_t main_background = (255 << 24) | (192 << 16) | (192 << 8) | 192;	//4290822336
+	uint32_t light_grey = (255 << 24) | (128 << 16) | (128 << 8) | 128;	//4286611584
 	uint32_t white = (255 << 24) | (255 << 16) | (255 << 8) | 255;	//4294967295
 
 	/*
@@ -479,9 +479,9 @@ int main(){
 			start_primed |= (1 << 6);	//P bit
 		}
 
-		if(!(playerActive & (1 << __dev->port))){	//Player is there, but hasn't been activated yet
+		if(!(player_active & (1 << __dev->port))){	//Player is there, but hasn't been activated yet
 			if(st->buttons != 0){	//Input detected
-				playerActive |= (1 << __dev->port);
+				player_active |= (1 << __dev->port);
 			}
 			else{
 				continue;
@@ -489,92 +489,92 @@ int main(){
 		}
 
 		//Use the buttons previously pressed to control what happens here
-		buttonAction = 0;
-		buttonAction |= ((prevButtons[__dev->port] & CONT_A) && !(st->buttons & CONT_A)) << 0;
-		buttonAction |= ((prevButtons[__dev->port] & CONT_X) && !(st->buttons & CONT_X) && !over_mode) << 1;
-		buttonAction |= (!(prevButtons[__dev->port] & CONT_B) && (st->buttons & CONT_B) && !over_mode) << 2;
-		buttonAction |= (!(prevButtons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y) && !over_mode) << 3;
-		buttonAction |= ((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && !(start_primed & (1 << 4))) << 4;	//If we press start, but we haven't done active prime yet and we aren't invalidated
+		button_action = 0;
+		button_action |= ((previous_buttons[__dev->port] & CONT_A) && !(st->buttons & CONT_A)) << 0;
+		button_action |= ((previous_buttons[__dev->port] & CONT_X) && !(st->buttons & CONT_X) && !over_mode) << 1;
+		button_action |= (!(previous_buttons[__dev->port] & CONT_B) && (st->buttons & CONT_B) && !over_mode) << 2;
+		button_action |= (!(previous_buttons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y) && !over_mode) << 3;
+		button_action |= ((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && !(start_primed & (1 << 4))) << 4;	//If we press start, but we haven't done active prime yet and we aren't invalidated
 
 		//These two are only ever set if The cursor is in the grid and A/B/X is/was pressed
-		int xEle = -1;
-		int yEle = -1;
+		int ele_x = -1;
+		int ele_y = -1;
 		uint8_t inGrid = 0;
 		//Need to know if in the grid when releasing A/X, pressing B and when holding A/X
-		if((buttonAction % (1 << 3)) || (st->buttons & (CONT_A + CONT_X))){
-			inGrid = (cursorPos[2 * __dev->port] < gridStartX + (gridX * 16)) && (cursorPos[(2 * __dev->port) + 1] < gridStartY + (gridY * 16))
-				&& cursorPos[2 * __dev->port] >= gridStartX && cursorPos[(2 * __dev->port) + 1] >= gridStartY;
+		if((button_action % (1 << 3)) || (st->buttons & (CONT_A + CONT_X))){
+			inGrid = (cursor_position[2 * __dev->port] < grid_start_x + (grid_x * 16)) && (cursor_position[(2 * __dev->port) + 1] < grid_start_y + (grid_y * 16))
+				&& cursor_position[2 * __dev->port] >= grid_start_x && cursor_position[(2 * __dev->port) + 1] >= grid_start_y;
 			if(inGrid){
-				xEle = (cursorPos[2 * __dev->port]  - gridStartX) / 16;
-				yEle = (cursorPos[(2 * __dev->port) + 1]  - gridStartY) / 16;
+				ele_x = (cursor_position[2 * __dev->port]  - grid_start_x) / 16;
+				ele_y = (cursor_position[(2 * __dev->port) + 1]  - grid_start_y) / 16;
 			}
 		}
 
 		//Note that I think the press logic might be off. Going on a diagonal rapidly pressing B sometimes does nothing
 		//This block does the A, B, X and Y press/release stuff
-		if(buttonAction % (1 << 3) != 0){
-			if((buttonAction & (1 << 0)) && (cursorPos[2 * __dev->port] <= 307 + 26) && (cursorPos[(2 * __dev->port) + 1] <= 64 + 26)
-				&& cursorPos[2 * __dev->port] >= 307 && cursorPos[(2 * __dev->port) + 1] >= 64){	//If face is released on
-				reset_grid(&TileANIM);
-				prevButtons[__dev->port] = st->buttons;	//Store the previous button press
+		if(button_action % (1 << 3) != 0){
+			if((button_action & (1 << 0)) && (cursor_position[2 * __dev->port] <= 307 + 26) && (cursor_position[(2 * __dev->port) + 1] <= 64 + 26)
+				&& cursor_position[2 * __dev->port] >= 307 && cursor_position[(2 * __dev->port) + 1] >= 64){	//If face is released on
+				reset_grid(&tile_anim);
+				previous_buttons[__dev->port] = st->buttons;	//Store the previous button press
 				face_frame_id = 0;
 				break;	//Since we don't want these old presses interacting with the new board
 			}
-			if(buttonAction % (1 << 3) && xEle != -1 && yEle != -1){	//If on the grid with an A/B/X press
-				if(buttonAction & (1 << 0)){	//For A press
+			if(button_action % (1 << 3) && ele_x != -1 && ele_y != -1){	//If on the grid with an A/B/X press
+				if(button_action & (1 << 0)){	//For A press
 					if(over_mode == 0){
 						if(!game_live){
-							timer_ms_gettime(&startTime, &startMSTime);
+							timer_ms_gettime(&start_time, &start_ms_time);
 							game_live = 1;
 						}
-						discover_tile(&TileANIM, xEle, yEle);
+						discover_tile(&tile_anim, ele_x, ele_y);
 					}
 				}
-				if(buttonAction & (1 << 1)){	//For X press
+				if(button_action & (1 << 1)){	//For X press
 					if(!game_live){
-						timer_ms_gettime(&startTime, &startMSTime);
+						timer_ms_gettime(&start_time, &start_ms_time);
 						game_live = 1;
 					}
-					x_press(&TileANIM, xEle, yEle);
+					x_press(&tile_anim, ele_x, ele_y);
 				}
-				if(buttonAction & (1 << 2)){	//For B press
-					b_press(&TileANIM, xEle + gridX * yEle);
+				if(button_action & (1 << 2)){	//For B press
+					b_press(&tile_anim, ele_x + grid_x * ele_y);
 				}
 			}
 		}
-		else if(buttonAction){
-			if(buttonAction & (1 << 3)){	//For Y press
+		else if(button_action){
+			if(button_action & (1 << 3)){	//For Y press
 				;
 			}
-			if(buttonAction & (1 << 4)){	//Valid start press starts a mini-timer for the reset
+			if(button_action & (1 << 4)){	//Valid start press starts a mini-timer for the reset
 				start_primed |= (1 << 4);	//A bit
-				timer_ms_gettime(&sButtonTime, &sButtonMSTime);
+				timer_ms_gettime(&start_button_time, &start_button_ms_time);
 			}
 		}
 
 		//Movement code
 		if(st->buttons & CONT_DPAD_UP){
-			cursorPos[(2 * __dev->port) + 1] -= 2;
-			if(cursorPos[(2 * __dev->port) + 1] < 0){
-				cursorPos[(2 * __dev->port) + 1] = 0;
+			cursor_position[(2 * __dev->port) + 1] -= 2;
+			if(cursor_position[(2 * __dev->port) + 1] < 0){
+				cursor_position[(2 * __dev->port) + 1] = 0;
 			}
 		}
 		if(st->buttons & CONT_DPAD_DOWN){
-			cursorPos[(2 * __dev->port) + 1] += 2;
-			if(cursorPos[(2 * __dev->port) + 1] > 480){
-				cursorPos[(2 * __dev->port) + 1] = 480;
+			cursor_position[(2 * __dev->port) + 1] += 2;
+			if(cursor_position[(2 * __dev->port) + 1] > 480){
+				cursor_position[(2 * __dev->port) + 1] = 480;
 			}
 		}
 		if(st->buttons & CONT_DPAD_LEFT){
-			cursorPos[2 * __dev->port] -= 2;
-			if(cursorPos[2 * __dev->port] < 0){
-				cursorPos[2 * __dev->port] = 0;
+			cursor_position[2 * __dev->port] -= 2;
+			if(cursor_position[2 * __dev->port] < 0){
+				cursor_position[2 * __dev->port] = 0;
 			}
 		}
 		if(st->buttons & CONT_DPAD_RIGHT){
-			cursorPos[2 * __dev->port] += 2;
-			if(cursorPos[2 * __dev->port] > 640){
-				cursorPos[2 * __dev->port] = 640;
+			cursor_position[2 * __dev->port] += 2;
+			if(cursor_position[2 * __dev->port] > 640){
+				cursor_position[2 * __dev->port] = 640;
 			}
 		}
 
@@ -583,32 +583,32 @@ int main(){
 			if(!over_mode && !face_frame_id){
 				face_frame_id = 1;	//Apply suprised face
 			}
-			if((st->buttons & CONT_A) && (cursorPos[2 * __dev->port] <= 307 + 26) && (cursorPos[(2 * __dev->port) + 1] <= 64 + 26)
-				&& cursorPos[2 * __dev->port] >= 307 && cursorPos[(2 * __dev->port) + 1] >= 64){	//If hovering over face
+			if((st->buttons & CONT_A) && (cursor_position[2 * __dev->port] <= 307 + 26) && (cursor_position[(2 * __dev->port) + 1] <= 64 + 26)
+				&& cursor_position[2 * __dev->port] >= 307 && cursor_position[(2 * __dev->port) + 1] >= 64){	//If hovering over face
 				face_frame_id = 4;
 			}
-			if(xEle >= 0 && yEle >= 0 && inGrid){	//This code is only supposed to trigger if A/X is pressed and its over the grid
+			if(ele_x >= 0 && ele_y >= 0 && inGrid){	//This code is only supposed to trigger if A/X is pressed and its over the grid
 				if(st->buttons & (CONT_X)){	//X press has priority
-					pressData[3 * __dev->port] = 2;
+					press_data[3 * __dev->port] = 2;
 				}
 				else{
-					pressData[3 * __dev->port] = 1;
+					press_data[3 * __dev->port] = 1;
 				}
-				pressData[(3 * __dev->port) + 1] = xEle;
-				pressData[(3 * __dev->port) + 2] = yEle;
+				press_data[(3 * __dev->port) + 1] = ele_x;
+				press_data[(3 * __dev->port) + 2] = ele_y;
 			}
 			else{
-				pressData[(3 * __dev->port)] = 0;
+				press_data[(3 * __dev->port)] = 0;
 			}
 			if(over_mode != 0){
-				pressData[3 * __dev->port] = 0;
+				press_data[3 * __dev->port] = 0;
 			}
 		}
 		else{
-			pressData[3 * __dev->port] = 0;
+			press_data[3 * __dev->port] = 0;
 		}
 
-		prevButtons[__dev->port] = st->buttons;	//Store the previous button press
+		previous_buttons[__dev->port] = st->buttons;	//Store the previous button press
 		
 		MAPLE_FOREACH_END()
 
@@ -632,7 +632,7 @@ int main(){
 
 		//X001 0000
 		if(!(start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
-			reset_grid(&TileANIM);
+			reset_grid(&tile_anim);
 			start_primed = 0;
 			face_frame_id = 0;
 		}
@@ -646,7 +646,7 @@ int main(){
 
 		//Right now this is always triggered when a game ends and thanks to "revealed" it only triggers once
 		if(!revealed && !game_live && over_mode != 0){
-			reveal_map(&TileANIM);
+			reveal_map(&tile_anim);
 		}
 
 		//The face frame id code. If not indented or suprised, then choose a face
@@ -664,10 +664,10 @@ int main(){
 		graphics_frame_coordinates(&Board.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, face_frame_id);
 		face_frame_id = 0;	//Reset face for new frame
 
-		timer_ms_gettime(&currentTime, &currentMSTime);
+		timer_ms_gettime(&current_time, &current_ms_time);
 		if(game_live && time_sec < 999){	//Prevent timer overflows
 			//Play the "tick" sound effect
-			time_sec = currentTime - startTime + (currentMSTime > startMSTime); //MS is there to account for the "1st second" inaccuracy
+			time_sec = current_time - start_time + (current_ms_time > start_ms_time); //MS is there to account for the "1st second" inaccuracy
 		}
 
 		pvr_wait_ready();
@@ -702,74 +702,74 @@ int main(){
 		digit_display(&Board, &Board.spritesheet_animation_array[2], time_sec, 581, 65);
 
 		//Draw the main background colour
-		graphics_draw_colour_poly(0, 0, 1, 640, 480, mainBackground);
+		graphics_draw_colour_poly(0, 0, 1, 640, 480, main_background);
 
 		//Depth for digit displays
-		graphics_draw_colour_poly(19, 64, 4, 40, 24, lightGrey);
+		graphics_draw_colour_poly(19, 64, 4, 40, 24, light_grey);
 		graphics_draw_colour_poly(21, 66, 4, 40, 24, white);
-		graphics_draw_colour_poly(580, 64, 4, 40, 24, lightGrey);
+		graphics_draw_colour_poly(580, 64, 4, 40, 24, light_grey);
 		graphics_draw_colour_poly(582, 66, 4, 40, 24, white);
 
 		//Draw the grid
-		graphics_draw_sprites_OLD(&TileSS, &TileANIM, coordGrid, frameGrid, 2 * gridSize, gridSize, 2, 1, 1, !operating_system && language);
+		graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 2, 1, 1, !operating_system && language);
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
-			if(playerActive & (1 << iter)){
-				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], cursorPos[2 * iter], cursorPos[(2 * iter) + 1], 10, 1, 1, 0, 0, 0);
-				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[3], cursorPos[2 * iter] + 5,
-					cursorPos[(2 * iter) + 1], 11, 1, 1, p_frame_x, p_frame_y + (iter * 10), 0);
+			if(player_active & (1 << iter)){
+				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], cursor_position[2 * iter], cursor_position[(2 * iter) + 1], 10, 1, 1, 0, 0, 0);
+				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[3], cursor_position[2 * iter] + 5,
+					cursor_position[(2 * iter) + 1], 11, 1, 1, p_frame_x, p_frame_y + (iter * 10), 0);
 			}
-			if(pressData[3 * iter]){
-				uint16_t top_left_x = pressData[(3 * iter) + 1] * 16;
-				uint16_t top_left_y = pressData[(3 * iter) + 2] * 16;
+			if(press_data[3 * iter]){
+				uint16_t top_left_x = press_data[(3 * iter) + 1] * 16;
+				uint16_t top_left_y = press_data[(3 * iter) + 2] * 16;
 				uint8_t liter = 0;
-				if(!(logicGrid[pressData[(3 * iter) + 1] + gridX * pressData[(3 * iter) + 2]] & ((1 << 7) + (1 << 6)))){	//If its not revealed/flagged
-					indented_neighbours[0] = top_left_x + gridStartX;
-					indented_neighbours[1] = top_left_y + gridStartY;
-					if(logicGrid[pressData[(3 * iter) + 1] + gridX * pressData[(3 * iter) + 2]] & (1 << 5)){	//If its question marked
-						graphics_frame_coordinates(&TileANIM, indented_frames, indented_frames + 1, 6);
+				if(!(logic_grid[press_data[(3 * iter) + 1] + grid_x * press_data[(3 * iter) + 2]] & ((1 << 7) + (1 << 6)))){	//If its not revealed/flagged
+					indented_neighbours[0] = top_left_x + grid_start_x;
+					indented_neighbours[1] = top_left_y + grid_start_y;
+					if(logic_grid[press_data[(3 * iter) + 1] + grid_x * press_data[(3 * iter) + 2]] & (1 << 5)){	//If its question marked
+						graphics_frame_coordinates(&tile_anim, indented_frames, indented_frames + 1, 6);
 					}
 					else{
-						graphics_frame_coordinates(&TileANIM, indented_frames, indented_frames + 1, 7);
+						graphics_frame_coordinates(&tile_anim, indented_frames, indented_frames + 1, 7);
 					}
 					liter = 1;
 				}
-				if(pressData[3 * iter] == 2){	//For the X press
-					uint8_t valids = neighbouring_tiles(pressData[(3 * iter) + 1], pressData[(3 * iter) + 2]);
+				if(press_data[3 * iter] == 2){	//For the X press
+					uint8_t valids = neighbouring_tiles(press_data[(3 * iter) + 1], press_data[(3 * iter) + 2]);	//Get the tiles that are in bounds
 					for(jiter = 0; jiter < 8; jiter++){
 						if(!(valids & (1 << jiter))){	//If out of bounds
 							continue;
 						}
-						int8_t xVariant = 0;
+						int8_t x_variant = 0;
 						if(jiter == 0 || jiter == 3 || jiter == 5){
-							xVariant = -1;
+							x_variant = -1;
 						}
 						else if(jiter == 2 || jiter == 4 || jiter == 7){
-							xVariant = 1;
+							x_variant = 1;
 						}
-						int8_t yVariant = 0;
+						int8_t y_variant = 0;
 						if(jiter < 3){
-							yVariant = -1;
+							y_variant = -1;
 						}
 						else if(jiter > 4){
-							yVariant = 1;
+							y_variant = 1;
 						}
-						if(logicGrid[pressData[(3 * iter) + 1] + xVariant + ((pressData[(3 * iter) + 2] + yVariant) * gridX)] & ((1 << 7) + (1 << 6))){
+						if(logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * grid_x)] & ((1 << 7) + (1 << 6))){
 							continue;
 						}
-						indented_neighbours[2 * liter] = top_left_x + (16 * xVariant) + gridStartX;
-						indented_neighbours[(2 * liter) + 1] = top_left_y + (16 * yVariant) + gridStartY;
-						if(logicGrid[pressData[(3 * iter) + 1] + xVariant + ((pressData[(3 * iter) + 2] + yVariant) * gridX)] & (1 << 5)){
-							graphics_frame_coordinates(&TileANIM, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
+						indented_neighbours[2 * liter] = top_left_x + (16 * x_variant) + grid_start_x;
+						indented_neighbours[(2 * liter) + 1] = top_left_y + (16 * y_variant) + grid_start_y;
+						if(logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * grid_x)] & (1 << 5)){	//Question mark
+							graphics_frame_coordinates(&tile_anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
 						}
 						else{
-							graphics_frame_coordinates(&TileANIM, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);
+							graphics_frame_coordinates(&tile_anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);	//Blank
 						}
 						liter++;
 					}
 				}
-				graphics_draw_sprites_OLD(&TileSS, &TileANIM, indented_neighbours, indented_frames, liter, liter, 3, 1, 1, !operating_system && language);
+				graphics_draw_sprites_OLD(&tile_ss, &tile_anim, indented_neighbours, indented_frames, 2 * liter, liter, 3, 1, 1, !operating_system && language);
 			}
 		}
 		
