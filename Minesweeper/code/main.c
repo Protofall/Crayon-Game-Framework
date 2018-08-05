@@ -68,7 +68,7 @@ uint8_t neighbouring_tiles(int ele_x, int ele_y){
 	return ret_val;
 }
 
-//Initially called by reset_grid where x is always a valid number
+//Initially called by clear_grid where x and y are always a valid numbers
 void populate_logic(int ele_x, int ele_y){
 	int ele_logic = ele_x + grid_x * ele_y;
 	if(logic_grid[ele_logic] == 9){	//Is mine
@@ -97,20 +97,18 @@ uint8_t true_prob(double p){
 	return rand() < p * (RAND_MAX + 1.0);
 }
 
-//Call this to reset the grid
-void reset_grid(animation_t * anim){
+//Blanks out grid then fills with mines, but doesn't number them
+void clear_grid(animation_t * anim){
 	num_flags = 0;
 	uint16_t grid_size = grid_x * grid_y;
 
 	int i = 0;
-	int j = 0;
 	uint16_t mines_left = num_mines;
 	uint16_t tiles_left = grid_size;
 
 	while(i < grid_size){
-		double prob = (double)mines_left / (double)tiles_left;
+		double prob = (double)mines_left / (double)tiles_left;	//Can I do better than using a division?
 		logic_grid[i] = 9 * true_prob(prob);
-		// logic_grid[i] = 9 * new_prob(mines_left, tiles_left);
 		if(logic_grid[i]){
 			mines_left--;
 			num_flags++;	//Is being set right
@@ -120,14 +118,7 @@ void reset_grid(animation_t * anim){
 	}
 
 	for(i = 0; i < 2 * grid_size; i = i + 2){
-		graphics_frame_coordinates(anim, frame_grid + i, frame_grid + i + 1, 0);
-	}
-
-	//Iterates through whole loop
-	for(j = 0; j < grid_y; j++){
-		for(i = 0; i < grid_x; i++){
-			populate_logic(i, j);
-		}
+		graphics_frame_coordinates(anim, frame_grid + i, frame_grid + i + 1, 0);	//All tiles are now blank
 	}
 
 	game_live = 0;
@@ -139,6 +130,78 @@ void reset_grid(animation_t * anim){
 
 	return;
 }
+
+//Numbers every tile in the grid
+void number_grid(){
+	int i, j;
+	for(j = 0; j < grid_y; j++){
+		for(i = 0; i < grid_x; i++){
+			populate_logic(i, j);
+		}
+	}
+
+	return;
+}
+
+//If you initially press a tile, move the mines around
+void adjust_grid(int ele_logic){
+	logic_grid[ele_logic] = 0;
+	// non_mines_left++;	//I commented these out because normally they aren't needed, but if you had a grid with all mines (why?) then this matters
+	// num_flags--;
+	int i = 0;
+	for(i = 0; i < grid_x * grid_y; i++){
+		if(i != ele_logic && logic_grid[i] != 9){
+			logic_grid[i] = 9;
+			break;
+			// non_mines_left--;
+			// num_flags++;
+		}
+	}
+
+	return;
+}
+
+//Call this to reset the grid
+// void reset_grid(animation_t * anim){
+// 	num_flags = 0;
+// 	uint16_t grid_size = grid_x * grid_y;
+
+// 	int i = 0;
+// 	int j = 0;
+// 	uint16_t mines_left = num_mines;
+// 	uint16_t tiles_left = grid_size;
+
+// 	while(i < grid_size){
+// 		double prob = (double)mines_left / (double)tiles_left;
+// 		logic_grid[i] = 9 * true_prob(prob);
+// 		if(logic_grid[i]){
+// 			mines_left--;
+// 			num_flags++;	//Is being set right
+// 		}
+// 		tiles_left--;
+// 		i++;
+// 	}
+
+// 	for(i = 0; i < 2 * grid_size; i = i + 2){
+// 		graphics_frame_coordinates(anim, frame_grid + i, frame_grid + i + 1, 0);
+// 	}
+
+// 	//Iterates through whole loop
+// 	for(j = 0; j < grid_y; j++){
+// 		for(i = 0; i < grid_x; i++){
+// 			populate_logic(i, j);
+// 		}
+// 	}
+
+// 	game_live = 0;
+// 	over_mode = 0;
+// 	revealed = 0;
+// 	time_sec = 0;
+
+// 	non_mines_left = grid_size - num_flags;
+
+// 	return;
+// }
 
 //It fills it out differently depending on over_mode
 //0 = ready for new game, 1 = loss (ded), 2 = win
@@ -403,7 +466,7 @@ int main(){
 	}
 
 	//Set the grid's initial values
-	reset_grid(&tile_anim);
+	clear_grid(&tile_anim);
 
 	//The face frame coords
 	uint16_t face_frame_x;
@@ -515,7 +578,7 @@ int main(){
 		if(button_action % (1 << 3) != 0){
 			if((button_action & (1 << 0)) && (cursor_position[2 * __dev->port] <= 307 + 26) && (cursor_position[(2 * __dev->port) + 1] <= 64 + 26)
 				&& cursor_position[2 * __dev->port] >= 307 && cursor_position[(2 * __dev->port) + 1] >= 64){	//If face is released on
-				reset_grid(&tile_anim);
+				clear_grid(&tile_anim);
 				previous_buttons[__dev->port] = st->buttons;	//Store the previous button press
 				face_frame_id = 0;
 				break;	//Since we don't want these old presses interacting with the new board
@@ -524,6 +587,11 @@ int main(){
 				if(button_action & (1 << 0)){	//For A press
 					if(over_mode == 0){
 						if(!game_live){
+							int ele_logic = ele_x + grid_x * ele_y;
+							if(logic_grid[ele_logic] == 9){
+								adjust_grid(ele_logic);
+							}
+							number_grid();
 							timer_ms_gettime(&start_time, &start_ms_time);
 							game_live = 1;
 						}
@@ -532,6 +600,11 @@ int main(){
 				}
 				if(button_action & (1 << 1)){	//For X press
 					if(!game_live){
+						int ele_logic = ele_x + grid_x * ele_y;
+						if(logic_grid[ele_logic] == 9){
+							adjust_grid(ele_logic);
+						}
+						number_grid();
 						timer_ms_gettime(&start_time, &start_ms_time);
 						game_live = 1;
 					}
@@ -546,7 +619,7 @@ int main(){
 			if(button_action & (1 << 3)){	//For Y press
 				;
 			}
-			if(button_action & (1 << 4)){	//Valid start press starts a mini-timer for the reset
+			if(button_action & (1 << 4)){	//Valid start press starts a mini-timer for the reset (Check over this, is this old code?)
 				start_primed |= (1 << 4);	//A bit
 				timer_ms_gettime(&start_button_time, &start_button_ms_time);
 			}
@@ -632,7 +705,7 @@ int main(){
 
 		//X001 0000
 		if(!(start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
-			reset_grid(&tile_anim);
+			clear_grid(&tile_anim);
 			start_primed = 0;
 			face_frame_id = 0;
 		}
