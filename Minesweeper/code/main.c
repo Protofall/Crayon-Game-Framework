@@ -111,7 +111,7 @@ void clear_grid(animation_t * anim){
 		logic_grid[i] = 9 * true_prob(prob);
 		if(logic_grid[i]){
 			mines_left--;
-			num_flags++;	//Is being set right
+			num_flags++;
 		}
 		tiles_left--;
 		i++;
@@ -143,7 +143,7 @@ void number_grid(){
 	return;
 }
 
-//If you initially press a tile, move the mines around
+//If you initially press a tile, move the mines around so you get a "free first press"
 void adjust_grid(int ele_logic){
 	logic_grid[ele_logic] = 0;
 	// non_mines_left++;	//I commented these out because normally they aren't needed, but if you had a grid with all mines (why?) then this matters
@@ -160,48 +160,6 @@ void adjust_grid(int ele_logic){
 
 	return;
 }
-
-//Call this to reset the grid
-// void reset_grid(animation_t * anim){
-// 	num_flags = 0;
-// 	uint16_t grid_size = grid_x * grid_y;
-
-// 	int i = 0;
-// 	int j = 0;
-// 	uint16_t mines_left = num_mines;
-// 	uint16_t tiles_left = grid_size;
-
-// 	while(i < grid_size){
-// 		double prob = (double)mines_left / (double)tiles_left;
-// 		logic_grid[i] = 9 * true_prob(prob);
-// 		if(logic_grid[i]){
-// 			mines_left--;
-// 			num_flags++;	//Is being set right
-// 		}
-// 		tiles_left--;
-// 		i++;
-// 	}
-
-// 	for(i = 0; i < 2 * grid_size; i = i + 2){
-// 		graphics_frame_coordinates(anim, frame_grid + i, frame_grid + i + 1, 0);
-// 	}
-
-// 	//Iterates through whole loop
-// 	for(j = 0; j < grid_y; j++){
-// 		for(i = 0; i < grid_x; i++){
-// 			populate_logic(i, j);
-// 		}
-// 	}
-
-// 	game_live = 0;
-// 	over_mode = 0;
-// 	revealed = 0;
-// 	time_sec = 0;
-
-// 	non_mines_left = grid_size - num_flags;
-
-// 	return;
-// }
 
 //It fills it out differently depending on over_mode
 //0 = ready for new game, 1 = loss (ded), 2 = win
@@ -486,8 +444,6 @@ int main(){
 	uint32_t start_ms_time = 0;
 
 	//For the "start to reset"
-	uint32_t start_button_time = 0;
-	uint32_t start_button_ms_time = 0;
 	uint8_t start_primed = 0;	//Format -PVA 4321 where the numbers are if the player is holding either nothing or just start,
 								//A is active. V is invalidated, P is someone pressed combo
 
@@ -498,6 +454,7 @@ int main(){
 	//1st element is type of click, 2nd element is x, 3rd element is y and repeat for all 4 controllers
 	//1st, 0 = none, 1 = A, 2 = X, X press has priority over A press
 	uint16_t press_data[12] = {0};
+	uint8_t player_movement = 0;	//This tells whether a player is using a joystick (0) or D-Pad (1) Only last 4 bits are used
 	uint16_t indented_neighbours[18];	//For now I'm doing the centre independently, but later I'll add it here
 	uint16_t indented_frames[18];
 
@@ -543,7 +500,7 @@ int main(){
 		}
 
 		if(!(player_active & (1 << __dev->port))){	//Player is there, but hasn't been activated yet
-			if(st->buttons != 0){	//Input detected
+			if(st->buttons != 0 || st->joyx || st->joyy || st->rtrig){	//Input detected
 				player_active |= (1 << __dev->port);
 			}
 			else{
@@ -617,37 +574,73 @@ int main(){
 		}
 		else if(button_action){
 			if(button_action & (1 << 3)){	//For Y press
-				;
+				player_movement ^= (1 << __dev->port);
 			}
-			if(button_action & (1 << 4)){	//Valid start press starts a mini-timer for the reset (Check over this, is this old code?)
+			if(button_action & (1 << 4)){	//Valid start press starts a mini-timer for the reset
 				start_primed |= (1 << 4);	//A bit
-				timer_ms_gettime(&start_button_time, &start_button_ms_time);
 			}
 		}
 
 		//Movement code
-		if(st->buttons & CONT_DPAD_UP){
-			cursor_position[(2 * __dev->port) + 1] -= 2;
-			if(cursor_position[(2 * __dev->port) + 1] < 0){
-				cursor_position[(2 * __dev->port) + 1] = 0;
+		if(player_movement & (1 << __dev->port)){	//D-Pad
+			if(st->buttons & CONT_DPAD_UP){
+				cursor_position[(2 * __dev->port) + 1] -= 2;
+				if(cursor_position[(2 * __dev->port) + 1] < 0){
+					cursor_position[(2 * __dev->port) + 1] = 0;
+				}
+			}
+			if(st->buttons & CONT_DPAD_DOWN){
+				cursor_position[(2 * __dev->port) + 1] += 2;
+				if(cursor_position[(2 * __dev->port) + 1] > 480){
+					cursor_position[(2 * __dev->port) + 1] = 480;
+				}
+			}
+			if(st->buttons & CONT_DPAD_LEFT){
+				cursor_position[2 * __dev->port] -= 2;
+				if(cursor_position[2 * __dev->port] < 0){
+					cursor_position[2 * __dev->port] = 0;
+				}
+			}
+			if(st->buttons & CONT_DPAD_RIGHT){
+				cursor_position[2 * __dev->port] += 2;
+				if(cursor_position[2 * __dev->port] > 640){
+					cursor_position[2 * __dev->port] = 640;
+				}
 			}
 		}
-		if(st->buttons & CONT_DPAD_DOWN){
-			cursor_position[(2 * __dev->port) + 1] += 2;
-			if(cursor_position[(2 * __dev->port) + 1] > 480){
-				cursor_position[(2 * __dev->port) + 1] = 480;
+		else{	//Thumbstick
+			float thumb_x;
+			float thumb_y;
+			if(st->joyx > 0){	//Converting from -128, 127 to -1, 1
+				thumb_x = st->joyx / 127;
 			}
-		}
-		if(st->buttons & CONT_DPAD_LEFT){
-			cursor_position[2 * __dev->port] -= 2;
-			if(cursor_position[2 * __dev->port] < 0){
-				cursor_position[2 * __dev->port] = 0;
+			else{
+				thumb_x = st->joyx / 128;
 			}
-		}
-		if(st->buttons & CONT_DPAD_RIGHT){
-			cursor_position[2 * __dev->port] += 2;
-			if(cursor_position[2 * __dev->port] > 640){
-				cursor_position[2 * __dev->port] = 640;
+			if(st->joyy > 0){
+				thumb_y = st->joyy / 127;
+			}
+			else{
+				thumb_y = st->joyy / 128;
+			}
+
+			if(thumb_x > 0.4 || thumb_x < -0.4){
+				cursor_position[2 * __dev->port] += 2 * thumb_x;
+				if(cursor_position[2 * __dev->port] < 0){
+					cursor_position[2 * __dev->port] = 0;
+				}
+				else if(cursor_position[2 * __dev->port] > 640){
+					cursor_position[2 * __dev->port] = 640;
+				}
+			}
+			if(thumb_y > 0.4 || thumb_y < -0.4){
+				cursor_position[(2 * __dev->port) + 1] += 2 * thumb_y;
+				if(cursor_position[(2 * __dev->port) + 1] < 0){
+					cursor_position[(2 * __dev->port) + 1] = 0;
+				}
+				else if(cursor_position[(2 * __dev->port) + 1] > 480){
+					cursor_position[(2 * __dev->port) + 1] = 480;
+				}
 			}
 		}
 
@@ -765,7 +758,7 @@ int main(){
 			//We choose palette 1 because that's 2000's palette and XP uses RGB565
 		}
 
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 455, 4, 1, 1, region_icon_x, region_icon_y, 0);	//Region icon
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 456, 4, 1, 1, region_icon_x, region_icon_y, 0);	//Region icon
 
 		//Draw the reset button face
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 2, 1, 1, face_frame_x, face_frame_y, 0);

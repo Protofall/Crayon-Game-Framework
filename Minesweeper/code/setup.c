@@ -210,15 +210,15 @@ void setup_OS_assets(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys, uint8_
 	uint8_t id_count = 0;
 	uint8_t iter;
 	for(iter = 0; iter < os->sprite_count; iter++){
-		uint8_t langFrame = 0;
+		uint8_t lang_frame = 0;
 		if(lang && ss->spritesheet_animation_array[id_count].animation_frames > 1){
-			langFrame = 1;
+			lang_frame = 1;
 		}
 		if(!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "italianTiles")){
 			id_count++;
 		}
 		graphics_frame_coordinates(&ss->spritesheet_animation_array[id_count],
-			os->coords_frame + (2 * iter), os->coords_frame + (2 * iter) + 1, langFrame);
+			os->coords_frame + (2 * iter), os->coords_frame + (2 * iter) + 1, lang_frame);
 		os->ids[iter] = id_count;
 		id_count++;
 	}
