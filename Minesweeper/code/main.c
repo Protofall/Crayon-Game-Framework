@@ -347,7 +347,7 @@ int main(){
 
 	srand(time(0));
 
-	int cursor_position[8];
+	float cursor_position[8];
 	cursor_position[0] = 50;
 	cursor_position[1] = 100;
 	cursor_position[2] = 50;
@@ -445,7 +445,7 @@ int main(){
 
 	//For the "start to reset"
 	uint8_t start_primed = 0;	//Format -PVA 4321 where the numbers are if the player is holding either nothing or just start,
-								//A is active. V is invalidated, P is someone pressed combo
+								//A somewhere start is being pressed. V is invalidated, P is someone pressed combo
 
 	//Stores the button combination from the previous button press
 	uint32_t previous_buttons[4] = {0};
@@ -487,20 +487,40 @@ int main(){
 
 	*/
 
+	float thumb_x = 0;
+	float thumb_y = 0;
+	uint8_t thumb_active;
+
 	while(1){		
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
+		if(st->joyx > 0){	//Converting from -128, 127 to -1, 1
+			thumb_x = (float) st->joyx / 127;
+		}
+		else{
+			thumb_x = (float) st->joyx / 128;
+		}
+		if(st->joyy > 0){
+			thumb_y = (float) st->joyy / 127;
+		}
+		else{
+			thumb_y = (float) st->joyy / 128;
+		}
 
-		if(start_primed && st->buttons != CONT_START && (st->buttons & CONT_START)){	//Player is pressing inpure start
+		thumb_active = (thumb_x * thumb_x) + (thumb_y * thumb_y) > 0.16;	//When its moving
+
+		if(start_primed && (st->buttons != CONT_START || thumb_active) && (st->buttons & CONT_START)){	//Player is pressing inpure start
+
 			start_primed |= (1 << (__dev->port));	//Number bits
 		}
 
-		if(st->buttons == CONT_START){	//Atleast someone is only pressing start
+		//It triggers ONLY when start is the only input (buttons == start && !thumb_active)
+		if(st->buttons == CONT_START && !thumb_active){	//Atleast someone is only pressing start
 			start_primed |= (1 << 6);	//P bit
 		}
 
 		if(!(player_active & (1 << __dev->port))){	//Player is there, but hasn't been activated yet
-			if(st->buttons != 0 || st->joyx || st->joyy || st->rtrig){	//Input detected
+			if(st->buttons != 0 || thumb_active){	//Input detected
 				player_active |= (1 << __dev->port);
 			}
 			else{
@@ -609,22 +629,7 @@ int main(){
 			}
 		}
 		else{	//Thumbstick
-			float thumb_x;
-			float thumb_y;
-			if(st->joyx > 0){	//Converting from -128, 127 to -1, 1
-				thumb_x = st->joyx / 127;
-			}
-			else{
-				thumb_x = st->joyx / 128;
-			}
-			if(st->joyy > 0){
-				thumb_y = st->joyy / 127;
-			}
-			else{
-				thumb_y = st->joyy / 128;
-			}
-
-			if(thumb_x > 0.4 || thumb_x < -0.4){
+			if(thumb_active){	//The thumbstick is outside of the 40% radius
 				cursor_position[2 * __dev->port] += 2 * thumb_x;
 				if(cursor_position[2 * __dev->port] < 0){
 					cursor_position[2 * __dev->port] = 0;
@@ -632,8 +637,6 @@ int main(){
 				else if(cursor_position[2 * __dev->port] > 640){
 					cursor_position[2 * __dev->port] = 640;
 				}
-			}
-			if(thumb_y > 0.4 || thumb_y < -0.4){
 				cursor_position[(2 * __dev->port) + 1] += 2 * thumb_y;
 				if(cursor_position[(2 * __dev->port) + 1] < 0){
 					cursor_position[(2 * __dev->port) + 1] = 0;
@@ -782,9 +785,9 @@ int main(){
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
 			if(player_active & (1 << iter)){
-				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], cursor_position[2 * iter], cursor_position[(2 * iter) + 1], 10, 1, 1, 0, 0, 0);
-				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[3], cursor_position[2 * iter] + 5,
-					cursor_position[(2 * iter) + 1], 11, 1, 1, p_frame_x, p_frame_y + (iter * 10), 0);
+				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], (int) cursor_position[2 * iter], (int) cursor_position[(2 * iter) + 1], 10, 1, 1, 0, 0, 0);
+				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[3], (int) cursor_position[2 * iter] + 5, (int) cursor_position[(2 * iter) + 1],
+					11, 1, 1, p_frame_x, p_frame_y + (iter * 10), 0);
 			}
 			if(press_data[3 * iter]){
 				uint16_t top_left_x = press_data[(3 * iter) + 1] * 16;
