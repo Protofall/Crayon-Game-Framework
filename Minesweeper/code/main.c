@@ -6,6 +6,7 @@
 
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
+#include <dc/maple/mouse.h>
 
 //For the timer
 #include <arch/timer.h>
@@ -31,6 +32,7 @@ uint8_t grid_y;
 uint16_t grid_start_x;
 uint16_t grid_start_y;
 uint16_t num_mines;
+uint8_t first_reveal;
 
 uint8_t *logic_grid;
 uint16_t *coord_grid;	//Unless changing grid size, this won't need to be changed once set
@@ -71,23 +73,23 @@ uint8_t neighbouring_tiles(int ele_x, int ele_y){
 //Initially called by clear_grid where x and y are always a valid numbers
 void populate_logic(int ele_x, int ele_y){
 	int ele_logic = ele_x + grid_x * ele_y;
-	if(logic_grid[ele_logic] == 9){	//Is mine
+	if(logic_grid[ele_logic] % (1 << 4) == 9){	//Is mine
 		return;
 	}
 
 	uint8_t valids = neighbouring_tiles(ele_x, ele_y);
 	uint8_t sum = 0;	//A tiles value
 
-	if((valids & (1 << 0)) && logic_grid[ele_x - 1 + ((ele_y- 1) * grid_x)] == 9){sum++;}		//Top Left
-	if((valids & (1 << 1)) && logic_grid[ele_x + ((ele_y - 1) * grid_x)] == 9){sum++;}		//Top centre
-	if((valids & (1 << 2)) && logic_grid[ele_x + 1 + ((ele_y - 1) * grid_x)] == 9){sum++;}	//Top right
-	if((valids & (1 << 3)) && logic_grid[ele_x - 1 + (ele_y * grid_x)] == 9){sum++;}			//Mid Left
-	if((valids & (1 << 4)) && logic_grid[ele_x + 1 + (ele_y * grid_x)] == 9){sum++;}			//Mid Right
-	if((valids & (1 << 5)) && logic_grid[ele_x - 1 + ((ele_y + 1) * grid_x)] == 9){sum++;}	//Bottom left
-	if((valids & (1 << 6)) && logic_grid[ele_x + ((ele_y + 1) * grid_x)] == 9){sum++;}		//Bottom centre
-	if((valids & (1 << 7)) && logic_grid[ele_x + 1 + ((ele_y + 1) * grid_x)] == 9){sum++;}	//Bottom right
+	if((valids & (1 << 0)) && logic_grid[ele_x - 1 + ((ele_y- 1) * grid_x)] % (1 << 4) == 9){sum++;}	//Top Left
+	if((valids & (1 << 1)) && logic_grid[ele_x + ((ele_y - 1) * grid_x)] % (1 << 4) == 9){sum++;}		//Top centre
+	if((valids & (1 << 2)) && logic_grid[ele_x + 1 + ((ele_y - 1) * grid_x)] % (1 << 4) == 9){sum++;}	//Top right
+	if((valids & (1 << 3)) && logic_grid[ele_x - 1 + (ele_y * grid_x)] % (1 << 4) == 9){sum++;}			//Mid Left
+	if((valids & (1 << 4)) && logic_grid[ele_x + 1 + (ele_y * grid_x)] % (1 << 4) == 9){sum++;}			//Mid Right
+	if((valids & (1 << 5)) && logic_grid[ele_x - 1 + ((ele_y + 1) * grid_x)] % (1 << 4) == 9){sum++;}	//Bottom left
+	if((valids & (1 << 6)) && logic_grid[ele_x + ((ele_y + 1) * grid_x)] % (1 << 4) == 9){sum++;}		//Bottom centre
+	if((valids & (1 << 7)) && logic_grid[ele_x + 1 + ((ele_y + 1) * grid_x)] % (1 << 4) == 9){sum++;}	//Bottom right
 
-	logic_grid[ele_logic] = sum;
+	logic_grid[ele_logic] += sum;
 
 	return;
 }
@@ -106,7 +108,7 @@ void clear_grid(animation_t * anim){
 	uint16_t mines_left = num_mines;
 	uint16_t tiles_left = grid_size;
 
-	while(i < grid_size){
+	while(i < grid_size){	//Populate board
 		double prob = (double)mines_left / (double)tiles_left;	//Can I do better than using a division?
 		logic_grid[i] = 9 * true_prob(prob);
 		if(logic_grid[i]){
@@ -125,6 +127,7 @@ void clear_grid(animation_t * anim){
 	over_mode = 0;
 	revealed = 0;
 	time_sec = 0;
+	first_reveal = 0;
 
 	non_mines_left = grid_size - num_flags;
 
@@ -150,8 +153,8 @@ void adjust_grid(int ele_logic){
 	// num_flags--;
 	int i = 0;
 	for(i = 0; i < grid_x * grid_y; i++){
-		if(i != ele_logic && logic_grid[i] != 9){
-			logic_grid[i] = 9;
+		if(i != ele_logic && logic_grid[i] % (1 << 4) != 9){
+			logic_grid[i] += 9;
 			break;
 			// non_mines_left--;
 			// num_flags++;
@@ -189,7 +192,7 @@ void reveal_map(animation_t * anim){
 
 void discover_tile(animation_t * anim, int ele_x, int ele_y){
 	int ele_logic = ele_x + grid_x * ele_y;
-	if(!(logic_grid[ele_logic] & 1 << 6)){	//When not flagged
+	if(!(logic_grid[ele_logic] & 1 << 6)){	//If not flagged
 		if(logic_grid[ele_logic] & 1 << 7){	//Already discovered
 			return;
 		}
@@ -379,9 +382,25 @@ int main(){
 	MinesweeperOS_t os;
 	setup_OS_assets(&os, &Windows, operating_system, language);
 
+	//Beginner
+	// grid_x = 9;
+	// grid_y = 9;
+	// num_mines = 10;
+
+	//Intermediate
+	// grid_x = 16;
+	// grid_y = 16;
+	// num_mines = 40;
+
+	//Expert
 	grid_x = 30;
 	grid_y = 20;
 	num_mines = 99;
+
+	//Largest	(Tinker with this one)
+	// grid_x = 40;
+	// grid_y = 21;
+	// num_mines = 130;
 
 	grid_start_x = 80;
 	grid_start_y = 104;	//Never changes for XP mode, but might in 2000
@@ -399,7 +418,6 @@ int main(){
 	spritesheet_t tile_ss;
 	animation_t tile_anim;
 
-	//The commented code below is doing something very wrong...
 	uint8_t tile_id = 5;
 	if(!language){
 		tile_ss = Board;
@@ -564,24 +582,24 @@ int main(){
 				if(button_action & (1 << 0)){	//For A press
 					if(over_mode == 0){
 						if(!game_live){
-							int ele_logic = ele_x + grid_x * ele_y;
-							if(logic_grid[ele_logic] == 9){
-								adjust_grid(ele_logic);
-							}
-							number_grid();
 							timer_ms_gettime(&start_time, &start_ms_time);
 							game_live = 1;
+						}
+						if(first_reveal == 0){
+							int ele_logic = ele_x + grid_x * ele_y;
+							if(!(logic_grid[ele_logic] & (1 << 6))){
+								if(logic_grid[ele_logic] % (1 << 4) == 9){	//If this is the first reveal and its not flagged and its a mine
+									adjust_grid(ele_logic);
+								}
+								number_grid();
+								first_reveal = 1;
+							}
 						}
 						discover_tile(&tile_anim, ele_x, ele_y);
 					}
 				}
 				if(button_action & (1 << 1)){	//For X press
 					if(!game_live){
-						int ele_logic = ele_x + grid_x * ele_y;
-						if(logic_grid[ele_logic] == 9){
-							adjust_grid(ele_logic);
-						}
-						number_grid();
 						timer_ms_gettime(&start_time, &start_ms_time);
 						game_live = 1;
 					}
@@ -677,8 +695,40 @@ int main(){
 			press_data[3 * __dev->port] = 0;
 		}
 
-		previous_buttons[__dev->port] = st->buttons;	//Store the previous button press
+		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
 		
+		MAPLE_FOREACH_END()
+
+		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_MOUSE, mouse_state_t, st)	//Mouse support (Currently incomplete)
+
+		//In emulators like lxdream this will usually trigger instantly since it doesn't do mouse buttons that well
+		if(!(player_active & (1 << __dev->port))){	//Player is there, but hasn't been activated yet
+			if(st->buttons != 0 || st->dx != 0 || st->dy != 0){	//Input detected	(Not working right)
+				player_active |= (1 << __dev->port);
+			}
+			else{
+				continue;
+			}
+		}
+
+		//Movement code
+		cursor_position[(2 * __dev->port) + 1] += st->dy;
+		if(cursor_position[(2 * __dev->port) + 1] > 480){
+			cursor_position[(2 * __dev->port) + 1] = 480;
+		}
+		else if(cursor_position[(2 * __dev->port) + 1] < 0){
+			cursor_position[(2 * __dev->port) + 1] = 0;
+		}
+		cursor_position[2 * __dev->port] += st->dx;
+		if(cursor_position[2 * __dev->port] > 640){
+			cursor_position[2 * __dev->port] = 640;
+		}
+		else if(cursor_position[2 * __dev->port] < 0){
+			cursor_position[2 * __dev->port] = 0;
+		}
+
+		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
+
 		MAPLE_FOREACH_END()
 
 		//X101 0000 (Where every controller is doing an impure press)
@@ -785,6 +835,7 @@ int main(){
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
 			if(player_active & (1 << iter)){
+				//Passing coords as ints because otherwise we can get case where each pixel contains more than 1 texel
 				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], (int) cursor_position[2 * iter], (int) cursor_position[(2 * iter) + 1], 10, 1, 1, 0, 0, 0);
 				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[3], (int) cursor_position[2 * iter] + 5, (int) cursor_position[(2 * iter) + 1],
 					11, 1, 1, p_frame_x, p_frame_y + (iter * 10), 0);
