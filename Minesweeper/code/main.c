@@ -338,6 +338,96 @@ void digit_display(spritesheet_t * ss, animation_t * anim, int num, uint16_t x, 
 	return;
 }
 
+//Fill in these 3 functions so both the mouse and controller can both use them
+void face_and_indent_logic(int ele_x, int ele_y, uint8_t in_grid, uint8_t A_held, uint8_t X_held, int id,
+	uint8_t *face_frame_id, uint16_t *press_data, float *cursor_position){
+	if(A_held || X_held){
+		if(!over_mode && !*face_frame_id){
+			*face_frame_id = 1;	//Apply suprised face
+		}
+		if(A_held && (cursor_position[2 * id] <= 307 + 26) && (cursor_position[(2 * id) + 1] <= 64 + 26)
+			&& cursor_position[2 * id] >= 307 && cursor_position[(2 * id) + 1] >= 64){	//If hovering over face
+			*face_frame_id = 4;
+		}
+		if(ele_x >= 0 && ele_y >= 0 && in_grid){	//This code is only supposed to trigger if A/X is pressed and its over the grid
+			if(X_held){	//X press has priority
+				press_data[3 * id] = 2;
+			}
+			else{
+				press_data[3 * id] = 1;
+			}
+			press_data[(3 * id) + 1] = ele_x;
+			press_data[(3 * id) + 2] = ele_y;
+		}
+		else{
+			press_data[(3 * id)] = 0;
+		}
+		if(over_mode != 0){
+			press_data[3 * id] = 0;
+		}
+	}
+	else{
+		press_data[3 * id] = 0;
+	}
+}
+
+//Yes there's 12 parameters, no I don't want to break up this function
+void ABX_logic(int ele_x, int ele_y, uint8_t button_action, int id, float *cursor_position, animation_t *tile_anim, uint8_t *face_frame_id,
+	uint32_t *previous_buttons, uint32_t buttons, uint32_t *start_time, uint32_t *start_ms_time){
+	if(button_action % (1 << 3) != 0){
+		if((button_action & (1 << 0)) && (cursor_position[2 * id] <= 307 + 26) && (cursor_position[(2 * id) + 1] <= 64 + 26)
+			&& cursor_position[2 * id] >= 307 && cursor_position[(2 * id) + 1] >= 64){	//If face is released on
+			clear_grid(tile_anim);
+			previous_buttons[id] = buttons;	//Store the previous button press
+			*face_frame_id = 0;
+			return;	//Since we don't want these old presses interacting with the new board
+		}
+		if(button_action % (1 << 3) && ele_x != -1 && ele_y != -1){	//If on the grid with an A/B/X press
+			if(button_action & (1 << 0)){	//For A press
+				if(over_mode == 0){
+					if(!game_live){
+						timer_ms_gettime(start_time, start_ms_time);
+						game_live = 1;
+					}
+					if(first_reveal == 0){
+						int ele_logic = ele_x + grid_x * ele_y;
+						if(!(logic_grid[ele_logic] & (1 << 6))){
+							if(logic_grid[ele_logic] % (1 << 4) == 9){	//If this is the first reveal and its not flagged and its a mine
+								adjust_grid(ele_logic);
+							}
+							number_grid();
+							first_reveal = 1;
+						}
+					}
+					discover_tile(tile_anim, ele_x, ele_y);
+				}
+			}
+			if(button_action & (1 << 1)){	//For X press
+				if(!game_live){
+					timer_ms_gettime(start_time, start_ms_time);
+					game_live = 1;
+				}
+				x_press(tile_anim, ele_x, ele_y);
+			}
+			if(button_action & (1 << 2)){	//For B press
+				b_press(tile_anim, ele_x + grid_x * ele_y);
+			}
+		}
+	}
+}
+
+//Its purpose is to make sure the player's cursor is on the grid
+void cursor_on_grid(uint8_t *in_grid, int *ele_x, int *ele_y, uint8_t button_action, uint8_t AX_held, int id, float *cursor_position){
+	if((button_action % (1 << 3)) || AX_held){
+		*in_grid = (cursor_position[2 * id] < grid_start_x + (grid_x * 16)) && (cursor_position[(2 * id) + 1] < grid_start_y + (grid_y * 16))
+			&& cursor_position[2 * id] >= grid_start_x && cursor_position[(2 * id) + 1] >= grid_start_y;
+		if(*in_grid){
+			*ele_x = (cursor_position[2 * id]  - grid_start_x) / 16;
+			*ele_y = (cursor_position[(2 * id) + 1]  - grid_start_y) / 16;
+		}
+	}
+}
+
 int main(){
 	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
 		vid_set_mode(DM_640x480_VGA, PM_RGB565);
@@ -548,75 +638,27 @@ int main(){
 
 		//Use the buttons previously pressed to control what happens here
 		button_action = 0;
-		button_action |= ((previous_buttons[__dev->port] & CONT_A) && !(st->buttons & CONT_A)) << 0;
-		button_action |= ((previous_buttons[__dev->port] & CONT_X) && !(st->buttons & CONT_X) && !over_mode) << 1;
-		button_action |= (!(previous_buttons[__dev->port] & CONT_B) && (st->buttons & CONT_B) && !over_mode) << 2;
-		button_action |= (!(previous_buttons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y) && !over_mode) << 3;
+		button_action |= ((previous_buttons[__dev->port] & CONT_A) && !(st->buttons & CONT_A)) << 0;	//A released
+		button_action |= ((previous_buttons[__dev->port] & CONT_X) && !(st->buttons & CONT_X) && !over_mode) << 1;	//X released and the game isn't over
+		button_action |= (!(previous_buttons[__dev->port] & CONT_B) && (st->buttons & CONT_B) && !over_mode) << 2;	//B pressed and the game isn't over
+		button_action |= (!(previous_buttons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y) && !over_mode) << 3;	//Y pressed and the game isn't over
 		button_action |= ((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && !(start_primed & (1 << 4))) << 4;	//If we press start, but we haven't done active prime yet and we aren't invalidated
 
-		//These two are only ever set if The cursor is in the grid and A/B/X is/was pressed
+		//These two are only ever set if The cursor is on the grid and A/B/X is/was pressed
 		int ele_x = -1;
 		int ele_y = -1;
-		uint8_t inGrid = 0;
-		//Need to know if in the grid when releasing A/X, pressing B and when holding A/X
-		if((button_action % (1 << 3)) || (st->buttons & (CONT_A + CONT_X))){
-			inGrid = (cursor_position[2 * __dev->port] < grid_start_x + (grid_x * 16)) && (cursor_position[(2 * __dev->port) + 1] < grid_start_y + (grid_y * 16))
-				&& cursor_position[2 * __dev->port] >= grid_start_x && cursor_position[(2 * __dev->port) + 1] >= grid_start_y;
-			if(inGrid){
-				ele_x = (cursor_position[2 * __dev->port]  - grid_start_x) / 16;
-				ele_y = (cursor_position[(2 * __dev->port) + 1]  - grid_start_y) / 16;
-			}
-		}
+		uint8_t in_grid = 0;
 
-		//Note that I think the press logic might be off. Going on a diagonal rapidly pressing B sometimes does nothing
-		//This block does the A, B, X and Y press/release stuff
-		if(button_action % (1 << 3) != 0){
-			if((button_action & (1 << 0)) && (cursor_position[2 * __dev->port] <= 307 + 26) && (cursor_position[(2 * __dev->port) + 1] <= 64 + 26)
-				&& cursor_position[2 * __dev->port] >= 307 && cursor_position[(2 * __dev->port) + 1] >= 64){	//If face is released on
-				clear_grid(&tile_anim);
-				previous_buttons[__dev->port] = st->buttons;	//Store the previous button press
-				face_frame_id = 0;
-				break;	//Since we don't want these old presses interacting with the new board
-			}
-			if(button_action % (1 << 3) && ele_x != -1 && ele_y != -1){	//If on the grid with an A/B/X press
-				if(button_action & (1 << 0)){	//For A press
-					if(over_mode == 0){
-						if(!game_live){
-							timer_ms_gettime(&start_time, &start_ms_time);
-							game_live = 1;
-						}
-						if(first_reveal == 0){
-							int ele_logic = ele_x + grid_x * ele_y;
-							if(!(logic_grid[ele_logic] & (1 << 6))){
-								if(logic_grid[ele_logic] % (1 << 4) == 9){	//If this is the first reveal and its not flagged and its a mine
-									adjust_grid(ele_logic);
-								}
-								number_grid();
-								first_reveal = 1;
-							}
-						}
-						discover_tile(&tile_anim, ele_x, ele_y);
-					}
-				}
-				if(button_action & (1 << 1)){	//For X press
-					if(!game_live){
-						timer_ms_gettime(&start_time, &start_ms_time);
-						game_live = 1;
-					}
-					x_press(&tile_anim, ele_x, ele_y);
-				}
-				if(button_action & (1 << 2)){	//For B press
-					b_press(&tile_anim, ele_x + grid_x * ele_y);
-				}
-			}
+		cursor_on_grid(&in_grid, &ele_x, &ele_y, button_action, !!(st->buttons & (CONT_A + CONT_X)), __dev->port, cursor_position);
+		ABX_logic(ele_x, ele_y, button_action, __dev->port, cursor_position, &tile_anim, &face_frame_id, previous_buttons, st->buttons,
+			&start_time, &start_ms_time);	//Yes, I know
+
+		//Y and Start press code
+		if(button_action & (1 << 3)){
+			player_movement ^= (1 << __dev->port);
 		}
-		else if(button_action){
-			if(button_action & (1 << 3)){	//For Y press
-				player_movement ^= (1 << __dev->port);
-			}
-			if(button_action & (1 << 4)){	//Valid start press starts a mini-timer for the reset
-				start_primed |= (1 << 4);	//A bit
-			}
+		if(button_action & (1 << 4)){
+			start_primed |= (1 << 4);	//A bit
 		}
 
 		//Movement code
@@ -666,44 +708,19 @@ int main(){
 		}
 
 		//Face logic code and indented blank tiles
-		if((st->buttons & (CONT_A + CONT_X))){
-			if(!over_mode && !face_frame_id){
-				face_frame_id = 1;	//Apply suprised face
-			}
-			if((st->buttons & CONT_A) && (cursor_position[2 * __dev->port] <= 307 + 26) && (cursor_position[(2 * __dev->port) + 1] <= 64 + 26)
-				&& cursor_position[2 * __dev->port] >= 307 && cursor_position[(2 * __dev->port) + 1] >= 64){	//If hovering over face
-				face_frame_id = 4;
-			}
-			if(ele_x >= 0 && ele_y >= 0 && inGrid){	//This code is only supposed to trigger if A/X is pressed and its over the grid
-				if(st->buttons & (CONT_X)){	//X press has priority
-					press_data[3 * __dev->port] = 2;
-				}
-				else{
-					press_data[3 * __dev->port] = 1;
-				}
-				press_data[(3 * __dev->port) + 1] = ele_x;
-				press_data[(3 * __dev->port) + 2] = ele_y;
-			}
-			else{
-				press_data[(3 * __dev->port)] = 0;
-			}
-			if(over_mode != 0){
-				press_data[3 * __dev->port] = 0;
-			}
-		}
-		else{
-			press_data[3 * __dev->port] = 0;
-		}
+		face_and_indent_logic(ele_x, ele_y, in_grid, !!(st->buttons & (CONT_A)), !!(st->buttons & (CONT_X)), __dev->port,
+			&face_frame_id, press_data, cursor_position);
 
 		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
 		
 		MAPLE_FOREACH_END()
 
+		//NOTE TO SELF: Break up some of the controller code into functions since its shared between the controller and the mouse
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_MOUSE, mouse_state_t, st)	//Mouse support (Currently incomplete)
 
 		//In emulators like lxdream this will usually trigger instantly since it doesn't do mouse buttons that well
 		if(!(player_active & (1 << __dev->port))){	//Player is there, but hasn't been activated yet
-			if(st->buttons != 0 || st->dx != 0 || st->dy != 0){	//Input detected	(Not working right)
+			if(st->buttons != 0 || st->dx != 0 || st->dy != 0){	//Input detected
 				player_active |= (1 << __dev->port);
 			}
 			else{
@@ -711,21 +728,42 @@ int main(){
 			}
 		}
 
+		//Use the buttons previously pressed to control what happens here (Mouse logic needs improvements (Indent code is wrong for Left/Right middle press))
+		button_action = 0;
+		button_action |= ((previous_buttons[__dev->port] & MOUSE_LEFTBUTTON) && !(st->buttons & MOUSE_LEFTBUTTON)
+			&& !(previous_buttons[__dev->port] & MOUSE_RIGHTBUTTON)) << 0;	//Left released and Right wasn't held down
+		button_action |= ((((previous_buttons[__dev->port] & MOUSE_SIDEBUTTON) && !(st->buttons & MOUSE_SIDEBUTTON)) ||
+			(previous_buttons[__dev->port] & MOUSE_LEFTBUTTON && previous_buttons[__dev->port] & MOUSE_RIGHTBUTTON &&
+			(!(st->buttons & MOUSE_LEFTBUTTON) != !(st->buttons & MOUSE_RIGHTBUTTON)))) && !over_mode) << 1;	//Side released or Left/Right released while other is still held down and the game isn't over
+		button_action |= (!(previous_buttons[__dev->port] & MOUSE_RIGHTBUTTON) && (st->buttons & MOUSE_RIGHTBUTTON)
+			&& !(st->buttons & MOUSE_LEFTBUTTON) && !over_mode) << 2;	//Right pressed (Without Left) and the game isn't over
+		
+		int ele_x = -1;
+		int ele_y = -1;
+		uint8_t in_grid = 0;
+
+		cursor_on_grid(&in_grid, &ele_x, &ele_y, button_action, !!(st->buttons & (MOUSE_LEFTBUTTON + MOUSE_SIDEBUTTON)), __dev->port, cursor_position);
+		ABX_logic(ele_x, ele_y, button_action, __dev->port, cursor_position, &tile_anim, &face_frame_id, previous_buttons, st->buttons,
+			&start_time, &start_ms_time);
+
 		//Movement code
-		cursor_position[(2 * __dev->port) + 1] += st->dy;
+		cursor_position[(2 * __dev->port) + 1] += 2 * st->dy;
 		if(cursor_position[(2 * __dev->port) + 1] > 480){
 			cursor_position[(2 * __dev->port) + 1] = 480;
 		}
 		else if(cursor_position[(2 * __dev->port) + 1] < 0){
 			cursor_position[(2 * __dev->port) + 1] = 0;
 		}
-		cursor_position[2 * __dev->port] += st->dx;
+		cursor_position[2 * __dev->port] += 2 * st->dx;
 		if(cursor_position[2 * __dev->port] > 640){
 			cursor_position[2 * __dev->port] = 640;
 		}
 		else if(cursor_position[2 * __dev->port] < 0){
 			cursor_position[2 * __dev->port] = 0;
 		}
+
+		face_and_indent_logic(ele_x, ele_y, in_grid, !!(st->buttons & (MOUSE_LEFTBUTTON)), !!(st->buttons & (MOUSE_SIDEBUTTON)), __dev->port,
+			&face_frame_id, press_data, cursor_position);
 
 		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
 
