@@ -9,11 +9,12 @@ thing with this struct then I think you'll still need to go through
 the multi-draw. It shouldn't be too much slower if any.
 */
 
-typedef struct CrayonSpriteArray{
+//Unfinished
+typedef struct crayon_sprite_array{
 	uint16_t * draw_pos;	//Width then Height extracted from anim/frame data, Each group of 2 is for one sub-texture
 	uint16_t * frame_coords;	//Each group of 4 elements is one sub-texture to draw
 	uint8_t * scales;	//I think 8 bits is good enough for most cases
-	float rotations;	//Poly uses angles to rotate on Z axis, sprite uses booleans/flip bits. Decide what type this should be...
+	float * rotations;	//Poly uses angles to rotate on Z axis, sprite uses booleans/flip bits. Decide what type this should be...
 	uint16_t num_sprites;	//This tells the draw function how many sprites/polys to draw.
 
 	uint8_t options;	//Format FSRX XFFF, Basically 3 booleans options relating to frameCoords, scales and rotations
@@ -27,7 +28,19 @@ typedef struct CrayonSpriteArray{
 	uint32_t colour;	//For poly mode this dictates the rgb and alpha of a polygon
 	spritesheet_t * ss;
 	animation_t * anim;
-} CrayonSpriteArray_t;
+} crayon_sprite_array_t;
+
+//Used for rendering many untextured polys (Limitation being all verts are on the same Z plane)
+//It might be good however to give each poly its own z coord?
+typedef struct crayon_untextured_array{
+	uint16_t * draw_pos;	//Group of 2 per poly (top left coord)
+	uint8_t * draw_z;	//The layer to help deal with overlapping sprites/polys
+	uint32_t * colours;	//Dictates the rgb and alpha of a polygon
+	uint16_t * draw_dims;	//The x and y dims of each poly
+	float * rotations;	//Poly uses angles to rotate on Z axis
+	uint16_t num_polys;
+	uint8_t options;	//---- ZCDR. If Z,C,D,R is 1, then we use all elements in their lists. If 0 then we only use the first element
+} crayon_untextured_array_t;
 
 #endif
 

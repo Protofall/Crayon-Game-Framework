@@ -4,20 +4,20 @@
 extern int graphics_setup_palette(uint8_t palette_number, const struct spritesheet *ss){
   int entries;
   if(ss->spritesheet_format == 5){
-    entries = 16;
+	entries = 16;
   }
   else if(ss->spritesheet_format == 6){
-    entries = 256;
+	entries = 256;
   }
   else{
-    return 1;
+	return 1;
   }
 
   pvr_set_pal_format(PVR_PAL_ARGB8888);
   uint16_t i; //Can't this be a uint8_t instead? 0 to 255 and max 256 entries per palette
   //...but then again how would the loop be able to break? since it would overflow back to 0
   for(i = 0; i < ss->spritesheet_color_count; ++i){
-    pvr_set_pal_entry(i + entries * palette_number, ss->spritesheet_palette[i]);
+	pvr_set_pal_entry(i + entries * palette_number, ss->spritesheet_palette[i]);
   }
   return 0;
 }
@@ -35,49 +35,104 @@ extern void graphics_frame_coordinates(const struct animation *anim, uint16_t *f
 
 extern void graphics_draw_colour_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z, uint16_t dim_x,
   uint16_t dim_y, uint32_t colour){
-    pvr_poly_cxt_t cxt;
-    pvr_poly_hdr_t hdr;
-    pvr_vertex_t vert;
+	pvr_poly_cxt_t cxt;
+	pvr_poly_hdr_t hdr;
+	pvr_vertex_t vert;
 
-    pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
-    pvr_poly_compile(&hdr, &cxt);
-    pvr_prim(&hdr, sizeof(hdr));
+	pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
+	pvr_poly_compile(&hdr, &cxt);
+	pvr_prim(&hdr, sizeof(hdr));
 
-    vert.argb = colour;
-    vert.oargb = 0;	//Not sure what this does
-    vert.flags = PVR_CMD_VERTEX;    //I think this is used to define the start of a new polygon
+	vert.argb = colour;
+	vert.oargb = 0;	//Not sure what this does
+	vert.flags = PVR_CMD_VERTEX;    //I think this is used to define the start of a new polygon
 
-    //These define the verticies of the triangles "strips" (One triangle uses verticies of other triangle)
-    vert.x = draw_x;
-    vert.y = draw_y;
-    vert.z = draw_z;
-    vert.u = 0.0;
-    vert.v = 0.0;
-    pvr_prim(&vert, sizeof(vert));
+	//These define the verticies of the triangles "strips" (One triangle uses verticies of other triangle)
+	vert.x = draw_x;
+	vert.y = draw_y;
+	vert.z = draw_z;
+	vert.u = 0.0;
+	vert.v = 0.0;
+	pvr_prim(&vert, sizeof(vert));
 
-    vert.x = draw_x + dim_x;
-    vert.y = draw_y;
-    vert.z = draw_z;
-    vert.u = 1.0;
-    vert.v = 0.0;
-    pvr_prim(&vert, sizeof(vert));
+	vert.x = draw_x + dim_x;
+	vert.y = draw_y;
+	vert.z = draw_z;
+	vert.u = 1.0;
+	vert.v = 0.0;
+	pvr_prim(&vert, sizeof(vert));
 
-    vert.x = draw_x;
-    vert.y = draw_y + dim_y;
-    vert.z = draw_z;
-    vert.u = 0.0;
-    vert.v = 1.0;
-    pvr_prim(&vert, sizeof(vert));
+	vert.x = draw_x;
+	vert.y = draw_y + dim_y;
+	vert.z = draw_z;
+	vert.u = 0.0;
+	vert.v = 1.0;
+	pvr_prim(&vert, sizeof(vert));
 
-    vert.x = draw_x + dim_x;
-    vert.y = draw_y + dim_y;
-    vert.z = draw_z;
-    vert.u = 1.0;
-    vert.v = 1.0;
-    vert.flags = PVR_CMD_VERTEX_EOL;
-    pvr_prim(&vert, sizeof(vert));
-    return;
+	vert.x = draw_x + dim_x;
+	vert.y = draw_y + dim_y;
+	vert.z = draw_z;
+	vert.u = 1.0;
+	vert.v = 1.0;
+	vert.flags = PVR_CMD_VERTEX_EOL;
+	pvr_prim(&vert, sizeof(vert));
+	return;
 }
+
+//Not currently handling rotations, I'll do that at a later date
+//NOTE: order might be different for different emulators :(
+extern void graphics_draw_untextured_array(crayon_untextured_array_t *poly_array){
+	pvr_poly_cxt_t cxt;
+	pvr_poly_hdr_t hdr;
+	pvr_vertex_t vert;
+
+	pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
+	pvr_poly_compile(&hdr, &cxt);
+	pvr_prim(&hdr, sizeof(hdr));
+
+	uint8_t multiple_rotations = !!(poly_array->options & (1 << 0));	//Unused
+	uint8_t multiple_dims = !!(poly_array->options & (1 << 1));
+	uint8_t multiple_colours = !!(poly_array->options & (1 << 2));
+	uint8_t multiple_z = !!(poly_array->options & (1 << 3));
+
+	int i;
+	for(i = 0; i < poly_array->num_polys; i++){
+		vert.argb = poly_array->colours[multiple_colours * i];	//If only one colour, this is forced to colour zero
+		vert.oargb = 0;	//Not sure what this does
+		vert.flags = PVR_CMD_VERTEX;
+
+		vert.x = poly_array->draw_pos[2 * i];
+		vert.y = poly_array->draw_pos[(2 * i) + 1];
+		vert.z = poly_array->draw_z[multiple_z * i];
+		vert.u = 0.0;	//Are the u/v's redundant?
+		vert.v = 0.0;
+		pvr_prim(&vert, sizeof(vert));
+
+		vert.x = poly_array->draw_pos[2 * i] + poly_array->draw_dims[multiple_dims * 2 * i];	//If using one dim, multiple dims reduces it to the first value
+		// vert.y = poly_array->draw_pos[(2 * i) + 1];
+		// vert.z = poly_array->draw_z[multiple_z * i];
+		vert.u = 1.0;
+		vert.v = 0.0;
+		pvr_prim(&vert, sizeof(vert));
+
+		vert.x = poly_array->draw_pos[2 * i];
+		vert.y = poly_array->draw_pos[(2 * i) + 1] + poly_array->draw_dims[(multiple_dims * 2 * i) + 1];
+		// vert.z = poly_array->draw_z[multiple_z * i];
+		vert.u = 0.0;
+		vert.v = 1.0;
+		pvr_prim(&vert, sizeof(vert));
+
+		vert.x = poly_array->draw_pos[2 * i] + poly_array->draw_dims[multiple_dims * 2 * i];
+		// vert.y = poly_array->draw_pos[(2 * i) + 1] + poly_array->draw_dims[(multiple_dims * 2 * i) + 1];
+		// vert.z = poly_array->draw_z[multiple_z * i];
+		vert.u = 1.0;
+		vert.v = 1.0;
+		vert.flags = PVR_CMD_VERTEX_EOL;
+		pvr_prim(&vert, sizeof(vert));
+	}
+	return;
+}
+
 
 extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
 	const struct animation *anim, float draw_x, float draw_y, float draw_z,
@@ -148,13 +203,13 @@ extern uint8_t graphics_draw_sprites_OLD(const struct spritesheet *ss,
 
 	pvr_sprite_cxt_t context;
 	if(ss->spritesheet_format == 6){  //PAL8BPP format
-    // pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
-    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | ((paletteNumber) << 25),
+	// pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
+	pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | ((paletteNumber) << 25),
 		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
 	}
 	else if(ss->spritesheet_format == 5){ //PAL4BPP format
-    // pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
-    pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | ((paletteNumber) << 21),
+	// pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
+	pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | ((paletteNumber) << 21),
 		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
 	}
 	else if(ss->spritesheet_format == 0 || ss->spritesheet_format == 1 || ss->spritesheet_format == 2){  //ARGB1555, RGB565 and RGB4444
@@ -206,7 +261,7 @@ extern uint8_t graphics_draw_sprites_OLD(const struct spritesheet *ss,
 // options also includes filter mode and format is taken from spritesheet struct
 // draw_z, colour and palette_num are obvious
 // poly_list_mode is used to draw opaque, punchthrough or transparent stuff depending on current list
-extern uint8_t graphics_draw_sprites(CrayonSpriteArray_t *sprite_array, uint8_t poly_list_mode){
+extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
 	return 0;
 }
 
@@ -220,10 +275,10 @@ typedef struct crayon_sprite_array{
   uint16_t num_sprites; //This tells the draw function how many sprites/polys to draw.
 
   uint8_t options;  //Format FSRX XFFF, Basically 3 booleans options relating to frameCoords, scales and rotations
-            //if that bit is set to true, then we use the first element of F/S/R array for all sub-textures
-            //Else we assume each sub-texture has its own unique F/S/R value
-            //The 3 F's at the end are for the filtering mode. Can easily access it with a modulo 8 operation
-            //0 = none, 2 = Bilinear, 4 = Trilinear1, 6 = Trilinear2
+			//if that bit is set to true, then we use the first element of F/S/R array for all sub-textures
+			//Else we assume each sub-texture has its own unique F/S/R value
+			//The 3 F's at the end are for the filtering mode. Can easily access it with a modulo 8 operation
+			//0 = none, 2 = Bilinear, 4 = Trilinear1, 6 = Trilinear2
 
   uint8_t draw_z; //The layer to help deal with overlapping sprites/polys
   uint8_t palette_num;  //Also ask if palettes can start at not multiples of 16 or 256

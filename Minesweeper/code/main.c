@@ -436,17 +436,19 @@ int main(){
 
 	srand(time(0));
 
-	float cursor_position[8];
-	cursor_position[0] = 50;
-	cursor_position[1] = 100;
-	cursor_position[2] = 50;
-	cursor_position[3] = 350;
-	cursor_position[4] = 590;
-	cursor_position[5] = 100;
-	cursor_position[6] = 590;
-	cursor_position[7] = 350;
+	float cursor_position[8];	//Update these to the top (Inline with the face (face is 26x26 and starts at 307, 64 (In Windows)))
+	cursor_position[0] = 100;
+	cursor_position[1] = 77;
+	cursor_position[2] = 200;
+	cursor_position[3] = 77;
+	cursor_position[4] = 414;
+	cursor_position[5] = 77;
+	cursor_position[6] = 524;
+	cursor_position[7] = 77;
 
 	spritesheet_t Board, Windows;
+	crayon_untextured_array_t Grid_polys, Bg_polys;	//Contains most, if not all, of the untextured polys that will be drawn.
+	//crayon_untextured_array_t Win2000_polys;
 
 	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	memory_load_crayon_packer_sheet(&Board, "/Minesweeper/Board.dtex");
@@ -490,6 +492,10 @@ int main(){
 
 	grid_start_x = 80;
 	grid_start_y = 104;	//Never changes for XP mode, but might in 2000
+
+	//Setup the untextured poly structs
+	setup_grid_untextured_poly(&Grid_polys, grid_x, grid_y, grid_start_x, grid_start_y);	//Note the struct will need to be updated when grid_x and grid_y are updated since it will store grid boarders
+	setup_bg_untextured_poly(&Bg_polys);
 
 	uint16_t grid_size = grid_x * grid_y;
 
@@ -571,26 +577,6 @@ int main(){
 	}
 	graphics_frame_coordinates(&Board.spritesheet_animation_array[4], &region_icon_x, &region_icon_y, region);
 
-	//Set colours
-	uint32_t main_background = (255 << 24) | (192 << 16) | (192 << 8) | 192;	//4290822336
-	uint32_t light_grey = (255 << 24) | (128 << 16) | (128 << 8) | 128;	//4286611584
-	uint32_t white = (255 << 24) | (255 << 16) | (255 << 8) | 255;	//4294967295
-
-	/*
-	Depth plan:
-
-	Solution 1:
-		- 6 boxes, 2 big boxes like the digit displays, 4 "single pixel" boxes for overlap
-
-	Solution 2:
-		- 5 boxes, but 4 of them are partially transparent. their colour + their alpha + the bg colour equals what they should appear as
-		- The white box is the same, but there are 4 semi-transparent grey boxes...Is this worth it?
-
-	Might be simpler and easier to read by going with Solution 1 (Also make a function that given a box and z value and width,
-		it can create the boarders?)
-
-	*/
-
 	float thumb_x = 0;
 	float thumb_y = 0;
 	uint8_t thumb_active;
@@ -618,7 +604,7 @@ int main(){
 			start_primed |= (1 << (__dev->port));	//Number bits
 		}
 
-		//It triggers ONLY when start is the only input (buttons == start && !thumb_active)
+		//It triggers ONLY when start is the only input
 		if(st->buttons == CONT_START && !thumb_active){	//Atleast someone is only pressing start
 			start_primed |= (1 << 6);	//P bit
 		}
@@ -640,9 +626,7 @@ int main(){
 		button_action |= (!(previous_buttons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y)) << 3;	//Y pressed
 		button_action |= ((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && !(start_primed & (1 << 4))) << 4;	//If we press start, but we haven't done active prime yet and we aren't invalidated
 
-		if(face_press_logic(button_action, __dev->port, cursor_position, &face_frame_id, &tile_anim, previous_buttons, st->buttons)){
-			break;
-		}
+		if(face_press_logic(button_action, __dev->port, cursor_position, &face_frame_id, &tile_anim, previous_buttons, st->buttons)){break;}
 
 		//These are only ever set if The cursor is on the grid and A/B/X is/was pressed
 		int ele_x = -1;
@@ -650,10 +634,7 @@ int main(){
 		uint8_t in_grid = 0;
 
 		cursor_on_grid(&in_grid, &ele_x, &ele_y, button_action, __dev->port, cursor_position);
-
-		if(in_grid){
-			grid_ABX_logic(ele_x, ele_y, button_action, &tile_anim, &start_time, &start_ms_time);
-		}
+		if(in_grid){grid_ABX_logic(ele_x, ele_y, button_action, &tile_anim, &start_time, &start_ms_time);}
 
 		//Y and Start press code
 		if(button_action & (1 << 3)){
@@ -740,19 +721,14 @@ int main(){
 		button_action |= (!(previous_buttons[__dev->port] & MOUSE_RIGHTBUTTON) && (st->buttons & MOUSE_RIGHTBUTTON)
 			&& !(st->buttons & MOUSE_LEFTBUTTON)) << 2;	//Right pressed (Without Left) and the game isn't over
 
-		if(face_press_logic(button_action, __dev->port, cursor_position, &face_frame_id, &tile_anim, previous_buttons, st->buttons)){
-			break;
-		}
+		if(face_press_logic(button_action, __dev->port, cursor_position, &face_frame_id, &tile_anim, previous_buttons, st->buttons)){break;}
 
 		int ele_x = -1;
 		int ele_y = -1;
 		uint8_t in_grid = 0;
 
 		cursor_on_grid(&in_grid, &ele_x, &ele_y, button_action, __dev->port, cursor_position);
-
-		if(in_grid){
-			grid_ABX_logic(ele_x, ele_y, button_action, &tile_anim, &start_time, &start_ms_time);
-		}
+		if(in_grid){grid_ABX_logic(ele_x, ele_y, button_action, &tile_anim, &start_time, &start_ms_time);}
 
 		//Movement code
 		cursor_position[(2 * __dev->port) + 1] += 0.8 * st->dy;
@@ -857,26 +833,24 @@ int main(){
 			//We choose palette 1 because that's 2000's palette and XP uses RGB565
 		}
 
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 456, 4, 1, 1, region_icon_x, region_icon_y, 0);	//Region icon
+		//Draw the region icon
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 456, 5, 1, 1, region_icon_x, region_icon_y, 0);
 
 		//Draw the reset button face
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 2, 1, 1, face_frame_x, face_frame_y, 0);
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 3, 1, 1, face_frame_x, face_frame_y, 0);
 
 		//Draw the flag count and timer
 		digit_display(&Board, &Board.spritesheet_animation_array[2], num_flags, 20, 65);
 		digit_display(&Board, &Board.spritesheet_animation_array[2], time_sec, 581, 65);
 
-		//Draw the main background colour
-		graphics_draw_colour_poly(0, 0, 1, 640, 480, main_background);
+		//Draw the background stuff
+		graphics_draw_untextured_array(&Bg_polys);
 
-		//Depth for digit displays
-		graphics_draw_colour_poly(19, 64, 4, 40, 24, light_grey);
-		graphics_draw_colour_poly(21, 66, 4, 40, 24, white);
-		graphics_draw_colour_poly(580, 64, 4, 40, 24, light_grey);
-		graphics_draw_colour_poly(582, 66, 4, 40, 24, white);
+		//Draw the grid/digit display related untextured polys
+		graphics_draw_untextured_array(&Grid_polys);
 
 		//Draw the grid
-		graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 2, 1, 1, !operating_system && language);
+		graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 4, 1, 1, !operating_system && language);
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
@@ -935,7 +909,7 @@ int main(){
 						liter++;
 					}
 				}
-				graphics_draw_sprites_OLD(&tile_ss, &tile_anim, indented_neighbours, indented_frames, 2 * liter, liter, 3, 1, 1, !operating_system && language);
+				graphics_draw_sprites_OLD(&tile_ss, &tile_anim, indented_neighbours, indented_frames, 2 * liter, liter, 5, 1, 1, !operating_system && language);
 			}
 		}
 		
@@ -953,21 +927,6 @@ int main(){
 	return 0;
 }
 
-/*
-
-Things about Minesweeper:
-
-	Difficulties:
-	- Beginner
-	- Intermediate
-	- Expert
-	- Legacy User (Largest grid)
-
-
 //Add something to be displayed on the VMU screen. But what? Just a static mine/blown up mine
-
-//Ideas: When choosing an OS, make it boot up with a Dreamcast/Katana legacy BIOS
-
+//When choosing an OS, make it boot up with a Dreamcast/Katana legacy BIOS
 //CHANGE "Board" to "Common" and maybe "Windows" to "OS-Dependent"
-
-*/
