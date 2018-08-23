@@ -3,6 +3,7 @@
 
 #include "extra_structs.h"
 #include "setup.h"
+#include "custom_polys.h"
 
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
@@ -311,7 +312,7 @@ void b_press(animation_t * anim, uint16_t ele_logic){
 }
 
 //Must be called within a pvr_list_begin(), used for displaying the counter for flags and timer
-void digit_display(spritesheet_t * ss, animation_t * anim, int num, uint16_t x, uint16_t y){
+void digit_display(spritesheet_t * ss, animation_t * anim, int num, uint16_t x, uint16_t y, uint8_t z){
 	if(num < -99){
 		num = -99;
 	}
@@ -332,7 +333,7 @@ void digit_display(spritesheet_t * ss, animation_t * anim, int num, uint16_t x, 
 		else{
 			graphics_frame_coordinates(anim, &frame_x, &frame_y, (int)disp_num[i] - 48);
 		}
-		graphics_draw_sprite(ss, anim, x + (i * 13), y, 5, 1, 1, frame_x, frame_y, 0);
+		graphics_draw_sprite(ss, anim, x + (i * 13), y, z, 1, 1, frame_x, frame_y, 0);
 	}
 
 	return;
@@ -369,8 +370,8 @@ void face_logic(uint8_t *face_frame_id, int id, float *cursor_position, uint8_t 
 
 //Handles the interaction logic with the grid
 void grid_ABX_logic(int ele_x, int ele_y, uint8_t button_action, animation_t *tile_anim, uint32_t *start_time, uint32_t *start_ms_time){
-	if(button_action & (1 << 0)){	//For A press
-		if(over_mode == 0){
+	if(over_mode == 0){
+		if(button_action & (1 << 0)){	//For A press
 			if(!game_live){
 				timer_ms_gettime(start_time, start_ms_time);
 				game_live = 1;
@@ -387,16 +388,16 @@ void grid_ABX_logic(int ele_x, int ele_y, uint8_t button_action, animation_t *ti
 			}
 			discover_tile(tile_anim, ele_x, ele_y);
 		}
-	}
-	if(button_action & (1 << 1)){	//For X press
-		if(!game_live){
-			timer_ms_gettime(start_time, start_ms_time);
-			game_live = 1;
+		if(button_action & (1 << 1)){	//For X press
+			if(!game_live){
+				timer_ms_gettime(start_time, start_ms_time);
+				game_live = 1;
+			}
+			x_press(tile_anim, ele_x, ele_y);
 		}
-		x_press(tile_anim, ele_x, ele_y);
-	}
-	if(button_action & (1 << 2)){	//For B press
-		b_press(tile_anim, ele_x + grid_x * ele_y);
+		if(button_action & (1 << 2)){	//For B press
+			b_press(tile_anim, ele_x + grid_x * ele_y);
+		}
 	}
 }
 
@@ -447,7 +448,7 @@ int main(){
 	cursor_position[7] = 77;
 
 	spritesheet_t Board, Windows;
-	crayon_untextured_array_t Grid_polys, Bg_polys;	//Contains most, if not all, of the untextured polys that will be drawn.
+	crayon_untextured_array_t Bg_polys;	//Contains some of the untextured polys that will be drawn.
 	//crayon_untextured_array_t Win2000_polys;
 
 	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
@@ -494,7 +495,6 @@ int main(){
 	grid_start_y = 104;	//Never changes for XP mode, but might in 2000
 
 	//Setup the untextured poly structs
-	setup_grid_untextured_poly(&Grid_polys, grid_x, grid_y, grid_start_x, grid_start_y);	//Note the struct will need to be updated when grid_x and grid_y are updated since it will store grid boarders
 	setup_bg_untextured_poly(&Bg_polys);
 
 	uint16_t grid_size = grid_x * grid_y;
@@ -816,6 +816,7 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
+
 		//Setup the main palette
 		graphics_setup_palette(0, &Board);
 		if(!operating_system){	//Since it uses palettes and XP doesn't, we do this
@@ -837,20 +838,24 @@ int main(){
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 456, 5, 1, 1, region_icon_x, region_icon_y, 0);
 
 		//Draw the reset button face
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 3, 1, 1, face_frame_x, face_frame_y, 0);
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 4, 1, 1, face_frame_x, face_frame_y, 0);
 
 		//Draw the flag count and timer
-		digit_display(&Board, &Board.spritesheet_animation_array[2], num_flags, 20, 65);
-		digit_display(&Board, &Board.spritesheet_animation_array[2], time_sec, 581, 65);
+		digit_display(&Board, &Board.spritesheet_animation_array[2], num_flags, 20, 65, 5);
+		digit_display(&Board, &Board.spritesheet_animation_array[2], time_sec, 581, 65, 5);
+
+		//Draw the grid/digit display related untextured polys
+		custom_poly_boarder(1, 20, 65, 4, Board.spritesheet_animation_array[2].animation_frame_width * 3, Board.spritesheet_animation_array[2].animation_frame_height,
+			4286611584, 4294967295);
+		custom_poly_boarder(1, 581, 65, 4, Board.spritesheet_animation_array[2].animation_frame_width * 3, Board.spritesheet_animation_array[2].animation_frame_height,
+			4286611584, 4294967295);
 
 		//Draw the background stuff
 		graphics_draw_untextured_array(&Bg_polys);
 
-		//Draw the grid/digit display related untextured polys
-		graphics_draw_untextured_array(&Grid_polys);
-
-		//Draw the grid
-		graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 4, 1, 1, !operating_system && language);
+		//Draw the grid and its boarder
+		graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 5, 1, 1, !operating_system && language);
+		custom_poly_boarder(3, grid_start_x, grid_start_y, 4, grid_x * 16, grid_y * 16, 4286611584, 4294967295);
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
@@ -909,7 +914,7 @@ int main(){
 						liter++;
 					}
 				}
-				graphics_draw_sprites_OLD(&tile_ss, &tile_anim, indented_neighbours, indented_frames, 2 * liter, liter, 5, 1, 1, !operating_system && language);
+				graphics_draw_sprites_OLD(&tile_ss, &tile_anim, indented_neighbours, indented_frames, 2 * liter, liter, 6, 1, 1, !operating_system && language);
 			}
 		}
 		

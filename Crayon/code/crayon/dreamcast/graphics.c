@@ -51,29 +51,21 @@ extern void graphics_draw_colour_poly(uint16_t draw_x, uint16_t draw_y, uint16_t
 	vert.x = draw_x;
 	vert.y = draw_y;
 	vert.z = draw_z;
-	vert.u = 0.0;
-	vert.v = 0.0;
 	pvr_prim(&vert, sizeof(vert));
 
 	vert.x = draw_x + dim_x;
 	vert.y = draw_y;
 	vert.z = draw_z;
-	vert.u = 1.0;
-	vert.v = 0.0;
 	pvr_prim(&vert, sizeof(vert));
 
 	vert.x = draw_x;
 	vert.y = draw_y + dim_y;
 	vert.z = draw_z;
-	vert.u = 0.0;
-	vert.v = 1.0;
 	pvr_prim(&vert, sizeof(vert));
 
 	vert.x = draw_x + dim_x;
 	vert.y = draw_y + dim_y;
 	vert.z = draw_z;
-	vert.u = 1.0;
-	vert.v = 1.0;
 	vert.flags = PVR_CMD_VERTEX_EOL;
 	pvr_prim(&vert, sizeof(vert));
 	return;
@@ -104,29 +96,21 @@ extern void graphics_draw_untextured_array(crayon_untextured_array_t *poly_array
 		vert.x = poly_array->draw_pos[2 * i];
 		vert.y = poly_array->draw_pos[(2 * i) + 1];
 		vert.z = poly_array->draw_z[multiple_z * i];
-		vert.u = 0.0;	//Are the u/v's redundant?
-		vert.v = 0.0;
 		pvr_prim(&vert, sizeof(vert));
 
 		vert.x = poly_array->draw_pos[2 * i] + poly_array->draw_dims[multiple_dims * 2 * i];	//If using one dim, multiple dims reduces it to the first value
 		// vert.y = poly_array->draw_pos[(2 * i) + 1];
 		// vert.z = poly_array->draw_z[multiple_z * i];
-		vert.u = 1.0;
-		vert.v = 0.0;
 		pvr_prim(&vert, sizeof(vert));
 
 		vert.x = poly_array->draw_pos[2 * i];
 		vert.y = poly_array->draw_pos[(2 * i) + 1] + poly_array->draw_dims[(multiple_dims * 2 * i) + 1];
 		// vert.z = poly_array->draw_z[multiple_z * i];
-		vert.u = 0.0;
-		vert.v = 1.0;
 		pvr_prim(&vert, sizeof(vert));
 
 		vert.x = poly_array->draw_pos[2 * i] + poly_array->draw_dims[multiple_dims * 2 * i];
 		// vert.y = poly_array->draw_pos[(2 * i) + 1] + poly_array->draw_dims[(multiple_dims * 2 * i) + 1];
 		// vert.z = poly_array->draw_z[multiple_z * i];
-		vert.u = 1.0;
-		vert.v = 1.0;
 		vert.flags = PVR_CMD_VERTEX_EOL;
 		pvr_prim(&vert, sizeof(vert));
 	}
