@@ -13,6 +13,6 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 void setup_OS_assets(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys, uint8_t lang);
 void setup_free_OS_struct(MinesweeperOS_t *os);
 
-void setup_bg_untextured_poly(crayon_untextured_array_t *Bg);
+void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t sd);
 
 #endif

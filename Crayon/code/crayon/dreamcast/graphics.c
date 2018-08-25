@@ -33,7 +33,7 @@ extern void graphics_frame_coordinates(const struct animation *anim, uint16_t *f
 	return;
 }
 
-extern void graphics_draw_colour_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z, uint16_t dim_x,
+extern void graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z, uint16_t dim_x,
   uint16_t dim_y, uint32_t colour){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;

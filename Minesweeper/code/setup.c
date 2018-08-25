@@ -22,7 +22,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 3;
 			os->coords_pos[(iter * 3) + 1] = 447;
-			os->coords_pos[(iter * 3) + 2] = 4;
+			os->coords_pos[(iter * 3) + 2] = 16;
 			os->scale[iter * 2] = 633;
 			os->scale[(iter * 2) + 1] = 1;
 		}
@@ -34,7 +34,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 0;
 			os->coords_pos[(iter * 3) + 1] = 447;
-			os->coords_pos[(iter * 3) + 2] = 4;
+			os->coords_pos[(iter * 3) + 2] = 16;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
@@ -46,7 +46,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 636;
 			os->coords_pos[(iter * 3) + 1] = 447;
-			os->coords_pos[(iter * 3) + 2] = 5;
+			os->coords_pos[(iter * 3) + 2] = 17;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
@@ -58,7 +58,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 0;
 			os->coords_pos[(iter * 3) + 1] = 29;
-			os->coords_pos[(iter * 3) + 2] = 4;
+			os->coords_pos[(iter * 3) + 2] = 16;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 418;
 		}
@@ -70,7 +70,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 637;
 			os->coords_pos[(iter * 3) + 1] = 29;
-			os->coords_pos[(iter * 3) + 2] = 4;
+			os->coords_pos[(iter * 3) + 2] = 16;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 418;
 		}
@@ -82,14 +82,14 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 521;
 			os->coords_pos[(iter * 3) + 1] = 457;
-			os->coords_pos[(iter * 3) + 2] = 5;
+			os->coords_pos[(iter * 3) + 2] = 17;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
 		else{
 			os->coords_pos[iter * 3] = 512;
 			os->coords_pos[(iter * 3) + 1] = 459;
-			os->coords_pos[(iter * 3) + 2] = 5;
+			os->coords_pos[(iter * 3) + 2] = 17;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
@@ -98,14 +98,14 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 106;
 			os->coords_pos[(iter * 3) + 1] = 450;
-			os->coords_pos[(iter * 3) + 2] = 5;
+			os->coords_pos[(iter * 3) + 2] = 17;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
 		else{
 			os->coords_pos[iter * 3] = 69;
 			os->coords_pos[(iter * 3) + 1] = 458;
-			os->coords_pos[(iter * 3) + 2] = 5;
+			os->coords_pos[(iter * 3) + 2] = 17;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
@@ -114,7 +114,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 266;
 			os->coords_pos[(iter * 3) + 1] = 450;
-			os->coords_pos[(iter * 3) + 2] = 4;
+			os->coords_pos[(iter * 3) + 2] = 16;
 			os->scale[iter * 2] = 94;
 			os->scale[(iter * 2) + 1] = 1;
 		}
@@ -126,14 +126,14 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 0;
 			os->coords_pos[(iter * 3) + 1] = 450;
-			os->coords_pos[(iter * 3) + 2] = 4;
+			os->coords_pos[(iter * 3) + 2] = 16;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
 		else{
 			os->coords_pos[iter * 3] = 0;
 			os->coords_pos[(iter * 3) + 1] = 458;
-			os->coords_pos[(iter * 3) + 2] = 4;
+			os->coords_pos[(iter * 3) + 2] = 16;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
@@ -142,7 +142,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 547;
 			os->coords_pos[(iter * 3) + 1] = 450;
-			os->coords_pos[(iter * 3) + 2] = 4;
+			os->coords_pos[(iter * 3) + 2] = 16;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
@@ -154,14 +154,14 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 568;
 			os->coords_pos[(iter * 3) + 1] = 0;
-			os->coords_pos[(iter * 3) + 2] = 5;
+			os->coords_pos[(iter * 3) + 2] = 17;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
 		else{
-			os->coords_pos[iter * 3] = 588;	//Modify this later?
-			os->coords_pos[(iter * 3) + 1] = 2;
-			os->coords_pos[(iter * 3) + 2] = 5;
+			os->coords_pos[iter * 3] = 585;
+			os->coords_pos[(iter * 3) + 1] = 5;
+			os->coords_pos[(iter * 3) + 2] = 17;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
@@ -170,7 +170,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 105;
 			os->coords_pos[(iter * 3) + 1] = 0;
-			os->coords_pos[(iter * 3) + 2] = 4;
+			os->coords_pos[(iter * 3) + 2] = 16;
 			os->scale[iter * 2] = 155;
 			os->scale[(iter * 2) + 1] = 1;
 		}
@@ -182,14 +182,14 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 		if(sys){
 			os->coords_pos[iter * 3] = 0;
 			os->coords_pos[(iter * 3) + 1] = 0;
-			os->coords_pos[(iter * 3) + 2] = 4;
+			os->coords_pos[(iter * 3) + 2] = 16;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
 		else{
-			os->coords_pos[iter * 3] = 3;
-			os->coords_pos[(iter * 3) + 1] = 2;
-			os->coords_pos[(iter * 3) + 2] = 4;
+			os->coords_pos[iter * 3] = 6;
+			os->coords_pos[(iter * 3) + 1] = 5;
+			os->coords_pos[(iter * 3) + 2] = 16;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
@@ -234,8 +234,13 @@ void setup_free_OS_struct(MinesweeperOS_t *os){
 	free(os->scale);
 }
 
-void setup_bg_untextured_poly(crayon_untextured_array_t *Bg){
+//For XP mode it will have the "yellowy" polygon. 2000 misses this.
+//I THINK THIS IS BROKEN
+void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t sd){
 	Bg->num_polys = 3;
+	if(!os){
+		Bg->num_polys += 4;	//Windows 2000 has a few extra polys
+	}
 	Bg->draw_pos = (uint16_t *) malloc(2 * Bg->num_polys * sizeof(uint16_t));
 	Bg->draw_z = (uint8_t *) malloc(Bg->num_polys * sizeof(uint8_t));
 	Bg->colours = (uint32_t *) malloc(Bg->num_polys * sizeof(uint32_t));
@@ -247,24 +252,64 @@ void setup_bg_untextured_poly(crayon_untextured_array_t *Bg){
 	//Grey box
 	Bg->draw_pos[0] = 6;
 	Bg->draw_pos[1] = 52;
-	Bg->draw_z[0] = 3;
+	Bg->draw_z[0] = 9;
 	Bg->colours[0] = (255 << 24) | (192 << 16) | (192 << 8) | 192;	//4290822336 (lightGrey)
-	Bg->draw_dims[0] = 634;
-	Bg->draw_dims[1] = 428;
+	Bg->draw_dims[0] = 631;
+	Bg->draw_dims[1] = 397;
 
 	//White box
 	Bg->draw_pos[2] = 3;
 	Bg->draw_pos[3] = 48;
-	Bg->draw_z[1] = 2;
+	Bg->draw_z[1] = 8;
 	Bg->colours[1] = (255 << 24) | (255 << 16) | (255 << 8) | 255;	//4294967295 (White)
-	Bg->draw_dims[2] = 637;
-	Bg->draw_dims[3] = 431;
+	Bg->draw_dims[2] = 634;
+	Bg->draw_dims[3] = 401;
 
-	//Yellowy box
-	Bg->draw_pos[4] = 0;
-	Bg->draw_pos[5] = 0;
-	Bg->draw_z[2] = 1;
-	Bg->colours[2] = (255 << 24) | (236 << 16) | (233 << 8) | 216;	//4293716440 (Yellowy)
-	Bg->draw_dims[4] = 640;
-	Bg->draw_dims[5] = 49;
+	//Yellowy box, only for XP
+	if(os){
+		Bg->draw_pos[4] = 3;
+		Bg->draw_pos[5] = 7;
+		Bg->draw_z[2] = 8;
+		Bg->colours[2] = (255 << 24) | (236 << 16) | (233 << 8) | 216;	//4293716440 (Yellowy)
+		Bg->draw_dims[4] = 635;
+		Bg->draw_dims[5] = 447;
+	}
+	else{
+		//Place the polys for 2000's taskbar
+		Bg->draw_pos[4] = 0;
+		Bg->draw_pos[5] = 452;
+		Bg->draw_z[2] = 1;
+		Bg->colours[2] = (255 << 24) + (212 << 16) + (208 << 8) + 200;	//??? yellowy grey
+		Bg->draw_dims[4] = 640;
+		Bg->draw_dims[5] = 28;
+
+		Bg->draw_pos[6] = 0;
+		Bg->draw_pos[7] = 453;
+		Bg->draw_z[3] = 2;
+		Bg->colours[3] = (255 << 24) | (255 << 16) | (255 << 8) | 255;	//4294967295 (White)
+		Bg->draw_dims[6] = 640;
+		Bg->draw_dims[7] = 1;
+
+		//For the time and icons box (This changes based on "sd")
+		Bg->draw_pos[8] = 508;
+		Bg->draw_pos[9] = 456;
+		Bg->draw_z[4] = 2;
+		Bg->colours[4] = (255 << 24) + (128 << 16) + (128 << 8) + 128;	//??? (Dark Grey)
+		Bg->draw_dims[8] = 129;
+		Bg->draw_dims[9] = 21;
+
+		Bg->draw_pos[10] = 509;
+		Bg->draw_pos[11] = 457;
+		Bg->draw_z[5] = 3;
+		Bg->colours[5] = (255 << 24) | (255 << 16) | (255 << 8) | 255;	//4294967295 (White)
+		Bg->draw_dims[10] = 129;
+		Bg->draw_dims[11] = 21;
+
+		Bg->draw_pos[12] = 509;
+		Bg->draw_pos[13] = 457;
+		Bg->draw_z[6] = 4;
+		Bg->colours[6] = (255 << 24) + (212 << 16) + (208 << 8) + 200;	//4290822336 (lightGrey)
+		Bg->draw_dims[12] = 128;
+		Bg->draw_dims[13] = 20;
+	}
 }

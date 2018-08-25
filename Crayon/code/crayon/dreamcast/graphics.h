@@ -11,8 +11,8 @@ extern int graphics_setup_palette(uint8_t palette_number, const struct spriteshe
 extern void graphics_frame_coordinates(const struct animation *anim, uint16_t *frame_x,
 	uint16_t *frame_y, uint8_t frame);
 
-//Queue a colour/alpha poly to be rendered (Incomplete)
-extern void graphics_draw_colour_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z,
+//Queue a colour/alpha poly to be rendered. I recomment the array version, but for simple implementation this is good
+extern void graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z,
 	uint16_t dim_x, uint16_t dim_y, uint32_t colour);
 
 //Draw all coloured polys in the struct's list

@@ -23,11 +23,13 @@ uint8_t game_live = 0;	//Is true when the timer is turning
 uint8_t revealed;
 int time_sec;
 
+uint8_t sd_present = 0;			//If an ext2 formatted SD card is detected, this this becomes true and modifies some textures/coords and allows R to save screenshots
 uint8_t question_enabled = 1;	//Enable the use of question marking
-uint8_t sound_enabled = 0;
-uint8_t operating_system = 1;	//0 for 2000, 1 for XP
-uint8_t language = 0;	//0 for English, 1 for Italian. This also affects the Minesweeper/Prato fiorito themes
+uint8_t sound_enabled = 1;		//Toggle the sound
+uint8_t operating_system = 0;	//0 for 2000, 1 for XP
+uint8_t language = 0;			//0 for English, 1 for Italian. This affects the font language and the Minesweeper/Prato fiorito themes
 
+uint8_t focus = 0;	//Which window/tab is being focused on. 0 is The game, 1 is "New high score", 2 is options, 3 is controls and 4 is "About"
 uint8_t grid_x;
 uint8_t grid_y;
 uint16_t grid_start_x;
@@ -439,17 +441,16 @@ int main(){
 
 	float cursor_position[8];	//Update these to the top (Inline with the face (face is 26x26 and starts at 307, 64 (In Windows)))
 	cursor_position[0] = 100;
-	cursor_position[1] = 77;
+	cursor_position[1] = 66;
 	cursor_position[2] = 200;
-	cursor_position[3] = 77;
+	cursor_position[3] = 66;
 	cursor_position[4] = 414;
-	cursor_position[5] = 77;
+	cursor_position[5] = 66;
 	cursor_position[6] = 524;
-	cursor_position[7] = 77;
+	cursor_position[7] = 66;
 
 	spritesheet_t Board, Windows;
 	crayon_untextured_array_t Bg_polys;	//Contains some of the untextured polys that will be drawn.
-	//crayon_untextured_array_t Win2000_polys;
 
 	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	memory_load_crayon_packer_sheet(&Board, "/Minesweeper/Board.dtex");
@@ -492,10 +493,10 @@ int main(){
 	// num_mines = 130;
 
 	grid_start_x = 80;
-	grid_start_y = 104;	//Never changes for XP mode, but might in 2000
+	grid_start_y = 104;	//Never changes for XP mode, but might in 2000 Or I might simplify and just keep this constant?
 
 	//Setup the untextured poly structs
-	setup_bg_untextured_poly(&Bg_polys);
+	setup_bg_untextured_poly(&Bg_polys, operating_system, sd_present);
 
 	uint16_t grid_size = grid_x * grid_y;
 
@@ -834,36 +835,45 @@ int main(){
 			//We choose palette 1 because that's 2000's palette and XP uses RGB565
 		}
 
-		//Draw the region icon
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 456, 5, 1, 1, region_icon_x, region_icon_y, 0);
-
-		//Draw the reset button face
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 4, 1, 1, face_frame_x, face_frame_y, 0);
-
 		//Draw the flag count and timer
-		digit_display(&Board, &Board.spritesheet_animation_array[2], num_flags, 20, 65, 5);
-		digit_display(&Board, &Board.spritesheet_animation_array[2], time_sec, 581, 65, 5);
+		digit_display(&Board, &Board.spritesheet_animation_array[2], num_flags, 20, 65, 17);
+		digit_display(&Board, &Board.spritesheet_animation_array[2], time_sec, 581, 65, 17);
 
-		//Draw the grid/digit display related untextured polys
-		custom_poly_boarder(1, 20, 65, 4, Board.spritesheet_animation_array[2].animation_frame_width * 3, Board.spritesheet_animation_array[2].animation_frame_height,
-			4286611584, 4294967295);
-		custom_poly_boarder(1, 581, 65, 4, Board.spritesheet_animation_array[2].animation_frame_width * 3, Board.spritesheet_animation_array[2].animation_frame_height,
-			4286611584, 4294967295);
+		//Draw the boarders for digit display (I think I should move these calls into digit display itself)
+		custom_poly_boarder(1, 20, 65, 16, Board.spritesheet_animation_array[2].animation_frame_width * 3, Board.spritesheet_animation_array[2].animation_frame_height,
+			4286611584u, 4294967295u);
+		custom_poly_boarder(1, 581, 65, 16, Board.spritesheet_animation_array[2].animation_frame_width * 3, Board.spritesheet_animation_array[2].animation_frame_height,
+			4286611584u, 4294967295u);
 
-		//Draw the background stuff
+		//Draw the big indent boarder that encapsulates digit displays and face
+		custom_poly_boarder(2, 14, 59, 16, 615, 33, 4286611584u, 4294967295u);
+
+		//Draw the MS background stuff
 		graphics_draw_untextured_array(&Bg_polys);
 
+		if(!operating_system){
+			custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000
+			custom_poly_2000_boarder(0, 0, 1, 640, 452);	//The Windows 2000 window boarder
+			//Add the rest of the extra taskbar stuff
+		}
+
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 456 + (2 * !operating_system), 17, 1, 1, region_icon_x, region_icon_y, 0);	//Draw the region icon
+
+		//Draw the reset button face
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
+
 		//Draw the grid and its boarder
-		graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 5, 1, 1, !operating_system && language);
-		custom_poly_boarder(3, grid_start_x, grid_start_y, 4, grid_x * 16, grid_y * 16, 4286611584, 4294967295);
+		graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 17, 1, 1, !operating_system && language);
+		custom_poly_boarder(3, grid_start_x, grid_start_y, 16, grid_x * 16, grid_y * 16, 4286611584u, 4294967295u);
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
 			if(player_active & (1 << iter)){
 				//Passing coords as ints because otherwise we can get case where each pixel contains more than 1 texel
-				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], (int) cursor_position[2 * iter], (int) cursor_position[(2 * iter) + 1], 10, 1, 1, 0, 0, 0);
+				//ADD A DRAW FOR THE SHADOW
+				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], (int) cursor_position[2 * iter], (int) cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, 0);
 				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[3], (int) cursor_position[2 * iter] + 5, (int) cursor_position[(2 * iter) + 1],
-					11, 1, 1, p_frame_x, p_frame_y + (iter * 10), 0);
+					52, 1, 1, p_frame_x, p_frame_y + (iter * 10), 0);
 			}
 			if(press_data[3 * iter]){
 				uint16_t top_left_x = press_data[(3 * iter) + 1] * 16;
@@ -914,7 +924,7 @@ int main(){
 						liter++;
 					}
 				}
-				graphics_draw_sprites_OLD(&tile_ss, &tile_anim, indented_neighbours, indented_frames, 2 * liter, liter, 6, 1, 1, !operating_system && language);
+				graphics_draw_sprites_OLD(&tile_ss, &tile_anim, indented_neighbours, indented_frames, 2 * liter, liter, 18, 1, 1, !operating_system && language);
 			}
 		}
 		
