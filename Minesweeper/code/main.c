@@ -437,9 +437,9 @@ int main(){
 
 	pvr_init_defaults();
 
-	srand(time(0));
+	srand(time(0));	//Fix this
 
-	float cursor_position[8];	//Update these to the top (Inline with the face (face is 26x26 and starts at 307, 64 (In Windows)))
+	float cursor_position[8];
 	cursor_position[0] = 100;
 	cursor_position[1] = 66;
 	cursor_position[2] = 200;
@@ -449,11 +449,12 @@ int main(){
 	cursor_position[6] = 524;
 	cursor_position[7] = 66;
 
-	spritesheet_t Board, Windows;
+	spritesheet_t Board, Icons, Windows;
 	crayon_untextured_array_t Bg_polys;	//Contains some of the untextured polys that will be drawn.
 
 	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	memory_load_crayon_packer_sheet(&Board, "/Minesweeper/Board.dtex");
+	memory_load_crayon_packer_sheet(&Icons, "/Minesweeper/Icons.dtex");
 	fs_romdisk_unmount("/Minesweeper");
 
 	//Load the OS assets
@@ -470,7 +471,7 @@ int main(){
 
 	//Make the OS struct and populate it
 	MinesweeperOS_t os;
-	setup_OS_assets(&os, &Windows, operating_system, language);
+	setup_OS_assets(&os, &Windows, operating_system, language, sd_present);
 
 	//Beginner
 	// grid_x = 9;
@@ -511,7 +512,7 @@ int main(){
 	spritesheet_t tile_ss;
 	animation_t tile_anim;
 
-	uint8_t tile_id = 5;
+	uint8_t tile_id = 2;
 	if(!language){
 		tile_ss = Board;
 	}
@@ -546,7 +547,7 @@ int main(){
 	uint16_t p_frame_x = 0;
 	uint16_t p_frame_y = 0;
 	uint8_t player_active = 0;	//Used to confirm if a controller is being used
-	graphics_frame_coordinates(&Board.spritesheet_animation_array[3], &p_frame_x, &p_frame_y, 0);
+	graphics_frame_coordinates(&Icons.spritesheet_animation_array[1], &p_frame_x, &p_frame_y, 0);
 
 	//For the timer
 	uint32_t current_time = 0;
@@ -576,11 +577,15 @@ int main(){
 	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1 despite having a region
 		region = 3;
 	}
-	graphics_frame_coordinates(&Board.spritesheet_animation_array[4], &region_icon_x, &region_icon_y, region);
+	graphics_frame_coordinates(&Icons.spritesheet_animation_array[2], &region_icon_x, &region_icon_y, region);
 
 	float thumb_x = 0;
 	float thumb_y = 0;
 	uint8_t thumb_active;
+
+	uint16_t sd_x;
+	uint16_t sd_y;
+	graphics_frame_coordinates(&Icons.spritesheet_animation_array[3], &sd_x, &sd_y, 0);
 
 	while(1){		
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -803,12 +808,12 @@ int main(){
 			}
 		}
 
-		graphics_frame_coordinates(&Board.spritesheet_animation_array[1], &face_frame_x, &face_frame_y, face_frame_id);
+		graphics_frame_coordinates(&Board.spritesheet_animation_array[0], &face_frame_x, &face_frame_y, face_frame_id);
 		face_frame_id = 0;	//Reset face for new frame
 
 		timer_ms_gettime(&current_time, &current_ms_time);
 		if(game_live && time_sec < 999){	//Prevent timer overflows
-			//Play the "tick" sound effect
+			//Play the "tick" sound effect (But only when time_sec changes)
 			time_sec = current_time - start_time + (current_ms_time > start_ms_time); //MS is there to account for the "1st second" inaccuracy
 		}
 
@@ -817,11 +822,11 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
-
 		//Setup the main palette
 		graphics_setup_palette(0, &Board);
+		graphics_setup_palette(1, &Icons);
 		if(!operating_system){	//Since it uses palettes and XP doesn't, we do this
-			graphics_setup_palette(1, &Windows);
+			graphics_setup_palette(1, &Windows);	//Since Windows uses 8bpp, this doesn't overlap with "icons"
 		}
 
 		//Draw windows graphics using our MinesweeperOpSys struct
@@ -836,13 +841,13 @@ int main(){
 		}
 
 		//Draw the flag count and timer
-		digit_display(&Board, &Board.spritesheet_animation_array[2], num_flags, 20, 65, 17);
-		digit_display(&Board, &Board.spritesheet_animation_array[2], time_sec, 581, 65, 17);
+		digit_display(&Board, &Board.spritesheet_animation_array[1], num_flags, 20, 65, 17);
+		digit_display(&Board, &Board.spritesheet_animation_array[1], time_sec, 581, 65, 17);
 
 		//Draw the boarders for digit display (I think I should move these calls into digit display itself)
-		custom_poly_boarder(1, 20, 65, 16, Board.spritesheet_animation_array[2].animation_frame_width * 3, Board.spritesheet_animation_array[2].animation_frame_height,
+		custom_poly_boarder(1, 20, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
 			4286611584u, 4294967295u);
-		custom_poly_boarder(1, 581, 65, 16, Board.spritesheet_animation_array[2].animation_frame_width * 3, Board.spritesheet_animation_array[2].animation_frame_height,
+		custom_poly_boarder(1, 581, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
 			4286611584u, 4294967295u);
 
 		//Draw the big indent boarder that encapsulates digit displays and face
@@ -854,13 +859,18 @@ int main(){
 		if(!operating_system){
 			custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000
 			custom_poly_2000_boarder(0, 0, 1, 640, 452);	//The Windows 2000 window boarder
-			//Add the rest of the extra taskbar stuff
 		}
 
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[4], 553, 456 + (2 * !operating_system), 17, 1, 1, region_icon_x, region_icon_y, 0);	//Draw the region icon
+		//Draw the sd icon
+		if(sd_present){
+			graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[3], 530 + (3 * operating_system), 457 + (2 * !operating_system), 21, 1, 1, sd_x, sd_y, 1);
+		}
+
+		//Draw the region icon
+		graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[2], 553 - (5 * !operating_system), 456 + (2 * !operating_system), 21, 1, 1, region_icon_x, region_icon_y, 1);
 
 		//Draw the reset button face
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[1], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
+		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
 
 		//Draw the grid and its boarder
 		graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 17, 1, 1, !operating_system && language);
@@ -871,9 +881,9 @@ int main(){
 			if(player_active & (1 << iter)){
 				//Passing coords as ints because otherwise we can get case where each pixel contains more than 1 texel
 				//ADD A DRAW FOR THE SHADOW
-				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], (int) cursor_position[2 * iter], (int) cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, 0);
-				graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[3], (int) cursor_position[2 * iter] + 5, (int) cursor_position[(2 * iter) + 1],
-					52, 1, 1, p_frame_x, p_frame_y + (iter * 10), 0);
+				graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[0], (int) cursor_position[2 * iter], (int) cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, 1);
+				graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[1], (int) cursor_position[2 * iter] + 5, (int) cursor_position[(2 * iter) + 1],
+					52, 1, 1, p_frame_x, p_frame_y + (iter * 10), 1);
 			}
 			if(press_data[3 * iter]){
 				uint16_t top_left_x = press_data[(3 * iter) + 1] * 16;
@@ -936,6 +946,7 @@ int main(){
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
 	int retVal = 0;
 	retVal += memory_free_crayon_packer_sheet(&Board);
+	retVal += memory_free_crayon_packer_sheet(&Icons);
 	retVal += memory_free_crayon_packer_sheet(&Windows);
 	error_freeze("Free-ing result %d!\n", retVal);
 
@@ -944,4 +955,3 @@ int main(){
 
 //Add something to be displayed on the VMU screen. But what? Just a static mine/blown up mine
 //When choosing an OS, make it boot up with a Dreamcast/Katana legacy BIOS
-//CHANGE "Board" to "Common" and maybe "Windows" to "OS-Dependent"
