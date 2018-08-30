@@ -444,6 +444,23 @@ uint8_t button_press_logic(uint8_t button_action, int id, float *cursor_position
 }
 
 int main(){
+
+	//Currently this is the only way to access some of the hidden features
+	MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
+	if(st->buttons & (1 << 1)){		//B press
+		operating_system = 1;	//Else 0
+	}
+	if(st->buttons & (1 << 2)){		//A press
+		sound_enabled = 0;	//Else 1
+	}
+	if(st->buttons & (1 << 9)){		//Y press
+		language = 1;	//Else 0
+	}
+	if(st->buttons & (1 << 10)){	//X press
+		question_enabled = 0;	//Else 1
+	}
+	MAPLE_FOREACH_END()
+
 	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
 		vid_set_mode(DM_640x480_VGA, PM_RGB565);
 	}

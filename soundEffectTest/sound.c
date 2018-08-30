@@ -28,7 +28,7 @@ int main(){
 	controller = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);	//Reads the first plugged in controller
         st = (cont_state_t *)maple_dev_status(controller);	//State of controller
 
-        if(st->buttons & (1 << 2) && (!(previous_buttons & (1 << 2)))){	//When the "A" button is pressed, play the sound
+        if((st->buttons & (1 << 2)) && (!(previous_buttons & (1 << 2)))){	//When the "A" button is pressed, play the sound
             snd_sfx_play(Sound_T, 127, 128);    // ~50% volume, pan centred
         }
 
