@@ -5,6 +5,7 @@
 #include "setup.h"
 #include "custom_polys.h"
 
+//For the controller and mouse
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
 #include <dc/maple/mouse.h>
@@ -12,13 +13,17 @@
 //For the timer
 #include <arch/timer.h>
 
+//For the sound effects
+#include <dc/sound/stream.h>
+#include <dc/sound/sfxmgr.h>
+
 //To get region info (Not sure if this is needed)
 #include <dc/flashrom.h>
 
 uint16_t non_mines_left;	//When this variable equals zero, the game is won
 int num_flags;	//More like "number of flags in the pool"
 
-uint8_t over_mode = 0;	//0 = ready for new game, 1 = loss (ded), 2 = win
+uint8_t over_mode = 0;	//0 = ready for new game, 1 = game just ended, 2 = loss (ded), 3 = win
 uint8_t game_live = 0;	//Is true when the timer is turning
 uint8_t revealed;
 int time_sec;
@@ -29,7 +34,7 @@ uint8_t sound_enabled = 1;		//Toggle the sound
 uint8_t operating_system = 0;	//0 for 2000, 1 for XP
 uint8_t language = 0;			//0 for English, 1 for Italian. This affects the font language and the Minesweeper/Prato fiorito themes
 
-uint8_t focus = 0;	//Which window/tab is being focused on. 0 is The game, 1 is "New high score", 2 is options, 3 is controls and 4 is "About"
+uint8_t focus = 0;	//Which window/tab is being focused on. 0 is The game, 1 is "New high score", 2 is settings/savefile, 3 is controls and 4 is "About"
 uint8_t grid_x;
 uint8_t grid_y;
 uint16_t grid_start_x;
@@ -168,10 +173,9 @@ void adjust_grid(int ele_logic){
 }
 
 //It fills it out differently depending on over_mode
-//0 = ready for new game, 1 = loss (ded), 2 = win
 void reveal_map(animation_t * anim){
 	int i;
-	if(over_mode == 1){
+	if(over_mode == 2){
 		for(i = 0; i < grid_x * grid_y; i++){
 			if(logic_grid[i] == 9 || logic_grid[i] == 41){	//Untouched or question marked
 				graphics_frame_coordinates(anim, frame_grid + (2 * i), frame_grid + (2 * i) + 1, 3);
@@ -181,7 +185,7 @@ void reveal_map(animation_t * anim){
 			}
 		}
 	}
-	else if(over_mode == 2){
+	else if(over_mode == 3){
 		num_flags = 0;
 		for(i = 0; i < grid_x * grid_y; i++){
 			if(logic_grid[i] % (1 << 5) == 9){
@@ -364,7 +368,7 @@ void face_logic(uint8_t *face_frame_id, int id, float *cursor_position, uint8_t 
 			*face_frame_id = 1;	//Apply suprised face
 		}
 		if(A_held && (cursor_position[2 * id] <= 307 + 26) && (cursor_position[(2 * id) + 1] <= 64 + 26)
-			&& cursor_position[2 * id] >= 307 && cursor_position[(2 * id) + 1] >= 64){	//If hovering over face
+			&& cursor_position[2 * id] >= 307 && cursor_position[(2 * id) + 1] >= 64){	//If hovering over face and press on it
 			*face_frame_id = 4;
 		}
 	}
@@ -415,15 +419,27 @@ void cursor_on_grid(uint8_t *in_grid, int *ele_x, int *ele_y, uint8_t button_act
 	}
 }
 
-uint8_t face_press_logic(uint8_t button_action, int id, float *cursor_position, uint8_t *face_frame_id, animation_t * tile_anim,
+//This handles all the buttons you can press aside from the grid itself
+uint8_t button_press_logic(uint8_t button_action, int id, float *cursor_position, animation_t * tile_anim,
 	uint32_t *previous_buttons, uint32_t buttons){
-	if((button_action & (1 << 0)) && (cursor_position[2 * id] <= 307 + 26) && (cursor_position[(2 * id) + 1] <= 64 + 26)
-		&& cursor_position[2 * id] >= 307 && cursor_position[(2 * id) + 1] >= 64){	//If face is released on
-		clear_grid(tile_anim);
-		previous_buttons[id] = buttons;	//Store the previous button press
-		*face_frame_id = 0;	//Is this redundant? The grid has been reset, but if someone is still holding A or X then it should still be the same as before
-		return 1;
+	if(focus == 0){
+		if((button_action & (1 << 0)) && (cursor_position[2 * id] <= 307 + 26) && (cursor_position[(2 * id) + 1] <= 64 + 26)
+			&& cursor_position[2 * id] >= 307 && cursor_position[(2 * id) + 1] >= 64){	//If face is released on
+			clear_grid(tile_anim);
+			previous_buttons[id] = buttons;	//Store the previous button press
+			//Originally it set the face id to zero, but I removed it because it felt pointless
+			return 1;
+		}
 	}
+	//And detects for the other buttons/options
+	// if((button_action & (1 << 0)) && (cursor_position[2 * id] <= x + dim_x) && (cursor_position[(2 * id) + 1] <= y + dim_y)
+	// 		&& cursor_position[2 * id] >= x && cursor_position[(2 * id) + 1] >= y){
+	// 	focus = 2;
+	// }
+
+	//HOW DOES CHANGING FOCUS EFFECT THE CURRENT BUTTON PRESSES? (What if you die and change focus at the same time
+	//FINISH THIS WHEN THE FONT CODE IS DONE
+
 	return 0;
 }
 
@@ -437,7 +453,7 @@ int main(){
 
 	pvr_init_defaults();
 
-	srand(time(0));	//Fix this
+	srand(time(0));
 
 	float cursor_position[8];
 	cursor_position[0] = 100;
@@ -451,10 +467,16 @@ int main(){
 
 	spritesheet_t Board, Icons, Windows;
 	crayon_untextured_array_t Bg_polys;	//Contains some of the untextured polys that will be drawn.
+	sfxhnd_t Sound_Tick, Sound_Death, Sound_Death_Italian, Sound_Win;	//Sound effect handles. Might add more later for startup sounds or maybe put them in cdda? (Note this is a uint32_t)
+	snd_stream_init();	//Needed otherwise snd_sfx calls crash
 
 	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	memory_load_crayon_packer_sheet(&Board, "/Minesweeper/Board.dtex");
 	memory_load_crayon_packer_sheet(&Icons, "/Minesweeper/Icons.dtex");
+	Sound_Tick = snd_sfx_load("/Minesweeper/Sounds/tick.wav");	//This call crashes the game
+	Sound_Death = snd_sfx_load("/Minesweeper/Sounds/death.wav");
+	Sound_Death_Italian = snd_sfx_load("/Minesweeper/Sounds/deathItalian.wav");
+	Sound_Win = snd_sfx_load("/Minesweeper/Sounds/win.wav");
 	fs_romdisk_unmount("/Minesweeper");
 
 	//Load the OS assets
@@ -632,7 +654,7 @@ int main(){
 		button_action |= (!(previous_buttons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y)) << 3;	//Y pressed
 		button_action |= ((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && !(start_primed & (1 << 4))) << 4;	//If we press start, but we haven't done active prime yet and we aren't invalidated
 
-		if(face_press_logic(button_action, __dev->port, cursor_position, &face_frame_id, &tile_anim, previous_buttons, st->buttons)){break;}
+		if(button_press_logic(button_action, __dev->port, cursor_position, &tile_anim, previous_buttons, st->buttons)){break;}
 
 		//These are only ever set if The cursor is on the grid and A/B/X is/was pressed
 		int ele_x = -1;
@@ -727,7 +749,7 @@ int main(){
 		button_action |= (!(previous_buttons[__dev->port] & MOUSE_RIGHTBUTTON) && (st->buttons & MOUSE_RIGHTBUTTON)
 			&& !(st->buttons & MOUSE_LEFTBUTTON)) << 2;	//Right pressed (Without Left) and the game isn't over
 
-		if(face_press_logic(button_action, __dev->port, cursor_position, &face_frame_id, &tile_anim, previous_buttons, st->buttons)){break;}
+		if(button_press_logic(button_action, __dev->port, cursor_position, &tile_anim, previous_buttons, st->buttons)){break;}
 
 		int ele_x = -1;
 		int ele_y = -1;
@@ -771,13 +793,12 @@ int main(){
 			face_frame_id = 0;
 		}
 
-		//X011 0000
+		//X011 0000 (Start is released, but it was invalid)
 		if(!(start_primed & (1 << 6)) && (start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
 			start_primed = 0;
-			face_frame_id = 0;
 		}
 
-		//X001 0000
+		//X001 0000 (Start is released and it was valid)
 		if(!(start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
 			clear_grid(&tile_anim);
 			start_primed = 0;
@@ -786,35 +807,62 @@ int main(){
 
 		start_primed = start_primed & ((1 << 5) + (1 << 4));	//Clears all bits except active and invalidness
 
-		if(non_mines_left == 0 && game_live && over_mode == 0){
+		if(non_mines_left == 0 && game_live && !over_mode){
 			game_live = 0;
-			over_mode = 2;
+			over_mode = 1;
+		}
+
+		//This code triggers the turn when you win/lose the game (Doesn't trigger while dead/won after that)
+		if(!game_live && over_mode == 1){	//This triggers at the start of a new game too...
+			if(non_mines_left == 0){	//Only mines left, you win
+				over_mode = 3;
+				if(sound_enabled){ //play "won" sound
+					snd_sfx_play(Sound_Win, 127, 128);	//Right now this can play when dead
+				}
+				face_frame_id = 3;
+			}
+			else{	//Tiles are left, you must have been blown up
+				over_mode = 2;
+				if(sound_enabled){	//play bomb/death sound
+					if(language){	//Italian
+						snd_sfx_play(Sound_Death_Italian, 127, 128);
+					}
+					else{
+						snd_sfx_play(Sound_Death, 127, 128);
+					}
+				}
+				face_frame_id = 2;
+			}
+		}
+
+		//When releasing a start press (Or it becomes impure), we want to revert back to the gameover faced instead of the normal face
+		if(over_mode && face_frame_id != 4){
+			if(non_mines_left == 0){
+				face_frame_id = 3;
+			}
+			else{
+				face_frame_id = 2;
+			}
 		}
 
 		//Right now this is always triggered when a game ends and thanks to "revealed" it only triggers once
-		if(!revealed && !game_live && over_mode != 0){
+		if(!revealed && !game_live && over_mode){
 			reveal_map(&tile_anim);
 		}
 
-		//The face frame id code. If not indented or suprised, then choose a face
-		if(!face_frame_id){
-			if(over_mode == 1){
-				//play bomb/death sound
-				face_frame_id = 2;
-			}
-			else if(over_mode == 2){
-				//play "won" sound
-				face_frame_id = 3;
-			}
-		}
-
 		graphics_frame_coordinates(&Board.spritesheet_animation_array[0], &face_frame_x, &face_frame_y, face_frame_id);
-		face_frame_id = 0;	//Reset face for new frame
+		if(face_frame_id != 2 && face_frame_id != 3){	//So the ded/sunnies/end sound code will only be triggered on the turn the game ends
+			face_frame_id = 0;	//Reset face for new frame
+		}
 
 		timer_ms_gettime(&current_time, &current_ms_time);
 		if(game_live && time_sec < 999){	//Prevent timer overflows
-			//Play the "tick" sound effect (But only when time_sec changes)
-			time_sec = current_time - start_time + (current_ms_time > start_ms_time); //MS is there to account for the "1st second" inaccuracy
+			int temp_sec = current_time - start_time + (current_ms_time > start_ms_time); //MS is there to account for the "1st second" inaccuracy
+			//(How does this do the "start at 1 sec" thing? I forgot)
+			if(sound_enabled && temp_sec > time_sec){	//Play the "tick" sound effect (But only when time_sec changes)
+				snd_sfx_play(Sound_Tick, 127, 128);
+			}
+			time_sec = temp_sec;
 		}
 
 		pvr_wait_ready();

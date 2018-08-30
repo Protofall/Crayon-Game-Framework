@@ -24,7 +24,6 @@ void custom_poly_boarder(uint8_t thickness, uint16_t x, uint16_t y, uint8_t z, u
 
 	//Top right
 	vert.x = x;
-	// vert.y = y - thickness;
 	pvr_prim(&vert, sizeof(vert));
 
 	//Bottom left
@@ -43,13 +42,11 @@ void custom_poly_boarder(uint8_t thickness, uint16_t x, uint16_t y, uint8_t z, u
 	//Top side
 	vert.flags = PVR_CMD_VERTEX;
 	//Top left
-	// vert.x = x;
 	vert.y = y - thickness;
 	pvr_prim(&vert, sizeof(vert));
 
 	//Top right
 	vert.x = x + dim_x + thickness - 1;
-	// vert.y = y - thickness;
 	pvr_prim(&vert, sizeof(vert));
 
 	//Bottom left
@@ -59,7 +56,6 @@ void custom_poly_boarder(uint8_t thickness, uint16_t x, uint16_t y, uint8_t z, u
 
 	//Bottom right
 	vert.x = x + dim_x;
-	// vert.y = y;
 	vert.flags = PVR_CMD_VERTEX_EOL;
 	pvr_prim(&vert, sizeof(vert));
 
@@ -69,8 +65,6 @@ void custom_poly_boarder(uint8_t thickness, uint16_t x, uint16_t y, uint8_t z, u
 	vert.flags = PVR_CMD_VERTEX;
 	vert.argb = colour2;
 	//Top left
-	// vert.x = x + dim_x;
-	// vert.y = y;
 	pvr_prim(&vert, sizeof(vert));
 
 	//Top right
@@ -85,7 +79,6 @@ void custom_poly_boarder(uint8_t thickness, uint16_t x, uint16_t y, uint8_t z, u
 
 	//Bottom right
 	vert.x = x + dim_x + thickness;
-	// vert.y = y + dim_y + thickness;
 	vert.flags = PVR_CMD_VERTEX_EOL;
 	pvr_prim(&vert, sizeof(vert));
 
@@ -109,7 +102,6 @@ void custom_poly_boarder(uint8_t thickness, uint16_t x, uint16_t y, uint8_t z, u
 
 	//Bottom right
 	vert.x = x + dim_x + thickness;
-	// vert.y = y + dim_y + thickness;
 	vert.flags = PVR_CMD_VERTEX_EOL;
 	pvr_prim(&vert, sizeof(vert));
 
@@ -139,7 +131,6 @@ void custom_poly_2000_topbar(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x, 
 	//Top right
 	vert.argb = (255 << 24) + (166 << 16) + (202 << 8) + 240;
 	vert.x = x + dim_x;
-	// vert.y = y - thickness;
 	pvr_prim(&vert, sizeof(vert));
 
 	//Bottom left
@@ -151,18 +142,13 @@ void custom_poly_2000_topbar(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x, 
 	//Bottom right
 	vert.argb = (255 << 24) + (166 << 16) + (202 << 8) + 240;
 	vert.x = x + dim_x;
-	// vert.y = y + dim_y;
 	vert.flags = PVR_CMD_VERTEX_EOL;
 	pvr_prim(&vert, sizeof(vert));
 	return;
 }
 
 //This time the x, y and dim_x/dim_y are for the boarder itself...I might change that later
-//Should probably take a colour as a parameter (The Yellowy one)
 void custom_poly_2000_boarder(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x, int16_t dim_y){
-
-	//I THINK I'LL NEED TO PLAY AROUND WITH THE Z-s, maybe
-	//ONE OF THESE IS THE YELLOWY COLOUR (Prebs final call) FIX IT
 
 	//The LG and B first boarder
 	graphics_draw_untextured_poly(x, y, z + 1, dim_x - 1, dim_y - 1, (255 << 24) + (212 << 16) + (208 << 8) + 200);

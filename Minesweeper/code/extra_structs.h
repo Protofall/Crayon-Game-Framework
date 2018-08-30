@@ -5,6 +5,7 @@
 
 //This file exist just to make the main file a little bit more clean
 
+//Should add some code here to move the sd and region icons (Or store their x/y's here)
 typedef struct MinesweeperOS{
 	uint8_t * ids;	//Animation ids
 	uint16_t * coords_pos;	//The x and y for placing it
