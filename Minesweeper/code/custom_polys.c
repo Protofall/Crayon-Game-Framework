@@ -7,7 +7,7 @@ void custom_poly_boarder(uint8_t thickness, uint16_t x, uint16_t y, uint8_t z, u
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert;
 
-	pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
+	pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
@@ -113,7 +113,7 @@ void custom_poly_2000_topbar(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x, 
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert;
 
-	pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
+	pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
@@ -147,19 +147,21 @@ void custom_poly_2000_topbar(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x, 
 	return;
 }
 
+//At some point come back to this and see if I can make it more efficient
+
 //This time the x, y and dim_x/dim_y are for the boarder itself...I might change that later
 void custom_poly_2000_boarder(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x, int16_t dim_y){
 
-	//The LG and B first boarder
-	graphics_draw_untextured_poly(x, y, z + 1, dim_x - 1, dim_y - 1, (255 << 24) + (212 << 16) + (208 << 8) + 200);
-	graphics_draw_untextured_poly(x, y, z, dim_x, dim_y, (255 << 24));
+	//Centre colour
+	graphics_draw_untextured_poly(x + 2, y + 2, z + 4, dim_x - 4, dim_y - 4, (255 << 24) + (212 << 16) + (208 << 8) + 200, 1);
 
 	//White + dark grey
-	graphics_draw_untextured_poly(x + 1, y + 1, z + 3, dim_x - 3, dim_y - 3, (255 << 24) + (255 << 16) + (255 << 8) + 255);
-	graphics_draw_untextured_poly(x + 1, y + 1, z + 2, dim_x - 2, dim_y - 2, (255 << 24) + (128 << 16) + (128 << 8) + 128);
+	graphics_draw_untextured_poly(x + 1, y + 1, z + 3, dim_x - 3, dim_y - 3, (255 << 24) + (255 << 16) + (255 << 8) + 255, 1);
+	graphics_draw_untextured_poly(x + 1, y + 1, z + 2, dim_x - 2, dim_y - 2, (255 << 24) + (128 << 16) + (128 << 8) + 128, 1);
 
-	//Centre colour
-	graphics_draw_untextured_poly(x + 2, y + 2, z + 4, dim_x - 4, dim_y - 4, (255 << 24) + (212 << 16) + (208 << 8) + 200);
+	//The LG and B first boarder
+	graphics_draw_untextured_poly(x, y, z + 1, dim_x - 1, dim_y - 1, (255 << 24) + (212 << 16) + (208 << 8) + 200, 1);
+	graphics_draw_untextured_poly(x, y, z, dim_x, dim_y, (255 << 24), 1);
 
 	return;
 }

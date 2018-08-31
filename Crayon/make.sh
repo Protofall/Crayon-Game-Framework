@@ -154,7 +154,7 @@ buildDreamcastExecutable () {
 	ofiles=$(ls *.o)
 
 	if [ "$2" -le 1 ];then #dc-cd and dc-sd
-		$($KOS_CC $KOS_LDFLAGS -o $3.elf $KOS_START $ofiles -lz -lm $KOS_LIBS)	#Make the elf
+		$($KOS_CC $KOS_LDFLAGS -o $3.elf $KOS_START $ofiles -lkosext2fs -lz -lm $KOS_LIBS)	#Make the elf
 		if [ "$?" == 1 ];then	#Checks to see if an error occurred
 			echo "Failed to build the elf"
 			exit 1

@@ -39,7 +39,8 @@ typedef struct crayon_untextured_array{
 	uint16_t * draw_dims;	//The x and y dims of each poly
 	float * rotations;	//Poly uses angles to rotate on Z axis
 	uint16_t num_polys;
-	uint8_t options;	//---- ZCDR. If Z,C,D,R is 1, then we use all elements in their lists. If 0 then we only use the first element
+	uint8_t options;	//---O ZCDR. If Z,C,D,R is 1, then we use all elements in their lists. If 0 then we only use the first element.
+						//For O. If 1 its opaque, else its transparent (If you polys are fully opaque, set this to 1 (Its more efficient))
 } crayon_untextured_array_t;
 
 #endif

@@ -279,7 +279,7 @@ void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t
 	Bg->draw_dims = (uint16_t *) malloc(2 * Bg->num_polys * sizeof(uint16_t));
 	Bg->rotations = (float *) malloc(sizeof(float));
 	Bg->rotations[0] = 0;
-	Bg->options = (1 << 1) + (1 << 2) + (1 << 3);	//Z, C and D enabled
+	Bg->options = (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4);	//Z, C, D and O enabled
 
 	//Grey box
 	Bg->draw_pos[0] = 6;

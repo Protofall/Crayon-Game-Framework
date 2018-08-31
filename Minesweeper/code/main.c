@@ -20,6 +20,11 @@
 //To get region info (Not sure if this is needed)
 #include <dc/flashrom.h>
 
+//For mounting the sd dir
+#include <dc/sd.h>
+#include <kos/blockdev.h>
+#include <ext2/fs_ext2.h>
+
 uint16_t non_mines_left;	//When this variable equals zero, the game is won
 int num_flags;	//More like "number of flags in the pool"
 
@@ -45,6 +50,46 @@ uint8_t first_reveal;
 uint8_t *logic_grid;
 uint16_t *coord_grid;	//Unless changing grid size, this won't need to be changed once set
 uint16_t *frame_grid;
+
+#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
+
+static void unmount_ext2_sd(){
+	fs_ext2_unmount("/sd");
+	fs_ext2_shutdown();
+	sd_shutdown();
+}
+
+static int mount_ext2_sd(){
+	kos_blockdev_t sd_dev;
+	uint8 partition_type;
+
+	// Initialize the sd card if its present
+	if(sd_init()){
+		return 1;
+	}
+
+	// Grab the block device for the first partition on the SD card. Note that
+	// you must have the SD card formatted with an MBR partitioning scheme
+	if(sd_blockdev_for_partition(0, &sd_dev, &partition_type)){
+		return 2;
+	}
+
+	// Check to see if the MBR says that we have a Linux partition
+	if(partition_type != 0x83){
+		return 3;
+	}
+
+	// Initialize fs_ext2 and attempt to mount the device
+	if(fs_ext2_init()){
+		return 4;
+	}
+
+	//Mount the SD card to the sd dir in the VFS
+	if(fs_ext2_mount("/sd", &sd_dev, MNT_MODE)){
+		return 5;
+	}
+	return 0;
+}
 
 // N0 N1 N2
 // N3 S  N4
@@ -444,6 +489,13 @@ uint8_t button_press_logic(uint8_t button_action, int id, float *cursor_position
 }
 
 int main(){
+	// int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
+	// if(sdRes != 0){
+	// 	// error_freeze("sdRes = %d\n", sdRes);
+	// }
+	// else{
+	// 	sd_present = 1;
+	// }
 
 	//Currently this is the only way to access some of the hidden features
 	MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -487,6 +539,7 @@ int main(){
 	sfxhnd_t Sound_Tick, Sound_Death, Sound_Death_Italian, Sound_Win;	//Sound effect handles. Might add more later for startup sounds or maybe put them in cdda? (Note this is a uint32_t)
 	snd_stream_init();	//Needed otherwise snd_sfx calls crash
 
+	// memory_mount_romdisk("/sd/Minesweeper.img", "/Minesweeper");
 	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	memory_load_crayon_packer_sheet(&Board, "/Minesweeper/Board.dtex");
 	memory_load_crayon_packer_sheet(&Icons, "/Minesweeper/Icons.dtex");
@@ -498,11 +551,13 @@ int main(){
 
 	//Load the OS assets
 	if(operating_system){
+		// memory_mount_romdisk("/sd/XP.img", "/XP");
 		memory_mount_romdisk("/cd/XP.img", "/XP");
 		memory_load_crayon_packer_sheet(&Windows, "/XP/Windows.dtex");
 		fs_romdisk_unmount("/XP");
 	}
 	else{
+		// memory_mount_romdisk("/sd/2000.img", "/2000");
 		memory_mount_romdisk("/cd/2000.img", "/2000");
 		memory_load_crayon_packer_sheet(&Windows, "/2000/Windows.dtex");
 		fs_romdisk_unmount("/2000");
@@ -625,6 +680,8 @@ int main(){
 	uint16_t sd_x;
 	uint16_t sd_y;
 	graphics_frame_coordinates(&Icons.spritesheet_animation_array[3], &sd_x, &sd_y, 0);
+
+	// unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 
 	while(1){		
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -885,14 +942,14 @@ int main(){
 		pvr_wait_ready();
 		pvr_scene_begin();
 
-		pvr_list_begin(PVR_LIST_TR_POLY);
-
 		//Setup the main palette
 		graphics_setup_palette(0, &Board);
 		graphics_setup_palette(1, &Icons);
 		if(!operating_system){	//Since it uses palettes and XP doesn't, we do this
 			graphics_setup_palette(1, &Windows);	//Since Windows uses 8bpp, this doesn't overlap with "icons"
 		}
+
+		pvr_list_begin(PVR_LIST_TR_POLY);
 
 		//Draw windows graphics using our MinesweeperOpSys struct
 		for(iter = 0; iter < os.sprite_count; iter++){
@@ -909,22 +966,8 @@ int main(){
 		digit_display(&Board, &Board.spritesheet_animation_array[1], num_flags, 20, 65, 17);
 		digit_display(&Board, &Board.spritesheet_animation_array[1], time_sec, 581, 65, 17);
 
-		//Draw the boarders for digit display (I think I should move these calls into digit display itself)
-		custom_poly_boarder(1, 20, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
-			4286611584u, 4294967295u);
-		custom_poly_boarder(1, 581, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
-			4286611584u, 4294967295u);
-
-		//Draw the big indent boarder that encapsulates digit displays and face
-		custom_poly_boarder(2, 14, 59, 16, 615, 33, 4286611584u, 4294967295u);
-
-		//Draw the MS background stuff
-		graphics_draw_untextured_array(&Bg_polys);
-
-		if(!operating_system){
-			custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000
-			custom_poly_2000_boarder(0, 0, 1, 640, 452);	//The Windows 2000 window boarder
-		}
+		//Draw the grid
+		graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 17, 1, 1, !operating_system && language);
 
 		//Draw the sd icon
 		if(sd_present){
@@ -936,10 +979,6 @@ int main(){
 
 		//Draw the reset button face
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
-
-		//Draw the grid and its boarder
-		graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 17, 1, 1, !operating_system && language);
-		custom_poly_boarder(3, grid_start_x, grid_start_y, 16, grid_x * 16, grid_y * 16, 4286611584u, 4294967295u);
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
@@ -1002,7 +1041,30 @@ int main(){
 				graphics_draw_sprites_OLD(&tile_ss, &tile_anim, indented_neighbours, indented_frames, 2 * liter, liter, 18, 1, 1, !operating_system && language);
 			}
 		}
+		pvr_list_finish();
+
+		//None of these need to be transparent, so I think this might be more efficient
+		pvr_list_begin(PVR_LIST_OP_POLY);
+
+		//Draw the grid's boarder
+		custom_poly_boarder(3, grid_start_x, grid_start_y, 16, grid_x * 16, grid_y * 16, 4286611584u, 4294967295u);
 		
+		//Draw the boarders for digit display (I think I should move these calls into digit display itself)
+		custom_poly_boarder(1, 20, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
+			4286611584u, 4294967295u);
+		custom_poly_boarder(1, 581, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
+			4286611584u, 4294967295u);
+
+		// //Draw the big indent boarder that encapsulates digit displays and face
+		custom_poly_boarder(2, 14, 59, 16, 615, 33, 4286611584u, 4294967295u);
+
+		//Draw the MS background stuff
+		graphics_draw_untextured_array(&Bg_polys);
+
+		if(!operating_system){
+			custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000
+			custom_poly_2000_boarder(0, 0, 1, 640, 452);	//The Windows 2000 window boarder THIS FUNCTION IS INEFFICIENT AND CREATES SLOWDOWN
+		}
 		pvr_list_finish();
 
 		pvr_scene_finish();

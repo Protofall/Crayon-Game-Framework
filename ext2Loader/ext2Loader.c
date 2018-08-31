@@ -11,7 +11,7 @@
 #include <kos/blockdev.h>
 #include <ext2/fs_ext2.h>
 
-#include "error.h"	//Doesn't seem to work for some reason...
+#include "error.h"
 
 #include <kos/fs.h>	//Might need it for fs_load()
 #include <arch/exec.h>	//arch_exec()

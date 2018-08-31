@@ -34,12 +34,17 @@ extern void graphics_frame_coordinates(const struct animation *anim, uint16_t *f
 }
 
 extern void graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z, uint16_t dim_x,
-  uint16_t dim_y, uint32_t colour){
+  uint16_t dim_y, uint32_t colour, uint8_t opaque){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert;
 
-	pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
+	if(opaque){
+		pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
+	}
+	else{
+		pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
+	}
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
@@ -78,7 +83,12 @@ extern void graphics_draw_untextured_array(crayon_untextured_array_t *poly_array
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert;
 
-	pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
+	if(poly_array->options & (1 << 4)){	//If its opaque
+		pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
+	}
+	else{
+		pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
+	}
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
