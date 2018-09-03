@@ -1,5 +1,5 @@
 //Crayon libraries
-#include "../../Crayon/code/crayon/dreamcast/memory.h"
+#include "../../Crayon/code/dreamcast/memory.h"
 
 #include "extra_structs.h"
 #include "setup.h"
@@ -20,10 +20,14 @@
 //To get region info (Not sure if this is needed)
 #include <dc/flashrom.h>
 
-//For mounting the sd dir
-#include <dc/sd.h>
-#include <kos/blockdev.h>
-#include <ext2/fs_ext2.h>
+#define CRAYON_SD_MODE 0
+
+#if CRAYON_SD_MODE == 1
+	//For mounting the sd dir
+	#include <dc/sd.h>
+	#include <kos/blockdev.h>
+	#include <ext2/fs_ext2.h>
+#endif
 
 uint16_t non_mines_left;	//When this variable equals zero, the game is won
 int num_flags;	//More like "number of flags in the pool"
@@ -51,45 +55,47 @@ uint8_t *logic_grid;
 uint16_t *coord_grid;	//Unless changing grid size, this won't need to be changed once set
 uint16_t *frame_grid;
 
-#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
+#if CRAYON_SD_MODE == 1
+	#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
 
-static void unmount_ext2_sd(){
-	fs_ext2_unmount("/sd");
-	fs_ext2_shutdown();
-	sd_shutdown();
-}
-
-static int mount_ext2_sd(){
-	kos_blockdev_t sd_dev;
-	uint8 partition_type;
-
-	// Initialize the sd card if its present
-	if(sd_init()){
-		return 1;
+	static void unmount_ext2_sd(){
+		fs_ext2_unmount("/sd");
+		fs_ext2_shutdown();
+		sd_shutdown();
 	}
 
-	// Grab the block device for the first partition on the SD card. Note that
-	// you must have the SD card formatted with an MBR partitioning scheme
-	if(sd_blockdev_for_partition(0, &sd_dev, &partition_type)){
-		return 2;
-	}
+	static int mount_ext2_sd(){
+		kos_blockdev_t sd_dev;
+		uint8 partition_type;
 
-	// Check to see if the MBR says that we have a Linux partition
-	if(partition_type != 0x83){
-		return 3;
-	}
+		// Initialize the sd card if its present
+		if(sd_init()){
+			return 1;
+		}
 
-	// Initialize fs_ext2 and attempt to mount the device
-	if(fs_ext2_init()){
-		return 4;
-	}
+		// Grab the block device for the first partition on the SD card. Note that
+		// you must have the SD card formatted with an MBR partitioning scheme
+		if(sd_blockdev_for_partition(0, &sd_dev, &partition_type)){
+			return 2;
+		}
 
-	//Mount the SD card to the sd dir in the VFS
-	if(fs_ext2_mount("/sd", &sd_dev, MNT_MODE)){
-		return 5;
+		// Check to see if the MBR says that we have a Linux partition
+		if(partition_type != 0x83){
+			return 3;
+		}
+
+		// Initialize fs_ext2 and attempt to mount the device
+		if(fs_ext2_init()){
+			return 4;
+		}
+
+		//Mount the SD card to the sd dir in the VFS
+		if(fs_ext2_mount("/sd", &sd_dev, MNT_MODE)){
+			return 5;
+		}
+		return 0;
 	}
-	return 0;
-}
+#endif
 
 // N0 N1 N2
 // N3 S  N4
@@ -489,13 +495,12 @@ uint8_t button_press_logic(uint8_t button_action, int id, float *cursor_position
 }
 
 int main(){
-	// int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
-	// if(sdRes != 0){
-	// 	// error_freeze("sdRes = %d\n", sdRes);
-	// }
-	// else{
-	// 	sd_present = 1;
-	// }
+	#if CRAYON_SD_MODE == 1
+		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
+		if(sdRes == 0){
+			sd_present = 1;
+		}
+	#endif
 
 	//Currently this is the only way to access some of the hidden features
 	MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -539,8 +544,11 @@ int main(){
 	sfxhnd_t Sound_Tick, Sound_Death, Sound_Death_Italian, Sound_Win;	//Sound effect handles. Might add more later for startup sounds or maybe put them in cdda? (Note this is a uint32_t)
 	snd_stream_init();	//Needed otherwise snd_sfx calls crash
 
-	// memory_mount_romdisk("/sd/Minesweeper.img", "/Minesweeper");
-	memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
+	#if CRAYON_SD_MODE == 1
+		memory_mount_romdisk("/sd/Minesweeper.img", "/Minesweeper");
+	#else
+		memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
+	#endif
 	memory_load_crayon_packer_sheet(&Board, "/Minesweeper/Board.dtex");
 	memory_load_crayon_packer_sheet(&Icons, "/Minesweeper/Icons.dtex");
 	Sound_Tick = snd_sfx_load("/Minesweeper/Sounds/tick.wav");	//This call crashes the game
@@ -551,14 +559,20 @@ int main(){
 
 	//Load the OS assets
 	if(operating_system){
-		// memory_mount_romdisk("/sd/XP.img", "/XP");
-		memory_mount_romdisk("/cd/XP.img", "/XP");
+		#if CRAYON_SD_MODE == 1
+			memory_mount_romdisk("/sd/XP.img", "/XP");
+		#else
+			memory_mount_romdisk("/cd/XP.img", "/XP");
+		#endif
 		memory_load_crayon_packer_sheet(&Windows, "/XP/Windows.dtex");
 		fs_romdisk_unmount("/XP");
 	}
 	else{
-		// memory_mount_romdisk("/sd/2000.img", "/2000");
-		memory_mount_romdisk("/cd/2000.img", "/2000");
+		#if CRAYON_SD_MODE == 1
+			memory_mount_romdisk("/sd/2000.img", "/2000");
+		#else
+			memory_mount_romdisk("/cd/2000.img", "/2000");
+		#endif
 		memory_load_crayon_packer_sheet(&Windows, "/2000/Windows.dtex");
 		fs_romdisk_unmount("/2000");
 	}
@@ -681,7 +695,9 @@ int main(){
 	uint16_t sd_y;
 	graphics_frame_coordinates(&Icons.spritesheet_animation_array[3], &sd_x, &sd_y, 0);
 
-	// unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
+	#if CRAYON_SD_MODE == 1
+		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
+	#endif
 
 	while(1){		
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -891,7 +907,7 @@ int main(){
 			if(non_mines_left == 0){	//Only mines left, you win
 				over_mode = 3;
 				if(sound_enabled){ //play "won" sound
-					snd_sfx_play(Sound_Win, 127, 128);	//Right now this can play when dead
+					snd_sfx_play(Sound_Win, 192, 128);	//Right now this can play when dead
 				}
 				face_frame_id = 3;
 			}
@@ -899,10 +915,10 @@ int main(){
 				over_mode = 2;
 				if(sound_enabled){	//play bomb/death sound
 					if(language){	//Italian
-						snd_sfx_play(Sound_Death_Italian, 127, 128);
+						snd_sfx_play(Sound_Death_Italian, 192, 128);
 					}
 					else{
-						snd_sfx_play(Sound_Death, 127, 128);
+						snd_sfx_play(Sound_Death, 192, 128);
 					}
 				}
 				face_frame_id = 2;
@@ -934,7 +950,7 @@ int main(){
 			int temp_sec = current_time - start_time + (current_ms_time > start_ms_time); //MS is there to account for the "1st second" inaccuracy
 			//(How does this do the "start at 1 sec" thing? I forgot)
 			if(sound_enabled && temp_sec > time_sec){	//Play the "tick" sound effect (But only when time_sec changes)
-				snd_sfx_play(Sound_Tick, 127, 128);
+				snd_sfx_play(Sound_Tick, 192, 128);
 			}
 			time_sec = temp_sec;
 		}
@@ -1043,12 +1059,12 @@ int main(){
 		}
 		pvr_list_finish();
 
-		//None of these need to be transparent, so I think this might be more efficient
+		//None of these need to be transparent, by using the opaque list we are making the program more efficient
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
 		//Draw the grid's boarder
 		custom_poly_boarder(3, grid_start_x, grid_start_y, 16, grid_x * 16, grid_y * 16, 4286611584u, 4294967295u);
-		
+
 		//Draw the boarders for digit display (I think I should move these calls into digit display itself)
 		custom_poly_boarder(1, 20, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
 			4286611584u, 4294967295u);

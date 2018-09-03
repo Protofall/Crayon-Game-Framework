@@ -137,7 +137,7 @@ buildPreProcessed () {	#$1 is asset, $2 is projectRoot/cdfs, $3 is the current f
 }
 
 buildDreamcastExecutable () {
-	files=$(echo $5/code/crayon/dreamcast/*.c)	#Compile the Crayon source code files
+	files=$(echo $5/code/dreamcast/*.c)	#Compile the Crayon source code files
 	for x in $files; do
 		y=${x%.c}
 		z=${y##*/}

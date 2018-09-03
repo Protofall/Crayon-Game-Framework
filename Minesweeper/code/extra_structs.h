@@ -1,7 +1,7 @@
 #ifndef MS_EXTRA_STRUCTS_H
 #define MS_EXTRA_STRUCTS_H
 
-#include "../../Crayon/code/crayon/dreamcast/texture_structs.h"
+#include "../../Crayon/code/dreamcast/texture_structs.h"
 
 //This file exist just to make the main file a little bit more clean
 
