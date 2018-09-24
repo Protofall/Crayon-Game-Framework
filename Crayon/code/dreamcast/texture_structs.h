@@ -29,10 +29,7 @@ typedef struct spritesheet{
 	char *spritesheet_name;	//Might be useful for when it comes time to un-mount a romdisk, otherwise I don't think its needed
 	uint16_t spritesheet_dims;	//Since a pvr texture must be a square, we don't need height/width
 	uint8_t spritesheet_format;	//1 for 4BPP, 2 for 8BPP, 3 for RGB565 and 4 for ARGB4444 (0 for unknown)
-
-	crayon_palette_t *palette_data;	//Modify the graphics/memory functions to use this instead of a baked-in palette
-	// uint32_t *spritesheet_palette;	//Pointer to heap allocated palette (Its treated like an array of size spritesheet_colour_count)
-	// uint16_t spritesheet_color_count;	//Number of colours in the palette
+	crayon_palette_t *palette_data;	//Right now we still malloc this regardless if we use it or not. Change that
 
 	animation_t *spritesheet_animation_array;	//Allows me to make an array of animation_t pointers
 	uint8_t spritesheet_animation_count;	//The number of animations per spritesheet

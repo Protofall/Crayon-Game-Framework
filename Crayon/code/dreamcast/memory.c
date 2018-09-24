@@ -105,6 +105,7 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doe
     // Write palette metadata
     //---------------------------------------------------------------------------
 
+    ss->palette_data = (crayon_palette_t *) malloc(sizeof(crayon_palette_t));
     ss->palette_data->palette = palette;
     ss->palette_data->colour_count = dpal_header.color_count;
 
@@ -204,6 +205,8 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
   6 = PAL8BPP
   */
 
+  ss->palette_data = (crayon_palette_t *) malloc(sizeof(crayon_palette_t));
+
   int temp = strlen(path);
   if(ss->spritesheet_format == 5 || ss->spritesheet_format == 6){
     char *pathPal = (char *) malloc((temp+5)*sizeof(char));  //Add a check here to see if it failed
@@ -290,16 +293,14 @@ extern int memory_load_palette(crayon_palette_t *cp, char *path){
 
   if(memcmp(dpal_header.magic, "DPAL", 4) | !dpal_header.color_count){PAL_ERROR(3);}
 
-  uint32_t *palette = NULL; //Might replace this with a direct access to the pointer
-  palette = malloc(dpal_header.color_count * sizeof(uint32_t));
-  if(!palette){PAL_ERROR(4);}
+  cp->palette = malloc(dpal_header.color_count * sizeof(uint32_t));
+  if(!cp->palette){PAL_ERROR(4);}
 
-  if(fread(palette, sizeof(uint32_t), dpal_header.color_count,
+  if(fread(cp->palette, sizeof(uint32_t), dpal_header.color_count,
     palette_file) != dpal_header.color_count){PAL_ERROR(5);}
 
   #undef PAL_ERROR
 
-  cp->palette = palette;
   cp->colour_count = dpal_header.color_count;
 
   PAL_cleanup:
@@ -314,6 +315,7 @@ extern int memory_free_crayon_packer_sheet(struct spritesheet *ss){
   if(ss){
     if(ss->spritesheet_format == 5 || ss->spritesheet_format == 6){ //Paletted
       free(ss->palette_data->palette);
+      free(ss->palette_data);
     }
     pvr_mem_free(ss->spritesheet_texture);
 
