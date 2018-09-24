@@ -19,7 +19,7 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path);
 extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path);
 
 //If given a valid path it will insert the colours and amount of them into the first two arguments
-extern int memory_load_palette(uint32_t **palette, uint16_t *colourCount, char *path);
+extern int memory_load_palette(crayon_palette_t *cp, char *path);
 
 //Free up all memory from a spritesheet struct
 extern int memory_free_crayon_packer_sheet(struct spritesheet *ss);

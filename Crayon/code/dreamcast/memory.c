@@ -102,11 +102,11 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doe
 
   #undef PAL_ERROR
 
-  // Write palette metadata
-  //---------------------------------------------------------------------------
+    // Write palette metadata
+    //---------------------------------------------------------------------------
 
-    ss->spritesheet_palette     = palette;
-    ss->spritesheet_color_count = dpal_header.color_count;
+    ss->palette_data->palette = palette;
+    ss->palette_data->colour_count = dpal_header.color_count;
 
     // Palette Cleanup
     //---------------------------------------------------------------------------
@@ -116,7 +116,7 @@ extern int memory_load_dtex(struct spritesheet *ss, char *path){  //Note: It doe
     goto cleanup;
   }
   else{
-    ss->spritesheet_palette = NULL; //color_count doesn't need to be defined...nor does palette really...
+    ss->palette_data->palette = NULL; //color_count doesn't need to be defined...nor does palette really...
   }
 
   #undef ERROR
@@ -171,7 +171,7 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
   }
 
   ss->spritesheet_texture = texture;
-  ss->spritesheet_palette = NULL; //If we don't set it, memory_load_palette possibly won't work correctly
+  ss->palette_data->palette = NULL; //If we don't set it, memory_load_palette possibly won't work correctly
 
   //This assumes no mip-mapping, no stride, twiddled on, its uncompressed and no stride setting (I'm doing this to save on space)
   if(dtex_header.type == 0x00000000){ //ARGB1555
@@ -214,12 +214,12 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
     pathPal[temp+2] = 'a';
     pathPal[temp+3] = 'l';
     pathPal[temp+4] = '\0';
-    int resultPal = memory_load_palette(&ss->spritesheet_palette, &ss->spritesheet_color_count, pathPal); //The function will modify the palette and colour count
+    int resultPal = memory_load_palette(ss->palette_data, pathPal); //The function will modify the palette and colour count
     free(pathPal);
     if(resultPal){ERROR(7 + resultPal);}
   }
   else{
-    ss->spritesheet_palette = NULL; //color_count doesn't need to be defined...nor does palette really...
+    ss->palette_data->palette = NULL;  //color_count doesn't need to be defined...nor does palette really...
   }
 
   char *pathTxt = (char *) malloc((temp)*sizeof(char));  //Add a check here to see if it failed
@@ -278,7 +278,7 @@ extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path){
   return result;
 }
 
-extern int memory_load_palette(uint32_t **palette, uint16_t *colourCount, char *path){
+extern int memory_load_palette(crayon_palette_t *cp, char *path){
   int result = 0;
   #define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
   
@@ -290,15 +290,17 @@ extern int memory_load_palette(uint32_t **palette, uint16_t *colourCount, char *
 
   if(memcmp(dpal_header.magic, "DPAL", 4) | !dpal_header.color_count){PAL_ERROR(3);}
 
-  *palette = malloc(dpal_header.color_count * sizeof(uint32_t));
-  if(!*palette){PAL_ERROR(4);}
+  uint32_t *palette = NULL; //Might replace this with a direct access to the pointer
+  palette = malloc(dpal_header.color_count * sizeof(uint32_t));
+  if(!palette){PAL_ERROR(4);}
 
-  if(fread(*palette, sizeof(uint32_t), dpal_header.color_count,
+  if(fread(palette, sizeof(uint32_t), dpal_header.color_count,
     palette_file) != dpal_header.color_count){PAL_ERROR(5);}
 
   #undef PAL_ERROR
 
-  *colourCount = dpal_header.color_count;
+  cp->palette = palette;
+  cp->colour_count = dpal_header.color_count;
 
   PAL_cleanup:
 
@@ -311,7 +313,7 @@ extern int memory_load_palette(uint32_t **palette, uint16_t *colourCount, char *
 extern int memory_free_crayon_packer_sheet(struct spritesheet *ss){
   if(ss){
     if(ss->spritesheet_format == 5 || ss->spritesheet_format == 6){ //Paletted
-      free(ss->spritesheet_palette);
+      free(ss->palette_data->palette);
     }
     pvr_mem_free(ss->spritesheet_texture);
 

@@ -9,24 +9,25 @@
 #include <kos/fs.h>	//Might need it for fs_load()
 #include <arch/exec.h>	//arch_exec()
 #include <assert.h>	//assert()
-
 #include <kos/dbgio.h>	//Better debug output to the screen
 
 //Use on of these two for getting the VFS content
-#include <sys/dirent.h>	//opendir, readdir
+// #include <sys/dirent.h>	//opendir, readdir
 #include <kos/fs.h>	//fs_open, fs_readdir
 
-#define CRAYON_SD_MODE 0
+#define SD_MODE_ENABLED 0
 
-#if CRAYON_SD_MODE == 1
+#if SD_MODE_ENABLED == 1
 	//For mounting the sd dir
 	#include <dc/sd.h>
 	#include <kos/blockdev.h>
 	#include <ext2/fs_ext2.h>
+
+	#define MNT_MODE FS_EXT2_MOUNT_READWRITE
+
 #endif
 
-#if CRAYON_SD_MODE == 1
-	#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
+#if SD_MODE_ENABLED == 1
 
 	static void unmount_ext2_sd(){
 		fs_ext2_unmount("/sd");
@@ -34,7 +35,7 @@
 		sd_shutdown();
 	}
 
-	static int mount_ext2_sd(){
+	static uint8_t mount_ext2_sd(){
 		kos_blockdev_t sd_dev;
 		uint8 partition_type;
 
@@ -50,7 +51,7 @@
 		}
 
 		// Check to see if the MBR says that we have a Linux partition
-		if(partition_type != 0x83){
+		if(partition_type != 0x83){	//Decimal 131
 			return 3;
 		}
 
@@ -67,6 +68,7 @@
 	}
 #endif
 
+//Either indent it or do that and give it a cursor if we're hovering over it
 void indent(uint8_t hovering){
 	if(hovering){
 		dbgio_printf("> ");
@@ -77,6 +79,7 @@ void indent(uint8_t hovering){
 	return;
 }
 
+//Print the current directory (WIP)
 void print_dir(uint16_t cursor_pos, uint16_t counter_pos, uint16_t * file_count){
 	file_t d;
 	dirent_t * de;
@@ -97,39 +100,29 @@ void print_dir(uint16_t cursor_pos, uint16_t counter_pos, uint16_t * file_count)
 		counter_pos++;
 	}
 	*file_count = counter_pos;	//Update the number of files
-	// dbgio_printf("It is %d", counter_pos);
 	int i;
-	for(i = 1 + *file_count; i < 17; i++){	//17 - counter_pos = 12
+	for(i = 1 + *file_count; i < 17; i++){
 		dbgio_printf("\n");
 	}
 	fs_close(d);
 	return;
 }
 
+//Prints 17 newlines which happens to be just enough to clear the screen
 void clear_screen(){
-	// dbgio_printf("\n\n\n\n\n\n\n\n\n\n\n\n");
-	dbgio_write('\n');
-	dbgio_write('\n');
-	dbgio_write('\n');
-	dbgio_write('\n');
-	dbgio_write('\n');
-	dbgio_write('\n');
-	dbgio_write('\n');
-	dbgio_write('\n');
-	dbgio_write('\n');
-	dbgio_write('\n');
-	dbgio_write('\n');
-	dbgio_write('\n');
-	dbgio_flush();
+	int i;
+	for(i = 0; i < 17; i++){
+		dbgio_write('\n');
+	}
+	dbgio_flush();	//Might be redundant
 }
 
 int main(){
-	#if CRAYON_SD_MODE == 1
-		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
-		if(sdRes != 0){
-			dbgio_printf("Error. sdRes = %d\n", sdRes);
-			while(1){;}
-		}
+	//Add video mode stuff?
+
+	//Add the SD card to the VFS
+	#if SD_MODE_ENABLED == 1
+		mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir
 	#endif
 
 	//A test to see how dbgio works
@@ -155,16 +148,24 @@ int main(){
 		controller = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);	//Reads the first plugged in controller
 		st = (cont_state_t *)maple_dev_status(controller);	//State of controller
 
-		//A press
-		if((st->buttons & (1 << 2)) && !(previous_buttons & (1 << 2))){	//If you just pressed A
+		//A press (Select/go deeper)
+		if((st->buttons & CONT_A) && !(previous_buttons & CONT_A)){
 			// dbgio_write_buffer_xlat(&seventeen, 17);
 			// dbgio_write_buffer_xlat(&data, 27);
-			// dbgio_printf("\033[2J");
-			// dbgio_printf("\033[0;0H");
-			// dbgio_write('c');	//Flush not needed
-			// dbgio_write('a');
-			// dbgio_write('t');
-			// dbgio_write('\n');
+			if(0){
+				void *prog;
+				ssize_t length = fs_load("/sd/Program.bin", &prog);	//The un-scrambled binary executable you want to launch (Replace this with currently selected prog)
+				#if SD_MODE_ENABLED == 1
+					unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
+				#endif
+				assert(length > 0);
+				arch_exec(prog, length);
+			}
+		}
+
+		//B press. Same as selecting "..""
+		if((st->buttons & CONT_B) && !(previous_buttons & CONT_B)){
+			;
 		}
 
 		//Up press
@@ -172,7 +173,7 @@ int main(){
 			if(cursor_pos != 0){
 				cursor_pos--;
 			}
-			clear_screen();
+			// clear_screen();
 			print_dir(cursor_pos, counter_pos, &file_count);
 		}
 
@@ -181,18 +182,15 @@ int main(){
 			if(cursor_pos < file_count - 1){
 				cursor_pos++;
 			}
-			clear_screen();
+			// clear_screen();
 			print_dir(cursor_pos, counter_pos, &file_count);
 		}
 
 		previous_buttons = st->buttons;
 	}
-
-	void *prog;
-	ssize_t length = fs_load("/sd/Program.bin", &prog);	//The un-scrambled binary executable you want to launch
-	#if CRAYON_SD_MODE == 1
-		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
-	#endif
-	assert(length > 0);
-	arch_exec(prog, length);
+	return 0;
 }
+
+/*
+int fs_stat (const char *fn, stat_t *rv);	//Retrieve information about the specified path including if its a file or directory
+*/
