@@ -12,17 +12,14 @@
 #include <zlib/zlib.h>
 extern int zlib_getlength(char *filename);	//Because zlib.h won't declare it for us
 
-//Load a sprite from a path to the texture. The path is used to generate a dtex and dtex.pal paths
-extern int memory_load_dtex(struct spritesheet *ss, char *path);
-
-//Loads the "crayon_packer_sheet" field directory content
-extern int memory_load_crayon_packer_sheet(struct spritesheet *ss, char *path);
-
 //If given a valid path and a crayon_palette object, it will populate the palette object with the correct data
 extern int memory_load_palette(crayon_palette_t *cp, char *path);
 
-//Free up all memory from a spritesheet struct
-extern int memory_free_crayon_packer_sheet(struct spritesheet *ss);
+//Loads the "crayon_packer_sheet" field directory content
+extern int memory_load_crayon_packer_sheet(struct crayon_spritesheet *ss, char *path);
+
+//Free up all memory from a spritesheet struct. if free_palette is true, it will also free the palette
+extern int memory_free_crayon_packer_sheet(struct crayon_spritesheet *ss, uint8_t free_palette);
 
 //Mount a romdisk
 extern int memory_mount_romdisk(char *filename, char *mountpoint);

@@ -12,7 +12,7 @@ typedef struct MinesweeperOS{
 	uint16_t * coords_frame;	//The frame coordinates for UV
 	uint16_t * scale;	//The scale factor
 	uint8_t sprite_count;	//Number of sprites to draw
-	spritesheet_t * windows_ss;	//The spritesheet for the windows assets
+	crayon_spritesheet_t * windows_ss;	//The spritesheet for the windows assets
 } MinesweeperOS_t;
 
 //Figure out what I need to do here if anything

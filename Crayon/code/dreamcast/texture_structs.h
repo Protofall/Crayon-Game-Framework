@@ -12,7 +12,7 @@ typedef struct crayon_palette{
 	uint16_t colour_count;	//Number of colours in the palette
 } crayon_palette_t;
 
-typedef struct animation{
+typedef struct crayon_animation{
 	char *animation_name;	//Fix this later so its not hard coded and instead is a dynamic pointer
 	uint16_t animation_x;	//Since the animations are designed to be in tiles
 	uint16_t animation_y;	//We can select an frame based off of the first frame's coords
@@ -22,18 +22,18 @@ typedef struct animation{
 	uint16_t animation_frame_height;
 	uint8_t animation_frames;	//How many sprites make up the animation (Dunno if this should be a short or int yet)
 	//With these widths and heights, it might be possible to deduce some of them from other info, but idk
-} animation_t;
+} crayon_animation_t;
 
-typedef struct spritesheet{
+typedef struct crayon_spritesheet{
 	pvr_ptr_t *spritesheet_texture;
 	char *spritesheet_name;	//Might be useful for when it comes time to un-mount a romdisk, otherwise I don't think its needed
 	uint16_t spritesheet_dims;	//Since a pvr texture must be a square, we don't need height/width
 	uint8_t spritesheet_format;	//1 for 4BPP, 2 for 8BPP, 3 for RGB565 and 4 for ARGB4444 (0 for unknown)
 	crayon_palette_t *palette_data;	//Right now we still malloc this regardless if we use it or not. Change that
 
-	animation_t *spritesheet_animation_array;	//Allows me to make an array of animation_t pointers
+	crayon_animation_t *spritesheet_animation_array;	//Allows me to make an array of animation_t pointers
 	uint8_t spritesheet_animation_count;	//The number of animations per spritesheet
-} spritesheet_t;
+} crayon_spritesheet_t;
 
 //On fontshetes. FOR NOW EACH CHAR IN THE FONTSHEET CONTAINS BLANK PIXELS SEPERATING STUFF. EG (- is blank pixel row/column)
 

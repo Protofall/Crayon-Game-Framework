@@ -1,6 +1,6 @@
 #include "setup.h"
 
-void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys, uint8_t iter, uint8_t sd){
+void setup_pos_lookup_table(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys, uint8_t iter, uint8_t sd){
 	uint8_t anim_id = os->ids[iter];
 	if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "aboutLogo")){
 		if(sys){	//Populate this later
@@ -234,7 +234,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys,
 }
 
 //There seems to be an allocation issue here...
-void setup_OS_assets(MinesweeperOS_t *os, spritesheet_t *ss, uint8_t sys, uint8_t lang, uint8_t sd){
+void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys, uint8_t lang, uint8_t sd){
 	os->sprite_count = ss->spritesheet_animation_count - 1;
 	os->ids = (uint8_t *) malloc(os->sprite_count * sizeof(uint8_t));	//Because we don't include the ital-tiles, this makes other code easier
 	os->coords_pos = (uint16_t *) malloc(3 * os->sprite_count * sizeof(uint16_t));	//x, y, z

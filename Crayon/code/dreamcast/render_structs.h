@@ -26,8 +26,8 @@ typedef struct crayon_sprite_array{
 	uint8_t draw_z;	//The layer to help deal with overlapping sprites/polys
 	uint8_t palette_num;	//Also ask if palettes can start at not multiples of 16 or 256
 	uint32_t colour;	//For poly mode this dictates the rgb and alpha of a polygon
-	spritesheet_t * ss;
-	animation_t * anim;
+	crayon_spritesheet_t * ss;
+	crayon_animation_t * anim;
 } crayon_sprite_array_t;
 
 //Used for rendering many untextured polys

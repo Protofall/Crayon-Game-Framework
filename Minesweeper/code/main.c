@@ -159,7 +159,7 @@ uint8_t true_prob(double p){
 }
 
 //Blanks out grid then fills with mines, but doesn't number them
-void clear_grid(animation_t * anim){
+void clear_grid(crayon_animation_t * anim){
 	num_flags = 0;
 	uint16_t grid_size = grid_x * grid_y;
 
@@ -224,7 +224,7 @@ void adjust_grid(int ele_logic){
 }
 
 //It fills it out differently depending on over_mode
-void reveal_map(animation_t * anim){
+void reveal_map(crayon_animation_t * anim){
 	int i;
 	if(over_mode == 2){
 		for(i = 0; i < grid_x * grid_y; i++){
@@ -248,7 +248,7 @@ void reveal_map(animation_t * anim){
 	return;
 }
 
-void discover_tile(animation_t * anim, int ele_x, int ele_y){
+void discover_tile(crayon_animation_t * anim, int ele_x, int ele_y){
 	int ele_logic = ele_x + grid_x * ele_y;
 	if(!(logic_grid[ele_logic] & 1 << 6)){	//If not flagged
 		if(logic_grid[ele_logic] & 1 << 7){	//Already discovered
@@ -296,7 +296,7 @@ void discover_tile(animation_t * anim, int ele_x, int ele_y){
 	return;
 }
 
-void x_press(animation_t * anim, int ele_x, int ele_y){
+void x_press(crayon_animation_t * anim, int ele_x, int ele_y){
 	int ele_logic = ele_x + grid_x * ele_y;
 	if((logic_grid[ele_logic] & 1<<7)){	//If revealed
 
@@ -340,7 +340,7 @@ void x_press(animation_t * anim, int ele_x, int ele_y){
 }
 
 //If we use a flag that decrements the flag count, leaving flag will increment it
-void b_press(animation_t * anim, uint16_t ele_logic){
+void b_press(crayon_animation_t * anim, uint16_t ele_logic){
 	int ele = ele_logic * 2;
 	if(!(logic_grid[ele_logic] & (1 << 7))){	//Not discovered
 		uint8_t status = 0;	//0 = normal, 1 = flag, 2 = question icons
@@ -369,7 +369,7 @@ void b_press(animation_t * anim, uint16_t ele_logic){
 }
 
 //Must be called within a pvr_list_begin(), used for displaying the counter for flags and timer
-void digit_display(spritesheet_t * ss, animation_t * anim, int num, uint16_t x, uint16_t y, uint8_t z){
+void digit_display(crayon_spritesheet_t * ss, crayon_animation_t * anim, int num, uint16_t x, uint16_t y, uint8_t z){
 	if(num < -99){
 		num = -99;
 	}
@@ -426,7 +426,7 @@ void face_logic(uint8_t *face_frame_id, int id, float *cursor_position, uint8_t 
 }
 
 //Handles the interaction logic with the grid
-void grid_ABX_logic(int ele_x, int ele_y, uint8_t button_action, animation_t *tile_anim, uint32_t *start_time, uint32_t *start_ms_time){
+void grid_ABX_logic(int ele_x, int ele_y, uint8_t button_action, crayon_animation_t *tile_anim, uint32_t *start_time, uint32_t *start_ms_time){
 	if(over_mode == 0){
 		if(button_action & (1 << 0)){	//For A press
 			if(!game_live){
@@ -471,7 +471,7 @@ void cursor_on_grid(uint8_t *in_grid, int *ele_x, int *ele_y, uint8_t button_act
 }
 
 //This handles all the buttons you can press aside from the grid itself
-uint8_t button_press_logic(uint8_t button_action, int id, float *cursor_position, animation_t * tile_anim,
+uint8_t button_press_logic(uint8_t button_action, int id, float *cursor_position, crayon_animation_t * tile_anim,
 	uint32_t *previous_buttons, uint32_t buttons){
 	if(focus == 0){
 		if((button_action & (1 << 0)) && (cursor_position[2 * id] <= 307 + 26) && (cursor_position[(2 * id) + 1] <= 64 + 26)
@@ -539,7 +539,7 @@ int main(){
 	cursor_position[6] = 524;
 	cursor_position[7] = 66;
 
-	spritesheet_t Board, Icons, Windows;
+	crayon_spritesheet_t Board, Icons, Windows;
 	crayon_untextured_array_t Bg_polys;	//Contains some of the untextured polys that will be drawn.
 	sfxhnd_t Sound_Tick, Sound_Death, Sound_Death_Italian, Sound_Win;	//Sound effect handles. Might add more later for startup sounds or maybe put them in cdda? (Note this is a uint32_t)
 	snd_stream_init();	//Needed otherwise snd_sfx calls crash
@@ -617,8 +617,8 @@ int main(){
 	int jiter;
 
 	//These two just allow me to easily change between Minesweeper and Prato fiorito
-	spritesheet_t tile_ss;
-	animation_t tile_anim;
+	crayon_spritesheet_t tile_ss;
+	crayon_animation_t tile_anim;
 
 	uint8_t tile_id = 2;
 	if(!language){
@@ -1088,9 +1088,9 @@ int main(){
 
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
 	int retVal = 0;
-	retVal += memory_free_crayon_packer_sheet(&Board);
-	retVal += memory_free_crayon_packer_sheet(&Icons);
-	retVal += memory_free_crayon_packer_sheet(&Windows);
+	retVal += memory_free_crayon_packer_sheet(&Board, 1);
+	retVal += memory_free_crayon_packer_sheet(&Icons, 1);
+	retVal += memory_free_crayon_packer_sheet(&Windows, 1);
 	error_freeze("Free-ing result %d!\n", retVal);
 
 	return 0;

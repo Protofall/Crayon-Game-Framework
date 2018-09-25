@@ -1,7 +1,7 @@
 #include "graphics.h"
 
 //There are 4 palettes for 8BPP and 64 palettes for 4BPP. palette_number is the id
-extern int graphics_setup_palette(uint8_t palette_number, const struct spritesheet *ss){
+extern int graphics_setup_palette(uint8_t palette_number, const struct crayon_spritesheet *ss){
   int entries;
   if(ss->spritesheet_format == 5){
 	entries = 16;
@@ -22,7 +22,7 @@ extern int graphics_setup_palette(uint8_t palette_number, const struct spriteshe
   return 0;
 }
 
-extern void graphics_frame_coordinates(const struct animation *anim, uint16_t *frame_x, uint16_t *frame_y, uint8_t frame){
+extern void graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x, uint16_t *frame_y, uint8_t frame){
 	int framesPerRow = anim->animation_sheet_width/anim->animation_frame_width;
 	int colNum = frame%framesPerRow; //Gets the column (Zero indexed)
 	int rowNum = frame/framesPerRow;  //Gets the row (Zero indexed)
@@ -128,8 +128,8 @@ extern void graphics_draw_untextured_array(crayon_untextured_array_t *poly_array
 }
 
 
-extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
-	const struct animation *anim, float draw_x, float draw_y, float draw_z,
+extern uint8_t graphics_draw_sprite(const struct crayon_spritesheet *ss,
+	const struct crayon_animation *anim, float draw_x, float draw_y, float draw_z,
 	float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
 	uint8_t paletteNumber){
 
@@ -180,8 +180,8 @@ extern uint8_t graphics_draw_sprite(const struct spritesheet *ss,
 }
 
 //Note this always draws transparent textures sortal (look at pvr_sprite_cxt_txr() calls)
-extern uint8_t graphics_draw_sprites_OLD(const struct spritesheet *ss,
-	const struct animation *anim, uint16_t *draw_coords, uint16_t *frame_data, uint16_t fd_size,
+extern uint8_t graphics_draw_sprites_OLD(const struct crayon_spritesheet *ss,
+	const struct crayon_animation *anim, uint16_t *draw_coords, uint16_t *frame_data, uint16_t fd_size,
 	uint16_t num_sprites, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber){
 
 	//Texture coords. u0,v0 is the bottom left texel and u1,v1 is the top right
@@ -277,8 +277,8 @@ typedef struct crayon_sprite_array{
   uint8_t draw_z; //The layer to help deal with overlapping sprites/polys
   uint8_t palette_num;  //Also ask if palettes can start at not multiples of 16 or 256
   uint32_t colour;  //For poly mode this dictates the rgb and alpha of a polygon
-  spritesheet_t * ss;
-  animation_t * anim;
+  crayon_spritesheet_t * ss;
+  crayon_animation_t * anim;
 } crayon_sprite_array_t;
 
 */
