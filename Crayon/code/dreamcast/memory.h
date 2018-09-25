@@ -13,18 +13,36 @@
 extern int zlib_getlength(char *filename);	//Because zlib.h won't declare it for us
 
 //If given a valid path and a crayon_palette object, it will populate the palette object with the correct data
-extern int memory_load_palette(crayon_palette_t *cp, char *path);
+extern uint8_t memory_load_palette(crayon_palette_t *cp, char *path);
 
-//Loads the "crayon_packer_sheet" field directory content
-extern int memory_load_crayon_packer_sheet(struct crayon_spritesheet *ss, char *path);
+//------------------Allocating memory------------------//
+
+//Loads a "crayon_packer_sheet" spritesheet into memory
+extern uint8_t memory_load_crayon_packer_sheet(struct crayon_spritesheet *ss, char *path);
+
+//Loads a proportionally-spaced fontsheet into memory
+extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *path);	//(UNFINISHED)
+
+//Loads a mono-spaced fontsheet into memory
+extern uint8_t memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *path);
+
+//------------------Freeing memory------------------//
 
 //Free up all memory from a spritesheet struct. if free_palette is true, it will also free the palette
-extern int memory_free_crayon_packer_sheet(struct crayon_spritesheet *ss, uint8_t free_palette);
+extern uint8_t memory_free_crayon_packer_sheet(struct crayon_spritesheet *ss, uint8_t free_palette);
 
-//Mount a romdisk
-extern int memory_mount_romdisk(char *filename, char *mountpoint);
+//Same as above, but for mono-spaced fontsheets
+extern uint8_t memory_free_prop_font_sheet(struct crayon_font_prop *fp, uint8_t free_palette);	//(UNFINISHED)
+
+//Same as above, but for proportionally-spaced fontsheets
+extern uint8_t memory_free_mono_font_sheet(struct crayon_font_mono *fm, uint8_t free_palette);
+
+//------------------Mounting romdisks------------------//
+
+//Mount a regular img romdisk
+extern uint8_t memory_mount_romdisk(char *filename, char *mountpoint);
 
 //Mount a gz compressed romdisk
-extern int memory_mount_romdisk_gz(char *filename, char *mountpoint);
+extern uint8_t memory_mount_romdisk_gz(char *filename, char *mountpoint);
 
 #endif

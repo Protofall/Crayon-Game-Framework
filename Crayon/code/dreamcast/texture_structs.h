@@ -4,9 +4,7 @@
 #include <dc/pvr.h>
 #include <stdint.h> //For the uintX_t types
 
-//Currently unused. The fonts and ss will need to transition to use this
-//The reason it is it's own struct is so multiple textures can easily share the same palette
-	//Note this may become an issue when deleting a font/ss that shares a palette. Maybe have a "delete palette" toggle
+//The palette has its own struct since users might want to share one palette across multiple textures
 typedef struct crayon_palette{
 	uint32_t *palette;		//Pointer to heap allocated palette (Its treated like an array of size "colour_count")
 	uint16_t colour_count;	//Number of colours in the palette
@@ -33,30 +31,33 @@ typedef struct crayon_spritesheet{
 
 	crayon_animation_t *spritesheet_animation_array;	//Allows me to make an array of animation_t pointers
 	uint8_t spritesheet_animation_count;	//The number of animations per spritesheet
+	uint8_t garbage1;	//These are used for testing, remove later
+	uint8_t garbage2;
+	uint8_t garbage3;
+	uint8_t garbage4;
 } crayon_spritesheet_t;
 
-//On fontshetes. FOR NOW EACH CHAR IN THE FONTSHEET CONTAINS BLANK PIXELS SEPERATING STUFF. EG (- is blank pixel row/column)
+//On fontsheets. FOR NOW EACH CHAR IN THE FONTSHEET CONTAINS BLANK PIXELS SEPERATING STUFF. EG (- is blank pixel row/column)
 
 /*
-A-B-C
------
-D-E-F
------
-G-H-I
+A-B-C-
+------
+D-E-F-
+------
+G-H-I-
+------
 */
-
-//I might change it to compact it during pre-processing and hence be more efficient data wise (Only slightly), but for now its fine
 
 //Each char has a varying width, but all have the same height
 //Info file format:
 /*
-texture_dim char_height
+char_height
 num_rows num_chars_row_1 num_chars_row_2 (etc)
 1st_char_width 2nd_char_width (etc)
 */
 typedef struct crayon_font_prop{
-	pvr_ptr_t *font_texture;
-	uint16_t texture_dim;
+	pvr_ptr_t *fontsheet_texture;
+	uint16_t fontsheet_dim;
 	uint8_t texture_format;	//Contains the texel format
 	uint8_t *char_width;	//Num elements equal to total of "chars_per_row" array
 	uint8_t char_height;
@@ -67,13 +68,10 @@ typedef struct crayon_font_prop{
 } crayon_font_prop_t;
 
 //All chars have the same width and height
-//Info file format:
-/*
-texture_dim char_width char_height num_columns num_rows
-*/
+//Info file format: "char_width char_height num_columns num_rows"
 typedef struct crayon_font_mono{
-	pvr_ptr_t *font_texture;
-	uint16_t texture_dim;
+	pvr_ptr_t *fontsheet_texture;
+	uint16_t fontsheet_dim;
 	uint8_t texture_format;	//Contains the texel format
 	uint8_t char_width;
 	uint8_t char_height;

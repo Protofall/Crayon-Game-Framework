@@ -25,4 +25,4 @@ check:
 
 # I should probs remove buildRun later on or use a better emulator
 buildRun: clean all
-	lxdream $(cdiName)
+	redream $(cdiName)
