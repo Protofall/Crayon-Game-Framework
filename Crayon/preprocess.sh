@@ -1,17 +1,14 @@
 #!/bin/bash
 
 helpInfo () {
-	echo 'Usage: ./make.sh [build mode] [platform] [boot mode] [other]'
-	echo 'build mode:'
-	echo -e ' \t -preprocess to build preprocessed stuff'
-	echo 'platform:'
-	echo -e ' \t -dreamcast to make a dreamcast build'
-	echo -e ' \t boot mode:'
-	echo -e ' \t \t  -cd for loading from the cd directory'
-	echo -e ' \t \t  -sd for loading from an ext2 formatted sd card'
-	echo 'other:'
-	echo -e ' \t -noRM Prevents the removal of temperary files for viewing'
-	echo -e ' \t -clean to clean up'
+	echo 'Usage: ./make.sh -preprocess -noRM*'
+	echo 'preprocess:'
+	echo -e ' \t -preprocess will process your assets and modify'
+	echo -e ' \t components with a valid crayon tag. The processed'
+	echo -e ' \t assets directory end up in the cdfs folder'
+	echo 'noRM:'
+	echo -e ' \t -noRM is an optional parameter. It prevents the'
+	echo -e ' \t removal of temperary files for viewing/debugging'
 	exit 0
 }
 
@@ -136,44 +133,7 @@ buildPreProcessed () {	#$1 is asset, $2 is projectRoot/cdfs, $3 is the current f
 	cd ..
 }
 
-buildDreamcastExecutable () {
-	files=$(echo $5/code/dreamcast/*.c)	#Compile the Crayon source code files
-	for x in $files; do
-		y=${x%.c}
-		z=${y##*/}
-		$(kos-cc $KOS_CFLAGS -c $y.c -o $PWD/$z.o)
-		if [ "$?" == 1 ];then	#Checks to see if an error occurred
-			echo "$z.o failed to build"
-			exit 1
-		fi
-	done
-
-	find . -type f -name "*.c" -execdir bash -c "f={}; kos-cc $KOS_CFLAGS -c {} -o $PWD/\${f%.c}.o" \;	#This will compile all files in project dir
-	find . -type f -name "*.cpp" -execdir bash -c "f={}; kos-cc $KOS_CFLAGS -c {} -o $PWD/\${f%.cpp}.o" \;	#cpp/c++ files are untested
-
-	ofiles=$(ls *.o)
-
-	if [ "$2" -le 1 ];then #dc-cd and dc-sd
-		$($KOS_CC $KOS_LDFLAGS -o $3.elf $KOS_START $ofiles -lkosext2fs -lz -lm $KOS_LIBS)	#Make the elf
-		if [ "$?" == 1 ];then	#Checks to see if an error occurred
-			echo "Failed to build the elf"
-			exit 1
-		fi
-
-		if [ "$2" == 1 ];then	#dc-sd
-			$(sh-elf-objcopy -R .stack -O binary $3.elf $1/$3.bin)	#Turn it into a binary and place it in the cdfs dir
-		else	#dc-cd
-			$(sh-elf-objcopy -R .stack -O binary $3.elf $3.bin)	#Turn it into a binary
-			$($KOS_BASE/utils/scramble/scramble $3.bin $1/1st_read.bin)	#scramble
-			$(mkisofs -G $4 -C 0,11702 -J -l -r -o $3.iso $1) #IPBIN and name and cdfs
-			cdi4dc "$3.iso" "$3.cdi"
-		fi
-	fi
-}
-
 preprocess=0	# 0 for don't build, 1 for build
-platform=-1 #-1 for undefined, 0 for Dreamcast
-bootMode=-1	#-1 = undefined/none, 0 = dc-cd, 1 = dc-sd
 noRM=0	#0 means it will remove temp files, 1 means it won't remove them
 
 NAME=${PWD##*/}	#The name of the program is the same name as the project
@@ -193,31 +153,6 @@ do
 	if [ "$1" = "-preprocess" ];then
 		preprocess=1
 		shift
-	elif [ "$1" = "-clean" ];then
-		rm -f *.o	#Removes all object files
-		rm -f "$NAME.elf"	#Removes the elf
-		rm -f "$NAME.bin"	#Removes the normal binary
-		rm -f "$NAME.iso"	#Removes the iso
-		rm -f "$NAME.cdi"	#Removes the cdi
-		rm -rf "$cdfs/"*
-		echo "Clean complete"
-		exit 0
-	elif [ "$1" = "-dreamcast" ];then
-		if [ "$platform" -ne -1 ];then
-			echo 'Please check your paramters (platform). Try -h parameter for help'
-			exit 1
-		fi
-		platform=0
-		shift
-		if [ "$1" = "-cd" ];then
-			bootmode=0
-		elif [ "$1" = "-sd" ];then
-			bootmode=1
-		else
-			echo 'Please check your paramters (bootmode). Try -h parameter for help'
-			exit 1
-		fi
-		shift
 	elif [ "$1" = "-noRM" ];then
 		noRM=1
 		shift
@@ -231,10 +166,6 @@ done
 
 if [ "$preprocess" = 1 ];then
 	buildPreProcessed "$assets" "$projectRoot/$cdfs" "$noRM"
-fi
-
-if [ "$platform" = 0 ]; then	#Dreamcast
-	buildDreamcastExecutable "$cdfs" "$bootMode" "$NAME" "$IPBIN" "$crayonRoot"	#It will build cd or sd depending on bootMode
 fi
 
 exit 0

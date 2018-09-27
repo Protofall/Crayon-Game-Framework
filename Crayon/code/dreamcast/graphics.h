@@ -11,12 +11,16 @@ extern int graphics_setup_palette(const struct crayon_palette *cp, uint8_t forma
 extern void graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x,
 	uint16_t *frame_y, uint8_t frame);
 
+//------------------Drawing Untextured polys------------------//
+
 //Queue a colour/alpha poly to be rendered. I recomment the array version, but for simple implementation this is good
 extern void graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z,
 	uint16_t dim_x, uint16_t dim_y, uint32_t colour, uint8_t opaque);
 
 //Draw all coloured polys in the struct's list
 extern void graphics_draw_untextured_array(crayon_untextured_array_t *poly_array);
+
+//------------------Drawing Spritesheets------------------//
 
 //Queue a texture to be rendered (If RGB565 or ARGB4444 then paletteNumber is never read)
 extern uint8_t graphics_draw_sprite(const struct crayon_spritesheet *ss,
@@ -32,6 +36,8 @@ extern uint8_t graphics_draw_sprites_OLD(const struct crayon_spritesheet *ss,
 //Testing the new render struct (Delete other multi sprite draw after and keep original as a basic prog for noobies)
 //poly_list mode is for the tr/pt/op render list macro we want to use. Might move this param into the struct...
 extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
+
+//------------------Drawing Fonts------------------//
 
 //Draw string using mono font (string must be null-terminated)
 extern uint8_t graphics_draw_text_mono(const struct crayon_font_mono *fm, float draw_x, float draw_y,
