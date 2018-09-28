@@ -540,7 +540,8 @@ int main(){
 	cursor_position[7] = 66;
 
 	crayon_spritesheet_t Board, Icons, Windows;
-	crayon_font_mono_t Test_font;
+	crayon_font_mono_t BIOS_font;
+	crayon_font_prop_t Tahoma_font;
 	crayon_untextured_array_t Bg_polys;	//Contains some of the untextured polys that will be drawn.
 	sfxhnd_t Sound_Tick, Sound_Death, Sound_Death_Italian, Sound_Win;	//Sound effect handles. Might add more later for startup sounds or maybe put them in cdda? (Note this is a uint32_t)
 	snd_stream_init();	//Needed otherwise snd_sfx calls crash
@@ -550,7 +551,8 @@ int main(){
 	#else
 		memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	#endif
-	memory_load_mono_font_sheet(&Test_font, "/Minesweeper/Fonts/mono_test.dtex");
+	memory_load_mono_font_sheet(&BIOS_font, "/Minesweeper/Fonts/BIOS_font.dtex");
+	memory_load_prop_font_sheet(&Tahoma_font, "/Minesweeper/Fonts/Tahoma_font.dtex");
 	memory_load_crayon_packer_sheet(&Board, "/Minesweeper/Board.dtex");
 	memory_load_crayon_packer_sheet(&Icons, "/Minesweeper/Icons.dtex");
 
@@ -964,7 +966,8 @@ int main(){
 		//Setup the main palette
     	graphics_setup_palette(Board.palette_data, Board.spritesheet_format, 0);
     	graphics_setup_palette(Icons.palette_data, Icons.spritesheet_format, 1);
-    	graphics_setup_palette(Test_font.palette_data, Test_font.texture_format, 2);
+    	graphics_setup_palette(BIOS_font.palette_data, BIOS_font.texture_format, 2);
+    	// graphics_setup_palette(Tahoma_font.palette_data, Tahoma_font.texture_format, 3);
 		if(!operating_system){	//Since it uses palettes and XP doesn't, we do this
     		graphics_setup_palette(Windows.palette_data, Windows.spritesheet_format, 1);	//Since Windows uses 8bpp, this doesn't overlap with "icons"
 		}
@@ -981,7 +984,10 @@ int main(){
 				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 1);
 			//We choose palette 1 because that's 2000's palette and XP uses RGB565
 		}
-		graphics_draw_text_mono(&Test_font, 90, 60, 100, 1, 1, 2, "Mono-spaced font supported\nHello Magigears!\0");
+		// graphics_draw_text_mono(&BIOS_font, 90, 60, 100, 1, 1, 2, "Mono-spaced font supported\nHello Magigears!\0");
+		// graphics_draw_text_mono(&BIOS_font, 400, 459, 100, 1, 1, 2, "Scumbag edition\0");
+		// graphics_draw_text_mono(&BIOS_font, 146, 232, 100, 1, 1, 2, "A FATAL ERROR HAS OCCURED IN MINESWEEPER.EXE\nError code =72105105\0");
+		graphics_draw_text_prop(&Tahoma_font, 90, 60, 100, 1, 1, 3, "Windows system restored.\nWelcome back Protofall!\0");
 
 		//Draw the flag count and timer
 		digit_display(&Board, &Board.spritesheet_animation_array[1], num_flags, 20, 65, 17);
@@ -1096,7 +1102,8 @@ int main(){
 	retVal += memory_free_crayon_packer_sheet(&Board, 1);
 	retVal += memory_free_crayon_packer_sheet(&Icons, 1);
 	retVal += memory_free_crayon_packer_sheet(&Windows, 1);
-	retVal += memory_free_mono_font_sheet(&Test_font, 1);
+	retVal += memory_free_mono_font_sheet(&BIOS_font, 1);
+	// retVal += memory_free_mono_font_sheet(&Tahoma_font, 1);
 	error_freeze("Free-ing result %d!\n", retVal);
 
 	return 0;

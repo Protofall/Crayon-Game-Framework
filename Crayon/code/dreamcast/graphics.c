@@ -361,3 +361,122 @@ extern uint8_t graphics_draw_text_mono(const struct crayon_font_mono *fm, float 
 
 	return 0;
 }
+
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <string.h>
+
+//								// typedef struct crayon_font_prop{
+//								// 	pvr_ptr_t *fontsheet_texture;
+//	Correct (128)				// 	uint16_t fontsheet_dim;
+//	Correct	(5)					// 	uint8_t texture_format;	//Contains the texel format
+//	Correct						// 	uint8_t *char_width;	//Num elements equal to num_chars
+//	Correct	(11)				// 	uint8_t char_height;
+//	Correct						// 	uint8_t *chars_per_row;	//Total of array is num_rows
+//	Untested					// 	uint8_t *char_x_coord;	//If you want to use fontsheets with fontsheet_dim > 256
+//								// 							//then bump this up to a uint16_t and modify the load
+//								// 							//code in memory_free_prop_font_sheet()
+//	Correct	(5)					// 	uint8_t num_rows;
+//	Correct	(95)				// 	uint8_t num_chars;
+//								// 	crayon_palette_t *palette_data;
+//								// } crayon_font_prop_t;
+
+// extern uint8_t output_prop(const struct crayon_font_prop *fp, const struct crayon_font_mono *fm, uint8_t palette){
+// 	//Need to build a string
+// 	char buffer[300];	//Probs will need to change the size
+// 	int i;
+// 	for(i = 0; i < fp->num_chars; i++){
+// 		sprintf(buffer, "%s%d", buffer, fp->char_x_coord[i]);
+// 		if(i % 15 == 14){
+// 			strcat(buffer, "\n");
+// 		}
+// 		else{
+// 			strcat(buffer, " ");
+// 		}
+		
+// 	}
+// 	strcat(buffer, "\0");
+// 	graphics_draw_text_mono(fm, 0, 0, 101, 1, 1, palette, buffer);
+// }
+
+//Note, this is just mono's draw function, it needs to be re-written first
+extern uint8_t graphics_draw_text_prop(const struct crayon_font_prop *fp, float draw_x, float draw_y,
+	float draw_z, float scale_x, float scale_y,	uint8_t paletteNumber, char * string){
+
+	return 1;	//Remove when function is good
+
+	float x0 = draw_x;
+	float y0 = draw_y;
+	const float z = draw_z;
+
+	//x1 and y1 depend on the letter
+	// float x1 = draw_x + fp->char_width * scale_x;
+	// float y1 = draw_y + fp->char_height * scale_y;
+
+	float x1, y1, u0, v0, u1, v1;
+
+	pvr_sprite_cxt_t context;
+	if(fp->texture_format == 6){  //PAL8BPP format
+		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
+		fp->fontsheet_dim, fp->fontsheet_dim, fp->fontsheet_texture, PVR_FILTER_NONE);
+	}
+	else if(fp->texture_format == 5){ //PAL4BPP format
+		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
+		fp->fontsheet_dim, fp->fontsheet_dim, fp->fontsheet_texture, PVR_FILTER_NONE);
+	}
+	else if(fp->texture_format == 0 || fp->texture_format == 1 || fp->texture_format == 2){  //ARGB1555, RGB565 and RGB4444
+		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, (fp->texture_format) << 27,
+		fp->fontsheet_dim, fp->fontsheet_dim, fp->fontsheet_texture, PVR_FILTER_NONE);
+	}
+	else{ //Unknown format
+		return 1;
+	}
+
+	pvr_sprite_hdr_t header;
+	pvr_sprite_compile(&header, &context);
+	pvr_prim(&header, sizeof(header));
+
+	int i = 0;
+	char current_char;
+	// float prop_width = (float)fp->char_width / fp->fontsheet_dim;
+	// float prop_height = (float)fp->char_height / fp->fontsheet_dim;
+	while(1){	//First char seems to be drawn higher than others
+		current_char = string[i];
+
+		if(current_char == '\0'){
+			break;
+		}
+		if(current_char == '\n'){	//This should be able to do a new line (Doesn't seem to work right)
+			x0 = draw_x;
+			// x1 = draw_x + fm->char_width * scale_x;
+			y0 = y1;
+			y1 += fp->char_height * scale_y;
+			i++;
+			continue;
+		}
+		uint8_t distance_from_space = current_char - ' ';
+
+		// uint8_t row = distance_from_space / fm->num_columns;
+		// uint8_t column = distance_from_space - (row * fm->num_columns);
+
+		// u0 = column * prop_width;
+		// v0 = row * prop_height;
+		// u1 = u0 + prop_width;
+		// v1 = v0 + prop_height;
+
+		pvr_sprite_txr_t vert = {
+			.flags = PVR_CMD_VERTEX_EOL,
+			.ax = x0, .ay = y0, .az = z, .auv = PVR_PACK_16BIT_UV(u0, v0),
+			.bx = x1, .by = y0, .bz = z, .buv = PVR_PACK_16BIT_UV(u1, v0),
+			.cx = x1, .cy = y1, .cz = z, .cuv = PVR_PACK_16BIT_UV(u1, v1),
+			.dx = x0, .dy = y1
+		};
+		pvr_prim(&vert, sizeof(vert));
+
+		x0 = x1;
+		// x1 += fm->char_width * scale_x;
+		i++;
+	}
+
+	return 0;
+}

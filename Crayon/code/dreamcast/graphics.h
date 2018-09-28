@@ -47,4 +47,13 @@ extern uint8_t graphics_draw_text_mono(const struct crayon_font_mono *fm, float 
 extern uint8_t graphics_draw_text_prop(const struct crayon_font_prop *fp, float draw_x, float draw_y,
 	float draw_z, float scale_x, float scale_y,	uint8_t paletteNumber, char * string);
 
+
+
+
+
+
+// extern uint8_t output_prop(const struct crayon_font_prop *fp, const struct crayon_font_mono *fm, uint8_t palette);
+
+
+
 #endif

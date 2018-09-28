@@ -1,4 +1,0 @@
-The bash script currently won't apply a dtex conversion unless its a packer sheet, so I just made some pre-compiled ones to test with
-
-texconv -i "mono_test2.PAL4BPP.png" -o "mono_test.dtex" -f PAL4BPP
-

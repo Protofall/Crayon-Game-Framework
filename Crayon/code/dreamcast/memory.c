@@ -196,6 +196,178 @@ extern uint8_t memory_load_crayon_packer_sheet(struct crayon_spritesheet *ss, ch
 
 extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *path){
 	uint8_t result = 0;
+	pvr_ptr_t texture = NULL;
+	fp->palette_data = NULL;
+	fp->chars_per_row = NULL;
+	fp->char_width = NULL;
+	FILE *sheet_file = NULL;
+
+	#define ERROR(n) {result = (n); goto cleanup;}
+
+	FILE *texture_file = fopen(path, "rb");
+	if(!texture_file){ERROR(1);}
+
+	// Load texture
+	//---------------------------------------------------------------------------
+
+	dtex_header_t dtex_header;
+	if(fread(&dtex_header, sizeof(dtex_header), 1, texture_file) != 1){ERROR(2);}
+
+	if(memcmp(dtex_header.magic, "DTEX", 4)){ERROR(3);}
+
+	texture = pvr_mem_malloc(dtex_header.size);
+	if(!texture){ERROR(4);}
+
+	if(fread(texture, dtex_header.size, 1, texture_file) != 1){ERROR(5);}
+
+	// Write all metadata except palette stuff
+	//---------------------------------------------------------------------------
+
+	if(dtex_header.width > dtex_header.height){
+		fp->fontsheet_dim = dtex_header.width;
+	}
+	else{
+		fp->fontsheet_dim = dtex_header.height;
+	}
+
+	fp->fontsheet_texture = texture;
+
+	//This assumes same stuff as spritesheet loader does
+	if(dtex_header.type == 0x00000000){ //ARGB1555
+		fp->texture_format = 0;
+	}
+	if(dtex_header.type == 0x08000000){ //RGB565
+		fp->texture_format = 1;
+	}
+	else if(dtex_header.type == 0x10000000){ //ARGB4444
+		fp->texture_format = 2;
+	}
+	else if(dtex_header.type == 0x28000000){ //PAL4BPP
+		fp->texture_format = 5;
+	}
+	else if(dtex_header.type == 0x30000000){ //PAL8BPP
+		fp->texture_format = 6;
+	}
+	else{    
+		ERROR(6);
+	}
+
+	int path_length = strlen(path);
+	if(fp->texture_format == 5 || fp->texture_format == 6){
+		fp->palette_data = (crayon_palette_t *) malloc(sizeof(crayon_palette_t));
+		fp->palette_data->palette = NULL;
+
+		char *palette_path = (char *) malloc((path_length + 5)*sizeof(char));  //Add a check here to see if it failed
+		if(!palette_path){ERROR(7);}
+		strcpy(palette_path, path);
+		palette_path[path_length] = '.';
+		palette_path[path_length + 1] = 'p';
+		palette_path[path_length + 2] = 'a';
+		palette_path[path_length + 3] = 'l';
+		palette_path[path_length + 4] = '\0';
+		int resultPal = memory_load_palette(fp->palette_data, palette_path); //The function will modify the palette and colour count
+		free(palette_path);
+		if(resultPal){ERROR(7 + resultPal);}
+	}
+
+	char *txt_path = (char *) malloc((path_length)*sizeof(char));  //Add a check here to see if it failed
+	if(!txt_path){ERROR(13);}
+
+	strncpy(txt_path, path, path_length - 4);
+	// strcat(txt_path, "txt");	//At some point comeback and use something like this instead of the 4 commands below
+	txt_path[path_length - 4] = 't';
+	txt_path[path_length - 3] = 'x';
+	txt_path[path_length - 2] = 't';
+	txt_path[path_length - 1] = '\0';
+
+	sheet_file = fopen(txt_path, "rb");
+	free(txt_path);
+	if(!sheet_file){ERROR(14);}
+
+	if(fscanf(sheet_file, "%hhu\n", &fp->char_height) != 1){
+		ERROR(15);
+	}
+
+	if(fscanf(sheet_file, "%hhu", &fp->num_rows) != 1){
+		ERROR(16);
+	}
+
+	fp->chars_per_row = (uint8_t *) malloc((fp->num_rows)*sizeof(uint8_t));
+	if(fp->chars_per_row == NULL){ERROR(17);}
+
+	fp->num_chars = 0;
+	int i;
+	for(i = 0; i < fp->num_rows; i++){
+		int8_t res = fscanf(sheet_file, "%hhu", &fp->chars_per_row[i]);
+		fp->num_chars += fp->chars_per_row[i];
+		if(res != 1){
+			ERROR(18);
+		}
+	}
+	fscanf(sheet_file, "\n");	//Getting to the next line
+
+	fp->char_width = (uint8_t *) malloc((fp->num_chars)*sizeof(uint8_t));
+	if(fp->char_width == NULL){ERROR(19);}
+
+	i = 0;	//Might be redundant
+	for(i = 0; i < fp->num_chars; i++){
+		int8_t res = fscanf(sheet_file, "%hhu", &fp->char_width[i]);
+		if(res != 1){
+			ERROR(20);
+		}
+	}
+
+	//This section geterates the x coordinates for each char
+	fp->char_x_coord = (uint8_t *) malloc((fp->num_chars)*sizeof(uint8_t));
+	if(fp->char_x_coord == NULL){ERROR(21);}
+
+	i = 0;	//Might be redundant
+	int chars_counted_in_row = 0;
+	int current_row = 0;
+	for(i = 0; i < fp->num_chars; i++){
+		if(chars_counted_in_row == 0){	//first element per row = zero
+			fp->char_x_coord[i] = 0;
+		}
+		else{
+			fp->char_x_coord[i] = fp->char_x_coord[i - 1] + fp->char_width[i - 1];	//nth element = (n-1)th element's width + x pos
+		}
+		chars_counted_in_row++;
+		if(chars_counted_in_row == fp->chars_per_row[current_row]){	//When we reach the end of the row, reset our counters
+			current_row++;
+			chars_counted_in_row = 0;
+		}
+	}
+
+	#undef ERROR
+
+	cleanup:
+
+	if(texture_file){fclose(texture_file);}
+	if(sheet_file){fclose(sheet_file);}
+
+	// If a failure occured somewhere
+	if(result && texture){pvr_mem_free(texture);}
+
+	//If we allocated memory for the palette and error out
+	if(result){
+		if(fp->palette_data != NULL){
+			if(fp->palette_data->palette != NULL){ //If we allocated memory for the palette itself, free that
+				free(fp->palette_data->palette);
+			}
+			free(fp->palette_data);
+		}
+		if(fp->chars_per_row != NULL){
+			free(fp->chars_per_row);
+		}
+
+		if(fp->char_width != NULL){
+			free(fp->char_width);
+		}
+		if(fp->char_x_coord != NULL){
+			free(fp->char_x_coord);
+		}
+	}
+
 	return result;
 }
 
@@ -287,7 +459,6 @@ extern uint8_t memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *pa
 	free(txt_path);
 	if(!sheet_file){ERROR(14);}
 
-	//There's a good chance this line will cause a crash in lxdream...
 	if(fscanf(sheet_file, "%hhu %hhu %hhu %hhu\n", &fm->char_width, &fm->char_height, &fm->num_columns, &fm->num_rows) != 4){
 		ERROR(15);
 	}
@@ -339,6 +510,20 @@ extern uint8_t memory_free_crayon_packer_sheet(struct crayon_spritesheet *ss, ui
 }
 
 extern uint8_t memory_free_prop_font_sheet(struct crayon_font_prop *fp, uint8_t free_palette){
+	if(fp){
+		if(free_palette && fm->palette_data != NULL){ //Free the palette
+			if(fp->palette_data->palette != NULL){
+				free(fm->palette_data->palette);
+			}
+			free(fp->palette_data);
+		}
+		free(fp->char_x_coord);
+		free(fp->char_width);
+		free(fp->chars_per_row);
+		pvr_mem_free(fp->fontsheet_texture);
+
+		return 0;
+	}
 	return 1;
 }
 

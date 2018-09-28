@@ -31,13 +31,9 @@ typedef struct crayon_spritesheet{
 
 	crayon_animation_t *spritesheet_animation_array;	//Allows me to make an array of animation_t pointers
 	uint8_t spritesheet_animation_count;	//The number of animations per spritesheet
-	uint8_t garbage1;	//These are used for testing, remove later
-	uint8_t garbage2;
-	uint8_t garbage3;
-	uint8_t garbage4;
 } crayon_spritesheet_t;
 
-//On fontsheets. FOR NOW EACH CHAR IN THE FONTSHEET CONTAINS BLANK PIXELS SEPERATING STUFF. EG (- is blank pixel row/column)
+//On fontsheets. FOR NOW EACH CHAR IN THE FONTSHEET CONTAINS BLANK LINES OF PIXELS SEPERATING STUFF. EG (- is blank pixel row/column)
 
 /*
 A-B-C-
@@ -55,15 +51,23 @@ char_height
 num_rows num_chars_row_1 num_chars_row_2 (etc)
 1st_char_width 2nd_char_width (etc)
 */
+
+//It might be better to go with more data and less CPU time
+//Therefore I suggest the prop struct contains every char's x coord
+	//(Y can be easily derived from the char's ascii and the chars per row)
+
 typedef struct crayon_font_prop{
 	pvr_ptr_t *fontsheet_texture;
 	uint16_t fontsheet_dim;
 	uint8_t texture_format;	//Contains the texel format
-	uint8_t *char_width;	//Num elements equal to total of "chars_per_row" array
+	uint8_t *char_width;	//Num elements equal to num_chars
 	uint8_t char_height;
-	uint8_t *chars_per_row;	//Total of array is total of num_chars
-	uint8_t chars_per_row_size;
+	uint8_t *chars_per_row;	//Total of array is num_rows
+	uint8_t *char_x_coord;	//If you want to use fontsheets with fontsheet_dim > 256
+							//then bump this up to a uint16_t and modify the load
+							//code in memory_free_prop_font_sheet()
 	uint8_t num_rows;
+	uint8_t num_chars;
 	crayon_palette_t *palette_data;
 } crayon_font_prop_t;
 

@@ -1,14 +1,15 @@
 #!/bin/bash
 
 helpInfo () {
-	echo 'Usage: ./make.sh -preprocess -noRM*'
-	echo 'preprocess:'
-	echo -e ' \t -preprocess will process your assets and modify'
-	echo -e ' \t components with a valid crayon tag. The processed'
-	echo -e ' \t assets directory end up in the cdfs folder'
+	echo 'Usage: ./make.sh -noRM*'
 	echo 'noRM:'
 	echo -e ' \t -noRM is an optional parameter. It prevents the'
 	echo -e ' \t removal of temperary files for viewing/debugging'
+	echo -e '\n'
+	echo 'About:'
+	echo ' preprocess.sh will process your assets and modify'
+	echo ' components with a valid crayon tag. The processed'
+	echo ' assets content end up in the cdfs folder'
 	exit 0
 }
 
@@ -137,36 +138,29 @@ preprocess=0	# 0 for don't build, 1 for build
 noRM=0	#0 means it will remove temp files, 1 means it won't remove them
 
 NAME=${PWD##*/}	#The name of the program is the same name as the project
-IPBIN="$KOS_BASE/../IP.BIN"	#Change this depending on where your IP.BIN file is located
 assets="assets"
 cdfs="cdfs"
 projectRoot="$PWD"	#Make sure bash script is called from the real project root
-crayonRoot="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"	#The directory of the crayon source code
 
 if [ $# = 0 ];then
-	echo 'No params, try "-h" for help'
+	echo 'No parameters, try "-h" for help'
 	exit 1
 fi
 
 while test ${#} -gt 0
 do
-	if [ "$1" = "-preprocess" ];then
-		preprocess=1
-		shift
-	elif [ "$1" = "-noRM" ];then
+	if [ "$1" = "-noRM" ];then
 		noRM=1
 		shift
 	elif [ "$1" = "-h" ];then
 		helpInfo
 	else
-		echo 'Please check your paramters Try -h parameter for help'
+		echo 'Please check your parameters Try -h parameter for help'
 		exit 1
 	fi
 done
 
-if [ "$preprocess" = 1 ];then
-	buildPreProcessed "$assets" "$projectRoot/$cdfs" "$noRM"
-fi
+buildPreProcessed "$assets" "$projectRoot/$cdfs" "$noRM"
 
 exit 0
 

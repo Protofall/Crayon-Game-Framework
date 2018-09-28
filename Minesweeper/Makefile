@@ -68,8 +68,12 @@ check:
 	./$(crayon_path)/preprocess.sh -preprocess -noRM
 
 # I should probs remove buildRun later
+.PHONY: buildRun
 buildRun: clean dreamcast_cdi
 	redream $(project_name).cdi
+
+.PHONY: test
+test: $(objs)
 
 # include $(KOS_BASE)/Makefile.rules
 
