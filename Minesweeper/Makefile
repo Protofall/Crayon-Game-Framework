@@ -65,7 +65,7 @@ help:
 
 .PHONY: check
 check:
-	./$(crayon_path)/preprocess.sh -preprocess -noRM
+	./$(crayon_path)/preprocess.sh -noRM
 
 # I should probs remove buildRun later
 .PHONY: buildRun
@@ -101,7 +101,7 @@ $(foreach s,$(project_source_files),$(eval $(call COMPILE_rule,$(s))))
 #Assets preprocessing
 .PHONY: preprocess
 preprocess:
-	./$(crayon_path)/preprocess.sh -preprocess
+	./$(crayon_path)/preprocess.sh
 
 #Linking all .o files into an elf
 $(project_name).elf: $(objs)

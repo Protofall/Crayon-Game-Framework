@@ -142,11 +142,6 @@ assets="assets"
 cdfs="cdfs"
 projectRoot="$PWD"	#Make sure bash script is called from the real project root
 
-if [ $# = 0 ];then
-	echo 'No parameters, try "-h" for help'
-	exit 1
-fi
-
 while test ${#} -gt 0
 do
 	if [ "$1" = "-noRM" ];then

@@ -511,9 +511,9 @@ extern uint8_t memory_free_crayon_packer_sheet(struct crayon_spritesheet *ss, ui
 
 extern uint8_t memory_free_prop_font_sheet(struct crayon_font_prop *fp, uint8_t free_palette){
 	if(fp){
-		if(free_palette && fm->palette_data != NULL){ //Free the palette
+		if(free_palette && fp->palette_data != NULL){ //Free the palette
 			if(fp->palette_data->palette != NULL){
-				free(fm->palette_data->palette);
+				free(fp->palette_data->palette);
 			}
 			free(fp->palette_data);
 		}
