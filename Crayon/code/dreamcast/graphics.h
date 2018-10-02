@@ -35,7 +35,7 @@ extern uint8_t graphics_draw_sprites_OLD(const struct crayon_spritesheet *ss,
 
 //Testing the new render struct (Delete other multi sprite draw after and keep original as a basic prog for noobies)
 //poly_list mode is for the tr/pt/op render list macro we want to use. Might move this param into the struct...
-extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
+extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);	//UNIMPLEMENTED
 
 //------------------Drawing Fonts------------------//
 

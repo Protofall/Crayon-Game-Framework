@@ -12,6 +12,7 @@
 
 //For the timer
 #include <arch/timer.h>
+#include <time.h>
 
 //For the sound effects
 #include <dc/sound/stream.h>
@@ -527,7 +528,9 @@ int main(){
 
 	pvr_init_defaults();
 
-	srand(time(0));
+	srand(time(0));	//Set the seed for rand()
+	time_t os_clock;	//Stores the current time
+	struct tm *readable_time;
 
 	float cursor_position[8];
 	cursor_position[0] = 100;
@@ -960,17 +963,26 @@ int main(){
 			time_sec = temp_sec;
 		}
 
+		time(&os_clock);	//I think this is how I populate it with the current time
+		readable_time = localtime(&os_clock);
+
 		pvr_wait_ready();
 		pvr_scene_begin();
 
 		//Setup the main palette
-    	graphics_setup_palette(Board.palette_data, Board.spritesheet_format, 0);
-    	graphics_setup_palette(Icons.palette_data, Icons.spritesheet_format, 1);
-    	graphics_setup_palette(BIOS_font.palette_data, BIOS_font.texture_format, 2);
-    	graphics_setup_palette(Tahoma_font.palette_data, Tahoma_font.texture_format, 3);
+		graphics_setup_palette(Board.palette_data, Board.spritesheet_format, 0);
+		graphics_setup_palette(Icons.palette_data, Icons.spritesheet_format, 1);
 		if(!operating_system){	//Since it uses palettes and XP doesn't, we do this
-    		graphics_setup_palette(Windows.palette_data, Windows.spritesheet_format, 1);	//Since Windows uses 8bpp, this doesn't overlap with "icons"
+			graphics_setup_palette(Windows.palette_data, Windows.spritesheet_format, 1);	//Since Windows uses 8bpp, this doesn't overlap with "icons"
 		}
+
+		//I like to put the fonts at the very back of the system (But really, its probably better standard tp go first)
+		if(operating_system){
+			// graphics_setup_palette(???, 4BPP, 61);	//The extra palette for XP mode
+		}
+		graphics_setup_palette(Tahoma_font.palette_data, Tahoma_font.texture_format, 62);
+		graphics_setup_palette(BIOS_font.palette_data, BIOS_font.texture_format, 63);
+
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
@@ -982,11 +994,28 @@ int main(){
 			graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[os.ids[iter]],
 				os.coords_pos[3 * iter], os.coords_pos[(3 * iter) + 1], os.coords_pos[(3 * iter) + 2],
 				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 1);
-			//We choose palette 1 because that's 2000's palette and XP uses RGB565
+				//We choose palette 1 because that's 2000's palette and XP uses RGB565
 		}
-		// graphics_draw_text_mono(&BIOS_font, 90, 60, 100, 1, 1, 2, "Mono-spaced font supported\nHello Magigears!\0");
-		// graphics_draw_text_mono(&BIOS_font, 146, 232, 100, 1, 1, 2, "A FATAL ERROR HAS OCCURED IN MINESWEEPER.EXE\nError code =72105105\0");
-		graphics_draw_text_prop(&Tahoma_font, 90, 64, 100, 1, 1, 3, "Windows system restored.\nWelcome back Protofall!\0");
+		// graphics_draw_text_mono(&BIOS_font, 90, 60, 100, 1, 1, 63, "Mono-spaced font supported\nHello Magigears!\0");
+		// graphics_draw_text_mono(&BIOS_font, 146, 232, 100, 1, 1, 63, "A FATAL ERROR HAS OCCURED IN MINESWEEPER.EXE\nError code =72105105\0");
+		// graphics_draw_text_prop(&Tahoma_font, 90, 64, 100, 1, 1, 62, "Windows system restored.\nWelcome back Protofall!\0");
+		// graphics_draw_text_prop(&Tahoma_font, 5, 232, 100, 1, 1, 62, "0 !\"#$&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\0");
+
+
+		graphics_draw_text_prop(&Tahoma_font, 9, 30 + (3 * operating_system), 20, 1, 1, 62, "Game\0");
+		graphics_draw_text_prop(&Tahoma_font, 48, 30 + (3 * operating_system), 20, 1, 1, 62, "Options\0");
+		graphics_draw_text_prop(&Tahoma_font, 97, 30 + (3 * operating_system), 20, 1, 1, 62, "About\0");
+
+		//Updating the time in the bottom right
+		//CONSIDER ONLY UPDATING IF TIME IS DIFFERENT
+		char timebuffer[9];
+		if(readable_time->tm_hour < 13){
+			sprintf(timebuffer, "%02d:%02d AM", readable_time->tm_hour, readable_time->tm_min);
+		}
+		else{
+			sprintf(timebuffer, "%02d:%02d PM", readable_time->tm_hour - 12, readable_time->tm_min);
+		}
+		graphics_draw_text_prop(&Tahoma_font, 581, 463, 20, 1, 1, 62, timebuffer);	//Need a seperate palette for this in XP mode (Need white text) Also pos changes
 
 		//Draw the flag count and timer
 		digit_display(&Board, &Board.spritesheet_animation_array[1], num_flags, 20, 65, 17);

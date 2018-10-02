@@ -21,7 +21,7 @@ extern uint8_t memory_load_palette(crayon_palette_t *cp, char *path);
 extern uint8_t memory_load_crayon_packer_sheet(struct crayon_spritesheet *ss, char *path);
 
 //Loads a proportionally-spaced fontsheet into memory
-extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *path);	//(UNFINISHED)
+extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *path);
 
 //Loads a mono-spaced fontsheet into memory
 extern uint8_t memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *path);
@@ -32,7 +32,7 @@ extern uint8_t memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *pa
 extern uint8_t memory_free_crayon_packer_sheet(struct crayon_spritesheet *ss, uint8_t free_palette);
 
 //Same as above, but for mono-spaced fontsheets
-extern uint8_t memory_free_prop_font_sheet(struct crayon_font_prop *fp, uint8_t free_palette);	//(UNFINISHED)
+extern uint8_t memory_free_prop_font_sheet(struct crayon_font_prop *fp, uint8_t free_palette);
 
 //Same as above, but for proportionally-spaced fontsheets
 extern uint8_t memory_free_mono_font_sheet(struct crayon_font_mono *fm, uint8_t free_palette);

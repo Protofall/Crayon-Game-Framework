@@ -4,7 +4,7 @@
 CFLAGS = $(KOS_CFLAGS)
 # CFLAGS += -I$(KOS_BASE)/addons/zlib	#Might need to add this to the bash script
 
-#Change this so the path isn't hardcoded
+#Change this so the path isn't hardcoded (And add a "if not defined")
 crayon_path = ../Crayon
 crayon_build = dreamcast
 
@@ -33,7 +33,7 @@ objs += $(crayon_o_files)
 
 
 cdfs = cdfs
-IPBIN = $(KOS_BASE)/../IP.BIN	#Change this depending on where your IP.BIN file is located
+IPBIN = $(crayon_path)/IP.BIN	#Change this depending on where your IP.BIN file is located
 
 .PHONY: all
 all: dreamcast_cdi
@@ -43,12 +43,9 @@ dreamcast_cdi: preprocess $(scrambled_name)
 	mkisofs -G $(IPBIN) -C 0,11702 -J -l -r -o $(project_name).iso $(cdfs)
 	cdi4dc $(project_name).iso $(project_name).cdi
 
-.PHONY: dreamcast_cdi
+.PHONY: dreamcast_sd
 dreamcast_sd: preprocess $(project_name).bin
 	cp $(project_name).bin $(cdfs)/$(project_name).bin
-
-# dreamcastSD:
-# 	./$(crayon_path)/preprocess.sh -preprocess -dreamcast -sd
 
 .PHONY: clean
 clean:
@@ -69,7 +66,7 @@ check:
 
 # I should probs remove buildRun later
 .PHONY: buildRun
-buildRun: clean dreamcast_cdi
+buildRun: dreamcast_cdi
 	redream $(project_name).cdi
 
 .PHONY: test
@@ -79,7 +76,7 @@ test: $(objs)
 
 #These two are needed for re-compiling Crayon
 .PHONY: crayon
-crayon: crayon_clean $(crayon_o_files)
+crayon: $(crayon_o_files)
 
 .PHONY: crayon_clean
 crayon_clean:

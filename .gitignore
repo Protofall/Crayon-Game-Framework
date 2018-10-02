@@ -1,0 +1,34 @@
+#Use the -f param if you REALLY want to add one of these files
+
+# Compiled source #
+###################
+*.exe
+*.elf
+*.o
+*.cdi
+*.bin
+
+# Packages #
+############
+*.iso
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Redream config files #
+########################
+vmu*.bin
+redream.cfg
+flash.bin
+
+
+# CDFS #
+########
+*/cdfs/*

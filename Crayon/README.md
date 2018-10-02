@@ -12,14 +12,15 @@
 + (DONE) Spritesheet support (!!!)
 + (DONE) 4bpp loading/rendering support (!!!)
 + (DONE BY DEFAULT?) Maple/Controller support (!!!)
-+ (Error_Freeze() Isn't enough) Error display support (!!!)
++ (DONE? (Added font support)) (Error_Freeze() Isn't enough) Error display support (!!!)
 + Video mode support (!!!)
 + Rendering lists of ease of use (!!)
 + Threading support (!!)
 + (DONE) VGA/Progressive Scan support (!!)
 + VMU save/load support (!!)
 + VMU draw to screen support (!!)
-+ Sound support (!!)
++ (DONE) Sound effect support (!!)
++ BG music support (!!)
 + (DONE) 8bpp loading/rendering support (!!)
 + (DONE) Non paletted RGB565 loading/rendering support (!!)
 + Selector to easily choose between "sd" and "cd" dirs (cd for CD-Rs, sd for the sdloader method) (!)
@@ -29,29 +30,30 @@
 
 ## Instructions on usage
 
-As of now when making a new project, you'll need to link the exact path to a crayon library (Unlike in real library where you can just do "graphics.h"). Also I think your project directory and the Crayon directory need to have the same parent directory unless you modify the makefile to properly call Crayon's bash file
+As of now when making a new project, copy over this makefile, edit the "crayon_path" variable and make new asset, cdfs and code folders. Crayon currently doesn't behave like a real library, instead you must include the files you want with their correct path (Unlike in real library where you can just do "graphics.h")
 
 Crayon's root:
 
 	+ code	//Contains crayon library stuff
 	+ makefile
-	+ make.sh
+	+ preprocess.sh
 
 Your Project's root:
 
 	+ assets/
 	+ cdfs/
+	+ code/		//Your project's code files
 	+ makefile	//Same makefile from Crayon directory
 
 assets can contain a normal file system, but files/folders with crayon_x fields will be pre-processed. Basically the stuff inside there dirs will get processed and the processed result will be the cdfs directory.
 
 (Explain later what each field means)
 
-The picture formats are PAL4BPP, PAL8BPP, RGB565 (Opqaue), ARGB4444 (Transparent) or ARGB1555 (Punch-Through).
+The picture formats are PAL4BPP, PAL8BPP, RGB565 (Opqaue), ARGB4444 (Transparent) and ARGB1555 (Punch-Through).
 
 Note: Its up to the artist/developers to make sure that the art assets meet the BPP requirements (OPAQUE and TRANSPARENT are 16BPP) and that the romdisk/textures/sound files will all fit in the Dreamcast's RAM nicely (Not crash)
 
-The Crayon/code/ directory contains all the .c and .h crayon files used by the program, and every .c/.cpp file in "Your Project"s directory will also be compiled
+The Crayon/code/ directory contains all the .c and .h crayon files used by the program, and every .c/.cpp file in your Project's directory will also be compiled
 
 ### In assets
 
@@ -99,72 +101,82 @@ Notes:
 	+ **TODO** Make crayon_ignore so the bash script doesn't explore those directories
 	+ **TODO** Make crayon_PAL4BPP and crayon_8BPP to generate only the palette file everything in the dir (Think more how exactly this will work to make it intuitive so it can be used for easily swappable palettes)
 
-### Code Structure
+### Code Structure (OUTDATED STUFF HERE)
 
 First some definitions:
 
-+ A spritesheet (SS): Contains 1 or more animations
-+ An animation: Contains 1 or more sprites/frames
++ A crayon_spritesheet (SS): Contains 1 or more crayon_animations
++ A crayon_animation: Contains 1 or more sprites/frames
 + A sprite is the individual sub-textures/UV-coords-of-texture that you see when playing the game
 
-Ofc we have the basics, romdisk un/mount, setup_palette, all the draw functions for each format, load_texture(DTEX \*, DPAL \*) (Nothing is passed in for the DPAL pointer if its not paletted). Each texture it can load must be in the .dtex or .dtex.pal formats to work with the load texture functions.
+Ofc we have the basics, romdisk un/mount, setup_palette, all the draw functions for each format, load_texture(DTEX \*, DPAL \*) (Nothing is passed in for the DPAL pointer if its not paletted). Each texture it can load must be in the .dtex format (And if paletted it comes with a dtex.pal file) to work with the load texture functions.
 
-Each .dtex is actually a SS that contains 1 or more animations. So here's my proposed structs for storing the SS info **NOTE TO SELF** This has probably changed a bit, update it later
+Here's my structs for storing the spritesheet info:
 
 ```c
-ss{
-	pvr_ptr_t * ss_texture;
-	anim * ss_anims;	//Assigned with dynamic array
-	uint16_t ss_dims;	//Since a pvr texture must be a square, we don't need height/width
-	uint8_t ss_format; //1 for 4BPP, 2 for 8BPP, 3 for RGB565 and 4 for ARGB4444 (0 for unknown)
-	palette * ss_palette_id; //If it uses a palette, here is where you assign it's palette
-}
+typedef struct crayon_palette{
+	uint32_t *palette;		//Pointer to heap allocated palette (Its treated like an array of size "colour_count")
+	uint16_t colour_count;	//Number of colours in the palette
+} crayon_palette_t;
 
-anim{
-	char * anim_name;
-	uint8_t anim_frames;	//How many sprites make up the animation (Dunno if this should be a short or int yet)
-	uint16_t anim_top_left_x_coord;	//Since the anims are designed to be in tiles
-	uint16_t anim_top_left_y_coord;	//We can select an frame based off of the first frame's coords
-	uint16_t anim_sheet_width;	//Width of the anim sheet
-	uint16_t anim_sheet_height;
-	uint16_t anim_frame_width;	//Width of each frame
-	uint16_t anim_frame_height;
+typedef struct crayon_animation{
+	char *animation_name;
+	uint16_t animation_x;	//Since the animations are designed to be in tiles
+	uint16_t animation_y;	//We can select an frame based off of the first frame's coords
+	uint16_t animation_sheet_width;	//Width of the animation sheet
+	uint16_t animation_sheet_height;
+	uint16_t animation_frame_width;	//Width of each frame
+	uint16_t animation_frame_height;
+	uint8_t animation_frames;	//How many sprites make up the animation (Dunno if this should be a short or int yet)
 	//With these widths and heights, it might be possible to deduce some of them from other info, but idk
-}
+} crayon_animation_t;
+
+typedef struct crayon_spritesheet{
+	pvr_ptr_t *spritesheet_texture;
+	char *spritesheet_name;	//Might be useful for when it comes time to un-mount a romdisk, otherwise I don't think its needed
+	uint16_t spritesheet_dims;	//Since a pvr texture must be a square, we don't need height/width
+	uint8_t spritesheet_format;	//1 for 4BPP, 2 for 8BPP, 3 for RGB565 and 4 for ARGB4444 (0 for unknown)
+	crayon_palette_t *palette_data;	//Right now we still malloc this regardless if we use it or not. Change that
+
+	crayon_animation_t *spritesheet_animation_array;	//Allows me to make an array of animation_t pointers
+	uint8_t spritesheet_animation_count;	//The number of animations per spritesheet
+} crayon_spritesheet_t;
+```
+Later I will have a draw struct for sprites/animations
+```c
+//Fill in later
 ```
 
-I'm not 100% sure about the data types for the anim struct (I don't think pairs exist in regular C). However this gets the job done. The ss structs will be stored in a linked list. There will also be rendering linked lists like the one below.
+There will also be rendering linked lists like the one below.
 
 ```c
-object{
+typedef struct crayon_render_object{
 	ss * spritesheet;
 	anim * animation;
 	uint8_t currentFrame;
 	int drawX;
 	int drawY;
 	int drawZ;
-	uint8_t viewID;
+	uint8_t cameraID;
 	object * next;
 	uint8_t objectLogicID;	//Might need to make this a uint16_t later, idk
-}
+} crayon_render_object_t;
 ```
 
-It knows whether an object is opaque or transparent based on the ss->ss_format. currentFrame is used to tell it which sprite to draw from the animation, drawX/Y/Z are just the draw coordinates relative to the view. The viewID variable tells it which view we are drawing relative to. Prior to rendering we set up some view structs like so
+It knows whether an object is opaque or transparent based on the spritesheet's format parameter. currentFrame is used to tell it which sprite to draw from the animation, drawX/Y/Z are just the draw coordinates relative to the view. The viewID variable tells it which view we are drawing relative to. Prior to rendering we set up some view structs like so
 
 ```c
-view{
+typedef struct crayon_camera{
 	uint16_t top_left_x_coord;
 	uint16_t top_left_y_coord;
 	uint16_t height;
 	uint16_t width;
-}
+} crayon_camera_t;
 ```
 
-This would be useful for splitscreen (And maybe views too?). I feel this view idea in its current state is very primative so I hope to see it develop over time.
+This would be useful for splitscreen, multiple layers (HUD vs main world vs Parallax)
 
 objectLogicID is basically the general behaviour of a texture. So a background has none, but a sprite might have weight, immunity level, etc. The id is used to refer to the "logic list" that I'll decide on its specifics later.
-
-**Note to self:** The view struct probably won't be a part of Crayon and instead part of the project code
 
 ### Pre-requisites
 
@@ -182,7 +194,7 @@ Assuming you have a working clone of KOS.
 For cdi4dc:
 `git clone https://github.com/Kazade/img4dc.git`
 `cd img4dc`
-`cmake`
+`cmake .`
 `make`
 
 For texconv:
@@ -192,7 +204,7 @@ For texconv:
 `qmake`
 `make`
 
-Copy the executables for texconv and cdi4dc into a directory whose path is listed in the ~.profile file (Or add you own directory path)
+Copy the executables for texconv and cdi4dc into a directory whose path is listed in the ~/.profile file (Or add you own directory path)
 
 **CHECK** Do we also require the `convert` command?
 

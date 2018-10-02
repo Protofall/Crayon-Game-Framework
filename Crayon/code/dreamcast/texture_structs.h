@@ -11,7 +11,7 @@ typedef struct crayon_palette{
 } crayon_palette_t;
 
 typedef struct crayon_animation{
-	char *animation_name;	//Fix this later so its not hard coded and instead is a dynamic pointer
+	char *animation_name;
 	uint16_t animation_x;	//Since the animations are designed to be in tiles
 	uint16_t animation_y;	//We can select an frame based off of the first frame's coords
 	uint16_t animation_sheet_width;	//Width of the animation sheet
@@ -33,28 +33,21 @@ typedef struct crayon_spritesheet{
 	uint8_t spritesheet_animation_count;	//The number of animations per spritesheet
 } crayon_spritesheet_t;
 
-//On fontsheets. FOR NOW EACH CHAR IN THE FONTSHEET CONTAINS BLANK LINES OF PIXELS SEPERATING STUFF. EG (- is blank pixel row/column)
-
 /*
+On fontsheets. FOR NOW EACH CHAR IN THE FONTSHEET CONTAINS BLANK LINES OF PIXELS SEPERATING STUFF. EG (- is blank pixel row/column)
+
 A-B-C-
 ------
 D-E-F-
 ------
-G-H-I-
-------
-*/
 
-//Each char has a varying width, but all have the same height
-//Info file format:
-/*
+Each char has a varying width, but all have the same height
+Info file format:
+
 char_height
 num_rows num_chars_row_1 num_chars_row_2 (etc)
 1st_char_width 2nd_char_width (etc)
 */
-
-//It might be better to go with more data and less CPU time
-//Therefore I suggest the prop struct contains every char's x coord
-	//(Y can be easily derived from the char's ascii and the chars per row)
 
 typedef struct crayon_font_prop{
 	pvr_ptr_t *fontsheet_texture;
