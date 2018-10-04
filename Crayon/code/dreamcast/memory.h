@@ -15,7 +15,9 @@ extern int zlib_getlength(char *filename);	//Because zlib.h won't declare it for
 //If given a valid path and a crayon_palette object, it will populate the palette object with the correct data
 extern uint8_t memory_load_palette(crayon_palette_t *cp, char *path);
 
+
 //------------------Allocating memory------------------//
+
 
 //Loads a "crayon_packer_sheet" spritesheet into memory
 extern uint8_t memory_load_crayon_packer_sheet(struct crayon_spritesheet *ss, char *path);
@@ -26,7 +28,9 @@ extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *pa
 //Loads a mono-spaced fontsheet into memory
 extern uint8_t memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *path);
 
+
 //------------------Freeing memory------------------//
+
 
 //Free up all memory from a spritesheet struct. if free_palette is true, it will also free the palette
 extern uint8_t memory_free_crayon_packer_sheet(struct crayon_spritesheet *ss, uint8_t free_palette);
@@ -37,7 +41,9 @@ extern uint8_t memory_free_prop_font_sheet(struct crayon_font_prop *fp, uint8_t 
 //Same as above, but for proportionally-spaced fontsheets
 extern uint8_t memory_free_mono_font_sheet(struct crayon_font_mono *fm, uint8_t free_palette);
 
+
 //------------------Mounting romdisks------------------//
+
 
 //Mount a regular img romdisk
 extern uint8_t memory_mount_romdisk(char *filename, char *mountpoint);

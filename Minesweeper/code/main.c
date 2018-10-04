@@ -559,7 +559,7 @@ int main(){
 	memory_load_crayon_packer_sheet(&Board, "/Minesweeper/Board.dtex");
 	memory_load_crayon_packer_sheet(&Icons, "/Minesweeper/Icons.dtex");
 
-	Sound_Tick = snd_sfx_load("/Minesweeper/Sounds/tick.wav");	//This call crashes the game
+	Sound_Tick = snd_sfx_load("/Minesweeper/Sounds/tick.wav");
 	Sound_Death = snd_sfx_load("/Minesweeper/Sounds/death.wav");
 	Sound_Death_Italian = snd_sfx_load("/Minesweeper/Sounds/deathItalian.wav");
 	Sound_Win = snd_sfx_load("/Minesweeper/Sounds/win.wav");
@@ -1131,7 +1131,7 @@ int main(){
 	retVal += memory_free_crayon_packer_sheet(&Icons, 1);
 	retVal += memory_free_crayon_packer_sheet(&Windows, 1);
 	retVal += memory_free_mono_font_sheet(&BIOS_font, 1);
-	// retVal += memory_free_mono_font_sheet(&Tahoma_font, 1);
+	retVal += memory_free_prop_font_sheet(&Tahoma_font, 1);
 	error_freeze("Free-ing result %d!\n", retVal);
 
 	return 0;

@@ -19,6 +19,7 @@ typedef struct MinesweeperOS{
 typedef struct MinesweeperLang{
 	uint16_t coord_pos;	//Records the x and y for all the OS dependent stuff
 	//uint8_t num_sprites
+	uint8_t time_palette;	//The palette for the clock to use
 } MinesweeperLang_t;
 
 #endif
