@@ -556,8 +556,8 @@ int main(){
 	#endif
 	memory_load_mono_font_sheet(&BIOS_font, "/Minesweeper/Fonts/BIOS_font.dtex");
 	memory_load_prop_font_sheet(&Tahoma_font, "/Minesweeper/Fonts/Tahoma_font.dtex");
-	memory_load_crayon_packer_sheet(&Board, "/Minesweeper/Board.dtex");
-	memory_load_crayon_packer_sheet(&Icons, "/Minesweeper/Icons.dtex");
+	memory_load_crayon_spritesheet(&Board, "/Minesweeper/Board.dtex");
+	memory_load_crayon_spritesheet(&Icons, "/Minesweeper/Icons.dtex");
 
 	Sound_Tick = snd_sfx_load("/Minesweeper/Sounds/tick.wav");
 	Sound_Death = snd_sfx_load("/Minesweeper/Sounds/death.wav");
@@ -572,7 +572,7 @@ int main(){
 		#else
 			memory_mount_romdisk("/cd/XP.img", "/XP");
 		#endif
-		memory_load_crayon_packer_sheet(&Windows, "/XP/Windows.dtex");
+		memory_load_crayon_spritesheet(&Windows, "/XP/Windows.dtex");
 		fs_romdisk_unmount("/XP");
 	}
 	else{
@@ -581,7 +581,7 @@ int main(){
 		#else
 			memory_mount_romdisk("/cd/2000.img", "/2000");
 		#endif
-		memory_load_crayon_packer_sheet(&Windows, "/2000/Windows.dtex");
+		memory_load_crayon_spritesheet(&Windows, "/2000/Windows.dtex");
 		fs_romdisk_unmount("/2000");
 	}
 
@@ -702,6 +702,10 @@ int main(){
 	uint16_t sd_x;
 	uint16_t sd_y;
 	graphics_frame_coordinates(&Icons.spritesheet_animation_array[3], &sd_x, &sd_y, 0);
+
+	//Testing out my clone function
+	crayon_palette_t *XP_time = memory_clone_palette(Tahoma_font.palette_data);
+	XP_time->palette[1] = (255 << 24) + (255 << 16) + (255 << 8) + 255;	//Setting the black text to white
 
 	#if CRAYON_SD_MODE == 1
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
@@ -978,7 +982,7 @@ int main(){
 
 		//I like to put the fonts at the very back of the system (But really, its probably better standard tp go first)
 		if(operating_system){
-			// graphics_setup_palette(???, 4BPP, 61);	//The extra palette for XP mode
+			graphics_setup_palette(XP_time, 5, 61);	//The extra palette for XP mode
 		}
 		graphics_setup_palette(Tahoma_font.palette_data, Tahoma_font.texture_format, 62);
 		graphics_setup_palette(BIOS_font.palette_data, BIOS_font.texture_format, 63);
@@ -996,11 +1000,7 @@ int main(){
 				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 1);
 				//We choose palette 1 because that's 2000's palette and XP uses RGB565
 		}
-		// graphics_draw_text_mono(&BIOS_font, 90, 60, 100, 1, 1, 63, "Mono-spaced font supported\nHello Magigears!\0");
-		// graphics_draw_text_mono(&BIOS_font, 146, 232, 100, 1, 1, 63, "A FATAL ERROR HAS OCCURED IN MINESWEEPER.EXE\nError code =72105105\0");
-		// graphics_draw_text_prop(&Tahoma_font, 90, 64, 100, 1, 1, 62, "Windows system restored.\nWelcome back Protofall!\0");
 		// graphics_draw_text_prop(&Tahoma_font, 5, 232, 100, 1, 1, 62, "0 !\"#$&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\0");
-
 
 		graphics_draw_text_prop(&Tahoma_font, 9, 30 + (3 * operating_system), 20, 1, 1, 62, "Game\0");
 		graphics_draw_text_prop(&Tahoma_font, 48, 30 + (3 * operating_system), 20, 1, 1, 62, "Options\0");
@@ -1015,7 +1015,9 @@ int main(){
 		else{
 			sprintf(timebuffer, "%02d:%02d PM", readable_time->tm_hour - 12, readable_time->tm_min);
 		}
-		graphics_draw_text_prop(&Tahoma_font, 581, 463, 20, 1, 1, 62, timebuffer);	//Need a seperate palette for this in XP mode (Need white text) Also pos changes
+
+		graphics_draw_text_prop(&Tahoma_font, 581, 463, 20, 1, 1,
+			62 - operating_system, timebuffer);	//In XP is uses another palette (White text version)
 
 		//Draw the flag count and timer
 		digit_display(&Board, &Board.spritesheet_animation_array[1], num_flags, 20, 65, 17);
@@ -1127,11 +1129,17 @@ int main(){
 
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
 	int retVal = 0;
-	retVal += memory_free_crayon_packer_sheet(&Board, 1);
-	retVal += memory_free_crayon_packer_sheet(&Icons, 1);
-	retVal += memory_free_crayon_packer_sheet(&Windows, 1);
+	retVal += memory_free_crayon_spritesheet(&Board, 1);
+	retVal += memory_free_crayon_spritesheet(&Icons, 1);
+	retVal += memory_free_crayon_spritesheet(&Windows, 1);
 	retVal += memory_free_mono_font_sheet(&BIOS_font, 1);
 	retVal += memory_free_prop_font_sheet(&Tahoma_font, 1);
+	retVal += memory_free_palette(Tahoma_font.palette_data);
+	free(Tahoma_font.palette_data);
+	snd_sfx_unload(Sound_Tick);
+	snd_sfx_unload(Sound_Death);
+	snd_sfx_unload(Sound_Death_Italian);
+	snd_sfx_unload(Sound_Win);
 	error_freeze("Free-ing result %d!\n", retVal);
 
 	return 0;

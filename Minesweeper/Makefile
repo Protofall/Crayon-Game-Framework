@@ -98,6 +98,8 @@ $(foreach s,$(project_source_files),$(eval $(call COMPILE_rule,$(s))))
 #Assets preprocessing
 .PHONY: preprocess
 preprocess:
+	mkdir -p $(crayon_path)/code/dreamcast/compiled
+	mkdir -p $(cdfs)
 	./$(crayon_path)/preprocess.sh
 
 #Linking all .o files into an elf

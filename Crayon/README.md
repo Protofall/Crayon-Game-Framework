@@ -61,7 +61,7 @@ assets/
 
 ```
 |-> plants.crayon_img/
-      |-> flowers.PAL4BPP.crayon_packer_sheet/
+      |-> flowers.PAL4BPP.crayon_spritesheet/
       |     |-> rose.png
       |     |-> rose.crayon_anim
       |     |-> tulip.png
@@ -93,8 +93,8 @@ cd/(mount name)	#Note, this might be attached to the sd dir instead
 Notes:
 
 	+ crayon_x field is a hint to do something with the file/dir in preprocessing
-	+ The crayon_anim found in crayon_packer_sheet dirs contains "frame_width frame_height number_of_sprites" and is used to help make the final txt for that dir. It also assumes each frame has the same width and height and all the frames are tightly packed in an 2D representation of a 1D array-like grid
-	+ A dir with the crayon_packer_sheet field may only contain n png's and n or less crayon_anim's (Each crayon_anim has a png of the same name, but if a png doesn't have a corresponding crayon_anim then its assumed the png is a single frame/just a sprite). Any other files and directories will be ignored
+	+ The crayon_anim found in crayon_spritesheet dirs contains "frame_width frame_height number_of_sprites" and is used to help make the final txt for that dir. It also assumes each frame has the same width and height and all the frames are tightly packed in an 2D representation of a 1D array-like grid
+	+ A dir with the crayon_spritesheet field may only contain n png's and n or less crayon_anim's (Each crayon_anim has a png of the same name, but if a png doesn't have a corresponding crayon_anim then its assumed the png is a single frame/just a sprite). Any other files and directories will be ignored
 	+ files that aren't involved in preprocessing (Except gziped ones) are hardlinked
 	+ crayon_img means "Make this into a romdisk"
 	+ crayon_gz means "GZ compress this file/romdisk", can be combined with crayon_img

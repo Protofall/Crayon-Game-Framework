@@ -13,36 +13,7 @@ typedef struct dpal_header{
 	uint32_t color_count; //number of 32-bit ARGB palette entries
 } dpal_header_t;
 
-extern uint8_t memory_load_palette(crayon_palette_t *cp, char *path){
-	uint8_t result = 0;
-	#define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
-	
-	FILE *palette_file = fopen(path, "rb");
-	if(!palette_file){PAL_ERROR(1);}
-
-	dpal_header_t dpal_header;
-	if(fread(&dpal_header, sizeof(dpal_header), 1, palette_file) != 1){PAL_ERROR(2);}
-
-	if(memcmp(dpal_header.magic, "DPAL", 4) | !dpal_header.color_count){PAL_ERROR(3);}
-
-	cp->palette = malloc(dpal_header.color_count * sizeof(uint32_t));
-	if(!cp->palette){PAL_ERROR(4);}
-
-	if(fread(cp->palette, sizeof(uint32_t), dpal_header.color_count,
-		palette_file) != dpal_header.color_count){PAL_ERROR(5);}
-
-	#undef PAL_ERROR
-
-	cp->colour_count = dpal_header.color_count;
-
-	PAL_cleanup:
-
-	if(palette_file){fclose(palette_file);}
-
-	return result;
-}
-
-extern uint8_t memory_load_crayon_packer_sheet(struct crayon_spritesheet *ss, char *path){
+extern uint8_t memory_load_crayon_spritesheet(struct crayon_spritesheet *ss, char *path){
 	uint8_t result = 0;
 	pvr_ptr_t texture = NULL;
 	ss->palette_data = NULL;
@@ -484,8 +455,49 @@ extern uint8_t memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *pa
 	return result;
 }
 
+extern uint8_t memory_load_palette(crayon_palette_t *cp, char *path){
+	uint8_t result = 0;
+	#define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
+	
+	FILE *palette_file = fopen(path, "rb");
+	if(!palette_file){PAL_ERROR(1);}
+
+	dpal_header_t dpal_header;
+	if(fread(&dpal_header, sizeof(dpal_header), 1, palette_file) != 1){PAL_ERROR(2);}
+
+	if(memcmp(dpal_header.magic, "DPAL", 4) | !dpal_header.color_count){PAL_ERROR(3);}
+
+	cp->palette = malloc(dpal_header.color_count * sizeof(uint32_t));
+	if(!cp->palette){PAL_ERROR(4);}
+
+	if(fread(cp->palette, sizeof(uint32_t), dpal_header.color_count,
+		palette_file) != dpal_header.color_count){PAL_ERROR(5);}
+
+	#undef PAL_ERROR
+
+	cp->colour_count = dpal_header.color_count;
+
+	PAL_cleanup:
+
+	if(palette_file){fclose(palette_file);}
+
+	return result;
+}
+
+extern crayon_palette_t * memory_clone_palette(crayon_palette_t *original){
+	crayon_palette_t *copy = (crayon_palette_t *) malloc(sizeof(crayon_palette_t));
+	copy->palette = malloc(original->colour_count * sizeof(uint32_t));
+	copy->colour_count = original->colour_count;
+
+	uint16_t i;
+	for(i = 0; i < copy->colour_count; i++){	//Goes through the palette and adds in all values
+		copy->palette[i] = original->palette[i];
+	}
+	return copy;
+}
+
 //Free Texture, anim array and palette (Maybe the anim/ss names later on?). Doesn't free the spritesheet struct itself
-extern uint8_t memory_free_crayon_packer_sheet(struct crayon_spritesheet *ss, uint8_t free_palette){
+extern uint8_t memory_free_crayon_spritesheet(struct crayon_spritesheet *ss, uint8_t free_palette){
 	if(ss){
 		if(free_palette && ss->palette_data != NULL){ //Free the palette
 			if(ss->palette_data->palette != NULL){
@@ -537,6 +549,14 @@ extern uint8_t memory_free_mono_font_sheet(struct crayon_font_mono *fm, uint8_t 
 		}
 		pvr_mem_free(fm->fontsheet_texture);
 
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t memory_free_palette(crayon_palette_t *cp){
+	if(cp->palette != NULL){
+		free(cp->palette);
 		return 0;
 	}
 	return 1;
