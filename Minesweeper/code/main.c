@@ -659,12 +659,6 @@ int main(){
 	uint16_t face_frame_y;
 	uint8_t face_frame_id = 0;	//0 normal, 1 suprised, 2 ded, 3 sunny, 4 indented
 
-	//Cursor Player icon frame coords
-	uint16_t p_frame_x = 0;
-	uint16_t p_frame_y = 0;
-	uint8_t player_active = 0;	//Used to confirm if a controller is being used
-	graphics_frame_coordinates(&Icons.spritesheet_animation_array[1], &p_frame_x, &p_frame_y, 0);
-
 	//For the timer
 	uint32_t current_time = 0;
 	uint32_t current_ms_time = 0;
@@ -674,6 +668,7 @@ int main(){
 	//For the "start to reset"
 	uint8_t start_primed = 0;	//Format -PVA 4321 where the numbers are if the player is holding either nothing or just start,
 								//A somewhere start is being pressed. V is invalidated, P is someone pressed combo
+	uint8_t player_active = 0;	//Used to confirm if a controller is being used
 
 	//Stores the button combination from the previous button press
 	uint32_t previous_buttons[4] = {0};
@@ -693,7 +688,7 @@ int main(){
 	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1 despite having a region
 		region = 3;
 	}
-	graphics_frame_coordinates(&Icons.spritesheet_animation_array[2], &region_icon_x, &region_icon_y, region);
+	graphics_frame_coordinates(&Icons.spritesheet_animation_array[1], &region_icon_x, &region_icon_y, region);
 
 	float thumb_x = 0;
 	float thumb_y = 0;
@@ -701,11 +696,22 @@ int main(){
 
 	uint16_t sd_x;
 	uint16_t sd_y;
-	graphics_frame_coordinates(&Icons.spritesheet_animation_array[3], &sd_x, &sd_y, 0);
+	graphics_frame_coordinates(&Icons.spritesheet_animation_array[2], &sd_x, &sd_y, 0);
 
 	//The palette for XP's clock
 	crayon_palette_t *XP_time = memory_clone_palette(Tahoma_font.palette_data);
-	memory_swap_colour(XP_time, 4278190080u, 4294967295u, 0);	//Swapps black for white
+	memory_swap_colour(XP_time, 0xFF000000, 0xFFFFFFFF, 0);	//Swapps black for white
+
+	//The cursor colours
+	crayon_palette_t *cursor_red, *cursor_yellow, *cursor_green, *cursor_blue;
+	cursor_red = memory_clone_palette(Icons.palette_data);
+	cursor_yellow = memory_clone_palette(Icons.palette_data);
+	cursor_green = memory_clone_palette(Icons.palette_data);
+	cursor_blue = memory_clone_palette(Icons.palette_data);
+	memory_swap_colour(cursor_red, 0xFFFFFFFF, 0xFFFF0000, 0);
+	memory_swap_colour(cursor_yellow, 0xFFFFFFFF, 0xFFFFFF00, 0);
+	memory_swap_colour(cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
+	memory_swap_colour(cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
 
 	#if CRAYON_SD_MODE == 1
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
@@ -979,6 +985,10 @@ int main(){
 		if(!operating_system){	//Since it uses palettes and XP doesn't, we do this
 			graphics_setup_palette(Windows.palette_data, Windows.spritesheet_format, 1);	//Since Windows uses 8bpp, this doesn't overlap with "icons"
 		}
+		graphics_setup_palette(cursor_red, Icons.spritesheet_format, 2);
+		graphics_setup_palette(cursor_yellow, Icons.spritesheet_format, 3);
+		graphics_setup_palette(cursor_green, Icons.spritesheet_format, 4);
+		graphics_setup_palette(cursor_blue, Icons.spritesheet_format, 5);
 
 		//I like to put the fonts at the very back of the system (But really, its probably better standard tp go first)
 		if(operating_system){
@@ -1010,7 +1020,6 @@ int main(){
 		//Updating the time in the bottom right
 		//CONSIDER ONLY UPDATING IF TIME IS DIFFERENT
 		char timebuffer[9];
-		readable_time->tm_hour += 6;
 		if(readable_time->tm_hour < 13){
 			sprintf(timebuffer, "%02d:%02d AM", readable_time->tm_hour, readable_time->tm_min);
 		}
@@ -1052,11 +1061,11 @@ int main(){
 
 		//Draw the sd icon
 		if(sd_present){
-			graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[3], os.variant_pos[4], os.variant_pos[5], 21, 1, 1, sd_x, sd_y, 1);
+			graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[2], os.variant_pos[4], os.variant_pos[5], 21, 1, 1, sd_x, sd_y, 1);
 		}
 
 		//Draw the region icon
-		graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[2], os.variant_pos[6], os.variant_pos[7], 21, 1, 1, region_icon_x, region_icon_y, 1);
+		graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[1], os.variant_pos[6], os.variant_pos[7], 21, 1, 1, region_icon_x, region_icon_y, 1);
 
 		//Draw the reset button face
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
@@ -1066,9 +1075,12 @@ int main(){
 			if(player_active & (1 << iter)){
 				//Passing coords as ints because otherwise we can get case where each pixel contains more than 1 texel
 				//ADD A DRAW FOR THE SHADOW
-				graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[0], (int) cursor_position[2 * iter], (int) cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, 1);
-				graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[1], (int) cursor_position[2 * iter] + 5, (int) cursor_position[(2 * iter) + 1],
-					52, 1, 1, p_frame_x, p_frame_y + (iter * 10), 1);
+				uint8_t cursor_palette = 2 + iter;
+				if(player_active == (1 << 0) || player_active == (1 << 1) || player_active == (1 << 2) || player_active == (1 << 3)){
+					cursor_palette = 1;
+				}
+				graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[0], (int) cursor_position[2 * iter],
+					(int) cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, cursor_palette);
 			}
 			if(press_data[3 * iter]){
 				uint16_t top_left_x = press_data[(3 * iter) + 1] * 16;
@@ -1144,7 +1156,7 @@ int main(){
 
 		if(!operating_system){
 			custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000
-			custom_poly_2000_boarder(0, 0, 1, 640, 452);	//The Windows 2000 window boarder THIS FUNCTION IS INEFFICIENT AND CREATES SLOWDOWN
+			custom_poly_2000_boarder(0, 0, 1, 640, 452);	//The Windows 2000 window boarder
 		}
 		pvr_list_finish();
 
