@@ -496,6 +496,21 @@ extern crayon_palette_t * memory_clone_palette(crayon_palette_t *original){
 	return copy;
 }
 
+extern uint16_t memory_swap_colour(crayon_palette_t *cp, uint32_t colour1, uint32_t colour2, uint8_t _continue){
+	uint16_t i;
+	uint16_t found = 0;
+	for(i = 0; i < cp->colour_count; ++i){
+		if(cp->palette[i] == colour1){
+			cp->palette[i] = colour2;
+			found++;
+			if(!_continue){
+				break;
+			}
+		}
+	}
+	return found;
+}
+
 //Free Texture, anim array and palette (Maybe the anim/ss names later on?). Doesn't free the spritesheet struct itself
 extern uint8_t memory_free_crayon_spritesheet(struct crayon_spritesheet *ss, uint8_t free_palette){
 	if(ss){

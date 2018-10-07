@@ -13,13 +13,27 @@ typedef struct MinesweeperOS{
 	uint16_t *scale;	//The scale factor
 	uint8_t sprite_count;	//Number of sprites to draw
 	crayon_spritesheet_t *windows_ss;	//The spritesheet for the windows assets
+
+	//These two are for stuff that appear in both OSes, but vary depending on which OS you use
+	uint16_t *variant_pos;	//Records the x and y for all the OS dependent stuff not in OS spritesheet
+	uint8_t clock_palette;	//The palette for the clock to use
 } MinesweeperOS_t;
 
-//Figure out what I need to do here
+//Figure out what I need to do here if anything
 typedef struct MinesweeperLang{
-	uint16_t coord_pos;	//Records the x and y for all the OS dependent stuff
-	//uint8_t num_sprites
-	uint8_t time_palette;	//The palette for the clock to use
+	;
 } MinesweeperLang_t;
+
+/*
+
+OS dependent stuff
+
+[Menu_X] [Menu_Y]	//Game, Options, About
+[Clock_X] [Clock_Y]
+[Icon_Eject_X] [Icon_Eject_Y]
+[Icon_DC_X] [Icon_DC_Y]
+[Icon_BS_X] [Icon_BS_Y]
+
+*/
 
 #endif

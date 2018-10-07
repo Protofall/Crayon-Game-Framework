@@ -703,9 +703,9 @@ int main(){
 	uint16_t sd_y;
 	graphics_frame_coordinates(&Icons.spritesheet_animation_array[3], &sd_x, &sd_y, 0);
 
-	//Testing out my clone function
+	//The palette for XP's clock
 	crayon_palette_t *XP_time = memory_clone_palette(Tahoma_font.palette_data);
-	XP_time->palette[1] = (255 << 24) + (255 << 16) + (255 << 8) + 255;	//Setting the black text to white
+	memory_swap_colour(XP_time, 4278190080u, 4294967295u, 0);	//Swapps black for white
 
 	#if CRAYON_SD_MODE == 1
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
@@ -1000,15 +1000,17 @@ int main(){
 				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 1);
 				//We choose palette 1 because that's 2000's palette and XP uses RGB565
 		}
-		// graphics_draw_text_prop(&Tahoma_font, 5, 232, 100, 1, 1, 62, "0 !\"#$&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\0");
+		// graphics_draw_text_prop(&Tahoma_font, 5, 435, 100, 1, 1, 62, "0 !\"#$&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\0");
 
-		graphics_draw_text_prop(&Tahoma_font, 9, 30 + (3 * operating_system), 20, 1, 1, 62, "Game\0");
-		graphics_draw_text_prop(&Tahoma_font, 48, 30 + (3 * operating_system), 20, 1, 1, 62, "Options\0");
-		graphics_draw_text_prop(&Tahoma_font, 97, 30 + (3 * operating_system), 20, 1, 1, 62, "About\0");
+		graphics_draw_text_prop(&Tahoma_font, 9, os.variant_pos[1], 20, 1, 1, 62, "Game\0");
+		graphics_draw_text_prop(&Tahoma_font, 48, os.variant_pos[1], 20, 1, 1, 62, "Options\0");
+		graphics_draw_text_prop(&Tahoma_font, 97, os.variant_pos[1], 20, 1, 1, 62, "Controls\0");	//Change this and about's x pos
+		graphics_draw_text_prop(&Tahoma_font, 150, os.variant_pos[1], 20, 1, 1, 62, "About\0");
 
 		//Updating the time in the bottom right
 		//CONSIDER ONLY UPDATING IF TIME IS DIFFERENT
 		char timebuffer[9];
+		readable_time->tm_hour += 6;
 		if(readable_time->tm_hour < 13){
 			sprintf(timebuffer, "%02d:%02d AM", readable_time->tm_hour, readable_time->tm_min);
 		}
@@ -1016,8 +1018,30 @@ int main(){
 			sprintf(timebuffer, "%02d:%02d PM", readable_time->tm_hour - 12, readable_time->tm_min);
 		}
 
-		graphics_draw_text_prop(&Tahoma_font, 581, 463, 20, 1, 1,
-			62 - operating_system, timebuffer);	//In XP is uses another palette (White text version)
+		//The X starting pos varies based on the hour for XP and hour, AM/PM for 2000
+		if(operating_system){
+			if(readable_time->tm_hour % 12 < 10){
+				os.variant_pos[2] = 583;
+			}
+			else{
+				os.variant_pos[2] = 586;
+			}
+		}
+		else{
+			uint16_t clock_pos;
+			if(readable_time->tm_hour % 12 < 10){
+				clock_pos = 581;
+			}
+			else{
+				clock_pos = 585;
+			}
+			if(readable_time->tm_hour < 13){
+				clock_pos--;
+			}
+			os.variant_pos[2] = clock_pos;
+		}
+
+		graphics_draw_text_prop(&Tahoma_font, os.variant_pos[2], os.variant_pos[3], 20, 1, 1, os.clock_palette, timebuffer);	//In XP is uses another palette (White text version)
 
 		//Draw the flag count and timer
 		digit_display(&Board, &Board.spritesheet_animation_array[1], num_flags, 20, 65, 17);
@@ -1028,11 +1052,11 @@ int main(){
 
 		//Draw the sd icon
 		if(sd_present){
-			graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[3], 530 + (3 * operating_system), 457 + (2 * !operating_system), 21, 1, 1, sd_x, sd_y, 1);
+			graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[3], os.variant_pos[4], os.variant_pos[5], 21, 1, 1, sd_x, sd_y, 1);
 		}
 
 		//Draw the region icon
-		graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[2], 553 - (5 * !operating_system), 456 + (2 * !operating_system), 21, 1, 1, region_icon_x, region_icon_y, 1);
+		graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[2], os.variant_pos[6], os.variant_pos[7], 21, 1, 1, region_icon_x, region_icon_y, 1);
 
 		//Draw the reset button face
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
@@ -1128,6 +1152,7 @@ int main(){
 	}
 
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
+	//I'm probs forgetting a few things
 	int retVal = 0;
 	retVal += memory_free_crayon_spritesheet(&Board, 1);
 	retVal += memory_free_crayon_spritesheet(&Icons, 1);
@@ -1140,6 +1165,7 @@ int main(){
 	snd_sfx_unload(Sound_Death);
 	snd_sfx_unload(Sound_Death_Italian);
 	snd_sfx_unload(Sound_Win);
+	setup_free_OS_struct(&os);
 	error_freeze("Free-ing result %d!\n", retVal);
 
 	return 0;

@@ -31,6 +31,15 @@ extern uint8_t memory_load_palette(crayon_palette_t *cp, char *path);
 extern crayon_palette_t * memory_clone_palette(crayon_palette_t *original);
 
 
+//------------------Modifying memory----------------//
+
+
+//This function attempts to search for colour1 in the palette and swapps it for colour2
+//If _continue is false then it only replaces the first instance of colour1, else it replaces all instances
+//It returns 0 if colour1 wasn't found, otherwise it returns the number of "colour1"s that were swapped
+extern uint16_t memory_swap_colour(crayon_palette_t *cp, uint32_t colour1, uint32_t colour2, uint8_t _continue);
+
+
 //------------------Freeing memory------------------//
 
 

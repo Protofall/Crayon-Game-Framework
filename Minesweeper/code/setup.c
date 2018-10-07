@@ -259,6 +259,35 @@ void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys,
 	for(iter = 0; iter < os->sprite_count; iter++){
 		setup_pos_lookup_table(os, ss, sys, iter, sd);
 	}
+
+	//Confirm all these positions are accurate
+	os->variant_pos = (uint16_t *) malloc(10 * sizeof(uint16_t));
+	if(sys){
+		os->clock_palette = 61;
+		// os->variant_pos[0] = 0;	//Unused, just hear so its easy to get the item you want
+		os->variant_pos[1] = 33;
+		os->variant_pos[2] = 581;	//The X for this and other changes based on time (Right alighned) so have this be 640 - const - sum of width of chars
+		os->variant_pos[3] = 460;
+		os->variant_pos[4] = 533;
+		os->variant_pos[5] = 457;
+		os->variant_pos[6] = 553;
+		os->variant_pos[7] = 456;
+		os->variant_pos[8] = 0;	//The BS mode icon will go here eventually
+		os->variant_pos[9] = 0;
+	}
+	else{
+		os->clock_palette = 62;
+		// os->variant_pos[0] = 0;	//Unused, just hear so its easy to get the item you want
+		os->variant_pos[1] = 30;
+		os->variant_pos[2] = 581;	//Same as id 2 from XP
+		os->variant_pos[3] = 463;
+		os->variant_pos[4] = 530;
+		os->variant_pos[5] = 459;
+		os->variant_pos[6] = 548;
+		os->variant_pos[7] = 458;
+		os->variant_pos[8] = 0;	//The BS mode icon will go here eventually
+		os->variant_pos[9] = 0;
+	}
 }
 
 void setup_free_OS_struct(MinesweeperOS_t *os){

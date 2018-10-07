@@ -2,24 +2,24 @@
 
 //There are 4 palettes for 8BPP and 64 palettes for 4BPP. palette_number is the id
 extern int graphics_setup_palette(const struct crayon_palette *cp, uint8_t format, uint8_t palette_number){
-  int entries;
-  if(format == 5){
-	entries = 16;
-  }
-  else if(format == 6){
-	entries = 256;
-  }
-  else{
-	return 1;
-  }
+	int entries;
+	if(format == 5){
+		entries = 16;
+	}
+	else if(format == 6){
+		entries = 256;
+	}
+	else{
+		return 1;
+	}
 
-  pvr_set_pal_format(PVR_PAL_ARGB8888);
-  uint16_t i; //Can't this be a uint8_t instead? 0 to 255 and max 256 entries per palette
-  //...but then again how would the loop be able to break? since it would overflow back to 0
-  for(i = 0; i < cp->colour_count; ++i){
-	pvr_set_pal_entry(i + entries * palette_number, cp->palette[i]);
-  }
-  return 0;
+	pvr_set_pal_format(PVR_PAL_ARGB8888);
+	uint16_t i; //Can't this be a uint8_t instead? 0 to 255 and max 256 entries per palette
+	//...but then again how would the loop be able to break? since it would overflow back to 0
+	for(i = 0; i < cp->colour_count; ++i){
+		pvr_set_pal_entry(i + entries * palette_number, cp->palette[i]);
+	}
+	return 0;
 }
 
 extern void graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x, uint16_t *frame_y, uint8_t frame){
