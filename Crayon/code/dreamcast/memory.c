@@ -112,7 +112,10 @@ extern uint8_t memory_load_crayon_spritesheet(struct crayon_spritesheet *ss, cha
 	sheet_file = fopen(txt_path, "rb");
 	free(txt_path);
 	if(!sheet_file){ERROR(14);}
-	fscanf(sheet_file, "%hhu\n", &ss->spritesheet_animation_count);
+
+	int uint8_holder;	//Can't really read straight into uint8_t's so this is the work around :(
+	fscanf(sheet_file, "%d\n", &uint8_holder);
+	ss->spritesheet_animation_count = uint8_holder;
 
 	ss->spritesheet_animation_array = (crayon_animation_t *) malloc(sizeof(crayon_animation_t) * ss->spritesheet_animation_count);
 	if(!ss->spritesheet_animation_array){ERROR(15);}
@@ -129,7 +132,7 @@ extern uint8_t memory_load_crayon_spritesheet(struct crayon_spritesheet *ss, cha
 		ss->spritesheet_animation_array[i].animation_name = (char *) malloc((count + 1) * sizeof(char));
 
 		fseek(sheet_file, -count - 1, SEEK_CUR);  //Go back so we can store the name
-		int scanned = fscanf(sheet_file, "%s %hu %hu %hu %hu %hu %hu %hhu\n",
+		int scanned = fscanf(sheet_file, "%s %hu %hu %hu %hu %hu %hu %d\n",
 								ss->spritesheet_animation_array[i].animation_name,
 								&ss->spritesheet_animation_array[i].animation_x,
 								&ss->spritesheet_animation_array[i].animation_y,
@@ -137,7 +140,9 @@ extern uint8_t memory_load_crayon_spritesheet(struct crayon_spritesheet *ss, cha
 								&ss->spritesheet_animation_array[i].animation_sheet_height,
 								&ss->spritesheet_animation_array[i].animation_frame_width,
 								&ss->spritesheet_animation_array[i].animation_frame_height,
-								&ss->spritesheet_animation_array[i].animation_frames);
+								&uint8_holder);
+
+		ss->spritesheet_animation_array[i].animation_frames = uint8_holder;
 		if(scanned != 8){
 			free(ss->spritesheet_animation_array);
 			ERROR(16);
@@ -255,13 +260,18 @@ extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *pa
 	free(txt_path);
 	if(!sheet_file){ERROR(14);}
 
-	if(fscanf(sheet_file, "%hhu\n", &fp->char_height) != 1){
+	int uint8_holder;
+	if(fscanf(sheet_file, "%d\n", &uint8_holder) != 1){
 		ERROR(15);
 	}
+	fp->char_height = uint8_holder;
 
-	if(fscanf(sheet_file, "%hhu", &fp->num_rows) != 1){
+	if(fscanf(sheet_file, "%d", &uint8_holder) != 1){
 		ERROR(16);
 	}
+
+	fp->num_rows = uint8_holder;
+
 
 	fp->chars_per_row = (uint8_t *) malloc((fp->num_rows)*sizeof(uint8_t));
 	if(fp->chars_per_row == NULL){ERROR(17);}
@@ -269,7 +279,8 @@ extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *pa
 	fp->num_chars = 0;
 	int i;
 	for(i = 0; i < fp->num_rows; i++){
-		int8_t res = fscanf(sheet_file, "%hhu", &fp->chars_per_row[i]);
+		int8_t res = fscanf(sheet_file, "%d", &uint8_holder);
+		fp->chars_per_row[i] = uint8_holder;
 		fp->num_chars += fp->chars_per_row[i];
 		if(res != 1){
 			ERROR(18);
@@ -282,7 +293,8 @@ extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *pa
 
 	i = 0;	//Might be redundant
 	for(i = 0; i < fp->num_chars; i++){
-		int8_t res = fscanf(sheet_file, "%hhu", &fp->char_width[i]);
+		int8_t res = fscanf(sheet_file, "%d", &uint8_holder);
+		fp->char_width[i] = uint8_holder;
 		if(res != 1){
 			ERROR(20);
 		}
@@ -430,9 +442,24 @@ extern uint8_t memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *pa
 	free(txt_path);
 	if(!sheet_file){ERROR(14);}
 
-	if(fscanf(sheet_file, "%hhu %hhu %hhu %hhu\n", &fm->char_width, &fm->char_height, &fm->num_columns, &fm->num_rows) != 4){
+	int test1, test2, test3, test4;
+	if(fscanf(sheet_file, "%d %d %d %d\n", &test1, &test2, &test3, &test4) != 4){	//Storing them in into since hhu looks for one char...
 		ERROR(15);
 	}
+
+	fm->char_width = test1;
+	fm->char_height = test2;
+	fm->num_columns = test3;
+	fm->num_rows = test4;
+
+	//Attempt to come back here and read the whole file directly into the vars
+	// if(fscanf(sheet_file, "%hhu %hhu %hhu %hhu\n", fm->char_width, fm->char_height, fm->num_columns, fm->num_rows) != 4){
+	// if(fscanf(sheet_file, "%hhu %hhu %hhu %hhu\n", &fm->char_width, &fm->char_height, &fm->num_columns, &fm->num_rows) != 4){
+	// if(fscanf(sheet_file, "%d %d %d %d\n", &fm->char_width, &fm->char_height, &fm->num_columns, &fm->num_rows) != 4){
+	// if(fscanf(sheet_file, "%hhd %hhd %hhd %hhd\n", &fm->char_width, &fm->char_height, &fm->num_columns, &fm->num_rows) != 4){
+	// if(fscanf(sheet_file, "%u %u %u %u\n", &fm->char_width, &fm->char_height, &fm->num_columns, &fm->num_rows) != 4){
+		// ERROR(15);
+	// }
 
 	#undef ERROR
 

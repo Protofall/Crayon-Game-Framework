@@ -62,7 +62,7 @@ extern uint8_t memory_free_palette(crayon_palette_t *cp);
 //Mount a regular img romdisk
 extern uint8_t memory_mount_romdisk(char *filename, char *mountpoint);
 
-//Mount a gz compressed romdisk
+//Mount a gz compressed romdisk (Apparently its kinda dodgy)
 extern uint8_t memory_mount_romdisk_gz(char *filename, char *mountpoint);
 
 #endif

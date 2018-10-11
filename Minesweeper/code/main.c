@@ -471,7 +471,39 @@ void cursor_on_grid(uint8_t *in_grid, int *ele_x, int *ele_y, uint8_t button_act
 	}
 }
 
-//This handles all the buttons you can press aside from the grid itself
+uint8_t button_press_logic_buttons(MinesweeperOS_t *os, int id, float *cursor_position, uint32_t previous_buttons, uint32_t buttons){
+	//Clean up the magic numbers
+	if(focus != 1){
+		//Top 4 options
+		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){	//When we get a new score, we don't want to change focus easily
+			if((cursor_position[2 * id] <= 9 + 27 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 8 + 3)
+					&& cursor_position[2 * id] >= 9 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
+				focus = 0;
+			}
+			else if((cursor_position[2 * id] <= 48 + 37 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 8 + 3)
+					&& cursor_position[2 * id] >= 48 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
+				focus = 2;
+			}
+			else if((cursor_position[2 * id] <= 97 + 40 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 8 + 3)
+					&& cursor_position[2 * id] >= 97 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
+				focus = 3;
+			}
+			else if((cursor_position[2 * id] <= 149 + 29 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 8 + 3)
+					&& cursor_position[2 * id] >= 149 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
+				focus = 4;
+			}
+		}
+	}
+	else{
+		;
+	}
+
+	//HOW DOES CHANGING FOCUS EFFECT THE CURRENT BUTTON PRESSES? (What if you die and change focus at the same time
+
+	return 0;
+}
+
+//This handles all the buttons you can press aside from the grid itself. Currently only does the face, your re-add the buttons variant here
 uint8_t button_press_logic(uint8_t button_action, int id, float *cursor_position, crayon_animation_t * tile_anim,
 	uint32_t *previous_buttons, uint32_t buttons){
 	if(focus == 0){
@@ -483,14 +515,6 @@ uint8_t button_press_logic(uint8_t button_action, int id, float *cursor_position
 			return 1;
 		}
 	}
-	//And detects for the other buttons/options
-	// if((button_action & (1 << 0)) && (cursor_position[2 * id] <= x + dim_x) && (cursor_position[(2 * id) + 1] <= y + dim_y)
-	// 		&& cursor_position[2 * id] >= x && cursor_position[(2 * id) + 1] >= y){
-	// 	focus = 2;
-	// }
-
-	//HOW DOES CHANGING FOCUS EFFECT THE CURRENT BUTTON PRESSES? (What if you die and change focus at the same time
-	//FINISH THIS WHEN THE FONT CODE IS DONE
 
 	return 0;
 }
@@ -554,6 +578,7 @@ int main(){
 	#else
 		memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	#endif
+
 	memory_load_mono_font_sheet(&BIOS_font, "/Minesweeper/Fonts/BIOS_font.dtex");
 	memory_load_prop_font_sheet(&Tahoma_font, "/Minesweeper/Fonts/Tahoma_font.dtex");
 	memory_load_crayon_spritesheet(&Board, "/Minesweeper/Board.dtex");
@@ -762,22 +787,27 @@ int main(){
 		button_action |= (!(previous_buttons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y)) << 3;	//Y pressed
 		button_action |= ((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && !(start_primed & (1 << 4))) << 4;	//If we press start, but we haven't done active prime yet and we aren't invalidated
 
-		if(button_press_logic(button_action, __dev->port, cursor_position, &tile_anim, previous_buttons, st->buttons)){break;}
+		if(button_press_logic(button_action, __dev->port, cursor_position, &tile_anim, previous_buttons, st->buttons)){break;}	//Is previous_buttons right?
+		button_press_logic_buttons(&os, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
 
 		//These are only ever set if The cursor is on the grid and A/B/X is/was pressed
 		int ele_x = -1;
 		int ele_y = -1;
 		uint8_t in_grid = 0;
 
-		cursor_on_grid(&in_grid, &ele_x, &ele_y, button_action, __dev->port, cursor_position);
-		if(in_grid){grid_ABX_logic(ele_x, ele_y, button_action, &tile_anim, &start_time, &start_ms_time);}
+		if(focus == 0){
+			cursor_on_grid(&in_grid, &ele_x, &ele_y, button_action, __dev->port, cursor_position);
+			if(in_grid){grid_ABX_logic(ele_x, ele_y, button_action, &tile_anim, &start_time, &start_ms_time);}
 
-		//Y and Start press code
+			//Start press code
+			if(button_action & (1 << 4)){
+				start_primed |= (1 << 4);	//A bit
+			}
+		}
+
+		//Y press code
 		if(button_action & (1 << 3)){
 			player_movement ^= (1 << __dev->port);
-		}
-		if(button_action & (1 << 4)){
-			start_primed |= (1 << 4);	//A bit
 		}
 
 		//Movement code
@@ -826,9 +856,11 @@ int main(){
 			}
 		}
 
-		//Face logic code and indented blank tiles
 		face_logic(&face_frame_id, __dev->port, cursor_position, !!(st->buttons & (CONT_A)), !!(st->buttons & (CONT_X)));
-		grid_indent_logic(ele_x, ele_y, in_grid, __dev->port, press_data, !!(st->buttons & (CONT_A)), !!(st->buttons & (CONT_X)), !!(st->buttons & (CONT_B)), 0);
+
+		if(focus == 0){
+			grid_indent_logic(ele_x, ele_y, in_grid, __dev->port, press_data, !!(st->buttons & (CONT_A)), !!(st->buttons & (CONT_X)), !!(st->buttons & (CONT_B)), 0);
+		}
 
 		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
 		
@@ -858,13 +890,16 @@ int main(){
 			&& !(st->buttons & MOUSE_LEFTBUTTON)) << 2;	//Right pressed (Without Left) and the game isn't over
 
 		if(button_press_logic(button_action, __dev->port, cursor_position, &tile_anim, previous_buttons, st->buttons)){break;}
+		button_press_logic_buttons(&os, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
 
 		int ele_x = -1;
 		int ele_y = -1;
 		uint8_t in_grid = 0;
 
-		cursor_on_grid(&in_grid, &ele_x, &ele_y, button_action, __dev->port, cursor_position);
-		if(in_grid){grid_ABX_logic(ele_x, ele_y, button_action, &tile_anim, &start_time, &start_ms_time);}
+		if(focus == 0){
+			cursor_on_grid(&in_grid, &ele_x, &ele_y, button_action, __dev->port, cursor_position);
+			if(in_grid){grid_ABX_logic(ele_x, ele_y, button_action, &tile_anim, &start_time, &start_ms_time);}
+		}
 
 		//Movement code
 		cursor_position[(2 * __dev->port) + 1] += 0.8 * st->dy;
@@ -883,7 +918,10 @@ int main(){
 		}
 
 		face_logic(&face_frame_id, __dev->port, cursor_position, !!(st->buttons & (MOUSE_LEFTBUTTON)), !!(st->buttons & (MOUSE_SIDEBUTTON)));	//Might need to change the X/Side button code
-		grid_indent_logic(ele_x, ele_y, in_grid, __dev->port, press_data, !!(st->buttons & (MOUSE_LEFTBUTTON)), !!(st->buttons & (MOUSE_SIDEBUTTON)), !!(st->buttons & (MOUSE_RIGHTBUTTON)), 1);
+
+		if(focus == 0){
+			grid_indent_logic(ele_x, ele_y, in_grid, __dev->port, press_data, !!(st->buttons & (MOUSE_LEFTBUTTON)), !!(st->buttons & (MOUSE_SIDEBUTTON)), !!(st->buttons & (MOUSE_RIGHTBUTTON)), 1);
+		}
 
 		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
 
@@ -990,7 +1028,7 @@ int main(){
 		graphics_setup_palette(cursor_green, Icons.spritesheet_format, 4);
 		graphics_setup_palette(cursor_blue, Icons.spritesheet_format, 5);
 
-		//I like to put the fonts at the very back of the system (But really, its probably better standard tp go first)
+		//I like to put the fonts at the very back of the system (But really, its probably better standard to go first)
 		if(operating_system){
 			graphics_setup_palette(XP_time, 5, 61);	//The extra palette for XP mode
 		}
@@ -1010,21 +1048,20 @@ int main(){
 				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 1);
 				//We choose palette 1 because that's 2000's palette and XP uses RGB565
 		}
-		// graphics_draw_text_prop(&Tahoma_font, 5, 435, 100, 1, 1, 62, "0 !\"#$&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\0");
-
 		graphics_draw_text_prop(&Tahoma_font, 9, os.variant_pos[1], 20, 1, 1, 62, "Game\0");
 		graphics_draw_text_prop(&Tahoma_font, 48, os.variant_pos[1], 20, 1, 1, 62, "Options\0");
-		graphics_draw_text_prop(&Tahoma_font, 97, os.variant_pos[1], 20, 1, 1, 62, "Controls\0");	//Change this and about's x pos
-		graphics_draw_text_prop(&Tahoma_font, 150, os.variant_pos[1], 20, 1, 1, 62, "About\0");
+		graphics_draw_text_prop(&Tahoma_font, 97, os.variant_pos[1], 20, 1, 1, 62, "Controls\0");
+		graphics_draw_text_prop(&Tahoma_font, 149, os.variant_pos[1], 20, 1, 1, 62, "About\0");
+		// graphics_draw_text_mono(&BIOS_font, 149, os.variant_pos[1], 20, 1, 1, 63, "About\0");
 
 		//Updating the time in the bottom right
 		//CONSIDER ONLY UPDATING IF TIME IS DIFFERENT
-		char timebuffer[9];
+		char time_buffer[9];
 		if(readable_time->tm_hour < 13){
-			sprintf(timebuffer, "%02d:%02d AM", readable_time->tm_hour, readable_time->tm_min);
+			sprintf(time_buffer, "%02d:%02d AM", readable_time->tm_hour, readable_time->tm_min);
 		}
 		else{
-			sprintf(timebuffer, "%02d:%02d PM", readable_time->tm_hour - 12, readable_time->tm_min);
+			sprintf(time_buffer, "%02d:%02d PM", readable_time->tm_hour - 12, readable_time->tm_min);
 		}
 
 		//The X starting pos varies based on the hour for XP and hour, AM/PM for 2000
@@ -1050,14 +1087,17 @@ int main(){
 			os.variant_pos[2] = clock_pos;
 		}
 
-		graphics_draw_text_prop(&Tahoma_font, os.variant_pos[2], os.variant_pos[3], 20, 1, 1, os.clock_palette, timebuffer);	//In XP is uses another palette (White text version)
+		graphics_draw_text_prop(&Tahoma_font, os.variant_pos[2], os.variant_pos[3], 20, 1, 1, os.clock_palette, time_buffer);	//In XP is uses another palette (White text version)
+
+		//DEBUG, REMOVE LATER
+		char focus_buffer[9];
+		sprintf(focus_buffer, "Focus: %d", focus);
+		graphics_draw_text_prop(&Tahoma_font, 580, os.variant_pos[1], 20, 1, 1, 62, focus_buffer);
+
 
 		//Draw the flag count and timer
 		digit_display(&Board, &Board.spritesheet_animation_array[1], num_flags, 20, 65, 17);
 		digit_display(&Board, &Board.spritesheet_animation_array[1], time_sec, 581, 65, 17);
-
-		//Draw the grid
-		graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 17, 1, 1, !operating_system && language);
 
 		//Draw the sd icon
 		if(sd_present){
@@ -1069,6 +1109,11 @@ int main(){
 
 		//Draw the reset button face
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
+
+		//Draw the grid
+		if(focus <= 1){
+			graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 17, 1, 1, !operating_system && language);
+		}
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		for(iter = 0; iter < 4; iter++){
@@ -1140,7 +1185,9 @@ int main(){
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
 		//Draw the grid's boarder
-		custom_poly_boarder(3, grid_start_x, grid_start_y, 16, grid_x * 16, grid_y * 16, 4286611584u, 4294967295u);
+		if(focus <= 1){
+			custom_poly_boarder(3, grid_start_x, grid_start_y, 16, grid_x * 16, grid_y * 16, 4286611584u, 4294967295u);
+		}
 
 		//Draw the boarders for digit display (I think I should move these calls into digit display itself)
 		custom_poly_boarder(1, 20, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
@@ -1164,15 +1211,15 @@ int main(){
 	}
 
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
-	//I'm probs forgetting a few things
+	//I'm probs forgetting a few things such as the cursor palettes
 	int retVal = 0;
 	retVal += memory_free_crayon_spritesheet(&Board, 1);
 	retVal += memory_free_crayon_spritesheet(&Icons, 1);
 	retVal += memory_free_crayon_spritesheet(&Windows, 1);
 	retVal += memory_free_mono_font_sheet(&BIOS_font, 1);
 	retVal += memory_free_prop_font_sheet(&Tahoma_font, 1);
-	retVal += memory_free_palette(Tahoma_font.palette_data);
-	free(Tahoma_font.palette_data);
+	retVal += memory_free_palette(XP_time);
+	free(XP_time);
 	snd_sfx_unload(Sound_Tick);
 	snd_sfx_unload(Sound_Death);
 	snd_sfx_unload(Sound_Death_Italian);

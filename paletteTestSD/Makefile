@@ -40,7 +40,7 @@ LIBS =  -lkosext2fs -lz -lm $(KOS_LIBS)
 # main targets
 #------------------------------------------------------------------------------
 
-all: cdi
+all: $(target).bin
 
 cdi: rm-cdi $(TARGET).cdi
 
@@ -69,6 +69,9 @@ $(TARGET).cdi: $(SCRAMBLED) $(ROMDISK_IMGS)
 $(SCRAMBLED): $(CDFS_DIR) $(TARGET).elf
 	sh-elf-objcopy -R .stack -O binary $(TARGET).elf $(TARGET).bin
 	$(KOS_BASE)/utils/scramble/scramble $(TARGET).bin $@
+
+$(target).bin: $(CDFS_DIR) $(ROMDISK_IMGS) $(TARGET).elf
+	sh-elf-objcopy -R .stack -O binary $(TARGET).elf $(CDFS_DIR)/$(TARGET).bin
 
 # link objects into elf
 $(TARGET).elf: $(OFILES)
