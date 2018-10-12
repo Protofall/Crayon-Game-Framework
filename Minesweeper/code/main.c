@@ -18,10 +18,11 @@
 #include <dc/sound/stream.h>
 #include <dc/sound/sfxmgr.h>
 
-//To get region info (Not sure if this is needed)
+//To get region info
 #include <dc/flashrom.h>
 
 #define CRAYON_SD_MODE 0
+//LOWER BUTTON TOP BOUND BECAUSE OF XP MODE
 
 #if CRAYON_SD_MODE == 1
 	//For mounting the sd dir
@@ -476,19 +477,19 @@ uint8_t button_press_logic_buttons(MinesweeperOS_t *os, int id, float *cursor_po
 	if(focus != 1){
 		//Top 4 options
 		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){	//When we get a new score, we don't want to change focus easily
-			if((cursor_position[2 * id] <= 9 + 27 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 8 + 3)
+			if((cursor_position[2 * id] <= 9 + 27 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
 					&& cursor_position[2 * id] >= 9 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
 				focus = 0;
 			}
-			else if((cursor_position[2 * id] <= 48 + 37 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 8 + 3)
+			else if((cursor_position[2 * id] <= 48 + 37 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
 					&& cursor_position[2 * id] >= 48 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
 				focus = 2;
 			}
-			else if((cursor_position[2 * id] <= 97 + 40 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 8 + 3)
+			else if((cursor_position[2 * id] <= 97 + 40 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
 					&& cursor_position[2 * id] >= 97 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
 				focus = 3;
 			}
-			else if((cursor_position[2 * id] <= 149 + 29 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 8 + 3)
+			else if((cursor_position[2 * id] <= 149 + 29 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
 					&& cursor_position[2 * id] >= 149 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
 				focus = 4;
 			}
@@ -519,6 +520,24 @@ uint8_t button_press_logic(uint8_t button_action, int id, float *cursor_position
 	return 0;
 }
 
+//Called in draw function, if cursor hovers over a button then return the button map (Either no bits or 1 bit will be set)
+uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os){
+	uint8_t menus_selected = 0;
+	if((cursor_x <= 39) && (cursor_y <= os->variant_pos[1] + 13) && cursor_x >= 5 && cursor_y >= os->variant_pos[1] - 3){
+		menus_selected += (1 << 0);
+	}
+	else if((cursor_x <= 88) && (cursor_y <= os->variant_pos[1] + 13) && cursor_x >= 44 && cursor_y >= os->variant_pos[1] - 3){
+		menus_selected += (1 << 1);
+	}
+	else if((cursor_x <= 140) && (cursor_y <= os->variant_pos[1] + 13) && cursor_x >= 93 && cursor_y >= os->variant_pos[1] - 3){
+		menus_selected += (1 << 2);
+	}
+	else if((cursor_x <= 181) && (cursor_y <= os->variant_pos[1] + 13) && cursor_x >= 145 && cursor_y >= os->variant_pos[1] - 3){
+		menus_selected += (1 << 3);
+	}
+	return menus_selected;
+}
+
 int main(){
 	#if CRAYON_SD_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
@@ -526,6 +545,8 @@ int main(){
 			sd_present = 1;
 		}
 	#endif
+
+	focus = 2;
 
 	//Currently this is the only way to access some of the hidden features
 	MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -668,8 +689,26 @@ int main(){
 	}
 	tile_anim = tile_ss.spritesheet_animation_array[tile_id];
 
+	//Get the info for num_changer
+	uint8_t num_changer_id = 4;
+	uint16_t coord_num_changer[6], frame_num_changer[2];
+	for(iter = 0; iter < Windows.spritesheet_animation_count; iter++){
+		if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "numberChanger")){
+			num_changer_id = iter;
+			graphics_frame_coordinates(&Windows.spritesheet_animation_array[iter], frame_num_changer, frame_num_changer + 1, 0);
+			break;
+		}
+	}
+
+	coord_num_changer[0] = 100;
+	coord_num_changer[1] = 100;
+	coord_num_changer[2] = 100;
+	coord_num_changer[3] = 130;
+	coord_num_changer[4] = 100;
+	coord_num_changer[5] = 160;
+
 	for(jiter = 0; jiter < grid_y; jiter++){
-		for(iter = 0; iter < grid_x; iter++){	//iter is x, jiter is y
+		for(iter = 0; iter < grid_x; iter++){   //iter is x, jiter is y
 			uint16_t ele = (jiter * grid_x * 2) + (2 * iter);
 			coord_grid[ele] = grid_start_x + (iter * 16);
 			coord_grid[ele + 1] = grid_start_y + (jiter * 16);
@@ -737,6 +776,12 @@ int main(){
 	memory_swap_colour(cursor_yellow, 0xFFFFFFFF, 0xFFFFFF00, 0);
 	memory_swap_colour(cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
 	memory_swap_colour(cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
+
+	//Stuff for debugging/performance testing
+	// pvr_stats_t pvr_stats;
+	// uint8_t last_30_FPS[30] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	// uint8_t FPS_array_iter = 0;
+	// int fps_ave, fps_min, fps_max;
 
 	#if CRAYON_SD_MODE == 1
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
@@ -863,7 +908,7 @@ int main(){
 		}
 
 		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
-		
+
 		MAPLE_FOREACH_END()
 
 		//NOTE TO SELF: Break up some of the controller code into functions since its shared between the controller and the mouse
@@ -1014,6 +1059,24 @@ int main(){
 		time(&os_clock);	//I think this is how I populate it with the current time
 		readable_time = localtime(&os_clock);
 
+		// pvr_get_stats(&pvr_stats);	//Get the framerate
+		// last_30_FPS[FPS_array_iter] = pvr_stats.frame_rate;
+		// FPS_array_iter++;
+		// FPS_array_iter %= 30;
+		// fps_ave = 0;
+		// fps_min = last_30_FPS[0];
+		// fps_max = 0;
+		// for(iter = 0; iter < 30; iter++){
+		// 	fps_ave += last_30_FPS[iter];
+		// 	if(last_30_FPS[iter] > fps_max){
+		// 		fps_max = last_30_FPS[iter];
+		// 	}
+		// 	if(last_30_FPS[iter] < fps_min){
+		// 		fps_min = last_30_FPS[iter];
+		// 	}
+		// }
+		// fps_ave /= 30;
+
 		pvr_wait_ready();
 		pvr_scene_begin();
 
@@ -1040,7 +1103,7 @@ int main(){
 
 		//Draw windows graphics using our MinesweeperOpSys struct
 		for(iter = 0; iter < os.sprite_count; iter++){
-			if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "aboutLogo")){	//We don't want to draw that here so we skip
+			if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "aboutLogo") && focus != 4){	//We don't want to draw that unless we're on the about page
 				continue;
 			}
 			graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[os.ids[iter]],
@@ -1052,7 +1115,6 @@ int main(){
 		graphics_draw_text_prop(&Tahoma_font, 48, os.variant_pos[1], 20, 1, 1, 62, "Options\0");
 		graphics_draw_text_prop(&Tahoma_font, 97, os.variant_pos[1], 20, 1, 1, 62, "Controls\0");
 		graphics_draw_text_prop(&Tahoma_font, 149, os.variant_pos[1], 20, 1, 1, 62, "About\0");
-		// graphics_draw_text_mono(&BIOS_font, 149, os.variant_pos[1], 20, 1, 1, 63, "About\0");
 
 		//Updating the time in the bottom right
 		//CONSIDER ONLY UPDATING IF TIME IS DIFFERENT
@@ -1093,7 +1155,51 @@ int main(){
 		char focus_buffer[9];
 		sprintf(focus_buffer, "Focus: %d", focus);
 		graphics_draw_text_prop(&Tahoma_font, 580, os.variant_pos[1], 20, 1, 1, 62, focus_buffer);
+		// char fps_buffer[100];
+		// sprintf(fps_buffer, "FPS ave: %d, min: %d, max: %d", fps_ave, fps_min, fps_max);
+		// graphics_draw_text_prop(&Tahoma_font, 235, 435, 20, 1, 1, 62, fps_buffer);
+		// graphics_draw_text_prop(&Tahoma_font, 235, 463, 20, 1, 1, 62, fps_buffer);
 
+		if(focus == 2){
+			//A draw list for all 3 clicker thingys
+			graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[num_changer_id], coord_num_changer,
+				frame_num_changer, 2, 3, 25, 1, 1, 1);
+			if(operating_system){
+				;
+			}
+			else{
+				;
+			}
+			/*
+			Options page will contain these:
+			- X dim toggle (Display box with Up/Down buttons)
+			- Y dim toggle
+			- Num mines togle
+			- Beginner, Intermediate, Expert shortcuts
+			(The above require a reset_grid function)
+
+			- Sound checkbox
+			- Question checkbox
+			- Italian checkbox? For debugging, yes
+			- 
+
+			*/
+		}
+		else if(focus == 4){
+			graphics_draw_text_prop(&Tahoma_font, 140, 120, 20, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R symbol for XP, or not
+			graphics_draw_text_prop(&Tahoma_font, 140, 125 + 12, 20, 1, 1, 62, "Version \"Pre-reveal\" (Build 3011: Service Pack 5)\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 130 + 24, 20, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 135 + 36, 20, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 155 + 48, 20, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 160 + 60, 20, 1, 1, 62, "used texconv textures and powered by my Crayon library. I don't own\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 165 + 72, 20, 1, 1, 62, "the rights to Minesweeper nor do I claim to so don't sue me, k?\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 185 + 84, 20, 1, 1, 62, "Katana logo made by Airofoil\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 205 + 96, 20, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 210 + 108, 20, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 215 + 120, 20, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
+
+			//Display high scores here?
+		}
 
 		//Draw the flag count and timer
 		digit_display(&Board, &Board.spritesheet_animation_array[1], num_flags, 20, 65, 17);
@@ -1116,6 +1222,7 @@ int main(){
 		}
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
+		uint8_t menus_selected = 0;
 		for(iter = 0; iter < 4; iter++){
 			if(player_active & (1 << iter)){
 				//Passing coords as ints because otherwise we can get case where each pixel contains more than 1 texel
@@ -1126,6 +1233,9 @@ int main(){
 				}
 				graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[0], (int) cursor_position[2 * iter],
 					(int) cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, cursor_palette);
+
+				//Add code for checking if cursor is hovering over a button
+				menus_selected |= button_hover(cursor_position[(2 * iter)], cursor_position[(2 * iter) + 1], &os);
 			}
 			if(press_data[3 * iter]){
 				uint16_t top_left_x = press_data[(3 * iter) + 1] * 16;
@@ -1179,6 +1289,21 @@ int main(){
 				graphics_draw_sprites_OLD(&tile_ss, &tile_anim, indented_neighbours, indented_frames, 2 * liter, liter, 18, 1, 1, !operating_system && language);
 			}
 		}
+
+		//Drawing the highlight boxes
+		if(menus_selected & (1 << 0)){
+			graphics_draw_untextured_poly(5, os.variant_pos[1] - 3, 19, 34, 16, 0x80FFFFFF, 0);	//Font is layer 20
+		}
+		if(menus_selected & (1 << 1)){
+			graphics_draw_untextured_poly(44, os.variant_pos[1] - 3, 19, 44, 16, 0x80FFFFFF, 0);
+		}
+		if(menus_selected & (1 << 2)){
+			graphics_draw_untextured_poly(93, os.variant_pos[1] - 3, 19, 47, 16, 0x80FFFFFF, 0);
+		}
+		if(menus_selected & (1 << 3)){
+			graphics_draw_untextured_poly(145, os.variant_pos[1] - 3, 19, 36, 16, 0x80FFFFFF, 0);
+		}
+
 		pvr_list_finish();
 
 		//None of these need to be transparent, by using the opaque list we are making the program more efficient
@@ -1195,7 +1320,7 @@ int main(){
 		custom_poly_boarder(1, 581, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
 			4286611584u, 4294967295u);
 
-		// //Draw the big indent boarder that encapsulates digit displays and face
+		//Draw the big indent boarder that encapsulates digit displays and face
 		custom_poly_boarder(2, 14, 59, 16, 615, 33, 4286611584u, 4294967295u);
 
 		//Draw the MS background stuff

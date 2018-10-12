@@ -3,19 +3,19 @@
 void setup_pos_lookup_table(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys, uint8_t iter, uint8_t sd){
 	uint8_t anim_id = os->ids[iter];
 	if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "aboutLogo")){
-		if(sys){	//Populate this later
-			os->coords_pos[iter * 3] = 0;
-			os->coords_pos[(iter * 3) + 1] = 0;
-			os->coords_pos[(iter * 3) + 2] = 0;
+		if(sys){	//Change this later
+			os->coords_pos[iter * 3] = 100;
+			os->coords_pos[(iter * 3) + 1] = 120;
+			os->coords_pos[(iter * 3) + 2] = 19;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
 		}
 		else{
-			// os->coords_pos[iter * 3] = ;
-			// os->coords_pos[(iter * 3) + 1] = ;
-			// os->coords_pos[(iter * 3) + 2] = ;
-			// os->scale[iter * 2] = ;
-			// os->scale[(iter * 2) + 1] = ;
+			os->coords_pos[iter * 3] = 100;
+			os->coords_pos[(iter * 3) + 1] = 120;
+			os->coords_pos[(iter * 3) + 2] = 19;
+			os->scale[iter * 2] = 1;
+			os->scale[(iter * 2) + 1] = 1;
 		}
 	}
 	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "boarderBottom")){
@@ -235,7 +235,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8
 
 //There seems to be an allocation issue here...
 void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys, uint8_t lang, uint8_t sd){
-	os->sprite_count = ss->spritesheet_animation_count - 1;
+	os->sprite_count = ss->spritesheet_animation_count - 2;	//Two anims we won't include
 	os->ids = (uint8_t *) malloc(os->sprite_count * sizeof(uint8_t));	//Because we don't include the ital-tiles, this makes other code easier
 	os->coords_pos = (uint16_t *) malloc(3 * os->sprite_count * sizeof(uint16_t));	//x, y, z
 	os->coords_frame = (uint16_t *) malloc(2 * os->sprite_count * sizeof(uint16_t));	//u, v
@@ -248,7 +248,8 @@ void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys,
 		if(lang && ss->spritesheet_animation_array[id_count].animation_frames > 1){
 			lang_frame = 1;
 		}
-		if(!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "italianTiles")){
+		if(!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "italianTiles") ||
+			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "numberChanger")){
 			id_count++;
 		}
 		graphics_frame_coordinates(&ss->spritesheet_animation_array[id_count],
