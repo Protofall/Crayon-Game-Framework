@@ -387,3 +387,87 @@ void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t
 		}
 	}
 }
+
+void setup_option_untextured_poly(crayon_untextured_array_t *Options, uint8_t os){
+	if(!os){
+		Options->num_polys = 15;	//Windows 2000 has a extra polys
+	}
+	else{
+		Options->num_polys = 6;	//XP mode (XP not drawing all of the polys?)
+	}
+	Options->draw_pos = (uint16_t *) malloc(2 * Options->num_polys * sizeof(uint16_t));
+	Options->draw_z = (uint8_t *) malloc(Options->num_polys * sizeof(uint8_t));
+	Options->colours = (uint32_t *) malloc(Options->num_polys * sizeof(uint32_t));
+	Options->draw_dims = (uint16_t *) malloc(2 * Options->num_polys * sizeof(uint16_t));
+	Options->rotations = (float *) malloc(sizeof(float));
+	Options->rotations[0] = 0;
+	Options->options = (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4);	//Z, C, D and O enabled
+
+	uint16_t x, y[3];
+	x = 395; y[0] = 140; y[1] = 180; y[2] = 220;
+	int i;
+
+	if(!os){
+		uint8_t dim_x, dim_y;
+		dim_x = 40 - 15; dim_y = 21;
+		for(i = 0; i < 3; i++){
+			//Centre/top white
+			Options->draw_pos[(10 * i) + 0] = x + 2;
+			Options->draw_pos[(10 * i) + 1] = y[i] + 2;
+			Options->draw_z[(5 * i) + 0] = 29;
+			Options->colours[(5 * i) + 0] = 0xFFFFFFFF;	//White
+			Options->draw_dims[(10 * i) + 0] = dim_x - 4;
+			Options->draw_dims[(10 * i) + 1] = dim_y - 4;
+
+			//Middle colours
+			Options->draw_pos[(10 * i) + 2] = x + 1;
+			Options->draw_pos[(10 * i) + 3] = y[i] + 1;
+			Options->draw_z[(5 * i) + 1] = 28;
+			Options->colours[(5 * i) + 1] = 0xFF404040;	//Dark grey
+			Options->draw_dims[(10 * i) + 2] = dim_x - 3;
+			Options->draw_dims[(10 * i) + 3] = dim_y - 3;
+
+			Options->draw_pos[(10 * i) + 4] = x + 1;
+			Options->draw_pos[(10 * i) + 5] = y[i] + 1;
+			Options->draw_z[(5 * i) + 2] = 27;
+			Options->colours[(5 * i) + 2] = 0xFFD4D0C8;	//Light grey
+			Options->draw_dims[(10 * i) + 4] = dim_x - 2;
+			Options->draw_dims[(10 * i) + 5] = dim_y - 2;
+
+			//Back colours
+			Options->draw_pos[(10 * i) + 6] = x;
+			Options->draw_pos[(10 * i) + 7] = y[i];
+			Options->draw_z[(5 * i) + 3] = 26;
+			Options->colours[(5 * i) + 3] = 0xFF808080;	//Medium grey
+			Options->draw_dims[(10 * i) + 6] = dim_x - 1;
+			Options->draw_dims[(10 * i) + 7] = dim_y - 1;
+
+			Options->draw_pos[(10 * i) + 8] = x;
+			Options->draw_pos[(10 * i) + 9] = y[i];
+			Options->draw_z[(5 * i) + 4] = 25;
+			Options->colours[(5 * i) + 4] = 0xFFFFFFFF;	//White
+			Options->draw_dims[(10 * i) + 8] = dim_x;
+			Options->draw_dims[(10 * i) + 9] = dim_y;
+		}
+	}
+	else{
+		uint8_t dim_x, dim_y;
+		// y[0] -= 2; y[1] -= 2; y[2] -= 2;
+		dim_x = 40 - 15 + 17; dim_y = 20;
+		for(i = 0; i < 3; i++){
+			Options->draw_pos[(4 * i) + 0] = x + 1;
+			Options->draw_pos[(4 * i) + 1] = y[i] + 1;
+			Options->draw_z[(2 * i) + 0] = 26;
+			Options->colours[(2 * i) + 0] = 0xFFFFFFFF;	//White
+			Options->draw_dims[(4 * i) + 0] = dim_x - 2;
+			Options->draw_dims[(4 * i) + 1] = dim_y - 2;
+
+			Options->draw_pos[(4 * i) + 2] = x;
+			Options->draw_pos[(4 * i) + 3] = y[i];
+			Options->draw_z[(2 * i) + 1] = 25;
+			Options->colours[(2 * i) + 1] = 0xFF7F9DB9;	//Murky Light Blue
+			Options->draw_dims[(4 * i) + 2] = dim_x;
+			Options->draw_dims[(4 * i) + 3] = dim_y;
+		}
+	}
+}

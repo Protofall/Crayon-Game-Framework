@@ -22,6 +22,7 @@
 #include <dc/flashrom.h>
 
 #define CRAYON_SD_MODE 0
+#define CRAYON_DEBUG 0
 //LOWER BUTTON TOP BOUND BECAUSE OF XP MODE
 
 #if CRAYON_SD_MODE == 1
@@ -54,7 +55,7 @@ uint16_t num_mines;
 uint8_t first_reveal;
 
 uint8_t *logic_grid;
-uint16_t *coord_grid;	//Unless changing grid size, this won't need to be changed once set
+uint16_t *coord_grid;
 uint16_t *frame_grid;
 
 #if CRAYON_SD_MODE == 1
@@ -191,6 +192,50 @@ void clear_grid(crayon_animation_t * anim){
 	first_reveal = 0;
 
 	non_mines_left = grid_size - num_flags;
+
+	return;
+}
+
+//When called it changes the grid size and calls clear
+//Max grid size is 38, 21
+void reset_grid(crayon_animation_t * anim, uint8_t x, uint8_t y, uint16_t mine_count, uint16_t *grid_size){
+	grid_x = x;
+	grid_y = y;
+	num_mines = mine_count;
+	*grid_size = x * y;
+
+	if(logic_grid != NULL){
+		free(logic_grid);
+	}
+	if(coord_grid != NULL){
+		free(coord_grid);
+	}
+	if(frame_grid != NULL){
+		free(frame_grid);
+	}
+
+	logic_grid = (uint8_t *) malloc((*grid_size) * sizeof(uint8_t));
+	coord_grid = (uint16_t *) malloc(2 * (*grid_size) * sizeof(uint16_t));
+	frame_grid = (uint16_t *) malloc(2 * (*grid_size) * sizeof(uint16_t));
+
+	//Calculate some grid_start_x stuff. Default for expert is 80, 104
+	grid_start_x = 320 - (grid_x * 8);
+	grid_start_y = 104 + 160 - (grid_y * 8);
+	if(grid_start_y < 104){
+		grid_start_y = 104;
+	}
+
+	int i, j;
+
+	for(j = 0; j < grid_y; j++){
+		for(i = 0; i < grid_x; i++){   //i is x, j is y
+			uint16_t ele = (j * grid_x * 2) + (2 * i);
+			coord_grid[ele] = grid_start_x + (i * 16);
+			coord_grid[ele + 1] = grid_start_y + (j * 16);
+		}
+	}
+
+	clear_grid(anim);
 
 	return;
 }
@@ -539,6 +584,7 @@ uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os){
 }
 
 int main(){
+	// error_freeze("Multi-line\nError freeze\nTest\nHi!");	//This doesn't draw over multiple lines
 	#if CRAYON_SD_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
 		if(sdRes == 0){
@@ -590,7 +636,7 @@ int main(){
 	crayon_spritesheet_t Board, Icons, Windows;
 	crayon_font_mono_t BIOS_font;
 	crayon_font_prop_t Tahoma_font;
-	crayon_untextured_array_t Bg_polys;	//Contains some of the untextured polys that will be drawn.
+	crayon_untextured_array_t Bg_polys, Option_polys;	//Contains some of the untextured polys that will be drawn.
 	sfxhnd_t Sound_Tick, Sound_Death, Sound_Death_Italian, Sound_Win;	//Sound effect handles. Might add more later for startup sounds or maybe put them in cdda? (Note this is a uint32_t)
 	snd_stream_init();	//Needed otherwise snd_sfx calls crash
 
@@ -635,37 +681,9 @@ int main(){
 	MinesweeperOS_t os;
 	setup_OS_assets(&os, &Windows, operating_system, language, sd_present);
 
-	//Beginner
-	// grid_x = 9;
-	// grid_y = 9;
-	// num_mines = 10;
-
-	//Intermediate
-	// grid_x = 16;
-	// grid_y = 16;
-	// num_mines = 40;
-
-	//Expert
-	grid_x = 30;
-	grid_y = 20;
-	num_mines = 99;
-
-	//Largest	(Tinker with this one)
-	// grid_x = 40;
-	// grid_y = 21;
-	// num_mines = 130;
-
-	grid_start_x = 80;
-	grid_start_y = 104;	//Never changes for XP mode, but might in 2000 Or I might simplify and just keep this constant?
-
 	//Setup the untextured poly structs
 	setup_bg_untextured_poly(&Bg_polys, operating_system, sd_present);
-
-	uint16_t grid_size = grid_x * grid_y;
-
-	logic_grid = (uint8_t *) malloc(grid_size * sizeof(uint8_t));
-	coord_grid = (uint16_t *) malloc(2 * grid_size * sizeof(uint16_t));
-	frame_grid = (uint16_t *) malloc(2 * grid_size * sizeof(uint16_t));
+	setup_option_untextured_poly(&Option_polys, operating_system);
 
 	int iter;
 	int jiter;
@@ -700,23 +718,40 @@ int main(){
 		}
 	}
 
-	coord_num_changer[0] = 100;
-	coord_num_changer[1] = 100;
-	coord_num_changer[2] = 100;
-	coord_num_changer[3] = 130;
-	coord_num_changer[4] = 100;
-	coord_num_changer[5] = 160;
+	coord_num_changer[0] = 420;
+	coord_num_changer[1] = 140 + (2 * operating_system);
+	coord_num_changer[2] = 420;
+	coord_num_changer[3] = 180 + (2 * operating_system);
+	coord_num_changer[4] = 420;
+	coord_num_changer[5] = 220 + (2 * operating_system);
 
-	for(jiter = 0; jiter < grid_y; jiter++){
-		for(iter = 0; iter < grid_x; iter++){   //iter is x, jiter is y
-			uint16_t ele = (jiter * grid_x * 2) + (2 * iter);
-			coord_grid[ele] = grid_start_x + (iter * 16);
-			coord_grid[ele + 1] = grid_start_y + (jiter * 16);
-		}
-	}
+	//Beginner
+	// grid_x = 9;
+	// grid_y = 9;
+	// num_mines = 10;
 
-	//Set the grid's initial values
-	clear_grid(&tile_anim);
+	//Intermediate
+	// grid_x = 16;
+	// grid_y = 16;
+	// num_mines = 40;
+
+	//Expert
+	// grid_x = 30;
+	// grid_y = 20;
+	// num_mines = 99;
+
+	//Largest	(Tinker with this one)
+	// grid_x = 38;
+	// grid_y = 21;
+	// num_mines = 130;
+
+	uint16_t grid_size;
+
+	logic_grid = NULL;
+	coord_grid = NULL;
+	frame_grid = NULL;
+
+	reset_grid(&tile_anim, 30, 20, 99, &grid_size);
 
 	//The face frame coords
 	uint16_t face_frame_x;
@@ -777,11 +812,13 @@ int main(){
 	memory_swap_colour(cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
 	memory_swap_colour(cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
 
+	#if CRAYON_DEBUG == 1
 	//Stuff for debugging/performance testing
-	// pvr_stats_t pvr_stats;
-	// uint8_t last_30_FPS[30] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-	// uint8_t FPS_array_iter = 0;
-	// int fps_ave, fps_min, fps_max;
+		pvr_stats_t pvr_stats;
+		uint8_t last_30_FPS[30] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+		uint8_t FPS_array_iter = 0;
+		int fps_ave, fps_min, fps_max;
+	#endif
 
 	#if CRAYON_SD_MODE == 1
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
@@ -992,6 +1029,7 @@ int main(){
 		//X001 0000 (Start is released and it was valid)
 		if(!(start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
 			clear_grid(&tile_anim);
+			// reset_grid(&tile_anim, 38, 21, 130, &grid_size);
 			start_primed = 0;
 			face_frame_id = 0;
 		}
@@ -1059,23 +1097,25 @@ int main(){
 		time(&os_clock);	//I think this is how I populate it with the current time
 		readable_time = localtime(&os_clock);
 
-		// pvr_get_stats(&pvr_stats);	//Get the framerate
-		// last_30_FPS[FPS_array_iter] = pvr_stats.frame_rate;
-		// FPS_array_iter++;
-		// FPS_array_iter %= 30;
-		// fps_ave = 0;
-		// fps_min = last_30_FPS[0];
-		// fps_max = 0;
-		// for(iter = 0; iter < 30; iter++){
-		// 	fps_ave += last_30_FPS[iter];
-		// 	if(last_30_FPS[iter] > fps_max){
-		// 		fps_max = last_30_FPS[iter];
-		// 	}
-		// 	if(last_30_FPS[iter] < fps_min){
-		// 		fps_min = last_30_FPS[iter];
-		// 	}
-		// }
-		// fps_ave /= 30;
+		#if CRAYON_DEBUG == 1
+			pvr_get_stats(&pvr_stats);	//Get the framerate
+			last_30_FPS[FPS_array_iter] = pvr_stats.frame_rate;
+			FPS_array_iter++;
+			FPS_array_iter %= 30;
+			fps_ave = 0;
+			fps_min = last_30_FPS[0];
+			fps_max = 0;
+			for(iter = 0; iter < 30; iter++){
+				fps_ave += last_30_FPS[iter];
+				if(last_30_FPS[iter] > fps_max){
+					fps_max = last_30_FPS[iter];
+				}
+				if(last_30_FPS[iter] < fps_min){
+					fps_min = last_30_FPS[iter];
+				}
+			}
+			fps_ave /= 30;
+		#endif
 
 		pvr_wait_ready();
 		pvr_scene_begin();
@@ -1152,30 +1192,42 @@ int main(){
 		graphics_draw_text_prop(&Tahoma_font, os.variant_pos[2], os.variant_pos[3], 20, 1, 1, os.clock_palette, time_buffer);	//In XP is uses another palette (White text version)
 
 		//DEBUG, REMOVE LATER
-		char focus_buffer[9];
-		sprintf(focus_buffer, "Focus: %d", focus);
-		graphics_draw_text_prop(&Tahoma_font, 580, os.variant_pos[1], 20, 1, 1, 62, focus_buffer);
-		// char fps_buffer[100];
-		// sprintf(fps_buffer, "FPS ave: %d, min: %d, max: %d", fps_ave, fps_min, fps_max);
-		// graphics_draw_text_prop(&Tahoma_font, 235, 435, 20, 1, 1, 62, fps_buffer);
-		// graphics_draw_text_prop(&Tahoma_font, 235, 463, 20, 1, 1, 62, fps_buffer);
+		// char focus_buffer[9];
+		// sprintf(focus_buffer, "Focus: %d", focus);
+		// graphics_draw_text_prop(&Tahoma_font, 580, os.variant_pos[1], 20, 1, 1, 62, focus_buffer);
+		#if CRAYON_DEBUG == 1
+			char fps_buffer[100];
+			sprintf(fps_buffer, "FPS ave: %d, min: %d, max: %d", fps_ave, fps_min, fps_max);
+			graphics_draw_text_prop(&Tahoma_font, 235, 435, 20, 1, 1, 62, fps_buffer);
+		#endif
 
+		//Some of the options stuff is in opaque list
 		if(focus == 2){
-			//A draw list for all 3 clicker thingys
+
+			//A draw list for all 3 clicker thingys (Maybe enlarge them?) (MOVE TO OPAQUE LATER)
 			graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[num_changer_id], coord_num_changer,
-				frame_num_changer, 2, 3, 25, 1, 1, 1);
-			if(operating_system){
-				;
-			}
-			else{
-				;
-			}
+				frame_num_changer, 2, 3, 30, 1, 1, 1);
+
+			//Change this so it only sprintf's when a button is pressed and change it to use the "options" version of these vars, not the actual ones
+			char x_buffer[4], y_buffer[4], m_buffer[4];
+			sprintf(x_buffer, "%d", grid_x);
+			sprintf(y_buffer, "%d", grid_y);
+			sprintf(m_buffer, "%d", num_mines);
+			graphics_draw_text_prop(&Tahoma_font, 399, 145, 31, 1, 1, 62, x_buffer);
+			graphics_draw_text_prop(&Tahoma_font, 399, 185, 31, 1, 1, 62, y_buffer);
+			graphics_draw_text_prop(&Tahoma_font, 399, 225, 31, 1, 1, 62, m_buffer);
+
 			/*
+
+			Options struct should be passed into the pres_buttons function
+
+
 			Options page will contain these:
 			- X dim toggle (Display box with Up/Down buttons)
 			- Y dim toggle
 			- Num mines togle
-			- Beginner, Intermediate, Expert shortcuts
+			- Beginner, Intermediate, Expert shortcuts (This changes the X, Y and Num_mines toggles)
+			- An "Apply" button
 			(The above require a reset_grid function)
 
 			- Sound checkbox
@@ -1186,17 +1238,19 @@ int main(){
 			*/
 		}
 		else if(focus == 4){
-			graphics_draw_text_prop(&Tahoma_font, 140, 120, 20, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R symbol for XP, or not
-			graphics_draw_text_prop(&Tahoma_font, 140, 125 + 12, 20, 1, 1, 62, "Version \"Pre-reveal\" (Build 3011: Service Pack 5)\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 130 + 24, 20, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 135 + 36, 20, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 155 + 48, 20, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 160 + 60, 20, 1, 1, 62, "used texconv textures and powered by my Crayon library. I don't own\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 165 + 72, 20, 1, 1, 62, "the rights to Minesweeper nor do I claim to so don't sue me, k?\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 185 + 84, 20, 1, 1, 62, "Katana logo made by Airofoil\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 205 + 96, 20, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 210 + 108, 20, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 215 + 120, 20, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
+			graphics_draw_text_prop(&Tahoma_font, 140, 125 + 12, 25, 1, 1, 62, "Version \"Pre-reveal\" (Build 3011: Service Pack 5)\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 160 + 60, 25, 1, 1, 62, "used texconv textures and powered by my Crayon library. I don't own\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 165 + 72, 25, 1, 1, 62, "the rights to Minesweeper nor do I claim to so don't sue me, k?\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 185 + 84, 25, 1, 1, 62, "Katana logo made by Airofoil\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 205 + 96, 25, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 210 + 108, 25, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
+			graphics_draw_text_prop(&Tahoma_font, 140, 215 + 120, 25, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
+
+			//Draw a backdrop matching XP icon's bg colour? Yes
 
 			//Display high scores here?
 		}
@@ -1312,6 +1366,10 @@ int main(){
 		//Draw the grid's boarder
 		if(focus <= 1){
 			custom_poly_boarder(3, grid_start_x, grid_start_y, 16, grid_x * 16, grid_y * 16, 4286611584u, 4294967295u);
+		}
+		else if(focus == 2){	//Add in the number changer textures here too when I can draw SS in Opaque
+			//Draw all 3 untextured poly number boxes
+			graphics_draw_untextured_array(&Option_polys);
 		}
 
 		//Draw the boarders for digit display (I think I should move these calls into digit display itself)
