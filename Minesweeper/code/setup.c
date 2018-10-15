@@ -229,13 +229,13 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8
 		}
 	}
 	else{
-		error_freeze("Unlisted file detected. %s", ss->spritesheet_animation_array[os->ids[anim_id]].animation_name);
+		error_freeze("Unlisted file detected. %s", ss->spritesheet_animation_array[os->ids[anim_id]].animation_name);	//currently an error where os->ids[anim_id] != anim_id
 	}
 }
 
 //There seems to be an allocation issue here...
 void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys, uint8_t lang, uint8_t sd){
-	os->sprite_count = ss->spritesheet_animation_count - 2;	//Two anims we won't include
+	os->sprite_count = ss->spritesheet_animation_count - 4;	//Two anims we won't included. ItalianTiles, buttons and num_changer
 	os->ids = (uint8_t *) malloc(os->sprite_count * sizeof(uint8_t));	//Because we don't include the ital-tiles, this makes other code easier
 	os->coords_pos = (uint16_t *) malloc(3 * os->sprite_count * sizeof(uint16_t));	//x, y, z
 	os->coords_frame = (uint16_t *) malloc(2 * os->sprite_count * sizeof(uint16_t));	//u, v
@@ -248,8 +248,11 @@ void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys,
 		if(lang && ss->spritesheet_animation_array[id_count].animation_frames > 1){
 			lang_frame = 1;
 		}
-		if(!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "italianTiles") ||
-			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "numberChanger")){
+		//Skip over the 3 assets we don't want in this list
+		while(!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "italianTiles") ||
+			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "numberChanger") ||
+			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "checker") ||
+			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "button")){
 			id_count++;
 		}
 		graphics_frame_coordinates(&ss->spritesheet_animation_array[id_count],
@@ -409,7 +412,7 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, uint8_t os
 
 	if(!os){
 		uint8_t dim_x, dim_y;
-		dim_x = 40 - 15; dim_y = 21;
+		dim_x = 25; dim_y = 21;
 		for(i = 0; i < 3; i++){
 			//Centre/top white
 			Options->draw_pos[(10 * i) + 0] = x + 2;
@@ -452,8 +455,7 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, uint8_t os
 	}
 	else{
 		uint8_t dim_x, dim_y;
-		// y[0] -= 2; y[1] -= 2; y[2] -= 2;
-		dim_x = 40 - 15 + 17; dim_y = 20;
+		dim_x = 25 + 17; dim_y = 20;
 		for(i = 0; i < 3; i++){
 			Options->draw_pos[(4 * i) + 0] = x + 1;
 			Options->draw_pos[(4 * i) + 1] = y[i] + 1;

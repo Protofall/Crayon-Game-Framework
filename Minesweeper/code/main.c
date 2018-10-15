@@ -58,6 +58,12 @@ uint8_t *logic_grid;
 uint16_t *coord_grid;
 uint16_t *frame_grid;
 
+//For the options page (Apply only affects these 3 and not the checkboxes)
+uint8_t disp_grid_x;
+uint8_t disp_grid_y;
+uint8_t disp_grid_mines;
+char x_buffer[4], y_buffer[4], m_buffer[4];
+
 #if CRAYON_SD_MODE == 1
 	#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
 
@@ -198,11 +204,11 @@ void clear_grid(crayon_animation_t * anim){
 
 //When called it changes the grid size and calls clear
 //Max grid size is 38, 21
-void reset_grid(crayon_animation_t * anim, uint8_t x, uint8_t y, uint16_t mine_count, uint16_t *grid_size){
+void reset_grid(crayon_animation_t * anim, uint8_t x, uint8_t y, uint16_t mine_count){
 	grid_x = x;
 	grid_y = y;
 	num_mines = mine_count;
-	*grid_size = x * y;
+	uint16_t grid_size = x * y;
 
 	if(logic_grid != NULL){
 		free(logic_grid);
@@ -214,9 +220,9 @@ void reset_grid(crayon_animation_t * anim, uint8_t x, uint8_t y, uint16_t mine_c
 		free(frame_grid);
 	}
 
-	logic_grid = (uint8_t *) malloc((*grid_size) * sizeof(uint8_t));
-	coord_grid = (uint16_t *) malloc(2 * (*grid_size) * sizeof(uint16_t));
-	frame_grid = (uint16_t *) malloc(2 * (*grid_size) * sizeof(uint16_t));
+	logic_grid = (uint8_t *) malloc(grid_size * sizeof(uint8_t));
+	coord_grid = (uint16_t *) malloc(2 * grid_size * sizeof(uint16_t));
+	frame_grid = (uint16_t *) malloc(2 * grid_size * sizeof(uint16_t));
 
 	//Calculate some grid_start_x stuff. Default for expert is 80, 104
 	grid_start_x = 320 - (grid_x * 8);
@@ -236,6 +242,14 @@ void reset_grid(crayon_animation_t * anim, uint8_t x, uint8_t y, uint16_t mine_c
 	}
 
 	clear_grid(anim);
+
+	disp_grid_x = grid_x;
+	disp_grid_y = grid_y;
+	disp_grid_mines = num_mines;
+
+	sprintf(x_buffer, "%d", disp_grid_x);
+	sprintf(y_buffer, "%d", disp_grid_y);
+	sprintf(m_buffer, "%d", disp_grid_mines);
 
 	return;
 }
@@ -517,11 +531,12 @@ void cursor_on_grid(uint8_t *in_grid, int *ele_x, int *ele_y, uint8_t button_act
 	}
 }
 
-uint8_t button_press_logic_buttons(MinesweeperOS_t *os, int id, float *cursor_position, uint32_t previous_buttons, uint32_t buttons){
-	//Clean up the magic numbers
-	if(focus != 1){
+//Handles focus related things
+uint8_t button_press_logic_buttons(MinesweeperOS_t *os, crayon_animation_t *anim, int id, float *cursor_position, uint32_t previous_buttons, uint32_t buttons){
+	//CLEAN UP THE MAGIC NUMBERS
+	if(focus != 1){	//When we get a new score, we don't want to change focus easily
 		//Top 4 options
-		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){	//When we get a new score, we don't want to change focus easily
+		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){
 			if((cursor_position[2 * id] <= 9 + 27 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
 					&& cursor_position[2 * id] >= 9 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
 				focus = 0;
@@ -540,11 +555,111 @@ uint8_t button_press_logic_buttons(MinesweeperOS_t *os, int id, float *cursor_po
 			}
 		}
 	}
-	else{
-		;
+
+	if(focus == 2){
+		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){	//When we get a new score, we don't want to change focus easily
+			if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 149)
+					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 140){	//Incrementer X
+				if(disp_grid_x < 38){
+					disp_grid_x++;
+					sprintf(x_buffer, "%d", disp_grid_x);
+				}
+			}
+			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 159)
+					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 150){	//Decrementer X
+				if(disp_grid_x > 9){
+					disp_grid_x--;
+					sprintf(x_buffer, "%d", disp_grid_x);
+				}
+			}
+			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 189)
+					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 180){	//Incrementer Y
+				if(disp_grid_y < 21){
+					disp_grid_y++;
+					sprintf(y_buffer, "%d", disp_grid_y);
+				}
+			}
+			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 199)
+					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 190){	//Decrementer Y
+				if(disp_grid_y > 9){
+					disp_grid_y--;
+					sprintf(y_buffer, "%d", disp_grid_y);
+				}
+			}
+			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 229)
+					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 220){	//Incrementer Num Mines
+				if(disp_grid_mines < (disp_grid_x - 1) * (disp_grid_y - 1)){
+					disp_grid_mines++;
+				}
+				else{
+					disp_grid_mines = (disp_grid_x - 1) * (disp_grid_y - 1);
+				}
+				sprintf(m_buffer, "%d", disp_grid_mines);
+			}
+			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 239)
+					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 230){	//Decrementer Num Mines
+				if(disp_grid_mines > 10){
+					disp_grid_mines--;
+					sprintf(m_buffer, "%d", disp_grid_mines);
+				}
+			}
+			else if((cursor_position[2 * id] <= 189 + 75) && (cursor_position[(2 * id) + 1] <= 306 + 23)
+					&& cursor_position[2 * id] >= 189 && cursor_position[(2 * id) + 1] >= 306){	//Beginner
+				disp_grid_x = 9;
+				disp_grid_y = 9;
+				disp_grid_mines = 10;
+				sprintf(x_buffer, "%d", disp_grid_x);
+				sprintf(y_buffer, "%d", disp_grid_y);
+				sprintf(m_buffer, "%d", disp_grid_mines);
+			}
+			else if((cursor_position[2 * id] <= 275 + 75) && (cursor_position[(2 * id) + 1] <= 306 + 23)
+					&& cursor_position[2 * id] >= 275 && cursor_position[(2 * id) + 1] >= 306){	//Intermediate
+				disp_grid_x = 16;
+				disp_grid_y = 16;
+				disp_grid_mines = 40;
+				sprintf(x_buffer, "%d", disp_grid_x);
+				sprintf(y_buffer, "%d", disp_grid_y);
+				sprintf(m_buffer, "%d", disp_grid_mines);
+			}
+			else if((cursor_position[2 * id] <= 361 + 75) && (cursor_position[(2 * id) + 1] <= 306 + 23)
+					&& cursor_position[2 * id] >= 361 && cursor_position[(2 * id) + 1] >= 306){	//Expert
+				disp_grid_x = 30;
+				disp_grid_y = 20;
+				disp_grid_mines = 99;
+				sprintf(x_buffer, "%d", disp_grid_x);
+				sprintf(y_buffer, "%d", disp_grid_y);
+				sprintf(m_buffer, "%d", disp_grid_mines);
+			}
+			else if((cursor_position[2 * id] <= 361 + 75) && (cursor_position[(2 * id) + 1] <= 252 + 23)
+					&& cursor_position[2 * id] >= 361 && cursor_position[(2 * id) + 1] >= 252){	//Apply
+				if(disp_grid_mines > (disp_grid_x - 1) * (disp_grid_y - 1)){
+					disp_grid_mines = (disp_grid_x - 1) * (disp_grid_y - 1);
+					sprintf(m_buffer, "%d", disp_grid_mines);
+				}
+				reset_grid(anim, disp_grid_x, disp_grid_y, disp_grid_mines);	//Doesn't reset the face...the var is global, but the anim isn't...
+			}
+			else if((cursor_position[2 * id] <= 361 + 75) && (cursor_position[(2 * id) + 1] <= 306 + 23)
+					&& cursor_position[2 * id] >= 361 && cursor_position[(2 * id) + 1] >= 306){	//Save to VMU (UNFINISHED)
+				;
+			}
+			else if((cursor_position[2 * id] <= 245 + 13) && (cursor_position[(2 * id) + 1] <= 144 + 13)
+					&& cursor_position[2 * id] >= 245 && cursor_position[(2 * id) + 1] >= 144){	//Sound checker
+				sound_enabled = !sound_enabled;
+				//ADD SOMETHING TO CHANGE THE FRAME
+			}
+			else if((cursor_position[2 * id] <= 245 + 13) && (cursor_position[(2 * id) + 1] <= 184 + 13)
+					&& cursor_position[2 * id] >= 245 && cursor_position[(2 * id) + 1] >= 184){	//Question mark checker
+				question_enabled = !question_enabled;
+				//ADD SOMETHING TO CHANGE THE FRAME
+			}
+		}
 	}
 
-	//HOW DOES CHANGING FOCUS EFFECT THE CURRENT BUTTON PRESSES? (What if you die and change focus at the same time
+	// coord_checker[0] = 245;	//Sound
+	// coord_checker[1] = 144;
+	// coord_checker[2] = 245;	//Question mark
+	// coord_checker[3] = 184;
+	//13,13
 
 	return 0;
 }
@@ -710,11 +825,23 @@ int main(){
 	//Get the info for num_changer
 	uint8_t num_changer_id = 4;
 	uint16_t coord_num_changer[6], frame_num_changer[2];
+	uint8_t button_id = 4;
+	uint16_t coord_button[10], frame_button[2];
+	uint8_t checker_id = 4;
+	uint16_t coord_checker[4], frame_checker[2];
 	for(iter = 0; iter < Windows.spritesheet_animation_count; iter++){
-		if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "numberChanger")){
+		if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "button")){
+			button_id = iter;
+			graphics_frame_coordinates(&Windows.spritesheet_animation_array[iter], frame_button, frame_button + 1, 0);
+		}
+		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "checker")){
+			checker_id = iter;
+			graphics_frame_coordinates(&Windows.spritesheet_animation_array[iter], frame_checker, frame_checker + 1, 0);			
+		}
+		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "numberChanger")){
 			num_changer_id = iter;
 			graphics_frame_coordinates(&Windows.spritesheet_animation_array[iter], frame_num_changer, frame_num_changer + 1, 0);
-			break;
+			// break;
 		}
 	}
 
@@ -724,6 +851,25 @@ int main(){
 	coord_num_changer[3] = 180 + (2 * operating_system);
 	coord_num_changer[4] = 420;
 	coord_num_changer[5] = 220 + (2 * operating_system);
+
+	coord_button[0] = 189;	//Beginner
+	coord_button[1] = 306;
+	coord_button[2] = 275;	//Intermediate
+	coord_button[3] = 306;
+	coord_button[4] = 361;	//Expert
+	coord_button[5] = 306;
+	coord_button[6] = 275;	//Save to VMU
+	coord_button[7] = 252;
+	coord_button[8] = 361;	//Apply
+	coord_button[9] = 252;
+
+	coord_checker[0] = 245;	//Sound
+	coord_checker[1] = 144;
+	coord_checker[2] = 245;	//Question mark
+	coord_checker[3] = 184;
+
+	// graphics_draw_text_prop(&Tahoma_font, 189, 145, 31, 1, 1, 62, "Sound\0");
+	// graphics_draw_text_prop(&Tahoma_font, 189, 185, 31, 1, 1, 62, "Marks (?)\0");
 
 	//Beginner
 	// grid_x = 9;
@@ -745,13 +891,13 @@ int main(){
 	// grid_y = 21;
 	// num_mines = 130;
 
-	uint16_t grid_size;
-
 	logic_grid = NULL;
 	coord_grid = NULL;
 	frame_grid = NULL;
 
-	reset_grid(&tile_anim, 30, 20, 99, &grid_size);
+	reset_grid(&tile_anim, 30, 20, 99);
+
+	uint16_t grid_size = grid_x * grid_start_y;
 
 	//The face frame coords
 	uint16_t face_frame_x;
@@ -798,8 +944,8 @@ int main(){
 	graphics_frame_coordinates(&Icons.spritesheet_animation_array[2], &sd_x, &sd_y, 0);
 
 	//The palette for XP's clock
-	crayon_palette_t *XP_time = memory_clone_palette(Tahoma_font.palette_data);
-	memory_swap_colour(XP_time, 0xFF000000, 0xFFFFFFFF, 0);	//Swapps black for white
+	crayon_palette_t *White_Tahoma_Font = memory_clone_palette(Tahoma_font.palette_data);
+	memory_swap_colour(White_Tahoma_Font, 0xFF000000, 0xFFFFFFFF, 0);	//Swapps black for white
 
 	//The cursor colours
 	crayon_palette_t *cursor_red, *cursor_yellow, *cursor_green, *cursor_blue;
@@ -870,7 +1016,7 @@ int main(){
 		button_action |= ((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && !(start_primed & (1 << 4))) << 4;	//If we press start, but we haven't done active prime yet and we aren't invalidated
 
 		if(button_press_logic(button_action, __dev->port, cursor_position, &tile_anim, previous_buttons, st->buttons)){break;}	//Is previous_buttons right?
-		button_press_logic_buttons(&os, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
+		button_press_logic_buttons(&os, &tile_anim, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
 
 		//These are only ever set if The cursor is on the grid and A/B/X is/was pressed
 		int ele_x = -1;
@@ -972,7 +1118,7 @@ int main(){
 			&& !(st->buttons & MOUSE_LEFTBUTTON)) << 2;	//Right pressed (Without Left) and the game isn't over
 
 		if(button_press_logic(button_action, __dev->port, cursor_position, &tile_anim, previous_buttons, st->buttons)){break;}
-		button_press_logic_buttons(&os, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
+		button_press_logic_buttons(&os, &tile_anim, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
 
 		int ele_x = -1;
 		int ele_y = -1;
@@ -1029,7 +1175,6 @@ int main(){
 		//X001 0000 (Start is released and it was valid)
 		if(!(start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
 			clear_grid(&tile_anim);
-			// reset_grid(&tile_anim, 38, 21, 130, &grid_size);
 			start_primed = 0;
 			face_frame_id = 0;
 		}
@@ -1088,11 +1233,13 @@ int main(){
 		if(game_live && time_sec < 999){	//Prevent timer overflows
 			int temp_sec = current_time - start_time + (current_ms_time > start_ms_time); //MS is there to account for the "1st second" inaccuracy
 			//(How does this do the "start at 1 sec" thing? I forgot)
-			if(sound_enabled && temp_sec > time_sec){	//Play the "tick" sound effect (But only when time_sec changes)
+			if(focus <= 1 && sound_enabled && temp_sec > time_sec){	//Play the "tick" sound effect (But only when time_sec changes and we're on the game tab)
 				snd_sfx_play(Sound_Tick, 192, 128);
 			}
 			time_sec = temp_sec;
 		}
+
+		grid_size = grid_x * grid_y;
 
 		time(&os_clock);	//I think this is how I populate it with the current time
 		readable_time = localtime(&os_clock);
@@ -1132,9 +1279,7 @@ int main(){
 		graphics_setup_palette(cursor_blue, Icons.spritesheet_format, 5);
 
 		//I like to put the fonts at the very back of the system (But really, its probably better standard to go first)
-		if(operating_system){
-			graphics_setup_palette(XP_time, 5, 61);	//The extra palette for XP mode
-		}
+		graphics_setup_palette(White_Tahoma_Font, 5, 61);	//Used in XP's clock and controller legend
 		graphics_setup_palette(Tahoma_font.palette_data, Tahoma_font.texture_format, 62);
 		graphics_setup_palette(BIOS_font.palette_data, BIOS_font.texture_format, 63);
 
@@ -1208,24 +1353,65 @@ int main(){
 			graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[num_changer_id], coord_num_changer,
 				frame_num_changer, 2, 3, 30, 1, 1, 1);
 
-			//Change this so it only sprintf's when a button is pressed and change it to use the "options" version of these vars, not the actual ones
-			char x_buffer[4], y_buffer[4], m_buffer[4];
-			sprintf(x_buffer, "%d", grid_x);
-			sprintf(y_buffer, "%d", grid_y);
-			sprintf(m_buffer, "%d", num_mines);
+			//Draw all 5 buttons
+			graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[button_id], coord_button,
+				frame_button, 2, 5, 30, 1, 1, 1);
+
+			//Draw all 2 check boxes
+			graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[checker_id], coord_checker,
+				frame_checker, 2, 2, 30, 1, 1, 1);
+
+			graphics_draw_text_prop(&Tahoma_font, 189, 145, 31, 1, 1, 62, "Sound\0");
+			graphics_draw_text_prop(&Tahoma_font, 189, 185, 31, 1, 1, 62, "Marks (?)\0");
+
+			// coord_button[0] = 189;
+			// coord_button[1] = 306;
+			// coord_button[2] = 275;
+			// coord_button[3] = 306;
+			// coord_button[4] = 361;
+			// coord_button[5] = 306;
+			// coord_button[6] = 275;
+			// coord_button[7] = 252;
+			// coord_button[8] = 361;
+			// coord_button[9] = 252;
+
+			graphics_draw_text_prop(&Tahoma_font, 282, 257, 31, 1, 1, 62, "Save to VMU\0");
+			graphics_draw_text_prop(&Tahoma_font, 385, 257, 31, 1, 1, 62, "Apply\0");
+
+			//Without these printf's lxdream crashes when trying to print the best times text...
+				//I've tested this on Redream, Redream + BIOS, DEMUL and real hardware and it works fine there. This is an lxdream bug
+			// printf("Garbage\n");
+			// printf("Garbage\n");
+			// printf("Garbage\n");
+			// printf("Garbage\n");
+			// printf("Garbage\n");
+			// printf("Garbage\n");
+			// printf("Garbage\n");
+
+			// graphics_draw_text_prop(&Tahoma_font, 190, 280, 31, 1, 1, 62, "Best Times...\n(NOT IMPLEMENTED YET)\0");
+			graphics_draw_text_prop(&Tahoma_font, 189, 280, 31, 1, 1, 62, "Best Times...\0");
+
+			//Re-position these later
+			graphics_draw_text_prop(&Tahoma_font, 204, 311, 31, 1, 1, 62, "Beginner\0");
+			graphics_draw_text_prop(&Tahoma_font, 284, 311, 31, 1, 1, 62, "Intemediate\0");
+			graphics_draw_text_prop(&Tahoma_font, 383, 311, 31, 1, 1, 62, "Expert\0");
+
+			//Draw the numbers for grid_x, grid_y and num_mines displays
 			graphics_draw_text_prop(&Tahoma_font, 399, 145, 31, 1, 1, 62, x_buffer);
 			graphics_draw_text_prop(&Tahoma_font, 399, 185, 31, 1, 1, 62, y_buffer);
 			graphics_draw_text_prop(&Tahoma_font, 399, 225, 31, 1, 1, 62, m_buffer);
 
-			/*
+			graphics_draw_text_prop(&Tahoma_font, 350, 145, 31, 1, 1, 62, "Height:\0");
+			graphics_draw_text_prop(&Tahoma_font, 350, 185, 31, 1, 1, 62, "Width:\0");
+			graphics_draw_text_prop(&Tahoma_font, 350, 225, 31, 1, 1, 62, "Mines:\0");
 
-			Options struct should be passed into the pres_buttons function
+			/*
 
 
 			Options page will contain these:
-			- X dim toggle (Display box with Up/Down buttons)
-			- Y dim toggle
-			- Num mines togle
+			(DONE) - X dim toggle (Display box with Up/Down buttons)
+			(DONE) - Y dim toggle
+			(DONE) - Num mines togle
 			- Beginner, Intermediate, Expert shortcuts (This changes the X, Y and Num_mines toggles)
 			- An "Apply" button
 			(The above require a reset_grid function)
@@ -1236,6 +1422,8 @@ int main(){
 			- 
 
 			*/
+
+			//Display high scores here
 		}
 		else if(focus == 4){
 			graphics_draw_text_prop(&Tahoma_font, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
@@ -1249,10 +1437,6 @@ int main(){
 			graphics_draw_text_prop(&Tahoma_font, 140, 205 + 96, 25, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
 			graphics_draw_text_prop(&Tahoma_font, 140, 210 + 108, 25, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
 			graphics_draw_text_prop(&Tahoma_font, 140, 215 + 120, 25, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
-
-			//Draw a backdrop matching XP icon's bg colour? Yes
-
-			//Display high scores here?
 		}
 
 		//Draw the flag count and timer
@@ -1346,16 +1530,16 @@ int main(){
 
 		//Drawing the highlight boxes
 		if(menus_selected & (1 << 0)){
-			graphics_draw_untextured_poly(5, os.variant_pos[1] - 3, 19, 34, 16, 0x80FFFFFF, 0);	//Font is layer 20
+			graphics_draw_untextured_poly(5, os.variant_pos[1] - 3, 19, 34, 16, 0x40FFFFFF, 0);	//Font is layer 20
 		}
 		if(menus_selected & (1 << 1)){
-			graphics_draw_untextured_poly(44, os.variant_pos[1] - 3, 19, 44, 16, 0x80FFFFFF, 0);
+			graphics_draw_untextured_poly(44, os.variant_pos[1] - 3, 19, 44, 16, 0x40FFFFFF, 0);
 		}
 		if(menus_selected & (1 << 2)){
-			graphics_draw_untextured_poly(93, os.variant_pos[1] - 3, 19, 47, 16, 0x80FFFFFF, 0);
+			graphics_draw_untextured_poly(93, os.variant_pos[1] - 3, 19, 47, 16, 0x40FFFFFF, 0);
 		}
 		if(menus_selected & (1 << 3)){
-			graphics_draw_untextured_poly(145, os.variant_pos[1] - 3, 19, 36, 16, 0x80FFFFFF, 0);
+			graphics_draw_untextured_poly(145, os.variant_pos[1] - 3, 19, 36, 16, 0x40FFFFFF, 0);
 		}
 
 		pvr_list_finish();
@@ -1367,9 +1551,16 @@ int main(){
 		if(focus <= 1){
 			custom_poly_boarder(3, grid_start_x, grid_start_y, 16, grid_x * 16, grid_y * 16, 4286611584u, 4294967295u);
 		}
-		else if(focus == 2){	//Add in the number changer textures here too when I can draw SS in Opaque
-			//Draw all 3 untextured poly number boxes
-			graphics_draw_untextured_array(&Option_polys);
+		else{
+			if(focus > 1){
+				graphics_draw_untextured_poly(6, 98, 10, 631, 1, 0xFFA0A0A0, 1);
+				//0xFFEEEBDE	//This is the BG colour of the XP icons
+				graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFD4D0C8, 1);
+			}
+			if(focus == 2){	//Add in the number changer textures here too when I can draw SS in Opaque
+				//Draw all 3 untextured poly number boxes
+				graphics_draw_untextured_array(&Option_polys);
+			}
 		}
 
 		//Draw the boarders for digit display (I think I should move these calls into digit display itself)
@@ -1401,8 +1592,8 @@ int main(){
 	retVal += memory_free_crayon_spritesheet(&Windows, 1);
 	retVal += memory_free_mono_font_sheet(&BIOS_font, 1);
 	retVal += memory_free_prop_font_sheet(&Tahoma_font, 1);
-	retVal += memory_free_palette(XP_time);
-	free(XP_time);
+	retVal += memory_free_palette(White_Tahoma_Font);
+	free(White_Tahoma_Font);
 	snd_sfx_unload(Sound_Tick);
 	snd_sfx_unload(Sound_Death);
 	snd_sfx_unload(Sound_Death_Italian);

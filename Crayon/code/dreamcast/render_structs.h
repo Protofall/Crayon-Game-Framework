@@ -10,6 +10,7 @@ the multi-draw. It shouldn't be too much slower if any.
 */
 
 //Unfinished and currently unused
+//CHANGE THIS TO HAVE A UV MAP THING
 typedef struct crayon_sprite_array{
 	uint16_t * draw_pos;	//Width then Height extracted from anim/frame data, Each group of 2 is for one sub-texture
 	uint16_t * frame_coords;	//Each group of 4 elements is one sub-texture to draw
