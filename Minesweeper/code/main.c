@@ -364,11 +364,11 @@ void x_press(crayon_animation_t * anim, int ele_x, int ele_y){
 		uint8_t valids = neighbouring_tiles(ele_x, ele_y);
 		uint8_t flag_sum = 0;	//A tiles value
 
-		if((valids & (1 << 0)) && logic_grid[ele_x - 1 + ((ele_y- 1) * grid_x)] & (1 << 6)){flag_sum++;}		//Top Left
+		if((valids & (1 << 0)) && logic_grid[ele_x - 1 + ((ele_y- 1) * grid_x)] & (1 << 6)){flag_sum++;}	//Top Left
 		if((valids & (1 << 1)) && logic_grid[ele_x + ((ele_y - 1) * grid_x)]  & (1 << 6)){flag_sum++;}		//Top centre
 		if((valids & (1 << 2)) && logic_grid[ele_x + 1 + ((ele_y - 1) * grid_x)]  & (1 << 6)){flag_sum++;}	//Top right
-		if((valids & (1 << 3)) && logic_grid[ele_x - 1 + (ele_y * grid_x)]  & (1 << 6)){flag_sum++;}			//Mid Left
-		if((valids & (1 << 4)) && logic_grid[ele_x + 1 + (ele_y * grid_x)]  & (1 << 6)){flag_sum++;}			//Mid Right
+		if((valids & (1 << 3)) && logic_grid[ele_x - 1 + (ele_y * grid_x)]  & (1 << 6)){flag_sum++;}		//Mid Left
+		if((valids & (1 << 4)) && logic_grid[ele_x + 1 + (ele_y * grid_x)]  & (1 << 6)){flag_sum++;}		//Mid Right
 		if((valids & (1 << 5)) && logic_grid[ele_x - 1 + ((ele_y + 1) * grid_x)]  & (1 << 6)){flag_sum++;}	//Bottom left
 		if((valids & (1 << 6)) && logic_grid[ele_x + ((ele_y + 1) * grid_x)]  & (1 << 6)){flag_sum++;}		//Bottom centre
 		if((valids & (1 << 7)) && logic_grid[ele_x + 1 + ((ele_y + 1) * grid_x)]  & (1 << 6)){flag_sum++;}	//Bottom right
@@ -699,7 +699,6 @@ uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os){
 }
 
 int main(){
-	// error_freeze("Multi-line\nError freeze\nTest\nHi!");	//This doesn't draw over multiple lines
 	#if CRAYON_SD_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
 		if(sdRes == 0){
@@ -710,18 +709,13 @@ int main(){
 	focus = 2;
 
 	//Currently this is the only way to access some of the hidden features
+	//Later OS will be chosen in BIOS and language through save file name
 	MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 	if(st->buttons & (1 << 1)){		//B press
 		operating_system = 1;	//Else 0
 	}
 	if(st->buttons & (1 << 2)){		//A press
-		sound_enabled = 0;	//Else 1
-	}
-	if(st->buttons & (1 << 9)){		//Y press
 		language = 1;	//Else 0
-	}
-	if(st->buttons & (1 << 10)){	//X press
-		question_enabled = 0;	//Else 1
 	}
 	MAPLE_FOREACH_END()
 
@@ -867,29 +861,6 @@ int main(){
 	coord_checker[1] = 144;
 	coord_checker[2] = 245;	//Question mark
 	coord_checker[3] = 184;
-
-	// graphics_draw_text_prop(&Tahoma_font, 189, 145, 31, 1, 1, 62, "Sound\0");
-	// graphics_draw_text_prop(&Tahoma_font, 189, 185, 31, 1, 1, 62, "Marks (?)\0");
-
-	//Beginner
-	// grid_x = 9;
-	// grid_y = 9;
-	// num_mines = 10;
-
-	//Intermediate
-	// grid_x = 16;
-	// grid_y = 16;
-	// num_mines = 40;
-
-	//Expert
-	// grid_x = 30;
-	// grid_y = 20;
-	// num_mines = 99;
-
-	//Largest	(Tinker with this one)
-	// grid_x = 38;
-	// grid_y = 21;
-	// num_mines = 130;
 
 	logic_grid = NULL;
 	coord_grid = NULL;
@@ -1364,17 +1335,6 @@ int main(){
 			graphics_draw_text_prop(&Tahoma_font, 189, 145, 31, 1, 1, 62, "Sound\0");
 			graphics_draw_text_prop(&Tahoma_font, 189, 185, 31, 1, 1, 62, "Marks (?)\0");
 
-			// coord_button[0] = 189;
-			// coord_button[1] = 306;
-			// coord_button[2] = 275;
-			// coord_button[3] = 306;
-			// coord_button[4] = 361;
-			// coord_button[5] = 306;
-			// coord_button[6] = 275;
-			// coord_button[7] = 252;
-			// coord_button[8] = 361;
-			// coord_button[9] = 252;
-
 			graphics_draw_text_prop(&Tahoma_font, 282, 257, 31, 1, 1, 62, "Save to VMU\0");
 			graphics_draw_text_prop(&Tahoma_font, 385, 257, 31, 1, 1, 62, "Apply\0");
 
@@ -1412,14 +1372,12 @@ int main(){
 			(DONE) - X dim toggle (Display box with Up/Down buttons)
 			(DONE) - Y dim toggle
 			(DONE) - Num mines togle
-			- Beginner, Intermediate, Expert shortcuts (This changes the X, Y and Num_mines toggles)
-			- An "Apply" button
-			(The above require a reset_grid function)
+			(DONE) - Beginner, Intermediate, Expert shortcuts (This changes the X, Y and Num_mines toggles)
+			(DONE) - An "Apply" button
 
-			- Sound checkbox
-			- Question checkbox
-			- Italian checkbox? For debugging, yes
-			- 
+			(KINDA DONE) - Sound checkbox
+			(KINDA DONE)- Question checkbox
+			- Italian checkbox? For debugging, maybe
 
 			*/
 
@@ -1554,7 +1512,6 @@ int main(){
 		else{
 			if(focus > 1){
 				graphics_draw_untextured_poly(6, 98, 10, 631, 1, 0xFFA0A0A0, 1);
-				//0xFFEEEBDE	//This is the BG colour of the XP icons
 				graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFD4D0C8, 1);
 			}
 			if(focus == 2){	//Add in the number changer textures here too when I can draw SS in Opaque

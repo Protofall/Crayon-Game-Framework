@@ -195,6 +195,35 @@ extern uint8_t graphics_draw_sprites_OLD(const struct crayon_spritesheet *ss,
 		extras_mode = 1;
 	}
 
+	//Use these to merge the two palette if's into one
+	// PVR_TXRFMT_PAL4BPP   (5 << 27)
+	// PVR_TXRFMT_PAL8BPP   (6 << 27)
+	//(6 << 27) == 110 << 27 == 11000 00000 00000 00000 00000 00000
+	//(5 << 27) == 110 << 27 == 10100 00000 00000 00000 00000 00000
+	//paletteNumber ranges from 0 to 63 or 0 to 15 depending on BPP
+	//   (8BPP) 3  << 25 == 00011 00000 00000 00000 00000 00000
+	//   (4BPP) 63 << 21 == 00011 11110 00000 00000 00000 00000
+	//PVR_TXRFMT_PAL4BPP == 10100 00000 00000 00000 00000 00000
+	//PVR_TXRFMT_PAL8BPP == 11000 00000 00000 00000 00000 00000
+
+	//Think about converting the texture format back into what it is originally XD
+
+	//pvr_sprite_cxt_txr(context, TR/OP/PT list, int textureformat, dimX, dimY, texture, filter)
+
+	//Once the spritesheet/font format is fixed:
+	//uint8_t filter = PVR_FILTER_NONE;	//Have param to change this possibly
+	//int textureformat = ss->spritesheet_format;
+	//if(4BPP){
+	//		textureformat |= ((paletteNumber) << 21); 
+	// }
+	//if(8BPP){
+	//		textureformat |= ((paletteNumber) << 25); 
+	// }
+	//pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, textureformat,
+	//	 ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, filter);
+
+	//Then remove all that messy junk below for this and single draw (Confirm above idea would work)
+
 	pvr_sprite_cxt_t context;
 	if(ss->spritesheet_format == 6){  //PAL8BPP format
 	// pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
