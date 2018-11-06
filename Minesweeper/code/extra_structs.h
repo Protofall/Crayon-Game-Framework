@@ -50,12 +50,12 @@ typedef struct MinesweeperSaveFile{
 //Contains the logic for a board
 typedef struct MinesweeperGrid{
 	crayon_spritesheet_t *anim;
-	uint8_t *logic_grid;
-	uint16_t *coord_grid;
-	uint8_t *frame_grid_key;	//Contains element id's for the frame grid that contains the
+	uint8_t *logic_grid;	//The following 3 arrays are in the crayon_sprite_array_t
+	// uint16_t *coord_grid;
+	// uint8_t *frame_grid_key;	//Contains element id's for the frame grid that contains the
 								//texel coords for all 16 anim frames
-	uint16_t *frame_grid;
-	//later probs a pointer to the nex draw struct that will contain 3 of those arrays
+	// uint16_t *frame_grid;
+	crayon_sprite_array_t grid;
 
 	uint8_t grid_x;
 	uint8_t grid_y;
@@ -68,24 +68,24 @@ typedef struct MinesweeperGrid{
 	int num_flags;	//More like "number of flags in the pool"
 
 	//Can you set default values in struct?
-	uint8_t over_mode = 0;	//0 = ready for new game, 1 = game just ended, 2 = loss (ded), 3 = win
-	uint8_t game_live = 0;	//Is true when the timer is turning
+	uint8_t over_mode;	//0 = ready for new game, 1 = game just ended, 2 = loss (ded), 3 = win
+	uint8_t game_live;	//Is true when the timer is turning
 	uint8_t revealed;	//What did this do?
 
-	uint8_t players_allowed = 15;	//1111, if you want to make a competative mode this can help
-									//It goes P1, P2, P3, P4. I'm made it so all players can work
-									//on any grid
+	uint8_t players_allowed;	//1111, if you want to make a competative mode this can help
+								//It goes P1, P2, P3, P4. I'm made it so all players can work
+								//on any grid. Defeault 15
 } MinesweeperGrid_t;
 
 //Contains game options
 typedef struct MinesweeperOptions{
-	uint8_t sd_present = 0;			//If an ext2 formatted SD card is detected, this this becomes true
-									//and modifies some textures/coords and allows R to save screenshots
-	uint8_t question_enabled = 1;	//Enable the use of question marking
-	uint8_t sound_enabled = 1;		//Toggle the sound
-	uint8_t operating_system = 0;	//0 for 2000, 1 for XP
-	uint8_t language = 0;			//0 for English, 1 for Italian. This affects the font language and
-									//the Minesweeper/Prato fiorito themes
+	uint8_t sd_present;			//If an ext2 formatted SD card is detected, this this becomes true
+								//and modifies some textures/coords and allows R to save screenshots
+	uint8_t question_enabled;	//Enable the use of question marking
+	uint8_t sound_enabled;		//Toggle the sound
+	uint8_t operating_system;	//0 for 2000, 1 for XP
+	uint8_t language;			//0 for English, 1 for Italian. This affects the font language and
+								//the Minesweeper/Prato fiorito themes
 
 	//For the options page (Apply only affects these 3 and not the checkboxes)
 	uint8_t disp_grid_x;
@@ -93,6 +93,9 @@ typedef struct MinesweeperOptions{
 	uint8_t disp_grid_mines;
 	char x_buffer[4], y_buffer[4], m_buffer[4];
 
+	//Add some new draw struct pointers/or stack allocated, idk
+
+	crayon_spritesheet_t *check_box;	//The anim for the checkbox...I might remove this later
 	MinesweeperSaveFile_t savefile;	//Not a pointer since this struct needs the same save file always
 } MinesweeperOptions_t;
 

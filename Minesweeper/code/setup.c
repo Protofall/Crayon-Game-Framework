@@ -229,7 +229,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8
 		}
 	}
 	else{
-		error_freeze("Unlisted file detected. %s", ss->spritesheet_animation_array[os->ids[anim_id]].animation_name);	//currently an error where os->ids[anim_id] != anim_id
+		error_freeze("Unlisted file detected. %s", ss->spritesheet_animation_array[os->ids[anim_id]].animation_name);
 	}
 }
 
@@ -244,11 +244,7 @@ void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys,
 	uint8_t id_count = 0;
 	uint8_t iter;
 	for(iter = 0; iter < os->sprite_count; iter++){
-		uint8_t lang_frame = 0;
-		if(lang && ss->spritesheet_animation_array[id_count].animation_frames > 1){
-			lang_frame = 1;
-		}
-		//Skip over the 3 assets we don't want in this list
+		//Skip over the 4 assets we don't want in this list
 		while(!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "italianTiles") ||
 			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "numberChanger") ||
 			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "checker") ||
@@ -256,7 +252,9 @@ void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys,
 			id_count++;
 		}
 		graphics_frame_coordinates(&ss->spritesheet_animation_array[id_count],
-			os->coords_frame + (2 * iter), os->coords_frame + (2 * iter) + 1, lang_frame);
+			os->coords_frame + (2 * iter), os->coords_frame + (2 * iter) + 1,
+			lang ? ss->spritesheet_animation_array[id_count].animation_frames - 1: 0);
+		//Since all assets we will store here only have 2 frames if the 2nd frame is italian and we're in italian mode, then choose that
 		os->ids[iter] = id_count;
 		id_count++;
 	}

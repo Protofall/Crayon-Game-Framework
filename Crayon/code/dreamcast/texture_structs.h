@@ -27,6 +27,7 @@ typedef struct crayon_spritesheet{
 	char *spritesheet_name;	//Might be useful for when it comes time to un-mount a romdisk, otherwise I don't think its needed
 	uint16_t spritesheet_dims;	//Since a pvr texture must be a square, we don't need height/width
 	uint8_t spritesheet_format;	//1 for 4BPP, 2 for 8BPP, 3 for RGB565 and 4 for ARGB4444 (0 for unknown)
+								//CHANGE TO UINT32 AND JUST SAVE WHOLE FORMAT
 	crayon_palette_t *palette_data;	//Right now we still malloc this regardless if we use it or not. Change that
 
 	crayon_animation_t *spritesheet_animation_array;	//Allows me to make an array of animation_t pointers

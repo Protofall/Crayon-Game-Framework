@@ -8,12 +8,12 @@ OBJS = $(TARGET).o romdisk.o
 
 KOS_ROMDISK_DIR = romdisk
 
-all: $(SCRAMBLED)
+all: $(TARGET).cdi
 
 include $(KOS_BASE)/Makefile.rules
 
 clean:
-	-rm -f $(TARGET).elf $(TARGET).bin 1st_read.bin $(OBJS) romdisk.* romdisk/*.kmg
+	-rm -f $(TARGET).cdi $(TARGET).iso $(TARGET).elf $(TARGET).bin 1st_read.bin $(OBJS) romdisk.* romdisk/*.kmg
 
 $(SCRAMBLED): $(TARGET).elf
 	sh-elf-objcopy -R .stack -O binary $(TARGET).elf $(TARGET).bin
@@ -22,6 +22,10 @@ $(SCRAMBLED): $(TARGET).elf
 $(TARGET).elf: $(OBJS)
 	kos-cc -o $(TARGET).elf $(OBJS) -lkmg -lkosutils
 #I think -lkmg for the kmg port and -lkosutils for the .kmg
+
+$(TARGET).cdi: $(SCRAMBLED)
+	mkisofs -G $(KOS_BASE)/../IP.BIN -C 0,11702 -J -l -r -o $(TARGET).iso .
+	cdi4dc $(TARGET).iso $(TARGET).cdi
 
 romdisk.o: romdisk.img
 	$(KOS_BASE)/utils/bin2o/bin2o romdisk.img romdisk romdisk.o
