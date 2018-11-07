@@ -706,7 +706,7 @@ int main(){
 		}
 	#endif
 
-	focus = 2;
+	focus = 2;	//Remove this later, its only used for debugging right now
 
 	//Currently this is the only way to access some of the hidden features
 	//Later OS will be chosen in BIOS and language through save file name
@@ -944,7 +944,7 @@ int main(){
 	while(1){		
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
-		if(st->joyx > 0){	//Converting from -128, 127 to -1, 1
+		if(st->joyx > 0){	//Converting from -128, 127 to -1, 1 CHECK IF I'M DIVIDING RIGHT (Should they be all 127 or 128 or this?)
 			thumb_x = (float) st->joyx / 127;
 		}
 		else{
@@ -1011,26 +1011,34 @@ int main(){
 
 		//Movement code
 		if(player_movement & (1 << __dev->port)){	//D-Pad
+			float movement_speed = 1.0f;
+			//On emulator when mapping keyboard keys to the controller, this gimps DPad while the thumbstick is unlimited
+			//If using a real thumbstick then this code should be good
+			if(((st->buttons & CONT_DPAD_UP) || (st->buttons & CONT_DPAD_DOWN)) &&
+				((st->buttons & CONT_DPAD_LEFT) || (st->buttons & CONT_DPAD_RIGHT))){	//When doing diagonals, don't move as far
+				movement_speed = 0.70710678118f;
+			}
+
 			if(st->buttons & CONT_DPAD_UP){
-				cursor_position[(2 * __dev->port) + 1] -= 2;
+				cursor_position[(2 * __dev->port) + 1] -= 2 * movement_speed;
 				if(cursor_position[(2 * __dev->port) + 1] < 0){
 					cursor_position[(2 * __dev->port) + 1] = 0;
 				}
 			}
 			if(st->buttons & CONT_DPAD_DOWN){
-				cursor_position[(2 * __dev->port) + 1] += 2;
+				cursor_position[(2 * __dev->port) + 1] += 2 * movement_speed;
 				if(cursor_position[(2 * __dev->port) + 1] > 480){
 					cursor_position[(2 * __dev->port) + 1] = 480;
 				}
 			}
 			if(st->buttons & CONT_DPAD_LEFT){
-				cursor_position[2 * __dev->port] -= 2;
+				cursor_position[2 * __dev->port] -= 2 * movement_speed;
 				if(cursor_position[2 * __dev->port] < 0){
 					cursor_position[2 * __dev->port] = 0;
 				}
 			}
 			if(st->buttons & CONT_DPAD_RIGHT){
-				cursor_position[2 * __dev->port] += 2;
+				cursor_position[2 * __dev->port] += 2 * movement_speed;
 				if(cursor_position[2 * __dev->port] > 640){
 					cursor_position[2 * __dev->port] = 640;
 				}
@@ -1119,7 +1127,8 @@ int main(){
 		face_logic(&face_frame_id, __dev->port, cursor_position, !!(st->buttons & (MOUSE_LEFTBUTTON)), !!(st->buttons & (MOUSE_SIDEBUTTON)));	//Might need to change the X/Side button code
 
 		if(focus == 0){
-			grid_indent_logic(ele_x, ele_y, in_grid, __dev->port, press_data, !!(st->buttons & (MOUSE_LEFTBUTTON)), !!(st->buttons & (MOUSE_SIDEBUTTON)), !!(st->buttons & (MOUSE_RIGHTBUTTON)), 1);
+			grid_indent_logic(ele_x, ele_y, in_grid, __dev->port, press_data, !!(st->buttons & (MOUSE_LEFTBUTTON)),
+				!!(st->buttons & (MOUSE_SIDEBUTTON)), !!(st->buttons & (MOUSE_RIGHTBUTTON)), 1);
 		}
 
 		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses

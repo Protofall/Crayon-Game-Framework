@@ -3,7 +3,7 @@
 void setup_pos_lookup_table(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys, uint8_t iter, uint8_t sd){
 	uint8_t anim_id = os->ids[iter];
 	if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "aboutLogo")){
-		if(sys){	//Change this later
+		if(sys){
 			os->coords_pos[iter * 3] = 100;
 			os->coords_pos[(iter * 3) + 1] = 120;
 			os->coords_pos[(iter * 3) + 2] = 19;
@@ -113,8 +113,8 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8
 			os->scale[(iter * 2) + 1] = 1;
 		}
 		else{
-			os->coords_pos[iter * 3] = 69;
-			os->coords_pos[(iter * 3) + 1] = 458;
+			os->coords_pos[iter * 3] = 71;
+			os->coords_pos[(iter * 3) + 1] = 456;
 			os->coords_pos[(iter * 3) + 2] = 17;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
@@ -141,8 +141,8 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8
 			os->scale[(iter * 2) + 1] = 1;
 		}
 		else{
-			os->coords_pos[iter * 3] = 0;
-			os->coords_pos[(iter * 3) + 1] = 458;
+			os->coords_pos[iter * 3] = 2;
+			os->coords_pos[(iter * 3) + 1] = 456;
 			os->coords_pos[(iter * 3) + 2] = 16;
 			os->scale[iter * 2] = 1;
 			os->scale[(iter * 2) + 1] = 1;
