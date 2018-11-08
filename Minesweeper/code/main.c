@@ -745,20 +745,26 @@ int main(){
 	crayon_spritesheet_t Board, Icons, Windows;
 	crayon_font_mono_t BIOS_font;
 	crayon_font_prop_t Tahoma_font;
+	Board.spritesheet_texture = NULL;
+	Icons.spritesheet_texture = NULL;
+	Windows.spritesheet_texture = NULL;
+	BIOS_font.fontsheet_texture = NULL;
+	Tahoma_font.fontsheet_texture = NULL;
+
 	crayon_untextured_array_t Bg_polys, Option_polys;	//Contains some of the untextured polys that will be drawn.
 	sfxhnd_t Sound_Tick, Sound_Death, Sound_Death_Italian, Sound_Win;	//Sound effect handles. Might add more later for startup sounds or maybe put them in cdda? (Note this is a uint32_t)
 	snd_stream_init();	//Needed otherwise snd_sfx calls crash
 
 	#if CRAYON_SD_MODE == 1
-		memory_mount_romdisk("/sd/Minesweeper.img", "/Minesweeper");
+		crayon_memory_mount_romdisk("/sd/Minesweeper.img", "/Minesweeper");
 	#else
-		memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
+		crayon_memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	#endif
 
-	memory_load_mono_font_sheet(&BIOS_font, "/Minesweeper/Fonts/BIOS_font.dtex");
-	memory_load_prop_font_sheet(&Tahoma_font, "/Minesweeper/Fonts/Tahoma_font.dtex");
-	memory_load_crayon_spritesheet(&Board, "/Minesweeper/Board.dtex");
-	memory_load_crayon_spritesheet(&Icons, "/Minesweeper/Icons.dtex");
+	crayon_memory_load_mono_font_sheet(&BIOS_font, "/Minesweeper/Fonts/BIOS_font.dtex");
+	crayon_memory_load_prop_font_sheet(&Tahoma_font, "/Minesweeper/Fonts/Tahoma_font.dtex");
+	crayon_memory_load_spritesheet(&Board, "/Minesweeper/Board.dtex");
+	crayon_memory_load_spritesheet(&Icons, "/Minesweeper/Icons.dtex");
 
 	Sound_Tick = snd_sfx_load("/Minesweeper/Sounds/tick.wav");
 	Sound_Death = snd_sfx_load("/Minesweeper/Sounds/death.wav");
@@ -769,20 +775,20 @@ int main(){
 	//Load the OS assets
 	if(operating_system){
 		#if CRAYON_SD_MODE == 1
-			memory_mount_romdisk("/sd/XP.img", "/XP");
+			crayon_memory_mount_romdisk("/sd/XP.img", "/XP");
 		#else
-			memory_mount_romdisk("/cd/XP.img", "/XP");
+			crayon_memory_mount_romdisk("/cd/XP.img", "/XP");
 		#endif
-		memory_load_crayon_spritesheet(&Windows, "/XP/Windows.dtex");
+		crayon_memory_load_spritesheet(&Windows, "/XP/Windows.dtex");
 		fs_romdisk_unmount("/XP");
 	}
 	else{
 		#if CRAYON_SD_MODE == 1
-			memory_mount_romdisk("/sd/2000.img", "/2000");
+			crayon_memory_mount_romdisk("/sd/2000.img", "/2000");
 		#else
-			memory_mount_romdisk("/cd/2000.img", "/2000");
+			crayon_memory_mount_romdisk("/cd/2000.img", "/2000");
 		#endif
-		memory_load_crayon_spritesheet(&Windows, "/2000/Windows.dtex");
+		crayon_memory_load_spritesheet(&Windows, "/2000/Windows.dtex");
 		fs_romdisk_unmount("/2000");
 	}
 
@@ -915,19 +921,19 @@ int main(){
 	graphics_frame_coordinates(&Icons.spritesheet_animation_array[2], &sd_x, &sd_y, 0);
 
 	//The palette for XP's clock
-	crayon_palette_t *White_Tahoma_Font = memory_clone_palette(Tahoma_font.palette_data);
-	memory_swap_colour(White_Tahoma_Font, 0xFF000000, 0xFFFFFFFF, 0);	//Swapps black for white
+	crayon_palette_t *White_Tahoma_Font = crayon_memory_clone_palette(Tahoma_font.palette_data);
+	crayon_memory_swap_colour(White_Tahoma_Font, 0xFF000000, 0xFFFFFFFF, 0);	//Swapps black for white
 
 	//The cursor colours
 	crayon_palette_t *cursor_red, *cursor_yellow, *cursor_green, *cursor_blue;
-	cursor_red = memory_clone_palette(Icons.palette_data);
-	cursor_yellow = memory_clone_palette(Icons.palette_data);
-	cursor_green = memory_clone_palette(Icons.palette_data);
-	cursor_blue = memory_clone_palette(Icons.palette_data);
-	memory_swap_colour(cursor_red, 0xFFFFFFFF, 0xFFFF0000, 0);
-	memory_swap_colour(cursor_yellow, 0xFFFFFFFF, 0xFFFFFF00, 0);
-	memory_swap_colour(cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
-	memory_swap_colour(cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
+	cursor_red = crayon_memory_clone_palette(Icons.palette_data);
+	cursor_yellow = crayon_memory_clone_palette(Icons.palette_data);
+	cursor_green = crayon_memory_clone_palette(Icons.palette_data);
+	cursor_blue = crayon_memory_clone_palette(Icons.palette_data);
+	crayon_memory_swap_colour(cursor_red, 0xFFFFFFFF, 0xFFFF0000, 0);
+	crayon_memory_swap_colour(cursor_yellow, 0xFFFFFFFF, 0xFFFFFF00, 0);
+	crayon_memory_swap_colour(cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
+	crayon_memory_swap_colour(cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
 
 	#if CRAYON_DEBUG == 1
 	//Stuff for debugging/performance testing
@@ -1283,8 +1289,12 @@ int main(){
 
 		//Updating the time in the bottom right
 		//CONSIDER ONLY UPDATING IF TIME IS DIFFERENT
+		//Will come back to this at a later date to optimise it
 		char time_buffer[9];
 		if(readable_time->tm_hour < 13){
+			if(readable_time->tm_hour == 0){	//When its midnight, display 12:XX AM instead of 00:XX AM
+				readable_time->tm_hour = 12;
+			}
 			sprintf(time_buffer, "%02d:%02d AM", readable_time->tm_hour, readable_time->tm_min);
 		}
 		else{
@@ -1553,12 +1563,12 @@ int main(){
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
 	//I'm probs forgetting a few things such as the cursor palettes
 	int retVal = 0;
-	retVal += memory_free_crayon_spritesheet(&Board, 1);
-	retVal += memory_free_crayon_spritesheet(&Icons, 1);
-	retVal += memory_free_crayon_spritesheet(&Windows, 1);
-	retVal += memory_free_mono_font_sheet(&BIOS_font, 1);
-	retVal += memory_free_prop_font_sheet(&Tahoma_font, 1);
-	retVal += memory_free_palette(White_Tahoma_Font);
+	retVal += crayon_memory_free_crayon_spritesheet(&Board, 1);
+	retVal += crayon_memory_free_crayon_spritesheet(&Icons, 1);
+	retVal += crayon_memory_free_crayon_spritesheet(&Windows, 1);
+	retVal += crayon_memory_free_mono_font_sheet(&BIOS_font, 1);
+	retVal += crayon_memory_free_prop_font_sheet(&Tahoma_font, 1);
+	retVal += crayon_memory_free_palette(White_Tahoma_Font);
 	free(White_Tahoma_Font);
 	snd_sfx_unload(Sound_Tick);
 	snd_sfx_unload(Sound_Death);

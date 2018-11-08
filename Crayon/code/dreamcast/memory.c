@@ -1,41 +1,44 @@
 #include "memory.h"
 
-typedef struct dtex_header{
-	uint8_t magic[4]; //magic number "DTEX"
-	uint16_t   width; //texture width in pixels
-	uint16_t  height; //texture height in pixels
-	uint32_t    type; //format (see https://github.com/tvspelsfreak/texconv)
-	uint32_t    size; //texture size in bytes
-} dtex_header_t;
+extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, dtex_header_t *dtex_header, char *texture_path){	
+	uint8_t dtex_result = 0;
 
-typedef struct dpal_header{
-	uint8_t     magic[4]; //magic number "DPAL"
-	uint32_t color_count; //number of 32-bit ARGB palette entries
-} dpal_header_t;
+	#define DTEX_ERROR(n) {dtex_result = n; goto DTEX_cleanup;}
 
-extern uint8_t memory_load_crayon_spritesheet(struct crayon_spritesheet *ss, char *path){
+		FILE *texture_file = fopen(texture_path, "rb");
+		if(!texture_file){DTEX_ERROR(1);}
+
+		if(fread(dtex_header, sizeof(dtex_header_t), 1, texture_file) != 1){DTEX_ERROR(2);}
+
+		if(memcmp(dtex_header->magic, "DTEX", 4)){DTEX_ERROR(3);}
+
+		*dtex = pvr_mem_malloc(dtex_header->size);
+		if(!*dtex){DTEX_ERROR(4);}
+
+		if(fread(*dtex, dtex_header->size, 1, texture_file) != 1){DTEX_ERROR(5);}
+
+	#undef DTEX_ERROR
+
+	DTEX_cleanup:
+
+	if(texture_file){fclose(texture_file);}
+
+	return dtex_result;
+}
+
+extern uint8_t crayon_memory_load_spritesheet(struct crayon_spritesheet *ss, char *path){
 	uint8_t result = 0;
-	pvr_ptr_t texture = NULL;
 	ss->palette_data = NULL;
 	FILE *sheet_file = NULL;
 
 	#define ERROR(n) {result = (n); goto cleanup;}
 
-	FILE *texture_file = fopen(path, "rb");
-	if(!texture_file){ERROR(1);}
-
 	// Load texture
 	//---------------------------------------------------------------------------
 
 	dtex_header_t dtex_header;
-	if(fread(&dtex_header, sizeof(dtex_header), 1, texture_file) != 1){ERROR(2);}
-
-	if(memcmp(dtex_header.magic, "DTEX", 4)){ERROR(3);}
-
-	texture = pvr_mem_malloc(dtex_header.size);
-	if(!texture){ERROR(4);}
-
-	if(fread(texture, dtex_header.size, 1, texture_file) != 1){ERROR(5);}
+	uint8_t dtex_result = crayon_memory_load_dtex(&ss->spritesheet_texture, &dtex_header, path);
+	if(dtex_result){ERROR(dtex_result);}
 
 	// Write all metadata except palette stuff
 	//---------------------------------------------------------------------------
@@ -46,8 +49,6 @@ extern uint8_t memory_load_crayon_spritesheet(struct crayon_spritesheet *ss, cha
 	else{
 		ss->spritesheet_dims = dtex_header.height;
 	}
-
-	ss->spritesheet_texture = texture;
 
 	//This assumes no mip-mapping, no stride, twiddled on, its uncompressed and no stride setting (I might edit this later to allow for compressed)
 	if(dtex_header.type == 0x00000000){ //ARGB1555
@@ -94,7 +95,7 @@ extern uint8_t memory_load_crayon_spritesheet(struct crayon_spritesheet *ss, cha
 		palette_path[path_length + 2] = 'a';
 		palette_path[path_length + 3] = 'l';
 		palette_path[path_length + 4] = '\0';
-		int resultPal = memory_load_palette(ss->palette_data, palette_path); //The function will modify the palette and colour count
+		int resultPal = crayon_memory_load_palette(ss->palette_data, palette_path); //The function will modify the palette and colour count
 		free(palette_path);
 		if(resultPal){ERROR(7 + resultPal);}
 	}
@@ -153,11 +154,11 @@ extern uint8_t memory_load_crayon_spritesheet(struct crayon_spritesheet *ss, cha
 
 	cleanup:
 
-	if(texture_file){fclose(texture_file);}
 	if(sheet_file){fclose(sheet_file);} //May need to enclode this in an if "res >= 12" if statement
 
 	// If a failure occured somewhere
-	if(result && texture){pvr_mem_free(texture);}
+	// This might cause errors if the pointer wasn't initially set to NULL
+	if(result && ss->spritesheet_texture){pvr_mem_free(ss->spritesheet_texture);}
 
 	//If we allocated memory for the palette and error out
 	if(result && ss->palette_data != NULL){
@@ -170,9 +171,8 @@ extern uint8_t memory_load_crayon_spritesheet(struct crayon_spritesheet *ss, cha
 	return result;
 }
 
-extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *path){
+extern uint8_t crayon_memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *path){
 	uint8_t result = 0;
-	pvr_ptr_t texture = NULL;
 	fp->palette_data = NULL;
 	fp->chars_per_row = NULL;
 	fp->char_width = NULL;
@@ -180,21 +180,12 @@ extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *pa
 
 	#define ERROR(n) {result = (n); goto cleanup;}
 
-	FILE *texture_file = fopen(path, "rb");
-	if(!texture_file){ERROR(1);}
-
 	// Load texture
 	//---------------------------------------------------------------------------
 
 	dtex_header_t dtex_header;
-	if(fread(&dtex_header, sizeof(dtex_header), 1, texture_file) != 1){ERROR(2);}
-
-	if(memcmp(dtex_header.magic, "DTEX", 4)){ERROR(3);}
-
-	texture = pvr_mem_malloc(dtex_header.size);
-	if(!texture){ERROR(4);}
-
-	if(fread(texture, dtex_header.size, 1, texture_file) != 1){ERROR(5);}
+	uint8_t dtex_result = crayon_memory_load_dtex(&fp->fontsheet_texture, &dtex_header, path);
+	if(dtex_result){ERROR(dtex_result);}
 
 	// Write all metadata except palette stuff
 	//---------------------------------------------------------------------------
@@ -205,8 +196,6 @@ extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *pa
 	else{
 		fp->fontsheet_dim = dtex_header.height;
 	}
-
-	fp->fontsheet_texture = texture;
 
 	//This assumes same stuff as spritesheet loader does
 	if(dtex_header.type == 0x00000000){ //ARGB1555
@@ -241,7 +230,7 @@ extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *pa
 		palette_path[path_length + 2] = 'a';
 		palette_path[path_length + 3] = 'l';
 		palette_path[path_length + 4] = '\0';
-		int resultPal = memory_load_palette(fp->palette_data, palette_path); //The function will modify the palette and colour count
+		int resultPal = crayon_memory_load_palette(fp->palette_data, palette_path); //The function will modify the palette and colour count
 		free(palette_path);
 		if(resultPal){ERROR(7 + resultPal);}
 	}
@@ -325,11 +314,10 @@ extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *pa
 
 	cleanup:
 
-	if(texture_file){fclose(texture_file);}
 	if(sheet_file){fclose(sheet_file);}
 
 	// If a failure occured somewhere
-	if(result && texture){pvr_mem_free(texture);}
+	if(result && fp->fontsheet_texture){pvr_mem_free(fp->fontsheet_texture);}
 
 	//If we allocated memory for the palette and error out
 	if(result){
@@ -354,29 +342,19 @@ extern uint8_t memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *pa
 	return result;
 }
 
-extern uint8_t memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *path){
+extern uint8_t crayon_memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *path){
 	uint8_t result = 0;
-	pvr_ptr_t texture = NULL;
 	fm->palette_data = NULL;
 	FILE *sheet_file = NULL;
 
 	#define ERROR(n) {result = (n); goto cleanup;}
 
-	FILE *texture_file = fopen(path, "rb");
-	if(!texture_file){ERROR(1);}
-
 	// Load texture
 	//---------------------------------------------------------------------------
 
 	dtex_header_t dtex_header;
-	if(fread(&dtex_header, sizeof(dtex_header), 1, texture_file) != 1){ERROR(2);}
-
-	if(memcmp(dtex_header.magic, "DTEX", 4)){ERROR(3);}
-
-	texture = pvr_mem_malloc(dtex_header.size);
-	if(!texture){ERROR(4);}
-
-	if(fread(texture, dtex_header.size, 1, texture_file) != 1){ERROR(5);}
+	uint8_t dtex_result = crayon_memory_load_dtex(&fm->fontsheet_texture, &dtex_header, path);
+	if(dtex_result){ERROR(dtex_result);}
 
 	// Write all metadata except palette stuff
 	//---------------------------------------------------------------------------
@@ -387,8 +365,6 @@ extern uint8_t memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *pa
 	else{
 		fm->fontsheet_dim = dtex_header.height;
 	}
-
-	fm->fontsheet_texture = texture;
 
 	//This assumes same stuff as spritesheet loader does
 	if(dtex_header.type == 0x00000000){ //ARGB1555
@@ -423,7 +399,7 @@ extern uint8_t memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *pa
 		palette_path[path_length + 2] = 'a';
 		palette_path[path_length + 3] = 'l';
 		palette_path[path_length + 4] = '\0';
-		int resultPal = memory_load_palette(fm->palette_data, palette_path); //The function will modify the palette and colour count
+		int resultPal = crayon_memory_load_palette(fm->palette_data, palette_path); //The function will modify the palette and colour count
 		free(palette_path);
 		if(resultPal){ERROR(7 + resultPal);}
 	}
@@ -465,11 +441,10 @@ extern uint8_t memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *pa
 
 	cleanup:
 
-	if(texture_file){fclose(texture_file);}
 	if(sheet_file){fclose(sheet_file);}
 
 	// If a failure occured somewhere
-	if(result && texture){pvr_mem_free(texture);}
+	if(result && fm->fontsheet_texture){pvr_mem_free(fm->fontsheet_texture);}
 
 	//If we allocated memory for the palette and error out
 	if(result && fm->palette_data != NULL){
@@ -482,7 +457,7 @@ extern uint8_t memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *pa
 	return result;
 }
 
-extern uint8_t memory_load_palette(crayon_palette_t *cp, char *path){
+extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, char *path){
 	uint8_t result = 0;
 	#define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
 	
@@ -511,7 +486,7 @@ extern uint8_t memory_load_palette(crayon_palette_t *cp, char *path){
 	return result;
 }
 
-extern crayon_palette_t * memory_clone_palette(crayon_palette_t *original){
+extern crayon_palette_t * crayon_memory_clone_palette(crayon_palette_t *original){
 	crayon_palette_t *copy = (crayon_palette_t *) malloc(sizeof(crayon_palette_t));
 	copy->palette = malloc(original->colour_count * sizeof(uint32_t));
 	copy->colour_count = original->colour_count;
@@ -523,7 +498,7 @@ extern crayon_palette_t * memory_clone_palette(crayon_palette_t *original){
 	return copy;
 }
 
-extern uint16_t memory_swap_colour(crayon_palette_t *cp, uint32_t colour1, uint32_t colour2, uint8_t _continue){
+extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1, uint32_t colour2, uint8_t _continue){
 	uint16_t i;
 	uint16_t found = 0;
 	for(i = 0; i < cp->colour_count; ++i){
@@ -539,7 +514,7 @@ extern uint16_t memory_swap_colour(crayon_palette_t *cp, uint32_t colour1, uint3
 }
 
 //Free Texture, anim array and palette (Maybe the anim/ss names later on?). Doesn't free the spritesheet struct itself
-extern uint8_t memory_free_crayon_spritesheet(struct crayon_spritesheet *ss, uint8_t free_palette){
+extern uint8_t crayon_memory_free_spritesheet(struct crayon_spritesheet *ss, uint8_t free_palette){
 	if(ss){
 		if(free_palette && ss->palette_data != NULL){ //Free the palette
 			if(ss->palette_data->palette != NULL){
@@ -563,7 +538,7 @@ extern uint8_t memory_free_crayon_spritesheet(struct crayon_spritesheet *ss, uin
 	return 1;
 }
 
-extern uint8_t memory_free_prop_font_sheet(struct crayon_font_prop *fp, uint8_t free_palette){
+extern uint8_t crayon_memory_free_prop_font_sheet(struct crayon_font_prop *fp, uint8_t free_palette){
 	if(fp){
 		if(free_palette && fp->palette_data != NULL){ //Free the palette
 			if(fp->palette_data->palette != NULL){
@@ -581,7 +556,7 @@ extern uint8_t memory_free_prop_font_sheet(struct crayon_font_prop *fp, uint8_t 
 	return 1;
 }
 
-extern uint8_t memory_free_mono_font_sheet(struct crayon_font_mono *fm, uint8_t free_palette){
+extern uint8_t crayon_memory_free_mono_font_sheet(struct crayon_font_mono *fm, uint8_t free_palette){
 	if(fm){
 		if(free_palette && fm->palette_data != NULL){ //Free the palette
 			if(fm->palette_data->palette != NULL){
@@ -596,7 +571,7 @@ extern uint8_t memory_free_mono_font_sheet(struct crayon_font_mono *fm, uint8_t 
 	return 1;
 }
 
-extern uint8_t memory_free_palette(crayon_palette_t *cp){
+extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
 	if(cp->palette != NULL){
 		free(cp->palette);
 		return 0;
@@ -604,7 +579,7 @@ extern uint8_t memory_free_palette(crayon_palette_t *cp){
 	return 1;
 }
 
-extern uint8_t memory_mount_romdisk(char *filename, char *mountpoint){
+extern uint8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint){
 	void *buffer;
 	ssize_t size = fs_load(filename, &buffer); // Loads the file "filename" into RAM
 
@@ -615,7 +590,7 @@ extern uint8_t memory_mount_romdisk(char *filename, char *mountpoint){
 	return 1;
 }
 
-extern uint8_t memory_mount_romdisk_gz(char *filename, char *mountpoint){
+extern uint8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint){
 	void *buffer;
 	int length = zlib_getlength(filename);
 

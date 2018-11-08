@@ -23,7 +23,7 @@ typedef struct crayon_animation{
 } crayon_animation_t;
 
 typedef struct crayon_spritesheet{
-	pvr_ptr_t *spritesheet_texture;
+	pvr_ptr_t spritesheet_texture;
 	char *spritesheet_name;	//Might be useful for when it comes time to un-mount a romdisk, otherwise I don't think its needed
 	uint16_t spritesheet_dims;	//Since a pvr texture must be a square, we don't need height/width
 	uint8_t spritesheet_format;	//1 for 4BPP, 2 for 8BPP, 3 for RGB565 and 4 for ARGB4444 (0 for unknown)
@@ -51,7 +51,7 @@ num_rows num_chars_row_1 num_chars_row_2 (etc)
 */
 
 typedef struct crayon_font_prop{
-	pvr_ptr_t *fontsheet_texture;
+	pvr_ptr_t fontsheet_texture;
 	uint16_t fontsheet_dim;
 	uint8_t texture_format;	//Contains the texel format
 	uint8_t *char_width;	//Num elements equal to num_chars
@@ -68,7 +68,7 @@ typedef struct crayon_font_prop{
 //All chars have the same width and height
 //Info file format: "char_width char_height num_columns num_rows"
 typedef struct crayon_font_mono{
-	pvr_ptr_t *fontsheet_texture;
+	pvr_ptr_t fontsheet_texture;
 	uint16_t fontsheet_dim;
 	uint8_t texture_format;	//Contains the texel format
 	uint8_t char_width;
