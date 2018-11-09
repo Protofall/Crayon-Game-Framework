@@ -24,6 +24,7 @@
 #define CRAYON_SD_MODE 0
 #define CRAYON_DEBUG 0
 //LOWER BUTTON TOP BOUND BECAUSE OF XP MODE
+	//What does that mean? The highlight?
 
 #if CRAYON_SD_MODE == 1
 	//For mounting the sd dir
@@ -42,7 +43,7 @@ int time_sec;
 
 uint8_t sd_present = 0;			//If an ext2 formatted SD card is detected, this this becomes true and modifies some textures/coords and allows R to save screenshots
 uint8_t question_enabled = 1;	//Enable the use of question marking
-uint8_t sound_enabled = 1;		//Toggle the sound
+uint8_t sound_enabled = 0;		//Toggle the sound
 uint8_t operating_system = 0;	//0 for 2000, 1 for XP
 uint8_t language = 0;			//0 for English, 1 for Italian. This affects the font language and the Minesweeper/Prato fiorito themes
 
@@ -63,6 +64,11 @@ uint8_t disp_grid_x;
 uint8_t disp_grid_y;
 uint8_t disp_grid_mines;
 char x_buffer[4], y_buffer[4], m_buffer[4];
+
+//REMOVE LATER
+sfxhnd_t Sound_Debug;
+uint8_t failure_flag = 0;
+char failure_buffer[30];
 
 #if CRAYON_SD_MODE == 1
 	#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
@@ -309,12 +315,14 @@ void reveal_map(crayon_animation_t * anim){
 	return;
 }
 
+//Under heavy load this function isn't called sometimes (Confirmed with sfx_play debugging)
 void discover_tile(crayon_animation_t * anim, int ele_x, int ele_y){
 	int ele_logic = ele_x + grid_x * ele_y;
 	if(!(logic_grid[ele_logic] & 1 << 6)){	//If not flagged
 		if(logic_grid[ele_logic] & 1 << 7){	//Already discovered
 			return;
 		}
+		
 		int ele = ele_logic * 2;
 		if(logic_grid[ele_logic] & 1 << 5){	//If questioned, remove the question mark and set it to a normal tile
 			logic_grid[ele_logic] &= ~(1 << 5);
@@ -357,6 +365,7 @@ void discover_tile(crayon_animation_t * anim, int ele_x, int ele_y){
 	return;
 }
 
+//This function always seems to enter
 void x_press(crayon_animation_t * anim, int ele_x, int ele_y){
 	int ele_logic = ele_x + grid_x * ele_y;
 	if((logic_grid[ele_logic] & 1<<7)){	//If revealed
@@ -486,10 +495,26 @@ void face_logic(uint8_t *face_frame_id, int id, float *cursor_position, uint8_t 
 	}
 }
 
+//For some reason, it has a hard time detecting A and B presses under high load. But X is fine?
+//uint8_t button_action = 0;	// ---S YBXA format, each maple loop the variable is overritten with released statuses
+
 //Handles the interaction logic with the grid
 void grid_ABX_logic(int ele_x, int ele_y, uint8_t button_action, crayon_animation_t *tile_anim, uint32_t *start_time, uint32_t *start_ms_time){
 	if(over_mode == 0){
-		if(button_action & (1 << 0)){	//For A press
+		if(button_action & (1 << 2)){	//For B press
+			b_press(tile_anim, ele_x + grid_x * ele_y);
+			// failure_flag = 2;
+		}
+		else if(button_action & (1 << 1)){	//For X press
+			// snd_sfx_play(Sound_Debug, 192, 128);
+			if(!game_live){
+				timer_ms_gettime(start_time, start_ms_time);
+				game_live = 1;
+			}
+			x_press(tile_anim, ele_x, ele_y);
+			// failure_flag = 2;
+		}
+		else if(button_action & (1 << 0)){	//For A press
 			if(!game_live){
 				timer_ms_gettime(start_time, start_ms_time);
 				game_live = 1;
@@ -505,17 +530,12 @@ void grid_ABX_logic(int ele_x, int ele_y, uint8_t button_action, crayon_animatio
 				}
 			}
 			discover_tile(tile_anim, ele_x, ele_y);
+			// failure_flag = 2;
 		}
-		if(button_action & (1 << 1)){	//For X press
-			if(!game_live){
-				timer_ms_gettime(start_time, start_ms_time);
-				game_live = 1;
-			}
-			x_press(tile_anim, ele_x, ele_y);
-		}
-		if(button_action & (1 << 2)){	//For B press
-			b_press(tile_anim, ele_x + grid_x * ele_y);
-		}
+		// else{
+			// if(faluir)
+			// failure_flag = 1;
+		// }
 	}
 }
 
@@ -698,7 +718,13 @@ uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os){
 	return menus_selected;
 }
 
+// #include <float.h>	//Needed for FLT_MAX
+
 int main(){
+
+	// printf("\tVALUE: %f\n", FLT_MAX);	//Apparently floats can be *VERY* large (340282346638528859811704183484516925440.000000)
+	// printf("\tVALUE: %lu\n", (uint32_t)FLT_MAX);	//But here it becomes 4294967295
+
 	#if CRAYON_SD_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
 		if(sdRes == 0){
@@ -770,6 +796,7 @@ int main(){
 	Sound_Death = snd_sfx_load("/Minesweeper/Sounds/death.wav");
 	Sound_Death_Italian = snd_sfx_load("/Minesweeper/Sounds/deathItalian.wav");
 	Sound_Win = snd_sfx_load("/Minesweeper/Sounds/win.wav");
+	Sound_Debug = Sound_Tick;
 	fs_romdisk_unmount("/Minesweeper");
 
 	//Load the OS assets
@@ -872,7 +899,8 @@ int main(){
 	coord_grid = NULL;
 	frame_grid = NULL;
 
-	reset_grid(&tile_anim, 30, 20, 99);
+	// reset_grid(&tile_anim, 30, 20, 99);
+	reset_grid(&tile_anim, 38, 21, 160);
 
 	uint16_t grid_size = grid_x * grid_start_y;
 
@@ -947,6 +975,12 @@ int main(){
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
+	// uint8_t successful_b_presses_before = 0;
+	uint8_t successful_b_presses_just_after = 0;
+	uint8_t successful_b_presses_active_just_after = 0;
+	uint8_t successful_b_presses_long_after = 0;
+	uint8_t successful_b_presses_active_long_after = 0;
+
 	while(1){		
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
@@ -975,14 +1009,21 @@ int main(){
 			start_primed |= (1 << 6);	//P bit
 		}
 
-		if(!(player_active & (1 << __dev->port))){	//Player is there, but hasn't been activated yet
-			if(st->buttons != 0 || thumb_active){	//Input detected
-				player_active |= (1 << __dev->port);
-			}
-			else{
-				continue;
-			}
-		}
+		//While debugging I'm just making all players active
+		player_active |= (1 << __dev->port);
+
+		// if(!(player_active & (1 << __dev->port))){	//Player is there, but hasn't been activated yet
+		// 	if(st->buttons != 0 || thumb_active){	//Input detected
+		// 		player_active |= (1 << __dev->port);
+		// 	}
+		// 	else{
+		// 		continue;
+		// 	}
+		// }
+
+		// if(!(previous_buttons[__dev->port] & CONT_B) && (st->buttons & CONT_B)){
+		// 	successful_b_presses_before++;
+		// }
 
 		//Use the buttons previously pressed to control what happens here
 		button_action = 0;
@@ -992,7 +1033,16 @@ int main(){
 		button_action |= (!(previous_buttons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y)) << 3;	//Y pressed
 		button_action |= ((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && !(start_primed & (1 << 4))) << 4;	//If we press start, but we haven't done active prime yet and we aren't invalidated
 
-		if(button_press_logic(button_action, __dev->port, cursor_position, &tile_anim, previous_buttons, st->buttons)){break;}	//Is previous_buttons right?
+		if(button_action & (1 << 2)){
+			successful_b_presses_active_just_after++;
+		}
+
+		//Every time you perform a successful b press, we increment it (Press Y to show the total)
+		if(!(previous_buttons[__dev->port] & CONT_B) && (st->buttons & CONT_B)){
+			successful_b_presses_just_after++;
+		}
+
+		if(button_press_logic(button_action, __dev->port, cursor_position, &tile_anim, previous_buttons, st->buttons)){break;}	//This will update previous_muttons
 		button_press_logic_buttons(&os, &tile_anim, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
 
 		//These are only ever set if The cursor is on the grid and A/B/X is/was pressed
@@ -1009,6 +1059,36 @@ int main(){
 				start_primed |= (1 << 4);	//A bit
 			}
 		}
+
+		//EVERY TIME IT FAILS, ONLY NON-ACTIVE COUNTER GETS INCREMENTED SO IT IS REGISTERING IT, BUT NOT IN active_buttons
+
+		//Every time you perform a successful b press (active), we increment it (Press Y to show the total)
+		if(button_action & (1 << 2)){
+			successful_b_presses_active_long_after++;
+		}
+
+		//Every time you perform a successful b press, we increment it (Press Y to show the total)
+		if(!(previous_buttons[__dev->port] & CONT_B) && (st->buttons & CONT_B)){
+			successful_b_presses_long_after++;
+		}
+
+		//Press Y to end
+		if(st->buttons & (CONT_Y)){
+			// error_freeze("B, JA, LA (norm/active): %d, %d, %d, %d, %d", successful_b_presses_before, successful_b_presses_just_after, successful_b_presses_active_just_after, successful_b_presses_long_after, successful_b_presses_active_long_after);
+			error_freeze("JA, LA (norm/active): %d, %d, %d, %d", successful_b_presses_just_after, successful_b_presses_active_just_after, successful_b_presses_long_after, successful_b_presses_active_long_after);
+		}
+
+		//If a B press failed (This won't detect it most of the time, but when it did it was wrong)
+		// if(!button_action && !(previous_buttons[__dev->port] & CONT_B) && (st->buttons & CONT_B)){
+		// if(!failure_flag && !(previous_buttons[__dev->port] & CONT_B) && (st->buttons & CONT_B)){
+			// sprintf(failure_buffer, "%d:%lu, %lu", button_action, st->buttons, previous_buttons[__dev->port]);
+			// error_freeze("Crash: %d, %lu, %lu", button_action, st->buttons, previous_buttons[__dev->port]);	//Got a 0, 2, 0 on hardware at some point when b pressing
+			// Which means no actions, B is pressed and 0 wasn't pressed last frame. This is definately wrong since if we get this button combo, actions should be 4
+			// However there were multiple "failed" presses that this block didn't pick up
+		// }
+		// if(failure_flag == 2){
+			// failure_flag = 0;
+		// }
 
 		//Y press code
 		if(button_action & (1 << 3)){
@@ -1287,6 +1367,13 @@ int main(){
 		graphics_draw_text_prop(&Tahoma_font, 97, os.variant_pos[1], 20, 1, 1, 62, "Controls\0");
 		graphics_draw_text_prop(&Tahoma_font, 149, os.variant_pos[1], 20, 1, 1, 62, "About\0");
 
+		//DEBUG Drawing this removes the buggy effect :|
+		// graphics_draw_text_mono(&BIOS_font, 400, 450, 60, 1, 1, 63, failure_buffer);
+		// graphics_draw_text_prop(&Tahoma_font, 400, 455, 60, 1, 1, 62, failure_buffer);
+
+		//Even this fixes the bug :/
+		// graphics_draw_text_mono(&BIOS_font, 400, 450, 60, 1, 1, 63, "0, 2, 2\0");
+
 		//Updating the time in the bottom right
 		//CONSIDER ONLY UPDATING IF TIME IS DIFFERENT
 		//Will come back to this at a later date to optimise it
@@ -1563,9 +1650,9 @@ int main(){
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
 	//I'm probs forgetting a few things such as the cursor palettes
 	int retVal = 0;
-	retVal += crayon_memory_free_crayon_spritesheet(&Board, 1);
-	retVal += crayon_memory_free_crayon_spritesheet(&Icons, 1);
-	retVal += crayon_memory_free_crayon_spritesheet(&Windows, 1);
+	retVal += crayon_memory_free_spritesheet(&Board, 1);
+	retVal += crayon_memory_free_spritesheet(&Icons, 1);
+	retVal += crayon_memory_free_spritesheet(&Windows, 1);
 	retVal += crayon_memory_free_mono_font_sheet(&BIOS_font, 1);
 	retVal += crayon_memory_free_prop_font_sheet(&Tahoma_font, 1);
 	retVal += crayon_memory_free_palette(White_Tahoma_Font);
