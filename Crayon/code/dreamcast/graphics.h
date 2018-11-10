@@ -4,6 +4,8 @@
 #include "texture_structs.h"  //For the spritehsheet and anim structs
 #include "render_structs.h"  //For the crayon_sprite_array struct
 
+#include <math.h>
+
 //Sets a palette for a spritesheet
 extern int graphics_setup_palette(const struct crayon_palette *cp, uint8_t format, uint8_t palette_number);
 
@@ -37,9 +39,17 @@ extern uint8_t graphics_draw_sprites_OLD(const struct crayon_spritesheet *ss,
 	const struct crayon_animation *anim, uint16_t *draw_coords, uint16_t *frame_data, uint16_t fd_size,
 	uint16_t num_sprites, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber);
 
-//Testing the new render struct (Delete other multi sprite draw after and keep original as a basic prog for noobies)
+//Testing the new render struct (Delete other multi sprite draw after and keep original as a learner version for noobies)
 //poly_list mode is for the tr/pt/op render list macro we want to use. Might move this param into the struct...
-extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);	//UNIMPLEMENTED
+	//Can we get the list we're currently drawing for within the function?
+// extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);	//UNIMPLEMENTED
+
+//The version with polygons (Use this if your spritesheet is bigger than 256 by 256)
+extern uint8_t graphics_draw_poluss(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);	//UNIMPLEMENTED
+
+
+
+extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, const struct crayon_spritesheet *ss, uint8_t poly_list_mode);
 
 
 //------------------Drawing Fonts------------------//

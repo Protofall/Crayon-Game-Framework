@@ -92,7 +92,7 @@ extern void graphics_draw_untextured_array(crayon_untextured_array_t *poly_array
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
-	uint8_t multiple_rotations = !!(poly_array->options & (1 << 0));	//Unused
+	// uint8_t multiple_rotations = !!(poly_array->options & (1 << 0));	//Unused
 	uint8_t multiple_dims = !!(poly_array->options & (1 << 1));
 	uint8_t multiple_colours = !!(poly_array->options & (1 << 2));
 	uint8_t multiple_z = !!(poly_array->options & (1 << 3));
@@ -240,7 +240,7 @@ extern uint8_t graphics_draw_sprites_OLD(const struct crayon_spritesheet *ss,
 		ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
 	}
 	else{ //Unknown format
-	return 1;
+		return 1;
 	}
 
 	//Set shared vert data (Should z be like frame, different per sprite?)
@@ -280,37 +280,145 @@ extern uint8_t graphics_draw_sprites_OLD(const struct crayon_spritesheet *ss,
 	return 0;
 }
 
-// draw "num_sprites" amount of times using all "draw_pos" and the relevant frames/scales/rotations (Read options)
-// options also includes filter mode and format is taken from spritesheet struct
-// draw_z, colour and palette_num are obvious
+// draw "num_sprites" amount of times using all "draw_pos" and the relevant frames/scales/rotations/colour/z (Read options)
+// filter mode is in the struct and format is taken from spritesheet struct
+// palette_num ais obvious
 // poly_list_mode is used to draw opaque, punchthrough or transparent stuff depending on current list
-extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
+extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, const struct crayon_spritesheet *ss, uint8_t poly_list_mode){
+// extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
+
+	float u0, v0, u1, v1;
+
+	pvr_sprite_cxt_t context;
+	pvr_sprite_cxt_txr(&context, PVR_LIST_OP_POLY, (ss->spritesheet_format) << 27, 128, 128, ss->spritesheet_texture, PVR_FILTER_NONE);
+
+	// if(sprite_array->ss->spritesheet_format == 6){  //PAL8BPP format
+	// pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(sprite_array->palette_num),
+	// 	sprite_array->ss->spritesheet_dims, sprite_array->ss->spritesheet_dims,
+	// 	sprite_array->ss->spritesheet_texture, sprite_array->filter);
+	// }
+	// else if(sprite_array->ss->spritesheet_format == 5){ //PAL4BPP format
+	// pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(sprite_array->palette_num),
+	// 	sprite_array->ss->spritesheet_dims, sprite_array->ss->spritesheet_dims,
+	// 	sprite_array->ss->spritesheet_texture, sprite_array->filter);
+	// }
+	// else if(sprite_array->ss->spritesheet_format == 0 || sprite_array->ss->spritesheet_format == 1 ||
+	// sprite_array->ss->spritesheet_format == 2){  //ARGB1555, RGB565 and RGB4444
+	// 	pvr_sprite_cxt_txr(&context, poly_list_mode, (sprite_array->ss->spritesheet_format) << 27,
+	// 	sprite_array->ss->spritesheet_dims, sprite_array->ss->spritesheet_dims,
+	// 	sprite_array->ss->spritesheet_texture, sprite_array->filter);
+	// }
+	// else{ //Unknown format
+	// 	return 1;
+	// }
+
+	pvr_sprite_txr_t vert = {
+		.flags = PVR_CMD_VERTEX_EOL,
+	};
+
+	if(!(sprite_array->options & (1 << 0))){	//All share the same z
+		// vert.az = sprite_array->draw_z[0];
+		// vert.bz = sprite_array->draw_z[0];
+		// vert.cz = sprite_array->draw_z[0];
+	}
+	if(!(sprite_array->options & (1 << 1))){	//All share the same frame
+		// u0 = sprite_array->frame_coords_map[sprite_array->frame_coords_keys[0]] / (float)sprite_array->ss->spritesheet_dims;
+		// v0 = sprite_array->frame_coords_map[sprite_array->frame_coords_keys[0] + 1] / (float)sprite_array->ss->spritesheet_dims;
+		// u1 = u0 + sprite_array->anim->animation_frame_width / (float)sprite_array->ss->spritesheet_dims;
+		// v1 = v0 + sprite_array->anim->animation_frame_height / (float)sprite_array->ss->spritesheet_dims;
+		// vert.auv = PVR_PACK_16BIT_UV(u0, v0);
+		// vert.buv = PVR_PACK_16BIT_UV(u1, v0);
+		// vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+	}
+
+	pvr_sprite_hdr_t header;
+	pvr_sprite_compile(&header, &context);
+	pvr_prim(&header, sizeof(header));
+	uint16_t i;
+	for(i = 0; i < sprite_array->num_sprites; i++){
+		if(0){
+			//The floor command breaks stuff...? Not anymore atleast
+			vert.ax = floor(sprite_array->draw_pos[2 * i]);	//We floor the values since we're doing 2D and they'll look messed up if we have position "11.5", however scales can mess this up
+			vert.ay = floor(sprite_array->draw_pos[(2 * i) + 1]);
+			vert.bx = floor(sprite_array->draw_pos[2 * i] + sprite_array->anim->animation_frame_width) * sprite_array->scales[2 * i * !!(sprite_array->options & (1 << 2))];
+			vert.by = floor(sprite_array->draw_pos[(2 * i) + 1]);
+			vert.cx = floor(sprite_array->draw_pos[2 * i] + sprite_array->anim->animation_frame_width) * sprite_array->scales[2 * i * !!(sprite_array->options & (1 << 2))];
+			vert.cy = floor(sprite_array->draw_pos[(2 * i) + 1] + sprite_array->anim->animation_frame_height) * sprite_array->scales[(2 * i * !!(sprite_array->options & (1 << 2))) + 1];
+			vert.dx = floor(sprite_array->draw_pos[2 * i]);
+			vert.dy = floor(sprite_array->draw_pos[(2 * i) + 1] + sprite_array->anim->animation_frame_height) * sprite_array->scales[(2 * i * !!(sprite_array->options & (1 << 2))) + 1];
+		}
+		else if(1){
+			vert.ax = 0;
+			vert.ay = 0;
+			vert.bx = 128;
+			vert.by = 0;
+			vert.cx = 128;
+			vert.cy = 128;
+			vert.dx = 0;
+			vert.dy = 128;
+		}
+		else{
+			//Better, but the widths aren't being added right
+			// vert.ax = sprite_array->draw_pos[2 * i];
+			// vert.ay = sprite_array->draw_pos[(2 * i) + 1];
+			// vert.bx = sprite_array->draw_pos[2 * i] + (sprite_array->anim->animation_frame_width * sprite_array->scales[2 * i * !!(sprite_array->options & (1 << 2))]);
+			// vert.by = sprite_array->draw_pos[(2 * i) + 1];
+			// vert.cx = sprite_array->draw_pos[2 * i] + (sprite_array->anim->animation_frame_width * sprite_array->scales[2 * i * !!(sprite_array->options & (1 << 2))]);
+			// vert.cy = sprite_array->draw_pos[(2 * i) + 1] + (sprite_array->anim->animation_frame_height * sprite_array->scales[(2 * i * !!(sprite_array->options & (1 << 2))) + 1]);
+			// vert.dx = sprite_array->draw_pos[2 * i];
+			// vert.dy = sprite_array->draw_pos[(2 * i) + 1] + (sprite_array->anim->animation_frame_height * sprite_array->scales[(2 * i * !!(sprite_array->options & (1 << 2))) + 1]);
+		}
+
+		if(sprite_array->options & (1 << 0)){	//z
+			// vert.az = (float)sprite_array->draw_z[i];
+			// vert.bz = (float)sprite_array->draw_z[i];
+			// vert.cz = (float)sprite_array->draw_z[i];
+		}
+		vert.az = 1.0f;
+		vert.bz = 1.0f;
+		vert.cz = 1.0f;
+
+		if(sprite_array->options & (1 << 1)){	//frame
+			// u0 = sprite_array->frame_coords_map[(2 * sprite_array->frame_coords_keys[i])] / (float)sprite_array->ss->spritesheet_dims;
+			// v0 = sprite_array->frame_coords_map[(2 * sprite_array->frame_coords_keys[i]) + 1] / (float)sprite_array->ss->spritesheet_dims;
+			// u1 = u0 + sprite_array->anim->animation_frame_width / (float)sprite_array->ss->spritesheet_dims;
+			// v1 = v0 + sprite_array->anim->animation_frame_height / (float)sprite_array->ss->spritesheet_dims;
+			// vert.auv = PVR_PACK_16BIT_UV(u0, v0);
+			// vert.buv = PVR_PACK_16BIT_UV(u1, v0);
+			// vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+
+			u0 = 0;
+			v0 = 0;
+			u1 = 1;
+			v1 = 1;
+			vert.auv = PVR_PACK_16BIT_UV(u0, v0);
+			vert.buv = PVR_PACK_16BIT_UV(u1, v0);
+			vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+		}
+
+		if(sprite_array->options & (1 << 3)){	//rotations (Unimplemented)
+			;
+		}
+		else{
+			;
+		}
+
+		if(sprite_array->options & (1 << 4)){	//colour (Unimplemented)
+			;
+		}
+		else{
+			;
+		}
+
+		pvr_prim(&vert, sizeof(vert));
+	}
+
 	return 0;
 }
 
-/*
-
-typedef struct crayon_sprite_array{
-  uint16_t * draw_pos;  //Width then Height extracted from anim/frame data, Each group of 2 is for one sub-texture
-  uint16_t * frame_coords;  //Each group of 4 elements is one sub-texture to draw
-  uint8_t * scales; //I think 8 bits is good enough for most cases
-  float rotations;  //Poly uses angles to rotate on Z axis, sprite uses booleans/flip bits. Decide what type this should be...
-  uint16_t num_sprites; //This tells the draw function how many sprites/polys to draw.
-
-  uint8_t options;  //Format FSRX XFFF, Basically 3 booleans options relating to frameCoords, scales and rotations
-			//if that bit is set to true, then we use the first element of F/S/R array for all sub-textures
-			//Else we assume each sub-texture has its own unique F/S/R value
-			//The 3 F's at the end are for the filtering mode. Can easily access it with a modulo 8 operation
-			//0 = none, 2 = Bilinear, 4 = Trilinear1, 6 = Trilinear2
-
-  uint8_t draw_z; //The layer to help deal with overlapping sprites/polys
-  uint8_t palette_num;  //Also ask if palettes can start at not multiples of 16 or 256
-  uint32_t colour;  //For poly mode this dictates the rgb and alpha of a polygon
-  crayon_spritesheet_t * ss;
-  crayon_animation_t * anim;
-} crayon_sprite_array_t;
-
-*/
+extern uint8_t graphics_draw_polys(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
+	return 0;
+}
 
 extern uint8_t graphics_draw_text_mono(const struct crayon_font_mono *fm, float draw_x, float draw_y,
 	float draw_z, float scale_x, float scale_y,	uint8_t paletteNumber, char * string){
@@ -400,7 +508,8 @@ extern uint8_t graphics_draw_text_prop(const struct crayon_font_prop *fp, float 
 	float v1 = 0;
 	float percent_height = (float)fp->char_height / fp->fontsheet_dim;
 
-	float percent_width, u0, u1;
+	// float percent_width;
+	float u0, u1;
 
 	pvr_sprite_cxt_t context;
 	if(fp->texture_format == 6){  //PAL8BPP format
