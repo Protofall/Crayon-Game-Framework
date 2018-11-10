@@ -10,23 +10,25 @@ the multi-draw. It shouldn't be too much slower if any.
 */
 
 //In revision 1 just skip colour and rotation since I still need to plan them more
+	//colours and rotations are currently unused
 typedef struct crayon_sprite_array{
 	float *draw_pos;			//Width then Height extracted from anim/frame data,
 								//Each group of 2 is for one sub-texture
 	uint8_t *frame_coords_keys;	//Contains element ids a for group of two elements of
 								//frame_coords_map and uses that for drawing
 	uint16_t *frame_coords_map;	//Each group of 2 elements is one frame of an animation
-	//uint32_t *colour;			//For poly mode this dictates the rgb and alpha of a polygon
+	uint32_t *colours;			//For poly mode this dictates the rgb and alpha of a polygon
 								//(Might be usable in Sprite mode?)
 	uint8_t *scales;			//I think 8 bits is good enough for most cases,
 								//allows you to enlarge a sprite (I don't see much demand
 								//for shrinking scales hence its unsigned)
-	//float *rotations;			//Poly uses angles to rotate on Z axis, sprite uses
+	float *rotations;			//Poly uses angles to rotate on Z axis, sprite uses
 								//booleans/flip bits. Decide what type this should be...
 	uint8_t *draw_z;			//The layer to help deal with overlapping sprites/polys
 	uint16_t num_sprites;		//This tells the draw function how many sprites/polys to draw.
+	uint8_t unique_frames;		//The number of UVs in frame_coords_map
 
-	uint8_t options;			//Format XXC RSFZ, Basically some booleans options relating to
+	uint8_t options;			//Format XXXC RSFZ, Basically some booleans options relating to
 								//colour, rotations, scales, frame_coords, z coord (layer)
 								//If that bit is set to true, then we use the first element of
 								//arrays (except map) for all sub-textures
@@ -36,8 +38,7 @@ typedef struct crayon_sprite_array{
 
 	uint8_t palette_num;		//Also ask if palettes can start at not multiples of 16 or 256
 	crayon_spritesheet_t *ss;
-	crayon_animation_t *anim;	//Later switch to the id
-	// uint8_t anim_id;
+	crayon_animation_t *anim;
 } crayon_sprite_array_t;
 
 //Used for rendering many untextured polys

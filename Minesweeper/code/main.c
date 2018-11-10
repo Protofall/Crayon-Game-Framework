@@ -786,10 +786,7 @@ int main(){
 	int iter;
 	int jiter;
 
-	//These two just allow me to easily change between Minesweeper and Prato fiorito
-	// crayon_spritesheet_t tile_ss;
-	// crayon_animation_t tile_anim;
-
+	//This is just allow me to easily change between Minesweeper and Prato fiorito
 	uint8_t tile_id = 2;
 	if(!MS_options.language){
 		MS_grid.tile_ss = Board;
@@ -804,21 +801,11 @@ int main(){
 		}
 	}
 	MS_grid.tile_anim = MS_grid.tile_ss.spritesheet_animation_array[tile_id];
+
+	//New draw struct test
 	crayon_sprite_array_t test;
-	uint8_t elements = 8;
-	uint8_t frames = 3;
-	test.ss = &MS_grid.tile_ss;
-	test.anim = &MS_grid.tile_anim;
-	test.options = 0 + (1 << 1);	//Multiple frames, 1 of everything else
-	test.draw_pos = (float *) malloc(elements * 2 * sizeof(float));
-	test.frame_coords_keys = (uint8_t *) malloc(elements * sizeof(uint8_t));
-	test.frame_coords_map = (uint16_t *) malloc(frames * 2 * sizeof(uint16_t));
-	test.scales = (uint8_t *) malloc(1 * 2 * sizeof(uint8_t));
-	// test.rotations = (uint16_t *) malloc(!!(test->options & (1 << 3)) * 2 * sizeof(uint16_t));
-	test.draw_z = (uint8_t *) malloc(1 * 2 * sizeof(uint8_t));
-	// test.colours = (uint32_t *) malloc(!!(test->options & (1 << 4)) * 2 * sizeof(uint32_t));
-	test.filter = 0;	//nearest neighbour
-	test.palette_num = !MS_options.operating_system && MS_options.language;
+	crayon_memory_set_sprite_array(&test, 8, 3, 0, 1, 0, 0, 0, 0, !MS_options.operating_system && MS_options.language,
+		&MS_grid.tile_ss, &MS_grid.tile_anim);
 
 	//A diagonal line of stuff
 	test.draw_pos[0] = 0;
@@ -847,43 +834,13 @@ int main(){
 	test.frame_coords_keys[6] = 2;
 	test.frame_coords_keys[7] = 0;
 
-	graphics_frame_coordinates(&MS_grid.tile_anim, test.frame_coords_map + 0, test.frame_coords_map + 1, 9);
-	graphics_frame_coordinates(&MS_grid.tile_anim, test.frame_coords_map + 2, test.frame_coords_map + 3, 5);
-	graphics_frame_coordinates(&MS_grid.tile_anim, test.frame_coords_map + 4, test.frame_coords_map + 5, 15);
+	graphics_frame_coordinates(test.anim, test.frame_coords_map + 0, test.frame_coords_map + 1, 9);
+	graphics_frame_coordinates(test.anim, test.frame_coords_map + 2, test.frame_coords_map + 3, 5);
+	graphics_frame_coordinates(test.anim, test.frame_coords_map + 4, test.frame_coords_map + 5, 15);
 
 	test.scales[0] = 1;
 	test.scales[1] = 1;
 	test.draw_z[0] = 80;
-
-
-	// typedef struct crayon_sprite_array{
-	// 	float *draw_pos;			//Width then Height extracted from anim/frame data,
-	// 								//Each group of 2 is for one sub-texture
-	// 	uint8_t *frame_coords_keys;	//Contains element ids a for group of two elements of
-	// 								//frame_coords_map and uses that for drawing
-	// 	uint16_t *frame_coords_map;	//Each group of 2 elements is one frame of an animation
-	// 	//uint32_t *colour;			//For poly mode this dictates the rgb and alpha of a polygon
-	// 								//(Might be usable in Sprite mode?)
-	// 	uint8_t *scales;			//I think 8 bits is good enough for most cases,
-	// 								//allows you to enlarge a sprite (I don't see much demand
-	// 								//for shrinking scales hence its unsigned)
-	// 	//float *rotations;			//Poly uses angles to rotate on Z axis, sprite uses
-	// 								//booleans/flip bits. Decide what type this should be...
-	// 	uint8_t *draw_z;			//The layer to help deal with overlapping sprites/polys
-	// 	uint16_t num_sprites;		//This tells the draw function how many sprites/polys to draw.
-
-	// 	uint8_t options;			//Format XXC RSFZ, Basically some booleans options relating to
-	// 								//colour, rotations, scales, frame_coords, z coord (layer)
-	// 								//If that bit is set to true, then we use the first element of
-	// 								//arrays (except map) for all sub-textures
-	// 								//Else we assume each sprite has its own unique value
-
-	// 	uint8_t filter;				//0 = none, 2 = Bilinear, 4 = Trilinear1, 6 = Trilinear2
-
-	// 	uint8_t palette_num;		//Also ask if palettes can start at not multiples of 16 or 256
-	// 	crayon_spritesheet_t *ss;
-	// 	uint8_t anim_id;
-	// } crayon_sprite_array_t;
 
 	//Get the info for num_changer
 	uint8_t num_changer_id = 4;
@@ -1335,7 +1292,6 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
-		if(0){
 		//Draw windows graphics using our MinesweeperOpSys struct
 		for(iter = 0; iter < os.sprite_count; iter++){
 			if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "aboutLogo") && MS_options.focus != 4){	//We don't want to draw that unless we're on the about page
@@ -1585,17 +1541,13 @@ int main(){
 			graphics_draw_untextured_poly(145, os.variant_pos[1] - 3, 19, 36, 16, 0x40FFFFFF, 0);
 		}
 
-		}
-
 		pvr_list_finish();
 
 		//None of these need to be transparent, by using the opaque list we are making the program more efficient
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-		graphics_draw_sprites(&test, &MS_grid.tile_ss, PVR_LIST_OP_POLY);
-		// graphics_draw_sprites(&test, PVR_LIST_OP_POLY);
+		// graphics_draw_sprites(&test, PVR_LIST_OP_POLY);	//Was used for debugging
 
-	if(0){
 		//Draw the grid's boarder
 		if(MS_options.focus <= 1){
 			custom_poly_boarder(3, MS_grid.start_x, MS_grid.start_y, 16, MS_grid.x * 16, MS_grid.y * 16, 4286611584u, 4294967295u);
@@ -1627,7 +1579,6 @@ int main(){
 			custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000
 			custom_poly_2000_boarder(0, 0, 1, 640, 452);	//The Windows 2000 window boarder
 		}
-	}
 		pvr_list_finish();
 
 		pvr_scene_finish();
@@ -1636,6 +1587,7 @@ int main(){
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
 	//I'm probs forgetting a few things such as the cursor palettes
 	int retVal = 0;
+	retVal += crayon_memory_free_crayon_memory_free_sprite_array(&test, 0);	//We don't delete the spritesheet though
 	retVal += crayon_memory_free_spritesheet(&Board, 1);
 	retVal += crayon_memory_free_spritesheet(&Icons, 1);
 	retVal += crayon_memory_free_spritesheet(&Windows, 1);

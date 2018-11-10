@@ -498,6 +498,32 @@ extern crayon_palette_t * crayon_memory_clone_palette(crayon_palette_t *original
 	return copy;
 }
 
+//lol 12 params
+extern void crayon_memory_set_sprite_array(crayon_sprite_array_t *sprite_array, uint8_t num_sprites,
+	uint8_t unique_frames, uint8_t multi_draw_z, uint8_t multi_frames, uint8_t multi_scales,
+	uint8_t multi_rotations, uint8_t multi_colours, uint8_t filter, uint8_t palette_num,
+	crayon_spritesheet_t *ss, crayon_animation_t *anim){
+	
+	sprite_array->ss = ss;
+	sprite_array->anim = anim;
+	sprite_array->num_sprites = num_sprites;
+	sprite_array->unique_frames = unique_frames;
+	sprite_array->options = 0 + (multi_colours << 4) + (multi_rotations << 3) + (multi_scales << 2) +
+		(multi_frames << 1) + (multi_draw_z << 0);
+	sprite_array->filter = filter;
+	sprite_array->palette_num = palette_num;
+
+	sprite_array->draw_pos = (float *) malloc(num_sprites * 2 * sizeof(float));
+	sprite_array->draw_z = (uint8_t *) malloc((multi_draw_z ? num_sprites: 1) * sizeof(uint8_t));
+	sprite_array->frame_coords_keys = (uint8_t *) malloc((multi_frames ? num_sprites: 1) * sizeof(uint8_t));
+	sprite_array->frame_coords_map = (uint16_t *) malloc(unique_frames * 2 * sizeof(uint16_t));
+	sprite_array->scales = (uint8_t *) malloc((multi_scales ? num_sprites: 1) * 2 * sizeof(uint8_t));
+	sprite_array->rotations = (float *) malloc((multi_rotations ? num_sprites: 1) * sizeof(float));
+	sprite_array->colours = (uint32_t *) malloc((multi_colours ? num_sprites: 1) * sizeof(uint32_t));
+
+	return;
+}
+
 extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1, uint32_t colour2, uint8_t _continue){
 	uint16_t i;
 	uint16_t found = 0;
@@ -577,6 +603,24 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
 		return 0;
 	}
 	return 1;
+}
+
+extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array, uint8_t free_ss){
+	uint8_t retval = 0;
+	if(free_ss << 0){
+		retval = crayon_memory_free_spritesheet(sprite_array->ss, (free_ss << 1));
+		if(retval){return retval;}
+	}
+
+	free(sprite_array->draw_pos);
+	free(sprite_array->draw_z);
+	free(sprite_array->frame_coords_keys);
+	free(sprite_array->frame_coords_map);
+	free(sprite_array->scales);
+	free(sprite_array->rotations);
+	free(sprite_array->colours);
+
+	return 0;
 }
 
 extern uint8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint){
