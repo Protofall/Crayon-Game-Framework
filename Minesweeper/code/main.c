@@ -32,38 +32,6 @@
 	#include <ext2/fs_ext2.h>
 #endif
 
-uint16_t non_mines_left;	//When this variable equals zero, the game is won
-int num_flags;	//More like "number of flags in the pool"
-
-uint8_t over_mode = 0;	//0 = ready for new game, 1 = game just ended, 2 = loss (ded), 3 = win
-uint8_t game_live = 0;	//Is true when the timer is turning
-uint8_t revealed;
-int time_sec;
-
-uint8_t sd_present = 0;			//If an ext2 formatted SD card is detected, this this becomes true and modifies some textures/coords and allows R to save screenshots
-uint8_t question_enabled = 1;	//Enable the use of question marking
-uint8_t sound_enabled = 1;		//Toggle the sound
-uint8_t operating_system = 0;	//0 for 2000, 1 for XP
-uint8_t language = 0;			//0 for English, 1 for Italian. This affects the font language and the Minesweeper/Prato fiorito themes
-
-uint8_t focus = 0;	//Which window/tab is being focused on. 0 is The game, 1 is "New high score", 2 is settings/savefile, 3 is controls and 4 is "About"
-uint8_t grid_x;
-uint8_t grid_y;
-uint16_t grid_start_x;
-uint16_t grid_start_y;
-uint16_t num_mines;
-uint8_t first_reveal;
-
-uint8_t *logic_grid;
-uint16_t *coord_grid;
-uint16_t *frame_grid;
-
-//For the options page (Apply only affects these 3 and not the checkboxes)
-uint8_t disp_grid_x;
-uint8_t disp_grid_y;
-uint8_t disp_grid_mines;
-char x_buffer[4], y_buffer[4], m_buffer[4];
-
 #if CRAYON_SD_MODE == 1
 	#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
 
@@ -112,14 +80,14 @@ char x_buffer[4], y_buffer[4], m_buffer[4];
 // N are neighbours, S is source (ele_x, ele_y)
 // The returned value is in the format
 // N7N6N5N4N3N2N1N0 where each bit is true if neighbour is valid
-uint8_t neighbouring_tiles(int ele_x, int ele_y){
+uint8_t neighbouring_tiles(MinesweeperGrid_t * grid, int ele_x, int ele_y){
 	uint8_t ret_val = 255;
 	if(ele_x == 0){
 		ret_val &= ~(1 << 0);	//Clearing bits which can't be right
 		ret_val &= ~(1 << 3);
 		ret_val &= ~(1 << 5);
 	}
-	else if(ele_x >= grid_x - 1){
+	else if(ele_x >= grid->x - 1){
 		ret_val &= ~(1 << 2);
 		ret_val &= ~(1 << 4);
 		ret_val &= ~(1 << 7);
@@ -129,7 +97,7 @@ uint8_t neighbouring_tiles(int ele_x, int ele_y){
 		ret_val &= ~(1 << 1);
 		ret_val &= ~(1 << 2);
 	}
-	else if(ele_y >= grid_y - 1){
+	else if(ele_y >= grid->y - 1){
 		ret_val &= ~(1 << 5);
 		ret_val &= ~(1 << 6);
 		ret_val &= ~(1 << 7);
@@ -139,25 +107,25 @@ uint8_t neighbouring_tiles(int ele_x, int ele_y){
 }
 
 //Initially called by clear_grid where x and y are always a valid numbers
-void populate_logic(int ele_x, int ele_y){
-	int ele_logic = ele_x + grid_x * ele_y;
-	if(logic_grid[ele_logic] % (1 << 4) == 9){	//Is mine
+void populate_logic(MinesweeperGrid_t * grid, int ele_x, int ele_y){
+	int ele_logic = ele_x + grid->x * ele_y;
+	if(grid->logic_grid[ele_logic] % (1 << 4) == 9){	//Is mine
 		return;
 	}
 
-	uint8_t valids = neighbouring_tiles(ele_x, ele_y);
+	uint8_t valids = neighbouring_tiles(grid, ele_x, ele_y);
 	uint8_t sum = 0;	//A tiles value
 
-	if((valids & (1 << 0)) && logic_grid[ele_x - 1 + ((ele_y- 1) * grid_x)] % (1 << 4) == 9){sum++;}	//Top Left
-	if((valids & (1 << 1)) && logic_grid[ele_x + ((ele_y - 1) * grid_x)] % (1 << 4) == 9){sum++;}		//Top centre
-	if((valids & (1 << 2)) && logic_grid[ele_x + 1 + ((ele_y - 1) * grid_x)] % (1 << 4) == 9){sum++;}	//Top right
-	if((valids & (1 << 3)) && logic_grid[ele_x - 1 + (ele_y * grid_x)] % (1 << 4) == 9){sum++;}			//Mid Left
-	if((valids & (1 << 4)) && logic_grid[ele_x + 1 + (ele_y * grid_x)] % (1 << 4) == 9){sum++;}			//Mid Right
-	if((valids & (1 << 5)) && logic_grid[ele_x - 1 + ((ele_y + 1) * grid_x)] % (1 << 4) == 9){sum++;}	//Bottom left
-	if((valids & (1 << 6)) && logic_grid[ele_x + ((ele_y + 1) * grid_x)] % (1 << 4) == 9){sum++;}		//Bottom centre
-	if((valids & (1 << 7)) && logic_grid[ele_x + 1 + ((ele_y + 1) * grid_x)] % (1 << 4) == 9){sum++;}	//Bottom right
+	if((valids & (1 << 0)) && grid->logic_grid[ele_x - 1 + ((ele_y- 1) * grid->x)] % (1 << 4) == 9){sum++;}	//Top Left
+	if((valids & (1 << 1)) && grid->logic_grid[ele_x + ((ele_y - 1) * grid->x)] % (1 << 4) == 9){sum++;}		//Top centre
+	if((valids & (1 << 2)) && grid->logic_grid[ele_x + 1 + ((ele_y - 1) * grid->x)] % (1 << 4) == 9){sum++;}	//Top right
+	if((valids & (1 << 3)) && grid->logic_grid[ele_x - 1 + (ele_y * grid->x)] % (1 << 4) == 9){sum++;}			//Mid Left
+	if((valids & (1 << 4)) && grid->logic_grid[ele_x + 1 + (ele_y * grid->x)] % (1 << 4) == 9){sum++;}			//Mid Right
+	if((valids & (1 << 5)) && grid->logic_grid[ele_x - 1 + ((ele_y + 1) * grid->x)] % (1 << 4) == 9){sum++;}	//Bottom left
+	if((valids & (1 << 6)) && grid->logic_grid[ele_x + ((ele_y + 1) * grid->x)] % (1 << 4) == 9){sum++;}		//Bottom centre
+	if((valids & (1 << 7)) && grid->logic_grid[ele_x + 1 + ((ele_y + 1) * grid->x)] % (1 << 4) == 9){sum++;}	//Bottom right
 
-	logic_grid[ele_logic] += sum;
+	grid->logic_grid[ele_logic] += sum;
 
 	return;
 }
@@ -168,98 +136,98 @@ uint8_t true_prob(double p){
 }
 
 //Blanks out grid then fills with mines, but doesn't number them
-void clear_grid(crayon_animation_t * anim){
-	num_flags = 0;
-	uint16_t grid_size = grid_x * grid_y;
+void clear_grid(MinesweeperGrid_t * grid){
+	grid->num_flags = 0;
+	uint16_t grid_size = grid->x * grid->y;
 
 	int i = 0;
-	uint16_t mines_left = num_mines;
+	uint16_t mines_left = grid->num_mines;
 	uint16_t tiles_left = grid_size;
 
 	while(i < grid_size){	//Populate board
 		double prob = (double)mines_left / (double)tiles_left;	//Can I do better than using a division?
-		logic_grid[i] = 9 * true_prob(prob);
-		if(logic_grid[i]){
+		grid->logic_grid[i] = 9 * true_prob(prob);
+		if(grid->logic_grid[i]){
 			mines_left--;
-			num_flags++;
+			grid->num_flags++;
 		}
 		tiles_left--;
 		i++;
 	}
 
 	for(i = 0; i < 2 * grid_size; i = i + 2){
-		graphics_frame_coordinates(anim, frame_grid + i, frame_grid + i + 1, 0);	//All tiles are now blank
+		graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + i, grid->frame_grid + i + 1, 0);	//All tiles are now blank
 	}
 
-	game_live = 0;
-	over_mode = 0;
-	revealed = 0;
-	time_sec = 0;
-	first_reveal = 0;
+	grid->game_live = 0;
+	grid->over_mode = 0;
+	grid->revealed = 0;
+	grid->time_sec = 0;
+	grid->first_reveal = 0;
 
-	non_mines_left = grid_size - num_flags;
+	grid->non_mines_left = grid_size - grid->num_flags;
 
 	return;
 }
 
 //When called it changes the grid size and calls clear
 //Max grid size is 38, 21
-void reset_grid(crayon_animation_t * anim, uint8_t x, uint8_t y, uint16_t mine_count){
-	grid_x = x;
-	grid_y = y;
-	num_mines = mine_count;
+void reset_grid(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_t x, uint8_t y, uint16_t mine_count){
+	grid->x = x;
+	grid->y = y;
+	grid->num_mines = mine_count;
 	uint16_t grid_size = x * y;
 
-	if(logic_grid != NULL){
-		free(logic_grid);
+	if(grid->logic_grid != NULL){
+		free(grid->logic_grid);
 	}
-	if(coord_grid != NULL){
-		free(coord_grid);
+	if(grid->coord_grid != NULL){
+		free(grid->coord_grid);
 	}
-	if(frame_grid != NULL){
-		free(frame_grid);
+	if(grid->frame_grid != NULL){
+		free(grid->frame_grid);
 	}
 
-	logic_grid = (uint8_t *) malloc(grid_size * sizeof(uint8_t));
-	coord_grid = (uint16_t *) malloc(2 * grid_size * sizeof(uint16_t));
-	frame_grid = (uint16_t *) malloc(2 * grid_size * sizeof(uint16_t));
+	grid->logic_grid = (uint8_t *) malloc(grid_size * sizeof(uint8_t));
+	grid->coord_grid = (uint16_t *) malloc(2 * grid_size * sizeof(uint16_t));
+	grid->frame_grid = (uint16_t *) malloc(2 * grid_size * sizeof(uint16_t));
 
-	//Calculate some grid_start_x stuff. Default for expert is 80, 104
-	grid_start_x = 320 - (grid_x * 8);
-	grid_start_y = 104 + 160 - (grid_y * 8);
-	if(grid_start_y < 104){
-		grid_start_y = 104;
+	//Calculate some start_x stuff. Default for expert is 80, 104
+	grid->start_x = 320 - (grid->x * 8);
+	grid->start_y = 104 + 160 - (grid->y * 8);
+	if(grid->start_y < 104){
+		grid->start_y = 104;
 	}
 
 	int i, j;
 
-	for(j = 0; j < grid_y; j++){
-		for(i = 0; i < grid_x; i++){   //i is x, j is y
-			uint16_t ele = (j * grid_x * 2) + (2 * i);
-			coord_grid[ele] = grid_start_x + (i * 16);
-			coord_grid[ele + 1] = grid_start_y + (j * 16);
+	for(j = 0; j < grid->y; j++){
+		for(i = 0; i < grid->x; i++){   //i is x, j is y
+			uint16_t ele = (j * grid->x * 2) + (2 * i);
+			grid->coord_grid[ele] = grid->start_x + (i * 16);
+			grid->coord_grid[ele + 1] = grid->start_y + (j * 16);
 		}
 	}
 
-	clear_grid(anim);
+	clear_grid(grid);
 
-	disp_grid_x = grid_x;
-	disp_grid_y = grid_y;
-	disp_grid_mines = num_mines;
+	options->disp_x = grid->x;
+	options->disp_y = grid->y;
+	options->disp_mines = grid->num_mines;
 
-	sprintf(x_buffer, "%d", disp_grid_x);
-	sprintf(y_buffer, "%d", disp_grid_y);
-	sprintf(m_buffer, "%d", disp_grid_mines);
+	sprintf(options->x_buffer, "%d", options->disp_x);
+	sprintf(options->y_buffer, "%d", options->disp_y);
+	sprintf(options->m_buffer, "%d", options->disp_mines);
 
 	return;
 }
 
 //Numbers every tile in the grid
-void number_grid(){
+void number_grid(MinesweeperGrid_t * grid){
 	int i, j;
-	for(j = 0; j < grid_y; j++){
-		for(i = 0; i < grid_x; i++){
-			populate_logic(i, j);
+	for(j = 0; j < grid->y; j++){
+		for(i = 0; i < grid->x; i++){
+			populate_logic(grid, i, j);
 		}
 	}
 
@@ -267,14 +235,14 @@ void number_grid(){
 }
 
 //If you initially press a tile, move the mines around so you get a "free first press"
-void adjust_grid(int ele_logic){
-	logic_grid[ele_logic] = 0;
+void adjust_grid(MinesweeperGrid_t * grid, int ele_logic){
+	grid->logic_grid[ele_logic] = 0;
 	// non_mines_left++;	//I commented these out because normally they aren't needed, but if you had a grid with all mines (why?) then this matters
 	// num_flags--;
 	int i = 0;
-	for(i = 0; i < grid_x * grid_y; i++){
-		if(i != ele_logic && logic_grid[i] % (1 << 4) != 9){
-			logic_grid[i] += 9;
+	for(i = 0; i < grid->x * grid->y; i++){
+		if(i != ele_logic && grid->logic_grid[i] % (1 << 4) != 9){
+			grid->logic_grid[i] += 9;
 			break;
 			// non_mines_left--;
 			// num_flags++;
@@ -285,53 +253,53 @@ void adjust_grid(int ele_logic){
 }
 
 //It fills it out differently depending on over_mode
-void reveal_map(crayon_animation_t * anim){
+void reveal_map(MinesweeperGrid_t * grid){
 	int i;
-	if(over_mode == 2){
-		for(i = 0; i < grid_x * grid_y; i++){
-			if(logic_grid[i] == 9 || logic_grid[i] == 41){	//Untouched or question marked
-				graphics_frame_coordinates(anim, frame_grid + (2 * i), frame_grid + (2 * i) + 1, 3);
+	if(grid->over_mode == 2){
+		for(i = 0; i < grid->x * grid->y; i++){
+			if(grid->logic_grid[i] == 9 || grid->logic_grid[i] == 41){	//Untouched or question marked
+				graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + (2 * i), grid->frame_grid + (2 * i) + 1, 3);
 			}
-			if(logic_grid[i] != 73 && logic_grid[i] & 1<<6){	//Untouched or question marked
-				graphics_frame_coordinates(anim, frame_grid + (2 * i), frame_grid + (2 * i) + 1, 5);
-			}
-		}
-	}
-	else if(over_mode == 3){
-		num_flags = 0;
-		for(i = 0; i < grid_x * grid_y; i++){
-			if(logic_grid[i] % (1 << 5) == 9){
-				graphics_frame_coordinates(anim, frame_grid + (2 * i), frame_grid + (2 * i) + 1, 1);
+			if(grid->logic_grid[i] != 73 && grid->logic_grid[i] & 1<<6){	//Untouched or question marked
+				graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + (2 * i), grid->frame_grid + (2 * i) + 1, 5);
 			}
 		}
 	}
-	revealed = 1;
+	else if(grid->over_mode == 3){
+		grid->num_flags = 0;
+		for(i = 0; i < grid->x * grid->y; i++){
+			if(grid->logic_grid[i] % (1 << 5) == 9){
+				graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + (2 * i), grid->frame_grid + (2 * i) + 1, 1);
+			}
+		}
+	}
+	grid->revealed = 1;
 	return;
 }
 
-void discover_tile(crayon_animation_t * anim, int ele_x, int ele_y){
-	int ele_logic = ele_x + grid_x * ele_y;
-	if(!(logic_grid[ele_logic] & 1 << 6)){	//If not flagged
-		if(logic_grid[ele_logic] & 1 << 7){	//Already discovered
+void discover_tile(MinesweeperGrid_t * grid, int ele_x, int ele_y){
+	int ele_logic = ele_x + grid->x * ele_y;
+	if(!(grid->logic_grid[ele_logic] & 1 << 6)){	//If not flagged
+		if(grid->logic_grid[ele_logic] & 1 << 7){	//Already discovered
 			return;
 		}
 		int ele = ele_logic * 2;
-		if(logic_grid[ele_logic] & 1 << 5){	//If questioned, remove the question mark and set it to a normal tile
-			logic_grid[ele_logic] &= ~(1 << 5);
-			graphics_frame_coordinates(anim, frame_grid + ele, frame_grid + ele + 1, 0);
+		if(grid->logic_grid[ele_logic] & 1 << 5){	//If questioned, remove the question mark and set it to a normal tile
+			grid->logic_grid[ele_logic] &= ~(1 << 5);
+			graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + ele, grid->frame_grid + ele + 1, 0);
 		}
-		if(logic_grid[ele_logic] == 9){	//If mine
-			graphics_frame_coordinates(anim, frame_grid + ele, frame_grid + ele + 1, 4);
-			game_live = 0;
-			over_mode = 1;
+		if(grid->logic_grid[ele_logic] == 9){	//If mine
+			graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + ele, grid->frame_grid + ele + 1, 4);
+			grid->game_live = 0;
+			grid->over_mode = 1;
 		}
 		else{
-			graphics_frame_coordinates(anim, frame_grid + ele, frame_grid + ele + 1, 7 + logic_grid[ele_logic]);
-			non_mines_left--;
+			graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + ele, grid->frame_grid + ele + 1, 7 + grid->logic_grid[ele_logic]);
+			grid->non_mines_left--;
 		}
-		logic_grid[ele_logic] |= (1 << 7);
-		if(logic_grid[ele_logic] % (1 << 5) == 0){
-			uint8_t valids = neighbouring_tiles(ele_x, ele_y);
+		grid->logic_grid[ele_logic] |= (1 << 7);
+		if(grid->logic_grid[ele_logic] % (1 << 5) == 0){
+			uint8_t valids = neighbouring_tiles(grid, ele_x, ele_y);
 			int i;
 			for(i = 0; i < 8; i++){
 				if(valids & (1 << i)){	//If the tile is valid
@@ -349,7 +317,7 @@ void discover_tile(crayon_animation_t * anim, int ele_x, int ele_y){
 					else if(i > 4){
 						yVariant = 1;
 					}
-					discover_tile(anim, ele_x + xVarriant, ele_y + yVariant);
+					discover_tile(grid, ele_x + xVarriant, ele_y + yVariant);
 				}
 			}
 		}
@@ -357,23 +325,23 @@ void discover_tile(crayon_animation_t * anim, int ele_x, int ele_y){
 	return;
 }
 
-void x_press(crayon_animation_t * anim, int ele_x, int ele_y){
-	int ele_logic = ele_x + grid_x * ele_y;
-	if((logic_grid[ele_logic] & 1<<7)){	//If revealed
+void x_press(MinesweeperGrid_t * grid, int ele_x, int ele_y){
+	int ele_logic = ele_x + grid->x * ele_y;
+	if((grid->logic_grid[ele_logic] & 1<<7)){	//If revealed
 
-		uint8_t valids = neighbouring_tiles(ele_x, ele_y);
+		uint8_t valids = neighbouring_tiles(grid, ele_x, ele_y);
 		uint8_t flag_sum = 0;	//A tiles value
 
-		if((valids & (1 << 0)) && logic_grid[ele_x - 1 + ((ele_y- 1) * grid_x)] & (1 << 6)){flag_sum++;}	//Top Left
-		if((valids & (1 << 1)) && logic_grid[ele_x + ((ele_y - 1) * grid_x)]  & (1 << 6)){flag_sum++;}		//Top centre
-		if((valids & (1 << 2)) && logic_grid[ele_x + 1 + ((ele_y - 1) * grid_x)]  & (1 << 6)){flag_sum++;}	//Top right
-		if((valids & (1 << 3)) && logic_grid[ele_x - 1 + (ele_y * grid_x)]  & (1 << 6)){flag_sum++;}		//Mid Left
-		if((valids & (1 << 4)) && logic_grid[ele_x + 1 + (ele_y * grid_x)]  & (1 << 6)){flag_sum++;}		//Mid Right
-		if((valids & (1 << 5)) && logic_grid[ele_x - 1 + ((ele_y + 1) * grid_x)]  & (1 << 6)){flag_sum++;}	//Bottom left
-		if((valids & (1 << 6)) && logic_grid[ele_x + ((ele_y + 1) * grid_x)]  & (1 << 6)){flag_sum++;}		//Bottom centre
-		if((valids & (1 << 7)) && logic_grid[ele_x + 1 + ((ele_y + 1) * grid_x)]  & (1 << 6)){flag_sum++;}	//Bottom right
+		if((valids & (1 << 0)) && grid->logic_grid[ele_x - 1 + ((ele_y- 1) * grid->x)] & (1 << 6)){flag_sum++;}	//Top Left
+		if((valids & (1 << 1)) && grid->logic_grid[ele_x + ((ele_y - 1) * grid->x)]  & (1 << 6)){flag_sum++;}		//Top centre
+		if((valids & (1 << 2)) && grid->logic_grid[ele_x + 1 + ((ele_y - 1) * grid->x)]  & (1 << 6)){flag_sum++;}	//Top right
+		if((valids & (1 << 3)) && grid->logic_grid[ele_x - 1 + (ele_y * grid->x)]  & (1 << 6)){flag_sum++;}		//Mid Left
+		if((valids & (1 << 4)) && grid->logic_grid[ele_x + 1 + (ele_y * grid->x)]  & (1 << 6)){flag_sum++;}		//Mid Right
+		if((valids & (1 << 5)) && grid->logic_grid[ele_x - 1 + ((ele_y + 1) * grid->x)]  & (1 << 6)){flag_sum++;}	//Bottom left
+		if((valids & (1 << 6)) && grid->logic_grid[ele_x + ((ele_y + 1) * grid->x)]  & (1 << 6)){flag_sum++;}		//Bottom centre
+		if((valids & (1 << 7)) && grid->logic_grid[ele_x + 1 + ((ele_y + 1) * grid->x)]  & (1 << 6)){flag_sum++;}	//Bottom right
 
-		if(logic_grid[ele_logic] % (1 << 4) == flag_sum){
+		if(grid->logic_grid[ele_logic] % (1 << 4) == flag_sum){
 			//Execute the X-press on all adjacent
 			int i;
 			for(i = 0; i < 8; i++){
@@ -392,7 +360,7 @@ void x_press(crayon_animation_t * anim, int ele_x, int ele_y){
 					else if(i > 4){
 						yVariant = 1;
 					}
-					discover_tile(anim, ele_x + xVarriant, ele_y + yVariant);
+					discover_tile(grid, ele_x + xVarriant, ele_y + yVariant);
 				}
 			}
 		}
@@ -401,30 +369,30 @@ void x_press(crayon_animation_t * anim, int ele_x, int ele_y){
 }
 
 //If we use a flag that decrements the flag count, leaving flag will increment it
-void b_press(crayon_animation_t * anim, uint16_t ele_logic){
+void b_press(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint16_t ele_logic){
 	int ele = ele_logic * 2;
-	if(!(logic_grid[ele_logic] & (1 << 7))){	//Not discovered
+	if(!(grid->logic_grid[ele_logic] & (1 << 7))){	//Not discovered
 		uint8_t status = 0;	//0 = normal, 1 = flag, 2 = question icons
-		if(logic_grid[ele_logic] & (1 << 6)){	//If flagged
-			logic_grid[ele_logic] &= ~(1 << 6);	//Clears the flag bit
-			if(question_enabled){
-				logic_grid[ele_logic] |= (1 << 5);	//Sets the question bit
+		if(grid->logic_grid[ele_logic] & (1 << 6)){	//If flagged
+			grid->logic_grid[ele_logic] &= ~(1 << 6);	//Clears the flag bit
+			if(options->question_enabled){
+				grid->logic_grid[ele_logic] |= (1 << 5);	//Sets the question bit
 				status = 2;
 			}
-			num_flags++;
+			grid->num_flags++;
 		}
 		else{	//Not flagged, but maybe questioned
-			if(logic_grid[ele_logic] & (1 << 5)){	//Normal it
-				logic_grid[ele_logic] &= ~(1 << 5);
+			if(grid->logic_grid[ele_logic] & (1 << 5)){	//Normal it
+				grid->logic_grid[ele_logic] &= ~(1 << 5);
 				status = 0;
 			}
 			else{	//Flag it
-				logic_grid[ele_logic] |= (1 << 6);
+				grid->logic_grid[ele_logic] |= (1 << 6);
 				status = 1;
-				num_flags--;
+				grid->num_flags--;
 			}
 		}
-		graphics_frame_coordinates(anim, frame_grid + ele, frame_grid + ele + 1, status);
+		graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + ele, grid->frame_grid + ele + 1, status);
 	}
 	return;
 }
@@ -458,9 +426,9 @@ void digit_display(crayon_spritesheet_t * ss, crayon_animation_t * anim, int num
 }
 
 //control_type = 0 for normal controller and 1 for mouse
-void grid_indent_logic(int ele_x, int ele_y, uint8_t in_grid, int id, uint16_t *press_data, uint8_t A_held, uint8_t X_held,
+void grid_indent_logic(MinesweeperGrid_t * grid, int ele_x, int ele_y, uint8_t in_grid, int id, uint16_t *press_data, uint8_t A_held, uint8_t X_held,
 	uint8_t B_held, uint8_t control_type){
-	if(over_mode != 0 || (!A_held && !X_held) || !in_grid){
+	if(grid->over_mode != 0 || (!A_held && !X_held) || !in_grid){
 		press_data[3 * id] = 0;
 		return;
 	}
@@ -474,9 +442,9 @@ void grid_indent_logic(int ele_x, int ele_y, uint8_t in_grid, int id, uint16_t *
 	press_data[(3 * id) + 2] = ele_y;
 }
 
-void face_logic(uint8_t *face_frame_id, int id, float *cursor_position, uint8_t A_held, uint8_t X_held){
+void face_logic(MinesweeperGrid_t * grid, uint8_t *face_frame_id, int id, float *cursor_position, uint8_t A_held, uint8_t X_held){
 	if(A_held || X_held){
-		if(!over_mode && !*face_frame_id){	//Basically face_frame_id != 2, 3 or 4
+		if(!grid->over_mode && !*face_frame_id){	//Basically face_frame_id != 2, 3 or 4
 			*face_frame_id = 1;	//Apply suprised face
 		}
 		if(A_held && (cursor_position[2 * id] <= 307 + 26) && (cursor_position[(2 * id) + 1] <= 64 + 26)
@@ -487,156 +455,157 @@ void face_logic(uint8_t *face_frame_id, int id, float *cursor_position, uint8_t 
 }
 
 //Handles the interaction logic with the grid
-void grid_ABX_logic(int ele_x, int ele_y, uint8_t button_action, crayon_animation_t *tile_anim, uint32_t *start_time, uint32_t *start_ms_time){
-	if(over_mode == 0){
+void grid_ABX_logic(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, int ele_x, int ele_y, uint8_t button_action, uint32_t *start_time, uint32_t *start_ms_time){
+	if(grid->over_mode == 0){
 		if(button_action & (1 << 0)){	//For A press
-			if(!game_live){
+			if(!grid->game_live){
 				timer_ms_gettime(start_time, start_ms_time);
-				game_live = 1;
+				grid->game_live = 1;
 			}
-			if(first_reveal == 0){
-				int ele_logic = ele_x + grid_x * ele_y;
-				if(!(logic_grid[ele_logic] & (1 << 6))){
-					if(logic_grid[ele_logic] % (1 << 4) == 9){	//If this is the first reveal and its not flagged and its a mine
-						adjust_grid(ele_logic);
+			if(grid->first_reveal == 0){
+				int ele_logic = ele_x + grid->x * ele_y;
+				if(!(grid->logic_grid[ele_logic] & (1 << 6))){
+					if(grid->logic_grid[ele_logic] % (1 << 4) == 9){	//If this is the first reveal and its not flagged and its a mine
+						adjust_grid(grid, ele_logic);
 					}
-					number_grid();
-					first_reveal = 1;
+					number_grid(grid);
+					grid->first_reveal = 1;
 				}
 			}
-			discover_tile(tile_anim, ele_x, ele_y);
+			discover_tile(grid, ele_x, ele_y);
 		}
 		if(button_action & (1 << 1)){	//For X press
-			if(!game_live){
+			if(!grid->game_live){
 				timer_ms_gettime(start_time, start_ms_time);
-				game_live = 1;
+				grid->game_live = 1;
 			}
-			x_press(tile_anim, ele_x, ele_y);
+			x_press(grid, ele_x, ele_y);
 		}
 		if(button_action & (1 << 2)){	//For B press
-			b_press(tile_anim, ele_x + grid_x * ele_y);
+			b_press(grid, options, ele_x + grid->x * ele_y);
 		}
 	}
 }
 
 //Its purpose is to check if the player's cursor is on the grid when doing an A/B/X action
-void cursor_on_grid(uint8_t *in_grid, int *ele_x, int *ele_y, uint8_t button_action, int id, float *cursor_position){
-	if((button_action % (1 << 3)) || !over_mode){
-		*in_grid = (cursor_position[2 * id] < grid_start_x + (grid_x * 16)) && (cursor_position[(2 * id) + 1] < grid_start_y + (grid_y * 16))
-			&& cursor_position[2 * id] >= grid_start_x && cursor_position[(2 * id) + 1] >= grid_start_y;
+void cursor_on_grid(MinesweeperGrid_t * grid, uint8_t *in_grid, int *ele_x, int *ele_y, uint8_t button_action, int id, float *cursor_position){
+	if((button_action % (1 << 3)) || !grid->over_mode){
+		*in_grid = (cursor_position[2 * id] < grid->start_x + (grid->x * 16)) &&
+		(cursor_position[(2 * id) + 1] < grid->start_y + (grid->y * 16)) &&
+		cursor_position[2 * id] >= grid->start_x && cursor_position[(2 * id) + 1] >= grid->start_y;
 		if(*in_grid){
-			*ele_x = (cursor_position[2 * id]  - grid_start_x) / 16;
-			*ele_y = (cursor_position[(2 * id) + 1]  - grid_start_y) / 16;
+			*ele_x = (cursor_position[2 * id]  - grid->start_x) / 16;
+			*ele_y = (cursor_position[(2 * id) + 1]  - grid->start_y) / 16;
 		}
 	}
 }
 
 //Handles focus related things
-uint8_t button_press_logic_buttons(MinesweeperOS_t *os, crayon_animation_t *anim, int id, float *cursor_position, uint32_t previous_buttons, uint32_t buttons){
+uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, MinesweeperOS_t *os, int id, float *cursor_position, uint32_t previous_buttons, uint32_t buttons){
 	//CLEAN UP THE MAGIC NUMBERS
-	if(focus != 1){	//When we get a new score, we don't want to change focus easily
+	if(options->focus != 1){	//When we get a new score, we don't want to change focus easily
 		//Top 4 options
 		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){
 			if((cursor_position[2 * id] <= 9 + 27 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
 					&& cursor_position[2 * id] >= 9 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
-				focus = 0;
+				options->focus = 0;
 			}
 			else if((cursor_position[2 * id] <= 48 + 37 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
 					&& cursor_position[2 * id] >= 48 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
-				focus = 2;
+				options->focus = 2;
 			}
 			else if((cursor_position[2 * id] <= 97 + 40 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
 					&& cursor_position[2 * id] >= 97 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
-				focus = 3;
+				options->focus = 3;
 			}
 			else if((cursor_position[2 * id] <= 149 + 29 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
 					&& cursor_position[2 * id] >= 149 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
-				focus = 4;
+				options->focus = 4;
 			}
 		}
 	}
 
-	if(focus == 2){
+	if(options->focus == 2){
 		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){	//When we get a new score, we don't want to change focus easily
 			if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 149)
 					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 140){	//Incrementer X
-				if(disp_grid_x < 38){
-					disp_grid_x++;
-					sprintf(x_buffer, "%d", disp_grid_x);
+				if(options->disp_x < 38){
+					options->disp_x++;
+					sprintf(options->x_buffer, "%d", options->disp_x);
 				}
 			}
 			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 159)
 					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 150){	//Decrementer X
-				if(disp_grid_x > 9){
-					disp_grid_x--;
-					sprintf(x_buffer, "%d", disp_grid_x);
+				if(options->disp_x > 9){
+					options->disp_x--;
+					sprintf(options->x_buffer, "%d", options->disp_x);
 				}
 			}
 			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 189)
 					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 180){	//Incrementer Y
-				if(disp_grid_y < 21){
-					disp_grid_y++;
-					sprintf(y_buffer, "%d", disp_grid_y);
+				if(options->disp_y < 21){
+					options->disp_y++;
+					sprintf(options->y_buffer, "%d", options->disp_y);
 				}
 			}
 			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 199)
 					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 190){	//Decrementer Y
-				if(disp_grid_y > 9){
-					disp_grid_y--;
-					sprintf(y_buffer, "%d", disp_grid_y);
+				if(options->disp_y > 9){
+					options->disp_y--;
+					sprintf(options->y_buffer, "%d", options->disp_y);
 				}
 			}
 			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 229)
 					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 220){	//Incrementer Num Mines
-				if(disp_grid_mines < (disp_grid_x - 1) * (disp_grid_y - 1)){
-					disp_grid_mines++;
+				if(options->disp_mines < (options->disp_x - 1) * (options->disp_y - 1)){
+					options->disp_mines++;
 				}
 				else{
-					disp_grid_mines = (disp_grid_x - 1) * (disp_grid_y - 1);
+					options->disp_mines = (options->disp_x - 1) * (options->disp_y - 1);
 				}
-				sprintf(m_buffer, "%d", disp_grid_mines);
+				sprintf(options->m_buffer, "%d", options->disp_mines);
 			}
 			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 239)
 					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 230){	//Decrementer Num Mines
-				if(disp_grid_mines > 10){
-					disp_grid_mines--;
-					sprintf(m_buffer, "%d", disp_grid_mines);
+				if(options->disp_mines > 10){
+					options->disp_mines--;
+					sprintf(options->m_buffer, "%d", options->disp_mines);
 				}
 			}
 			else if((cursor_position[2 * id] <= 189 + 75) && (cursor_position[(2 * id) + 1] <= 306 + 23)
 					&& cursor_position[2 * id] >= 189 && cursor_position[(2 * id) + 1] >= 306){	//Beginner
-				disp_grid_x = 9;
-				disp_grid_y = 9;
-				disp_grid_mines = 10;
-				sprintf(x_buffer, "%d", disp_grid_x);
-				sprintf(y_buffer, "%d", disp_grid_y);
-				sprintf(m_buffer, "%d", disp_grid_mines);
+				options->disp_x = 9;
+				options->disp_y = 9;
+				options->disp_mines = 10;
+				sprintf(options->x_buffer, "%d", options->disp_x);
+				sprintf(options->y_buffer, "%d", options->disp_y);
+				sprintf(options->m_buffer, "%d", options->disp_mines);
 			}
 			else if((cursor_position[2 * id] <= 275 + 75) && (cursor_position[(2 * id) + 1] <= 306 + 23)
 					&& cursor_position[2 * id] >= 275 && cursor_position[(2 * id) + 1] >= 306){	//Intermediate
-				disp_grid_x = 16;
-				disp_grid_y = 16;
-				disp_grid_mines = 40;
-				sprintf(x_buffer, "%d", disp_grid_x);
-				sprintf(y_buffer, "%d", disp_grid_y);
-				sprintf(m_buffer, "%d", disp_grid_mines);
+				options->disp_x = 16;
+				options->disp_y = 16;
+				options->disp_mines = 40;
+				sprintf(options->x_buffer, "%d", options->disp_x);
+				sprintf(options->y_buffer, "%d", options->disp_y);
+				sprintf(options->m_buffer, "%d", options->disp_mines);
 			}
 			else if((cursor_position[2 * id] <= 361 + 75) && (cursor_position[(2 * id) + 1] <= 306 + 23)
 					&& cursor_position[2 * id] >= 361 && cursor_position[(2 * id) + 1] >= 306){	//Expert
-				disp_grid_x = 30;
-				disp_grid_y = 20;
-				disp_grid_mines = 99;
-				sprintf(x_buffer, "%d", disp_grid_x);
-				sprintf(y_buffer, "%d", disp_grid_y);
-				sprintf(m_buffer, "%d", disp_grid_mines);
+				options->disp_x = 30;
+				options->disp_y = 20;
+				options->disp_mines = 99;
+				sprintf(options->x_buffer, "%d", options->disp_x);
+				sprintf(options->y_buffer, "%d", options->disp_y);
+				sprintf(options->m_buffer, "%d", options->disp_mines);
 			}
 			else if((cursor_position[2 * id] <= 361 + 75) && (cursor_position[(2 * id) + 1] <= 252 + 23)
 					&& cursor_position[2 * id] >= 361 && cursor_position[(2 * id) + 1] >= 252){	//Apply
-				if(disp_grid_mines > (disp_grid_x - 1) * (disp_grid_y - 1)){
-					disp_grid_mines = (disp_grid_x - 1) * (disp_grid_y - 1);
-					sprintf(m_buffer, "%d", disp_grid_mines);
+				if(options->disp_mines > (options->disp_x - 1) * (options->disp_y - 1)){
+					options->disp_mines = (options->disp_x - 1) * (options->disp_y - 1);
+					sprintf(options->m_buffer, "%d", options->disp_mines);
 				}
-				reset_grid(anim, disp_grid_x, disp_grid_y, disp_grid_mines);	//Doesn't reset the face...the var is global, but the anim isn't...
+				reset_grid(grid, options, options->disp_x, options->disp_y, options->disp_mines);	//Doesn't reset the face...the var is global, but the anim isn't...
 			}
 			else if((cursor_position[2 * id] <= 361 + 75) && (cursor_position[(2 * id) + 1] <= 306 + 23)
 					&& cursor_position[2 * id] >= 361 && cursor_position[(2 * id) + 1] >= 306){	//Save to VMU (UNFINISHED)
@@ -644,12 +613,12 @@ uint8_t button_press_logic_buttons(MinesweeperOS_t *os, crayon_animation_t *anim
 			}
 			else if((cursor_position[2 * id] <= 245 + 13) && (cursor_position[(2 * id) + 1] <= 144 + 13)
 					&& cursor_position[2 * id] >= 245 && cursor_position[(2 * id) + 1] >= 144){	//Sound checker
-				sound_enabled = !sound_enabled;
+				options->sound_enabled = !options->sound_enabled;
 				//ADD SOMETHING TO CHANGE THE FRAME
 			}
 			else if((cursor_position[2 * id] <= 245 + 13) && (cursor_position[(2 * id) + 1] <= 184 + 13)
 					&& cursor_position[2 * id] >= 245 && cursor_position[(2 * id) + 1] >= 184){	//Question mark checker
-				question_enabled = !question_enabled;
+				options->question_enabled = !options->question_enabled;
 				//ADD SOMETHING TO CHANGE THE FRAME
 			}
 		}
@@ -665,12 +634,12 @@ uint8_t button_press_logic_buttons(MinesweeperOS_t *os, crayon_animation_t *anim
 }
 
 //This handles all the buttons you can press aside from the grid itself. Currently only does the face, your re-add the buttons variant here
-uint8_t button_press_logic(uint8_t button_action, int id, float *cursor_position, crayon_animation_t * tile_anim,
+uint8_t button_press_logic(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_t button_action, int id, float *cursor_position,
 	uint32_t *previous_buttons, uint32_t buttons){
-	if(focus == 0){
+	if(options->focus == 0){
 		if((button_action & (1 << 0)) && (cursor_position[2 * id] <= 307 + 26) && (cursor_position[(2 * id) + 1] <= 64 + 26)
 			&& cursor_position[2 * id] >= 307 && cursor_position[(2 * id) + 1] >= 64){	//If face is released on
-			clear_grid(tile_anim);
+			clear_grid(grid);
 			previous_buttons[id] = buttons;	//Store the previous button press
 			//Originally it set the face id to zero, but I removed it because it felt pointless
 			return 1;
@@ -699,23 +668,37 @@ uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os){
 }
 
 int main(){
+	MinesweeperGrid_t MS_grid;	//Contains a bunch of variables related to the grid
+	MinesweeperOptions_t MS_options;	//Contains a bunch of vars related to options
+
+	//Setting some default variables
+	MS_grid.over_mode = 0;
+	MS_grid.game_live = 0;
+	MS_options.sd_present = 0;
+	MS_options.question_enabled = 1;
+	MS_options.sound_enabled = 1;
+	MS_options.operating_system = 0;
+	MS_options.language = 0;
+	MS_options.focus = 0;
+	// MS_options.focus = 2;	//DEBUG
+
 	#if CRAYON_SD_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
 		if(sdRes == 0){
-			sd_present = 1;
+			MS_options.sd_present = 1;
 		}
 	#endif
 
-	focus = 2;	//Remove this later, its only used for debugging right now
+	// focus = 2;	//Remove this later, its only used for debugging right now
 
 	//Currently this is the only way to access some of the hidden features
 	//Later OS will be chosen in BIOS and language through save file name
 	MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 	if(st->buttons & (1 << 1)){		//B press
-		operating_system = 1;	//Else 0
+		MS_options.operating_system = 1;
 	}
 	if(st->buttons & (1 << 2)){		//A press
-		language = 1;	//Else 0
+		MS_options.language = 1;
 	}
 	MAPLE_FOREACH_END()
 
@@ -773,7 +756,7 @@ int main(){
 	fs_romdisk_unmount("/Minesweeper");
 
 	//Load the OS assets
-	if(operating_system){
+	if(MS_options.operating_system){
 		#if CRAYON_SD_MODE == 1
 			crayon_memory_mount_romdisk("/sd/XP.img", "/XP");
 		#else
@@ -794,33 +777,33 @@ int main(){
 
 	//Make the OS struct and populate it
 	MinesweeperOS_t os;
-	setup_OS_assets(&os, &Windows, operating_system, language, sd_present);
+	setup_OS_assets(&os, &Windows, MS_options.operating_system, MS_options.language, MS_options.sd_present);
 
 	//Setup the untextured poly structs
-	setup_bg_untextured_poly(&Bg_polys, operating_system, sd_present);
-	setup_option_untextured_poly(&Option_polys, operating_system);
+	setup_bg_untextured_poly(&Bg_polys, MS_options.operating_system, MS_options.sd_present);
+	setup_option_untextured_poly(&Option_polys, MS_options.operating_system);
 
 	int iter;
 	int jiter;
 
 	//These two just allow me to easily change between Minesweeper and Prato fiorito
-	crayon_spritesheet_t tile_ss;
-	crayon_animation_t tile_anim;
+	// crayon_spritesheet_t tile_ss;
+	// crayon_animation_t tile_anim;
 
 	uint8_t tile_id = 2;
-	if(!language){
-		tile_ss = Board;
+	if(!MS_options.language){
+		MS_grid.tile_ss = Board;
 	}
 	else{
-		tile_ss = Windows;
-		for(iter = 0; iter < tile_ss.spritesheet_animation_count; iter++){
-			if(!strcmp(tile_ss.spritesheet_animation_array[iter].animation_name, "italianTiles")){
+		MS_grid.tile_ss = Windows;
+		for(iter = 0; iter < MS_grid.tile_ss.spritesheet_animation_count; iter++){
+			if(!strcmp(MS_grid.tile_ss.spritesheet_animation_array[iter].animation_name, "italianTiles")){
 				tile_id = iter;
 				break;
 			}
 		}
 	}
-	tile_anim = tile_ss.spritesheet_animation_array[tile_id];
+	MS_grid.tile_anim = MS_grid.tile_ss.spritesheet_animation_array[tile_id];
 
 	//Get the info for num_changer
 	uint8_t num_changer_id = 4;
@@ -846,11 +829,11 @@ int main(){
 	}
 
 	coord_num_changer[0] = 420;
-	coord_num_changer[1] = 140 + (2 * operating_system);
+	coord_num_changer[1] = 140 + (2 * MS_options.operating_system);
 	coord_num_changer[2] = 420;
-	coord_num_changer[3] = 180 + (2 * operating_system);
+	coord_num_changer[3] = 180 + (2 * MS_options.operating_system);
 	coord_num_changer[4] = 420;
-	coord_num_changer[5] = 220 + (2 * operating_system);
+	coord_num_changer[5] = 220 + (2 * MS_options.operating_system);
 
 	coord_button[0] = 189;	//Beginner
 	coord_button[1] = 306;
@@ -868,13 +851,13 @@ int main(){
 	coord_checker[2] = 245;	//Question mark
 	coord_checker[3] = 184;
 
-	logic_grid = NULL;
-	coord_grid = NULL;
-	frame_grid = NULL;
+	MS_grid.logic_grid = NULL;
+	MS_grid.coord_grid = NULL;
+	MS_grid.frame_grid = NULL;
 
-	reset_grid(&tile_anim, 30, 20, 99);
+	reset_grid(&MS_grid, &MS_options, 30, 20, 99);
 
-	uint16_t grid_size = grid_x * grid_start_y;
+	uint16_t grid_size = MS_grid.x * MS_grid.start_y;
 
 	//The face frame coords
 	uint16_t face_frame_x;
@@ -992,17 +975,17 @@ int main(){
 		button_action |= (!(previous_buttons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y)) << 3;	//Y pressed
 		button_action |= ((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && !(start_primed & (1 << 4))) << 4;	//If we press start, but we haven't done active prime yet and we aren't invalidated
 
-		if(button_press_logic(button_action, __dev->port, cursor_position, &tile_anim, previous_buttons, st->buttons)){break;}	//Is previous_buttons right?
-		button_press_logic_buttons(&os, &tile_anim, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
+		if(button_press_logic(&MS_grid, &MS_options, button_action, __dev->port, cursor_position, previous_buttons, st->buttons)){break;}	//Is previous_buttons right?
+		button_press_logic_buttons(&MS_grid, &MS_options, &os, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
 
 		//These are only ever set if The cursor is on the grid and A/B/X is/was pressed
 		int ele_x = -1;
 		int ele_y = -1;
 		uint8_t in_grid = 0;
 
-		if(focus == 0){
-			cursor_on_grid(&in_grid, &ele_x, &ele_y, button_action, __dev->port, cursor_position);
-			if(in_grid){grid_ABX_logic(ele_x, ele_y, button_action, &tile_anim, &start_time, &start_ms_time);}
+		if(MS_options.focus == 0){
+			cursor_on_grid(&MS_grid, &in_grid, &ele_x, &ele_y, button_action, __dev->port, cursor_position);
+			if(in_grid){grid_ABX_logic(&MS_grid, &MS_options, ele_x, ele_y, button_action, &start_time, &start_ms_time);}
 
 			//Start press code
 			if(button_action & (1 << 4)){
@@ -1069,10 +1052,10 @@ int main(){
 			}
 		}
 
-		face_logic(&face_frame_id, __dev->port, cursor_position, !!(st->buttons & (CONT_A)), !!(st->buttons & (CONT_X)));
+		face_logic(&MS_grid, &face_frame_id, __dev->port, cursor_position, !!(st->buttons & (CONT_A)), !!(st->buttons & (CONT_X)));
 
-		if(focus == 0){
-			grid_indent_logic(ele_x, ele_y, in_grid, __dev->port, press_data, !!(st->buttons & (CONT_A)), !!(st->buttons & (CONT_X)), !!(st->buttons & (CONT_B)), 0);
+		if(MS_options.focus == 0){
+			grid_indent_logic(&MS_grid, ele_x, ele_y, in_grid, __dev->port, press_data, !!(st->buttons & (CONT_A)), !!(st->buttons & (CONT_X)), !!(st->buttons & (CONT_B)), 0);
 		}
 
 		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
@@ -1102,16 +1085,16 @@ int main(){
 		button_action |= (!(previous_buttons[__dev->port] & MOUSE_RIGHTBUTTON) && (st->buttons & MOUSE_RIGHTBUTTON)
 			&& !(st->buttons & MOUSE_LEFTBUTTON)) << 2;	//Right pressed (Without Left) and the game isn't over
 
-		if(button_press_logic(button_action, __dev->port, cursor_position, &tile_anim, previous_buttons, st->buttons)){break;}
-		button_press_logic_buttons(&os, &tile_anim, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
+		if(button_press_logic(&MS_grid, &MS_options, button_action, __dev->port, cursor_position, previous_buttons, st->buttons)){break;}
+		button_press_logic_buttons(&MS_grid, &MS_options, &os, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
 
 		int ele_x = -1;
 		int ele_y = -1;
 		uint8_t in_grid = 0;
 
-		if(focus == 0){
-			cursor_on_grid(&in_grid, &ele_x, &ele_y, button_action, __dev->port, cursor_position);
-			if(in_grid){grid_ABX_logic(ele_x, ele_y, button_action, &tile_anim, &start_time, &start_ms_time);}
+		if(MS_options.focus == 0){
+			cursor_on_grid(&MS_grid, &in_grid, &ele_x, &ele_y, button_action, __dev->port, cursor_position);
+			if(in_grid){grid_ABX_logic(&MS_grid, &MS_options, ele_x, ele_y, button_action, &start_time, &start_ms_time);}
 		}
 
 		//Movement code
@@ -1130,10 +1113,10 @@ int main(){
 			cursor_position[2 * __dev->port] = 0;
 		}
 
-		face_logic(&face_frame_id, __dev->port, cursor_position, !!(st->buttons & (MOUSE_LEFTBUTTON)), !!(st->buttons & (MOUSE_SIDEBUTTON)));	//Might need to change the X/Side button code
+		face_logic(&MS_grid, &face_frame_id, __dev->port, cursor_position, !!(st->buttons & (MOUSE_LEFTBUTTON)), !!(st->buttons & (MOUSE_SIDEBUTTON)));	//Might need to change the X/Side button code
 
-		if(focus == 0){
-			grid_indent_logic(ele_x, ele_y, in_grid, __dev->port, press_data, !!(st->buttons & (MOUSE_LEFTBUTTON)),
+		if(MS_options.focus == 0){
+			grid_indent_logic(&MS_grid, ele_x, ele_y, in_grid, __dev->port, press_data, !!(st->buttons & (MOUSE_LEFTBUTTON)),
 				!!(st->buttons & (MOUSE_SIDEBUTTON)), !!(st->buttons & (MOUSE_RIGHTBUTTON)), 1);
 		}
 
@@ -1160,31 +1143,31 @@ int main(){
 
 		//X001 0000 (Start is released and it was valid)
 		if(!(start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
-			clear_grid(&tile_anim);
+			clear_grid(&MS_grid);
 			start_primed = 0;
 			face_frame_id = 0;
 		}
 
 		start_primed = start_primed & ((1 << 5) + (1 << 4));	//Clears all bits except active and invalidness
 
-		if(non_mines_left == 0 && game_live && !over_mode){
-			game_live = 0;
-			over_mode = 1;
+		if(MS_grid.non_mines_left == 0 && MS_grid.game_live && !MS_grid.over_mode){
+			MS_grid.game_live = 0;
+			MS_grid.over_mode = 1;
 		}
 
 		//This code triggers the turn when you win/lose the game (Doesn't trigger while dead/won after that)
-		if(!game_live && over_mode == 1){	//This triggers at the start of a new game too...
-			if(non_mines_left == 0){	//Only mines left, you win
-				over_mode = 3;
-				if(sound_enabled){ //play "won" sound
+		if(!MS_grid.game_live && MS_grid.over_mode == 1){	//This triggers at the start of a new game too...
+			if(MS_grid.non_mines_left == 0){	//Only mines left, you win
+				MS_grid.over_mode = 3;
+				if(MS_options.sound_enabled){ //play "won" sound
 					snd_sfx_play(Sound_Win, 192, 128);	//Right now this can play when dead
 				}
 				face_frame_id = 3;
 			}
 			else{	//Tiles are left, you must have been blown up
-				over_mode = 2;
-				if(sound_enabled){	//play bomb/death sound
-					if(language){	//Italian
+				MS_grid.over_mode = 2;
+				if(MS_options.sound_enabled){	//play bomb/death sound
+					if(MS_options.language){	//Italian
 						snd_sfx_play(Sound_Death_Italian, 192, 128);
 					}
 					else{
@@ -1196,8 +1179,8 @@ int main(){
 		}
 
 		//When releasing a start press (Or it becomes impure), we want to revert back to the gameover faced instead of the normal face
-		if(over_mode && face_frame_id != 4){
-			if(non_mines_left == 0){
+		if(MS_grid.over_mode && face_frame_id != 4){
+			if(MS_grid.non_mines_left == 0){
 				face_frame_id = 3;
 			}
 			else{
@@ -1206,8 +1189,8 @@ int main(){
 		}
 
 		//Right now this is always triggered when a game ends and thanks to "revealed" it only triggers once
-		if(!revealed && !game_live && over_mode){
-			reveal_map(&tile_anim);
+		if(!MS_grid.revealed && !MS_grid.game_live && MS_grid.over_mode){
+			reveal_map(&MS_grid);
 		}
 
 		graphics_frame_coordinates(&Board.spritesheet_animation_array[0], &face_frame_x, &face_frame_y, face_frame_id);
@@ -1216,16 +1199,16 @@ int main(){
 		}
 
 		timer_ms_gettime(&current_time, &current_ms_time);
-		if(game_live && time_sec < 999){	//Prevent timer overflows
+		if(MS_grid.game_live && MS_grid.time_sec < 999){	//Prevent timer overflows
 			int temp_sec = current_time - start_time + (current_ms_time > start_ms_time); //MS is there to account for the "1st second" inaccuracy
 			//(How does this do the "start at 1 sec" thing? I forgot)
-			if(focus <= 1 && sound_enabled && temp_sec > time_sec){	//Play the "tick" sound effect (But only when time_sec changes and we're on the game tab)
+			if(MS_options.focus <= 1 && MS_options.sound_enabled && temp_sec > MS_grid.time_sec){	//Play the "tick" sound effect (But only when time_sec changes and we're on the game tab)
 				snd_sfx_play(Sound_Tick, 192, 128);
 			}
-			time_sec = temp_sec;
+			MS_grid.time_sec = temp_sec;
 		}
 
-		grid_size = grid_x * grid_y;
+		grid_size = MS_grid.x * MS_grid.y;
 
 		time(&os_clock);	//I think this is how I populate it with the current time
 		readable_time = localtime(&os_clock);
@@ -1256,7 +1239,7 @@ int main(){
 		//Setup the main palette
 		graphics_setup_palette(Board.palette_data, Board.spritesheet_format, 0);
 		graphics_setup_palette(Icons.palette_data, Icons.spritesheet_format, 1);
-		if(!operating_system){	//Since it uses palettes and XP doesn't, we do this
+		if(!MS_options.operating_system){	//Since it uses palettes and XP doesn't, we do this
 			graphics_setup_palette(Windows.palette_data, Windows.spritesheet_format, 1);	//Since Windows uses 8bpp, this doesn't overlap with "icons"
 		}
 		graphics_setup_palette(cursor_red, Icons.spritesheet_format, 2);
@@ -1274,7 +1257,7 @@ int main(){
 
 		//Draw windows graphics using our MinesweeperOpSys struct
 		for(iter = 0; iter < os.sprite_count; iter++){
-			if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "aboutLogo") && focus != 4){	//We don't want to draw that unless we're on the about page
+			if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "aboutLogo") && MS_options.focus != 4){	//We don't want to draw that unless we're on the about page
 				continue;
 			}
 			graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[os.ids[iter]],
@@ -1302,7 +1285,7 @@ int main(){
 		}
 
 		//The X starting pos varies based on the hour for XP and hour, AM/PM for 2000
-		if(operating_system){
+		if(MS_options.operating_system){
 			if(readable_time->tm_hour % 12 < 10){
 				os.variant_pos[2] = 583;
 			}
@@ -1337,7 +1320,7 @@ int main(){
 		#endif
 
 		//Some of the options stuff is in opaque list
-		if(focus == 2){
+		if(MS_options.focus == 2){
 
 			//A draw list for all 3 clicker thingys (Maybe enlarge them?) (MOVE TO OPAQUE LATER)
 			graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[num_changer_id], coord_num_changer,
@@ -1375,10 +1358,10 @@ int main(){
 			graphics_draw_text_prop(&Tahoma_font, 284, 311, 31, 1, 1, 62, "Intemediate\0");
 			graphics_draw_text_prop(&Tahoma_font, 383, 311, 31, 1, 1, 62, "Expert\0");
 
-			//Draw the numbers for grid_x, grid_y and num_mines displays
-			graphics_draw_text_prop(&Tahoma_font, 399, 145, 31, 1, 1, 62, x_buffer);
-			graphics_draw_text_prop(&Tahoma_font, 399, 185, 31, 1, 1, 62, y_buffer);
-			graphics_draw_text_prop(&Tahoma_font, 399, 225, 31, 1, 1, 62, m_buffer);
+			//Draw the numbers for x, y and num_mines displays
+			graphics_draw_text_prop(&Tahoma_font, 399, 145, 31, 1, 1, 62, MS_options.x_buffer);
+			graphics_draw_text_prop(&Tahoma_font, 399, 185, 31, 1, 1, 62, MS_options.y_buffer);
+			graphics_draw_text_prop(&Tahoma_font, 399, 225, 31, 1, 1, 62, MS_options.m_buffer);
 
 			graphics_draw_text_prop(&Tahoma_font, 350, 145, 31, 1, 1, 62, "Height:\0");
 			graphics_draw_text_prop(&Tahoma_font, 350, 185, 31, 1, 1, 62, "Width:\0");
@@ -1402,7 +1385,7 @@ int main(){
 
 			//Display high scores here
 		}
-		else if(focus == 4){
+		else if(MS_options.focus == 4){
 			graphics_draw_text_prop(&Tahoma_font, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
 			graphics_draw_text_prop(&Tahoma_font, 140, 125 + 12, 25, 1, 1, 62, "Version \"Pre-reveal\" (Build 3011: Service Pack 5)\0");
 			graphics_draw_text_prop(&Tahoma_font, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
@@ -1417,11 +1400,11 @@ int main(){
 		}
 
 		//Draw the flag count and timer
-		digit_display(&Board, &Board.spritesheet_animation_array[1], num_flags, 20, 65, 17);
-		digit_display(&Board, &Board.spritesheet_animation_array[1], time_sec, 581, 65, 17);
+		digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.num_flags, 20, 65, 17);
+		digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.time_sec, 581, 65, 17);
 
 		//Draw the sd icon
-		if(sd_present){
+		if(MS_options.sd_present){
 			graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[2], os.variant_pos[4], os.variant_pos[5], 21, 1, 1, sd_x, sd_y, 1);
 		}
 
@@ -1432,8 +1415,9 @@ int main(){
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
 
 		//Draw the grid
-		if(focus <= 1){
-			graphics_draw_sprites_OLD(&tile_ss, &tile_anim, coord_grid, frame_grid, 2 * grid_size, grid_size, 17, 1, 1, !operating_system && language);
+		if(MS_options.focus <= 1){
+			graphics_draw_sprites_OLD(&MS_grid.tile_ss, &MS_grid.tile_anim, MS_grid.coord_grid, MS_grid.frame_grid, 2 * grid_size, grid_size, 17, 1, 1,
+				!MS_options.operating_system && MS_options.language);
 		}
 
 		//Draw the indented tiles ontop of the grid and the cursors themselves
@@ -1456,19 +1440,19 @@ int main(){
 				uint16_t top_left_x = press_data[(3 * iter) + 1] * 16;
 				uint16_t top_left_y = press_data[(3 * iter) + 2] * 16;
 				uint8_t liter = 0;
-				if(!(logic_grid[press_data[(3 * iter) + 1] + grid_x * press_data[(3 * iter) + 2]] & ((1 << 7) + (1 << 6)))){	//If its not revealed/flagged
-					indented_neighbours[0] = top_left_x + grid_start_x;
-					indented_neighbours[1] = top_left_y + grid_start_y;
-					if(logic_grid[press_data[(3 * iter) + 1] + grid_x * press_data[(3 * iter) + 2]] & (1 << 5)){	//If its question marked
-						graphics_frame_coordinates(&tile_anim, indented_frames, indented_frames + 1, 6);
+				if(!(MS_grid.logic_grid[press_data[(3 * iter) + 1] + MS_grid.x * press_data[(3 * iter) + 2]] & ((1 << 7) + (1 << 6)))){	//If its not revealed/flagged
+					indented_neighbours[0] = top_left_x + MS_grid.start_x;
+					indented_neighbours[1] = top_left_y + MS_grid.start_y;
+					if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + MS_grid.x * press_data[(3 * iter) + 2]] & (1 << 5)){	//If its question marked
+						graphics_frame_coordinates(&MS_grid.tile_anim, indented_frames, indented_frames + 1, 6);
 					}
 					else{
-						graphics_frame_coordinates(&tile_anim, indented_frames, indented_frames + 1, 7);
+						graphics_frame_coordinates(&MS_grid.tile_anim, indented_frames, indented_frames + 1, 7);
 					}
 					liter = 1;
 				}
 				if(press_data[3 * iter] == 2){	//For the X press
-					uint8_t valids = neighbouring_tiles(press_data[(3 * iter) + 1], press_data[(3 * iter) + 2]);	//Get the tiles that are in bounds
+					uint8_t valids = neighbouring_tiles(&MS_grid, press_data[(3 * iter) + 1], press_data[(3 * iter) + 2]);	//Get the tiles that are in bounds
 					for(jiter = 0; jiter < 8; jiter++){
 						if(!(valids & (1 << jiter))){	//If out of bounds
 							continue;
@@ -1487,21 +1471,22 @@ int main(){
 						else if(jiter > 4){
 							y_variant = 1;
 						}
-						if(logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * grid_x)] & ((1 << 7) + (1 << 6))){
+						if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * MS_grid.x)] & ((1 << 7) + (1 << 6))){
 							continue;
 						}
-						indented_neighbours[2 * liter] = top_left_x + (16 * x_variant) + grid_start_x;
-						indented_neighbours[(2 * liter) + 1] = top_left_y + (16 * y_variant) + grid_start_y;
-						if(logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * grid_x)] & (1 << 5)){	//Question mark
-							graphics_frame_coordinates(&tile_anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
+						indented_neighbours[2 * liter] = top_left_x + (16 * x_variant) + MS_grid.start_x;
+						indented_neighbours[(2 * liter) + 1] = top_left_y + (16 * y_variant) + MS_grid.start_y;
+						if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * MS_grid.x)] & (1 << 5)){	//Question mark
+							graphics_frame_coordinates(&MS_grid.tile_anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
 						}
 						else{
-							graphics_frame_coordinates(&tile_anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);	//Blank
+							graphics_frame_coordinates(&MS_grid.tile_anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);	//Blank
 						}
 						liter++;
 					}
 				}
-				graphics_draw_sprites_OLD(&tile_ss, &tile_anim, indented_neighbours, indented_frames, 2 * liter, liter, 18, 1, 1, !operating_system && language);
+				graphics_draw_sprites_OLD(&MS_grid.tile_ss, &MS_grid.tile_anim, indented_neighbours, indented_frames, 2 * liter, liter, 18, 1, 1,
+					!MS_options.operating_system && MS_options.language);
 			}
 		}
 
@@ -1525,15 +1510,15 @@ int main(){
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
 		//Draw the grid's boarder
-		if(focus <= 1){
-			custom_poly_boarder(3, grid_start_x, grid_start_y, 16, grid_x * 16, grid_y * 16, 4286611584u, 4294967295u);
+		if(MS_options.focus <= 1){
+			custom_poly_boarder(3, MS_grid.start_x, MS_grid.start_y, 16, MS_grid.x * 16, MS_grid.y * 16, 4286611584u, 4294967295u);
 		}
 		else{
-			if(focus > 1){
+			if(MS_options.focus > 1){
 				graphics_draw_untextured_poly(6, 98, 10, 631, 1, 0xFFA0A0A0, 1);
 				graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFD4D0C8, 1);
 			}
-			if(focus == 2){	//Add in the number changer textures here too when I can draw SS in Opaque
+			if(MS_options.focus == 2){	//Add in the number changer textures here too when I can draw SS in Opaque
 				//Draw all 3 untextured poly number boxes
 				graphics_draw_untextured_array(&Option_polys);
 			}
@@ -1551,7 +1536,7 @@ int main(){
 		//Draw the MS background stuff
 		graphics_draw_untextured_array(&Bg_polys);
 
-		if(!operating_system){
+		if(!MS_options.operating_system){
 			custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000
 			custom_poly_2000_boarder(0, 0, 1, 640, 452);	//The Windows 2000 window boarder
 		}
@@ -1563,9 +1548,9 @@ int main(){
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
 	//I'm probs forgetting a few things such as the cursor palettes
 	int retVal = 0;
-	retVal += crayon_memory_free_crayon_spritesheet(&Board, 1);
-	retVal += crayon_memory_free_crayon_spritesheet(&Icons, 1);
-	retVal += crayon_memory_free_crayon_spritesheet(&Windows, 1);
+	retVal += crayon_memory_free_spritesheet(&Board, 1);
+	retVal += crayon_memory_free_spritesheet(&Icons, 1);
+	retVal += crayon_memory_free_spritesheet(&Windows, 1);
 	retVal += crayon_memory_free_mono_font_sheet(&BIOS_font, 1);
 	retVal += crayon_memory_free_prop_font_sheet(&Tahoma_font, 1);
 	retVal += crayon_memory_free_palette(White_Tahoma_Font);

@@ -43,41 +43,39 @@ typedef struct MinesweeperSaveFile{
 	uint8_t pref_mines;
 } MinesweeperSaveFile_t;
 
-//The following two structs take the place of all the globals + a few extra things
-//Eventually convert to start using these structs (MSGrid depends on map-based)
-//Draw array function though
-
 //Contains the logic for a board
 typedef struct MinesweeperGrid{
-	crayon_spritesheet_t *anim;
+	crayon_spritesheet_t tile_ss;
+	crayon_animation_t tile_anim;
 	uint8_t *logic_grid;	//The following 3 arrays are in the crayon_sprite_array_t
-	// uint16_t *coord_grid;
-	// uint8_t *frame_grid_key;	//Contains element id's for the frame grid that contains the
-								//texel coords for all 16 anim frames
-	// uint16_t *frame_grid;
-	crayon_sprite_array_t grid;
 
-	uint8_t grid_x;
-	uint8_t grid_y;
-	uint16_t grid_start_x;
-	uint16_t grid_start_y;
+	//Next 3 pointers will later be replaced with the crayon_sprite_array object
+	uint16_t *coord_grid;
+	uint8_t *frame_grid_key;	//Contains element id's for the frame grid that contains the
+								//texel coords for all 16 anim frames
+	uint16_t *frame_grid;
+	// crayon_sprite_array_t grid;
+
+	uint8_t x;
+	uint8_t y;
+	uint16_t start_x;
+	uint16_t start_y;
 	uint16_t num_mines;
 	uint8_t first_reveal;
 
 	uint16_t non_mines_left;	//When this variable equals zero, the game is won
 	int num_flags;	//More like "number of flags in the pool"
-
-	//Can you set default values in struct?
 	uint8_t over_mode;	//0 = ready for new game, 1 = game just ended, 2 = loss (ded), 3 = win
 	uint8_t game_live;	//Is true when the timer is turning
-	uint8_t revealed;	//What did this do?
+	uint8_t revealed;
+	int time_sec;
 
-	uint8_t players_allowed;	//1111, if you want to make a competative mode this can help
+	// uint8_t players_allowed;	//1111, if you want to make a competative mode this can help
 								//It goes P1, P2, P3, P4. I'm made it so all players can work
 								//on any grid. Defeault 15
 } MinesweeperGrid_t;
 
-//Contains game options
+//Contains game options and focus (Windows tab)
 typedef struct MinesweeperOptions{
 	uint8_t sd_present;			//If an ext2 formatted SD card is detected, this this becomes true
 								//and modifies some textures/coords and allows R to save screenshots
@@ -87,10 +85,12 @@ typedef struct MinesweeperOptions{
 	uint8_t language;			//0 for English, 1 for Italian. This affects the font language and
 								//the Minesweeper/Prato fiorito themes
 
+	uint8_t focus;
+
 	//For the options page (Apply only affects these 3 and not the checkboxes)
-	uint8_t disp_grid_x;
-	uint8_t disp_grid_y;
-	uint8_t disp_grid_mines;
+	uint8_t disp_x;
+	uint8_t disp_y;
+	uint8_t disp_mines;
 	char x_buffer[4], y_buffer[4], m_buffer[4];
 
 	//Add some new draw struct pointers/or stack allocated, idk
