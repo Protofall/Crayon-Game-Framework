@@ -804,39 +804,36 @@ int main(){
 
 	//New draw struct test
 	crayon_sprite_array_t test;
-	crayon_memory_set_sprite_array(&test, 8, 3, 0, 1, 0, 0, 0, 0, !MS_options.operating_system && MS_options.language,
+	crayon_memory_set_sprite_array(&test, 17, MS_grid.tile_anim.animation_frames, 0, 1, 0, 0, 0, 0, !MS_options.operating_system && MS_options.language,
 		&MS_grid.tile_ss, &MS_grid.tile_anim);
 
 	//A diagonal line of stuff
-	test.draw_pos[0] = 0;
-	test.draw_pos[1] = 0;
-	test.draw_pos[2] = 16;
-	test.draw_pos[3] = 16;
-	test.draw_pos[4] = 32;
-	test.draw_pos[5] = 32;
-	test.draw_pos[6] = 48;
-	test.draw_pos[7] = 48;
-	test.draw_pos[8] = 64;
-	test.draw_pos[9] = 64;
-	test.draw_pos[10] = 80;
-	test.draw_pos[11] = 80;
-	test.draw_pos[12] = 96;
-	test.draw_pos[13] = 96;
-	test.draw_pos[14] = 112;
-	test.draw_pos[15] = 112;
+	for(iter = 0; iter < test.num_sprites; iter++){
+		test.draw_pos[2 * iter] = iter * 16;
+		test.draw_pos[(2 * iter) + 1] = iter * 16;
+	}
 
-	test.frame_coords_keys[0] = 2;
+	test.frame_coords_keys[0] = 5;
 	test.frame_coords_keys[1] = 0;
 	test.frame_coords_keys[2] = 1;
-	test.frame_coords_keys[3] = 1;
-	test.frame_coords_keys[4] = 0;
-	test.frame_coords_keys[5] = 1;
+	test.frame_coords_keys[3] = 3;
+	test.frame_coords_keys[4] = 7;
+	test.frame_coords_keys[5] = 6;
 	test.frame_coords_keys[6] = 2;
-	test.frame_coords_keys[7] = 0;
+	test.frame_coords_keys[7] = 4;
+	test.frame_coords_keys[8] = 14;
+	test.frame_coords_keys[9] = 11;
+	test.frame_coords_keys[10] = 8;
+	test.frame_coords_keys[11] = 13;
+	test.frame_coords_keys[12] = 15;
+	test.frame_coords_keys[13] = 12;
+	test.frame_coords_keys[14] = 9;
+	test.frame_coords_keys[15] = 10;
+	test.frame_coords_keys[16] = 2;
 
-	graphics_frame_coordinates(test.anim, test.frame_coords_map + 0, test.frame_coords_map + 1, 9);
-	graphics_frame_coordinates(test.anim, test.frame_coords_map + 2, test.frame_coords_map + 3, 5);
-	graphics_frame_coordinates(test.anim, test.frame_coords_map + 4, test.frame_coords_map + 5, 15);
+	for(iter = 0; iter < test.unique_frames; iter++){
+		graphics_frame_coordinates(test.anim, test.frame_coords_map + (2 * iter), test.frame_coords_map + (2 * iter) + 1, iter);
+	}
 
 	test.scales[0] = 1;
 	test.scales[1] = 1;
@@ -1546,7 +1543,7 @@ int main(){
 		//None of these need to be transparent, by using the opaque list we are making the program more efficient
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-		// graphics_draw_sprites(&test, PVR_LIST_OP_POLY);	//Was used for debugging
+		graphics_draw_sprites(&test, PVR_LIST_OP_POLY);	//Was used for debugging
 
 		//Draw the grid's boarder
 		if(MS_options.focus <= 1){
@@ -1587,7 +1584,7 @@ int main(){
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
 	//I'm probs forgetting a few things such as the cursor palettes
 	int retVal = 0;
-	retVal += crayon_memory_free_crayon_memory_free_sprite_array(&test, 0);	//We don't delete the spritesheet though
+	retVal += crayon_memory_free_sprite_array(&test, 0);	//We don't delete the spritesheet though
 	retVal += crayon_memory_free_spritesheet(&Board, 1);
 	retVal += crayon_memory_free_spritesheet(&Icons, 1);
 	retVal += crayon_memory_free_spritesheet(&Windows, 1);
