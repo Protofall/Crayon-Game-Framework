@@ -281,7 +281,7 @@ extern uint8_t graphics_draw_sprites_OLD(const struct crayon_spritesheet *ss,
 }
 
 //Need to come back and do rotations and maybe colour?
-extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
 
 	float u0, v0, u1, v1;
 
@@ -377,12 +377,12 @@ extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_
 }
 
 //I'll come back to this later
-extern uint8_t graphics_draw_polys(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_polys(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
 	return 0;
 }
 
-extern uint8_t graphics_draw_text_mono(const struct crayon_font_mono *fm, float draw_x, float draw_y,
-	float draw_z, float scale_x, float scale_y,	uint8_t paletteNumber, char * string){
+extern uint8_t graphics_draw_text_mono(const struct crayon_font_mono *fm, uint8_t poly_list_mode, float draw_x,
+	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string){
 
 	float x0 = draw_x;
 	float y0 = draw_y;
@@ -396,15 +396,15 @@ extern uint8_t graphics_draw_text_mono(const struct crayon_font_mono *fm, float 
 
 	pvr_sprite_cxt_t context;
 	if(fm->texture_format == 6){  //PAL8BPP format
-		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
+		pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
 		fm->fontsheet_dim, fm->fontsheet_dim, fm->fontsheet_texture, PVR_FILTER_NONE);
 	}
 	else if(fm->texture_format == 5){ //PAL4BPP format
-		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
+		pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
 		fm->fontsheet_dim, fm->fontsheet_dim, fm->fontsheet_texture, PVR_FILTER_NONE);
 	}
 	else if(fm->texture_format == 0 || fm->texture_format == 1 || fm->texture_format == 2){  //ARGB1555, RGB565 and RGB4444
-		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, (fm->texture_format) << 27,
+		pvr_sprite_cxt_txr(&context, poly_list_mode, (fm->texture_format) << 27,
 		fm->fontsheet_dim, fm->fontsheet_dim, fm->fontsheet_texture, PVR_FILTER_NONE);
 	}
 	else{ //Unknown format
@@ -457,8 +457,8 @@ extern uint8_t graphics_draw_text_mono(const struct crayon_font_mono *fm, float 
 	return 0;
 }
 
-extern uint8_t graphics_draw_text_prop(const struct crayon_font_prop *fp, float draw_x, float draw_y,
-	float draw_z, float scale_x, float scale_y,	uint8_t paletteNumber, char * string){
+extern uint8_t graphics_draw_text_prop(const struct crayon_font_prop *fp, uint8_t poly_list_mode, float draw_x,
+	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string){
 
 	float x0 = draw_x;
 	float y0 = draw_y;
@@ -474,15 +474,15 @@ extern uint8_t graphics_draw_text_prop(const struct crayon_font_prop *fp, float 
 
 	pvr_sprite_cxt_t context;
 	if(fp->texture_format == 6){  //PAL8BPP format
-		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
+		pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(paletteNumber),
 		fp->fontsheet_dim, fp->fontsheet_dim, fp->fontsheet_texture, PVR_FILTER_NONE);
 	}
 	else if(fp->texture_format == 5){ //PAL4BPP format
-		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
+		pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(paletteNumber),
 		fp->fontsheet_dim, fp->fontsheet_dim, fp->fontsheet_texture, PVR_FILTER_NONE);
 	}
 	else if(fp->texture_format == 0 || fp->texture_format == 1 || fp->texture_format == 2){  //ARGB1555, RGB565 and RGB4444
-		pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, (fp->texture_format) << 27,
+		pvr_sprite_cxt_txr(&context, poly_list_mode, (fp->texture_format) << 27,
 		fp->fontsheet_dim, fp->fontsheet_dim, fp->fontsheet_texture, PVR_FILTER_NONE);
 	}
 	else{ //Unknown format

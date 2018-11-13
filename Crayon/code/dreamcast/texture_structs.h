@@ -8,6 +8,7 @@
 typedef struct crayon_palette{
 	uint32_t *palette;		//Pointer to heap allocated palette (Its treated like an array of size "colour_count")
 	uint16_t colour_count;	//Number of colours in the palette
+	int8_t palette_id;		//Used for graphics_setup_palette. If its -1 then its unset
 } crayon_palette_t;
 
 typedef struct crayon_animation{
@@ -28,7 +29,6 @@ typedef struct crayon_spritesheet{
 	uint16_t spritesheet_dims;	//Since a pvr texture must be a square, we don't need height/width
 	uint8_t spritesheet_format;	//1 for 4BPP, 2 for 8BPP, 3 for RGB565 and 4 for ARGB4444 (0 for unknown)
 								//CHANGE TO UINT32 AND JUST SAVE WHOLE FORMAT
-	crayon_palette_t *palette_data;	//Right now we still malloc this regardless if we use it or not. Change that
 
 	crayon_animation_t *spritesheet_animation_array;	//Allows me to make an array of animation_t pointers
 	uint8_t spritesheet_animation_count;	//The number of animations per spritesheet
@@ -62,7 +62,6 @@ typedef struct crayon_font_prop{
 							//code in memory_free_prop_font_sheet()
 	uint8_t num_rows;
 	uint8_t num_chars;
-	crayon_palette_t *palette_data;
 } crayon_font_prop_t;
 
 //All chars have the same width and height
@@ -75,7 +74,6 @@ typedef struct crayon_font_mono{
 	uint8_t char_height;
 	uint8_t num_columns;
 	uint8_t num_rows;
-	crayon_palette_t *palette_data;
 } crayon_font_mono_t;
 
 #endif

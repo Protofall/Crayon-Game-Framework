@@ -689,8 +689,6 @@ int main(){
 		}
 	#endif
 
-	// focus = 2;	//Remove this later, its only used for debugging right now
-
 	//Currently this is the only way to access some of the hidden features
 	//Later OS will be chosen in BIOS and language through save file name
 	MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -726,6 +724,7 @@ int main(){
 	cursor_position[7] = 66;
 
 	crayon_spritesheet_t Board, Icons, Windows;
+	crayon_palette_t Board_P, Icons_P, Windows_P, BIOS_P, Tahoma_P;
 	crayon_font_mono_t BIOS_font;
 	crayon_font_prop_t Tahoma_font;
 	Board.spritesheet_texture = NULL;
@@ -744,10 +743,10 @@ int main(){
 		crayon_memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	#endif
 
-	crayon_memory_load_mono_font_sheet(&BIOS_font, "/Minesweeper/Fonts/BIOS_font.dtex");
-	crayon_memory_load_prop_font_sheet(&Tahoma_font, "/Minesweeper/Fonts/Tahoma_font.dtex");
-	crayon_memory_load_spritesheet(&Board, "/Minesweeper/Board.dtex");
-	crayon_memory_load_spritesheet(&Icons, "/Minesweeper/Icons.dtex");
+	crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 63, "/Minesweeper/Fonts/BIOS_font.dtex");
+	crayon_memory_load_prop_font_sheet(&Tahoma_font, &Tahoma_P, 62, "/Minesweeper/Fonts/Tahoma_font.dtex");
+	crayon_memory_load_spritesheet(&Board, &Board_P, 0, "/Minesweeper/Board.dtex");
+	crayon_memory_load_spritesheet(&Icons, &Icons_P, 1, "/Minesweeper/Icons.dtex");	
 
 	Sound_Tick = snd_sfx_load("/Minesweeper/Sounds/tick.wav");
 	Sound_Death = snd_sfx_load("/Minesweeper/Sounds/death.wav");
@@ -762,7 +761,7 @@ int main(){
 		#else
 			crayon_memory_mount_romdisk("/cd/XP.img", "/XP");
 		#endif
-		crayon_memory_load_spritesheet(&Windows, "/XP/Windows.dtex");
+		crayon_memory_load_spritesheet(&Windows, NULL, -1, "/XP/Windows.dtex");	//XP doesn't use paletted textures so we avoid it
 		fs_romdisk_unmount("/XP");
 	}
 	else{
@@ -771,7 +770,7 @@ int main(){
 		#else
 			crayon_memory_mount_romdisk("/cd/2000.img", "/2000");
 		#endif
-		crayon_memory_load_spritesheet(&Windows, "/2000/Windows.dtex");
+		crayon_memory_load_spritesheet(&Windows, &Windows_P, 1, "/2000/Windows.dtex");
 		fs_romdisk_unmount("/2000");
 	}
 
@@ -790,6 +789,7 @@ int main(){
 	uint8_t tile_id = 2;
 	if(!MS_options.language){
 		MS_grid.tile_ss = Board;
+		MS_grid.draw_grid.palette = &Board_P;
 	}
 	else{
 		MS_grid.tile_ss = Windows;
@@ -799,13 +799,14 @@ int main(){
 				break;
 			}
 		}
+		MS_grid.draw_grid.palette = &Windows_P;
 	}
 	MS_grid.tile_anim = MS_grid.tile_ss.spritesheet_animation_array[tile_id];
 
 	//New draw struct test
 	crayon_sprite_array_t test;
 	crayon_memory_set_sprite_array(&test, 17, MS_grid.tile_anim.animation_frames, 0, 1, 0, 0, 0, 0, !MS_options.operating_system && MS_options.language,
-		&MS_grid.tile_ss, &MS_grid.tile_anim);
+		&MS_grid.tile_ss, &MS_grid.tile_anim, MS_grid.draw_grid.palette);
 
 	//A diagonal line of stuff
 	for(iter = 0; iter < test.num_sprites; iter++){
@@ -938,19 +939,19 @@ int main(){
 	graphics_frame_coordinates(&Icons.spritesheet_animation_array[2], &sd_x, &sd_y, 0);
 
 	//The palette for XP's clock
-	crayon_palette_t *White_Tahoma_Font = crayon_memory_clone_palette(Tahoma_font.palette_data);
-	crayon_memory_swap_colour(White_Tahoma_Font, 0xFF000000, 0xFFFFFFFF, 0);	//Swapps black for white
+	crayon_palette_t White_Tahoma_P, cursor_red, cursor_yellow, cursor_green, cursor_blue;
+	crayon_memory_clone_palette(&Tahoma_P, &White_Tahoma_P, 61);
+	crayon_memory_swap_colour(&White_Tahoma_P, 0xFF000000, 0xFFFFFFFF, 0);	//Swapps black for white
 
 	//The cursor colours
-	crayon_palette_t *cursor_red, *cursor_yellow, *cursor_green, *cursor_blue;
-	cursor_red = crayon_memory_clone_palette(Icons.palette_data);
-	cursor_yellow = crayon_memory_clone_palette(Icons.palette_data);
-	cursor_green = crayon_memory_clone_palette(Icons.palette_data);
-	cursor_blue = crayon_memory_clone_palette(Icons.palette_data);
-	crayon_memory_swap_colour(cursor_red, 0xFFFFFFFF, 0xFFFF0000, 0);
-	crayon_memory_swap_colour(cursor_yellow, 0xFFFFFFFF, 0xFFFFFF00, 0);
-	crayon_memory_swap_colour(cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
-	crayon_memory_swap_colour(cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
+	crayon_memory_clone_palette(&Icons_P, &cursor_red, 2);
+	crayon_memory_clone_palette(&Icons_P, &cursor_yellow, 3);
+	crayon_memory_clone_palette(&Icons_P, &cursor_green, 4);
+	crayon_memory_clone_palette(&Icons_P, &cursor_blue, 5);
+	crayon_memory_swap_colour(&cursor_red, 0xFFFFFFFF, 0xFFFF0000, 0);
+	crayon_memory_swap_colour(&cursor_yellow, 0xFFFFFFFF, 0xFFFFFF00, 0);
+	crayon_memory_swap_colour(&cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
+	crayon_memory_swap_colour(&cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
 
 	#if CRAYON_DEBUG == 1
 	//Stuff for debugging/performance testing
@@ -1271,21 +1272,21 @@ int main(){
 		pvr_scene_begin();
 
 		//Setup the main palette
-		graphics_setup_palette(Board.palette_data, Board.spritesheet_format, 0);
-		graphics_setup_palette(Icons.palette_data, Icons.spritesheet_format, 1);
+		graphics_setup_palette(&Board_P, Board.spritesheet_format, Board_P.palette_id);
+		// graphics_setup_palette(&Board_P, Board.spritesheet_format, test.palette->palette_id);	//This works too, but in reality we'd choose the first one
+		graphics_setup_palette(&Icons_P, Icons.spritesheet_format, Icons_P.palette_id);
 		if(!MS_options.operating_system){	//Since it uses palettes and XP doesn't, we do this
-			graphics_setup_palette(Windows.palette_data, Windows.spritesheet_format, 1);	//Since Windows uses 8bpp, this doesn't overlap with "icons"
+			graphics_setup_palette(&Windows_P, Windows.spritesheet_format, Windows_P.palette_id);	//Since Windows uses 8bpp, this doesn't overlap with "icons"
 		}
-		graphics_setup_palette(cursor_red, Icons.spritesheet_format, 2);
-		graphics_setup_palette(cursor_yellow, Icons.spritesheet_format, 3);
-		graphics_setup_palette(cursor_green, Icons.spritesheet_format, 4);
-		graphics_setup_palette(cursor_blue, Icons.spritesheet_format, 5);
+		graphics_setup_palette(&cursor_red, Icons.spritesheet_format, cursor_red.palette_id);
+		graphics_setup_palette(&cursor_yellow, Icons.spritesheet_format, cursor_yellow.palette_id);
+		graphics_setup_palette(&cursor_green, Icons.spritesheet_format, cursor_green.palette_id);
+		graphics_setup_palette(&cursor_blue, Icons.spritesheet_format, cursor_blue.palette_id);
 
 		//I like to put the fonts at the very back of the system (But really, its probably better standard to go first)
-		graphics_setup_palette(White_Tahoma_Font, 5, 61);	//Used in XP's clock and controller legend
-		graphics_setup_palette(Tahoma_font.palette_data, Tahoma_font.texture_format, 62);
-		graphics_setup_palette(BIOS_font.palette_data, BIOS_font.texture_format, 63);
-
+		graphics_setup_palette(&White_Tahoma_P, Tahoma_font.texture_format, White_Tahoma_P.palette_id);	//Used in XP's clock and controller legend
+		graphics_setup_palette(&Tahoma_P, Tahoma_font.texture_format, Tahoma_P.palette_id);
+		graphics_setup_palette(&BIOS_P, BIOS_font.texture_format, BIOS_P.palette_id);
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
@@ -1299,10 +1300,10 @@ int main(){
 				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 1);
 				//We choose palette 1 because that's 2000's palette and XP uses RGB565
 		}
-		graphics_draw_text_prop(&Tahoma_font, 9, os.variant_pos[1], 20, 1, 1, 62, "Game\0");
-		graphics_draw_text_prop(&Tahoma_font, 48, os.variant_pos[1], 20, 1, 1, 62, "Options\0");
-		graphics_draw_text_prop(&Tahoma_font, 97, os.variant_pos[1], 20, 1, 1, 62, "Controls\0");
-		graphics_draw_text_prop(&Tahoma_font, 149, os.variant_pos[1], 20, 1, 1, 62, "About\0");
+		graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 9, os.variant_pos[1], 20, 1, 1, 62, "Game\0");
+		graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 48, os.variant_pos[1], 20, 1, 1, 62, "Options\0");
+		graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 97, os.variant_pos[1], 20, 1, 1, 62, "Controls\0");
+		graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 149, os.variant_pos[1], 20, 1, 1, 62, "About\0");
 
 		//Updating the time in the bottom right
 		//CONSIDER ONLY UPDATING IF TIME IS DIFFERENT
@@ -1341,7 +1342,7 @@ int main(){
 			os.variant_pos[2] = clock_pos;
 		}
 
-		graphics_draw_text_prop(&Tahoma_font, os.variant_pos[2], os.variant_pos[3], 20, 1, 1, os.clock_palette, time_buffer);	//In XP is uses another palette (White text version)
+		graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, os.variant_pos[2], os.variant_pos[3], 20, 1, 1, os.clock_palette, time_buffer);	//In XP is uses another palette (White text version)
 
 		//DEBUG, REMOVE LATER
 		// char focus_buffer[9];
@@ -1350,7 +1351,7 @@ int main(){
 		#if CRAYON_DEBUG == 1
 			char fps_buffer[100];
 			sprintf(fps_buffer, "FPS ave: %d, min: %d, max: %d", fps_ave, fps_min, fps_max);
-			graphics_draw_text_prop(&Tahoma_font, 235, 435, 20, 1, 1, 62, fps_buffer);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 235, 435, 20, 1, 1, 62, fps_buffer);
 		#endif
 
 		//Some of the options stuff is in opaque list
@@ -1368,11 +1369,11 @@ int main(){
 			graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[checker_id], coord_checker,
 				frame_checker, 2, 2, 30, 1, 1, 1);
 
-			graphics_draw_text_prop(&Tahoma_font, 189, 145, 31, 1, 1, 62, "Sound\0");
-			graphics_draw_text_prop(&Tahoma_font, 189, 185, 31, 1, 1, 62, "Marks (?)\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 189, 145, 31, 1, 1, 62, "Sound\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 189, 185, 31, 1, 1, 62, "Marks (?)\0");
 
-			graphics_draw_text_prop(&Tahoma_font, 282, 257, 31, 1, 1, 62, "Save to VMU\0");
-			graphics_draw_text_prop(&Tahoma_font, 385, 257, 31, 1, 1, 62, "Apply\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 282, 257, 31, 1, 1, 62, "Save to VMU\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 385, 257, 31, 1, 1, 62, "Apply\0");
 
 			//Without these printf's lxdream crashes when trying to print the best times text...
 				//I've tested this on Redream, Redream + BIOS, DEMUL and real hardware and it works fine there. This is an lxdream bug
@@ -1384,22 +1385,22 @@ int main(){
 			// printf("Garbage\n");
 			// printf("Garbage\n");
 
-			// graphics_draw_text_prop(&Tahoma_font, 190, 280, 31, 1, 1, 62, "Best Times...\n(NOT IMPLEMENTED YET)\0");
-			graphics_draw_text_prop(&Tahoma_font, 189, 280, 31, 1, 1, 62, "Best Times...\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 190, 280, 31, 1, 1, 62, "Best Times...\n(NOT IMPLEMENTED YET)\0");
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 189, 280, 31, 1, 1, 62, "Best Times...\0");
 
 			//Re-position these later
-			graphics_draw_text_prop(&Tahoma_font, 204, 311, 31, 1, 1, 62, "Beginner\0");
-			graphics_draw_text_prop(&Tahoma_font, 284, 311, 31, 1, 1, 62, "Intemediate\0");
-			graphics_draw_text_prop(&Tahoma_font, 383, 311, 31, 1, 1, 62, "Expert\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 204, 311, 31, 1, 1, 62, "Beginner\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 284, 311, 31, 1, 1, 62, "Intemediate\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 383, 311, 31, 1, 1, 62, "Expert\0");
 
 			//Draw the numbers for x, y and num_mines displays
-			graphics_draw_text_prop(&Tahoma_font, 399, 145, 31, 1, 1, 62, MS_options.x_buffer);
-			graphics_draw_text_prop(&Tahoma_font, 399, 185, 31, 1, 1, 62, MS_options.y_buffer);
-			graphics_draw_text_prop(&Tahoma_font, 399, 225, 31, 1, 1, 62, MS_options.m_buffer);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 399, 145, 31, 1, 1, 62, MS_options.x_buffer);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 399, 185, 31, 1, 1, 62, MS_options.y_buffer);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 399, 225, 31, 1, 1, 62, MS_options.m_buffer);
 
-			graphics_draw_text_prop(&Tahoma_font, 350, 145, 31, 1, 1, 62, "Height:\0");
-			graphics_draw_text_prop(&Tahoma_font, 350, 185, 31, 1, 1, 62, "Width:\0");
-			graphics_draw_text_prop(&Tahoma_font, 350, 225, 31, 1, 1, 62, "Mines:\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 350, 145, 31, 1, 1, 62, "Height:\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 350, 185, 31, 1, 1, 62, "Width:\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 350, 225, 31, 1, 1, 62, "Mines:\0");
 
 			/*
 
@@ -1420,17 +1421,17 @@ int main(){
 			//Display high scores here
 		}
 		else if(MS_options.focus == 4){
-			graphics_draw_text_prop(&Tahoma_font, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
-			graphics_draw_text_prop(&Tahoma_font, 140, 125 + 12, 25, 1, 1, 62, "Version \"Pre-reveal\" (Build 3011: Service Pack 5)\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 160 + 60, 25, 1, 1, 62, "used texconv textures and powered by my Crayon library. I don't own\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 165 + 72, 25, 1, 1, 62, "the rights to Minesweeper nor do I claim to so don't sue me, k?\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 185 + 84, 25, 1, 1, 62, "Katana logo made by Airofoil\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 205 + 96, 25, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 210 + 108, 25, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
-			graphics_draw_text_prop(&Tahoma_font, 140, 215 + 120, 25, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version \"Pre-reveal\" (Build 3011: Service Pack 5)\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 160 + 60, 25, 1, 1, 62, "used texconv textures and powered by my Crayon library. I don't own\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 165 + 72, 25, 1, 1, 62, "the rights to Minesweeper nor do I claim to so don't sue me, k?\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 185 + 84, 25, 1, 1, 62, "Katana logo made by Airofoil\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 205 + 96, 25, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 210 + 108, 25, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 215 + 120, 25, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
 		}
 
 		//Draw the flag count and timer
@@ -1543,7 +1544,7 @@ int main(){
 		//None of these need to be transparent, by using the opaque list we are making the program more efficient
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-		graphics_draw_sprites(&test, PVR_LIST_OP_POLY);	//Was used for debugging
+		// crayon_graphics_draw_sprites(&test, PVR_LIST_OP_POLY);	//Was used for debugging
 
 		//Draw the grid's boarder
 		if(MS_options.focus <= 1){
@@ -1576,22 +1577,26 @@ int main(){
 			custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000
 			custom_poly_2000_boarder(0, 0, 1, 640, 452);	//The Windows 2000 window boarder
 		}
+
 		pvr_list_finish();
 
 		pvr_scene_finish();
 	}
 
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
-	//I'm probs forgetting a few things such as the cursor palettes
+	//I'm probs forgetting a few things
 	int retVal = 0;
-	retVal += crayon_memory_free_sprite_array(&test, 0);	//We don't delete the spritesheet though
-	retVal += crayon_memory_free_spritesheet(&Board, 1);
-	retVal += crayon_memory_free_spritesheet(&Icons, 1);
-	retVal += crayon_memory_free_spritesheet(&Windows, 1);
-	retVal += crayon_memory_free_mono_font_sheet(&BIOS_font, 1);
-	retVal += crayon_memory_free_prop_font_sheet(&Tahoma_font, 1);
-	retVal += crayon_memory_free_palette(White_Tahoma_Font);
-	free(White_Tahoma_Font);
+	retVal += crayon_memory_free_sprite_array(&test, 0, 0);
+	retVal += crayon_memory_free_spritesheet(&Board);
+	retVal += crayon_memory_free_spritesheet(&Icons);
+	retVal += crayon_memory_free_spritesheet(&Windows);
+	retVal += crayon_memory_free_mono_font_sheet(&BIOS_font);
+	retVal += crayon_memory_free_prop_font_sheet(&Tahoma_font);
+	retVal += crayon_memory_free_palette(&White_Tahoma_P);
+	retVal += crayon_memory_free_palette(&cursor_red);
+	retVal += crayon_memory_free_palette(&cursor_yellow);
+	retVal += crayon_memory_free_palette(&cursor_green);
+	retVal += crayon_memory_free_palette(&cursor_blue);
 	snd_sfx_unload(Sound_Tick);
 	snd_sfx_unload(Sound_Death);
 	snd_sfx_unload(Sound_Death_Italian);

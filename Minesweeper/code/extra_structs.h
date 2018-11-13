@@ -54,7 +54,7 @@ typedef struct MinesweeperGrid{
 	uint8_t *frame_grid_key;	//Contains element id's for the frame grid that contains the
 								//texel coords for all 16 anim frames
 	uint16_t *frame_grid;
-	crayon_sprite_array_t grid;
+	crayon_sprite_array_t draw_grid;
 
 	uint8_t x;
 	uint8_t y;

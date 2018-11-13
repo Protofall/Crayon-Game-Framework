@@ -31,25 +31,25 @@ typedef struct dpal_header{
 extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, dtex_header_t *dtex_header, char *texture_path);
 
 //Loads a "crayon_spritesheet" spritesheet into memory
-extern uint8_t crayon_memory_load_spritesheet(struct crayon_spritesheet *ss, char *path);
+extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_t *cp, int8_t palette_id, char *path);
 
 //Loads a proportionally-spaced fontsheet into memory
-extern uint8_t crayon_memory_load_prop_font_sheet(struct crayon_font_prop *fp, char *path);
+extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palette_t *cp, int8_t palette_id, char *path);
 
 //Loads a mono-spaced fontsheet into memory
-extern uint8_t crayon_memory_load_mono_font_sheet(struct crayon_font_mono *fm, char *path);
+extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, int8_t palette_id, char *path);
 
 //If given a valid path and a crayon_palette object, it will populate the palette object with the correct data
 extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, char *path);
 
 //This will make a new palette struct thats a copy of another one.
-extern crayon_palette_t * crayon_memory_clone_palette(crayon_palette_t *original);
+extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id);
 
 //Set initial array sizes and options for your sprite_array
 extern void crayon_memory_set_sprite_array(crayon_sprite_array_t *sprite_array, uint8_t num_sprites,
 	uint8_t unique_frames, uint8_t multi_draw_z, uint8_t multi_frames, uint8_t multi_scales, uint8_t multi_rotations,
 	uint8_t multi_colours, uint8_t filter, uint8_t palette_num, struct crayon_spritesheet *ss,
-	struct crayon_animation *anim);
+	struct crayon_animation *anim, crayon_palette_t *palette);
 
 
 //------------------Modifying memory----------------//
@@ -65,13 +65,13 @@ extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1
 
 
 //Free up all memory from a spritesheet struct. if free_palette is true, it will also free the palette
-extern uint8_t crayon_memory_free_spritesheet(struct crayon_spritesheet *ss, uint8_t free_palette);
+extern uint8_t crayon_memory_free_spritesheet(struct crayon_spritesheet *ss);
 
 //Same as above, but for mono-spaced fontsheets
-extern uint8_t crayon_memory_free_prop_font_sheet(struct crayon_font_prop *fp, uint8_t free_palette);
+extern uint8_t crayon_memory_free_prop_font_sheet(struct crayon_font_prop *fp);
 
 //Same as above, but for proportionally-spaced fontsheets
-extern uint8_t crayon_memory_free_mono_font_sheet(struct crayon_font_mono *fm, uint8_t free_palette);
+extern uint8_t crayon_memory_free_mono_font_sheet(struct crayon_font_mono *fm);
 
 //Frees a palette
 extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp);
@@ -79,7 +79,7 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp);
 //Frees a sprite array
 	//free_ss is XXXX XXPS where P is delete the palette and S is delete the just spritesheet
 	//Can't delete just a palette by passing in (1 << 1), thats intentional
-extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array, uint8_t free_ss);
+extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array, uint8_t free_ss, uint8_t free_pal);
 
 
 //------------------Mounting romdisks------------------//

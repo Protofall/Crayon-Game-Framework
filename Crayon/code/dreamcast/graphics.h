@@ -43,21 +43,21 @@ extern uint8_t graphics_draw_sprites_OLD(const struct crayon_spritesheet *ss,
 
 //(Delete other multi sprite draw after and keep original as a learner version for noobies)
 //poly_list mode is for the tr/pt/op render list macro we want to use. Might move this param into the struct...
-extern uint8_t graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);	//UNFINISHED (No colour/rotation yet)
+extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);	//UNFINISHED (No colour/rotation yet)
 
 //The version with polygons (Use this if your spritesheet is bigger than 256 by 256)
-extern uint8_t graphics_draw_polys(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);	//UNIMPLEMENTED
+extern uint8_t crayon_graphics_draw_polys(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);	//UNIMPLEMENTED
 
 //------------------Drawing Fonts------------------//
 
 
 //Draw string using mono font (string must be null-terminated)
-extern uint8_t graphics_draw_text_mono(const struct crayon_font_mono *fm, float draw_x, float draw_y,
-	float draw_z, float scale_x, float scale_y,	uint8_t paletteNumber, char * string);
+extern uint8_t graphics_draw_text_mono(const crayon_font_mono_t *fm, uint8_t poly_list_mode, float draw_x,
+	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string);
 
 //Draw string using propertional font (string must be null-terminated)
-extern uint8_t graphics_draw_text_prop(const struct crayon_font_prop *fp, float draw_x, float draw_y,
-	float draw_z, float scale_x, float scale_y,	uint8_t paletteNumber, char * string);
+extern uint8_t graphics_draw_text_prop(const crayon_font_prop_t *fp, uint8_t poly_list_mode, float draw_x,
+	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string);
 
 
 #endif
