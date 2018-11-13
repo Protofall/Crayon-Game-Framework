@@ -743,6 +743,7 @@ int main(){
 		crayon_memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	#endif
 
+	//I like to put the font's paletets at the very back of the system (But really, its probably better standard to go first)
 	crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 63, "/Minesweeper/Fonts/BIOS_font.dtex");
 	crayon_memory_load_prop_font_sheet(&Tahoma_font, &Tahoma_P, 62, "/Minesweeper/Fonts/Tahoma_font.dtex");
 	crayon_memory_load_spritesheet(&Board, &Board_P, 0, "/Minesweeper/Board.dtex");
@@ -1272,21 +1273,19 @@ int main(){
 		pvr_scene_begin();
 
 		//Setup the main palette
-		graphics_setup_palette(&Board_P, Board.spritesheet_format, Board_P.palette_id);
-		// graphics_setup_palette(&Board_P, Board.spritesheet_format, test.palette->palette_id);	//This works too, but in reality we'd choose the first one
-		graphics_setup_palette(&Icons_P, Icons.spritesheet_format, Icons_P.palette_id);
+		graphics_setup_palette(&Board_P);
+		graphics_setup_palette(&Icons_P);
 		if(!MS_options.operating_system){	//Since it uses palettes and XP doesn't, we do this
-			graphics_setup_palette(&Windows_P, Windows.spritesheet_format, Windows_P.palette_id);	//Since Windows uses 8bpp, this doesn't overlap with "icons"
+			graphics_setup_palette(&Windows_P);	//Since Windows uses 8bpp, this doesn't overlap with "icons"
 		}
-		graphics_setup_palette(&cursor_red, Icons.spritesheet_format, cursor_red.palette_id);
-		graphics_setup_palette(&cursor_yellow, Icons.spritesheet_format, cursor_yellow.palette_id);
-		graphics_setup_palette(&cursor_green, Icons.spritesheet_format, cursor_green.palette_id);
-		graphics_setup_palette(&cursor_blue, Icons.spritesheet_format, cursor_blue.palette_id);
+		graphics_setup_palette(&cursor_red);
+		graphics_setup_palette(&cursor_yellow);
+		graphics_setup_palette(&cursor_green);
+		graphics_setup_palette(&cursor_blue);
 
-		//I like to put the fonts at the very back of the system (But really, its probably better standard to go first)
-		graphics_setup_palette(&White_Tahoma_P, Tahoma_font.texture_format, White_Tahoma_P.palette_id);	//Used in XP's clock and controller legend
-		graphics_setup_palette(&Tahoma_P, Tahoma_font.texture_format, Tahoma_P.palette_id);
-		graphics_setup_palette(&BIOS_P, BIOS_font.texture_format, BIOS_P.palette_id);
+		graphics_setup_palette(&White_Tahoma_P);	//Used in XP's clock and controller legend
+		graphics_setup_palette(&Tahoma_P);
+		graphics_setup_palette(&BIOS_P);
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 

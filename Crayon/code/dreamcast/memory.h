@@ -40,7 +40,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, int8_t palette_id, char *path);
 
 //If given a valid path and a crayon_palette object, it will populate the palette object with the correct data
-extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, char *path);
+extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, char *path, int8_t bpp);
 
 //This will make a new palette struct thats a copy of another one.
 extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id);

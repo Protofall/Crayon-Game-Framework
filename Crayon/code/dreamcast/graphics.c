@@ -1,23 +1,26 @@
 #include "graphics.h"
 
-//There are 4 palettes for 8BPP and 64 palettes for 4BPP. palette_number is the id
-extern int graphics_setup_palette(const struct crayon_palette *cp, uint8_t format, uint8_t palette_number){
+//There are 4 palettes for 8BPP and 64 palettes for 4BPP
+extern int graphics_setup_palette(const crayon_palette_t *cp){
+	if(cp->palette_id < 0 || cp->bpp < 0 || cp->bpp * cp->palette_id >= 1024){	//Invalid format/palette not properly set
+		return 1;
+	}
 	int entries;
-	if(format == 5){
+	if(cp->bpp == 4){
 		entries = 16;
 	}
-	else if(format == 6){
+	else if(cp->bpp == 8){
 		entries = 256;
 	}
-	else{
-		return 1;
+	else{	//When OpenGL port arrives, this might change if I allow more than 64 entries
+		return 2;
 	}
 
 	pvr_set_pal_format(PVR_PAL_ARGB8888);
 	uint16_t i; //Can't this be a uint8_t instead? 0 to 255 and max 256 entries per palette
 	//...but then again how would the loop be able to break? since it would overflow back to 0
 	for(i = 0; i < cp->colour_count; ++i){
-		pvr_set_pal_entry(i + entries * palette_number, cp->palette[i]);
+		pvr_set_pal_entry(i + entries * cp->palette_id, cp->palette[i]);
 	}
 	return 0;
 }

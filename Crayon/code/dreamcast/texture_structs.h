@@ -8,6 +8,7 @@
 typedef struct crayon_palette{
 	uint32_t *palette;		//Pointer to heap allocated palette (Its treated like an array of size "colour_count")
 	uint16_t colour_count;	//Number of colours in the palette
+	int8_t bpp;
 	int8_t palette_id;		//Used for graphics_setup_palette. If its -1 then its unset
 } crayon_palette_t;
 

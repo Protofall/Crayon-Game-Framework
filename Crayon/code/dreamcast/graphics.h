@@ -8,7 +8,7 @@
 #include <math.h>
 
 //Sets a palette for a spritesheet
-extern int graphics_setup_palette(const struct crayon_palette *cp, uint8_t format, uint8_t palette_number);
+extern int graphics_setup_palette(const crayon_palette_t *cp);
 
 //Give an animation struct, frame, coordinates and frame and it will populate the coordinates
 extern void graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x,
