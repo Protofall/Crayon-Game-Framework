@@ -138,13 +138,12 @@ uint8_t true_prob(double p){
 //Blanks out grid then fills with mines, but doesn't number them
 void clear_grid(MinesweeperGrid_t * grid){
 	grid->num_flags = 0;
-	uint16_t grid_size = grid->x * grid->y;
 
 	int i = 0;
 	uint16_t mines_left = grid->num_mines;
-	uint16_t tiles_left = grid_size;
+	uint16_t tiles_left = grid->draw_grid.num_sprites;
 
-	while(i < grid_size){	//Populate board
+	while(i < grid->draw_grid.num_sprites){	//Populate board
 		double prob = (double)mines_left / (double)tiles_left;	//Can I do better than using a division?
 		grid->logic_grid[i] = 9 * true_prob(prob);
 		if(grid->logic_grid[i]){
@@ -155,8 +154,8 @@ void clear_grid(MinesweeperGrid_t * grid){
 		i++;
 	}
 
-	for(i = 0; i < 2 * grid_size; i = i + 2){
-		graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + i, grid->frame_grid + i + 1, 0);	//All tiles are now blank
+	for(i = 0; i < grid->draw_grid.num_sprites; i++){
+		grid->draw_grid.frame_coords_keys[i] = 0;
 	}
 
 	grid->game_live = 0;
@@ -165,7 +164,7 @@ void clear_grid(MinesweeperGrid_t * grid){
 	grid->time_sec = 0;
 	grid->first_reveal = 0;
 
-	grid->non_mines_left = grid_size - grid->num_flags;
+	grid->non_mines_left = grid->draw_grid.num_sprites - grid->num_flags;
 
 	return;
 }
@@ -176,21 +175,27 @@ void reset_grid(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_
 	grid->x = x;
 	grid->y = y;
 	grid->num_mines = mine_count;
-	uint16_t grid_size = x * y;
 
 	if(grid->logic_grid != NULL){
 		free(grid->logic_grid);
 	}
-	if(grid->coord_grid != NULL){
-		free(grid->coord_grid);
-	}
-	if(grid->frame_grid != NULL){
-		free(grid->frame_grid);
-	}
 
-	grid->logic_grid = (uint8_t *) malloc(grid_size * sizeof(uint8_t));
-	grid->coord_grid = (uint16_t *) malloc(2 * grid_size * sizeof(uint16_t));
-	grid->frame_grid = (uint16_t *) malloc(2 * grid_size * sizeof(uint16_t));
+	//New
+	// if(grid->draw_grid.draw_pos != NULL){
+		// free(grid->draw_grid.draw_pos);
+	// }
+	// if(grid->draw_grid.frame_coords_keys != NULL){
+		// free(grid->draw_grid.frame_coords_keys);
+	// }
+
+	grid->draw_grid.num_sprites = x * y;
+	grid->logic_grid = (uint8_t *) malloc(grid->draw_grid.num_sprites * sizeof(uint8_t));
+
+	//New
+	// grid->draw_grid.draw_pos = (float *) malloc(2 * grid->draw_grid.num_sprites * sizeof(float));
+	// grid->draw_grid.frame_coords_keys = (uint8_t *) malloc(grid->draw_grid.num_sprites * sizeof(uint8_t));
+	// grid->draw_grid.draw_pos = (float *) malloc(2 * grid->draw_grid.num_sprites * sizeof(float));
+	// grid->draw_grid.frame_coords_keys = (uint8_t *) malloc(grid->draw_grid.num_sprites * sizeof(uint8_t));
 
 	//Calculate some start_x stuff. Default for expert is 80, 104
 	grid->start_x = 320 - (grid->x * 8);
@@ -204,8 +209,9 @@ void reset_grid(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_
 	for(j = 0; j < grid->y; j++){
 		for(i = 0; i < grid->x; i++){   //i is x, j is y
 			uint16_t ele = (j * grid->x * 2) + (2 * i);
-			grid->coord_grid[ele] = grid->start_x + (i * 16);
-			grid->coord_grid[ele + 1] = grid->start_y + (j * 16);
+
+			grid->draw_grid.draw_pos[ele] = (float)(grid->start_x + (i * 16));
+			grid->draw_grid.draw_pos[ele + 1] = (float)(grid->start_y + (j * 16));
 		}
 	}
 
@@ -258,10 +264,10 @@ void reveal_map(MinesweeperGrid_t * grid){
 	if(grid->over_mode == 2){
 		for(i = 0; i < grid->x * grid->y; i++){
 			if(grid->logic_grid[i] == 9 || grid->logic_grid[i] == 41){	//Untouched or question marked
-				graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + (2 * i), grid->frame_grid + (2 * i) + 1, 3);
+				grid->draw_grid.frame_coords_keys[i] = 3;
 			}
 			if(grid->logic_grid[i] != 73 && grid->logic_grid[i] & 1<<6){	//Untouched or question marked
-				graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + (2 * i), grid->frame_grid + (2 * i) + 1, 5);
+				grid->draw_grid.frame_coords_keys[i] = 5;
 			}
 		}
 	}
@@ -269,7 +275,7 @@ void reveal_map(MinesweeperGrid_t * grid){
 		grid->num_flags = 0;
 		for(i = 0; i < grid->x * grid->y; i++){
 			if(grid->logic_grid[i] % (1 << 5) == 9){
-				graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + (2 * i), grid->frame_grid + (2 * i) + 1, 1);
+				grid->draw_grid.frame_coords_keys[i] = 1;
 			}
 		}
 	}
@@ -283,18 +289,17 @@ void discover_tile(MinesweeperGrid_t * grid, int ele_x, int ele_y){
 		if(grid->logic_grid[ele_logic] & 1 << 7){	//Already discovered
 			return;
 		}
-		int ele = ele_logic * 2;
 		if(grid->logic_grid[ele_logic] & 1 << 5){	//If questioned, remove the question mark and set it to a normal tile
 			grid->logic_grid[ele_logic] &= ~(1 << 5);
-			graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + ele, grid->frame_grid + ele + 1, 0);
+			grid->draw_grid.frame_coords_keys[ele_logic] = 0;
 		}
 		if(grid->logic_grid[ele_logic] == 9){	//If mine
-			graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + ele, grid->frame_grid + ele + 1, 4);
+			grid->draw_grid.frame_coords_keys[ele_logic] = 4;
 			grid->game_live = 0;
 			grid->over_mode = 1;
 		}
 		else{
-			graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + ele, grid->frame_grid + ele + 1, 7 + grid->logic_grid[ele_logic]);
+			grid->draw_grid.frame_coords_keys[ele_logic] = 7 + grid->logic_grid[ele_logic];
 			grid->non_mines_left--;
 		}
 		grid->logic_grid[ele_logic] |= (1 << 7);
@@ -370,7 +375,6 @@ void x_press(MinesweeperGrid_t * grid, int ele_x, int ele_y){
 
 //If we use a flag that decrements the flag count, leaving flag will increment it
 void b_press(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint16_t ele_logic){
-	int ele = ele_logic * 2;
 	if(!(grid->logic_grid[ele_logic] & (1 << 7))){	//Not discovered
 		uint8_t status = 0;	//0 = normal, 1 = flag, 2 = question icons
 		if(grid->logic_grid[ele_logic] & (1 << 6)){	//If flagged
@@ -392,7 +396,7 @@ void b_press(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint16_t 
 				grid->num_flags--;
 			}
 		}
-		graphics_frame_coordinates(&grid->tile_anim, grid->frame_grid + ele, grid->frame_grid + ele + 1, status);
+		grid->draw_grid.frame_coords_keys[ele_logic] = status;
 	}
 	return;
 }
@@ -528,31 +532,31 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 	if(options->focus == 2){
 		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){	//When we get a new score, we don't want to change focus easily
 			if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 149)
-					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 140){	//Incrementer X
-				if(options->disp_x < 38){
-					options->disp_x++;
-					sprintf(options->x_buffer, "%d", options->disp_x);
-				}
-			}
-			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 159)
-					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 150){	//Decrementer X
-				if(options->disp_x > 9){
-					options->disp_x--;
-					sprintf(options->x_buffer, "%d", options->disp_x);
-				}
-			}
-			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 189)
-					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 180){	//Incrementer Y
+					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 140){	//Incrementer Y
 				if(options->disp_y < 21){
 					options->disp_y++;
 					sprintf(options->y_buffer, "%d", options->disp_y);
 				}
 			}
-			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 199)
-					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 190){	//Decrementer Y
+			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 159)
+					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 150){	//Decrementer Y
 				if(options->disp_y > 9){
 					options->disp_y--;
 					sprintf(options->y_buffer, "%d", options->disp_y);
+				}
+			}
+			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 189)
+					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 180){	//Incrementer X
+				if(options->disp_x < 38){
+					options->disp_x++;
+					sprintf(options->x_buffer, "%d", options->disp_x);
+				}
+			}
+			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 199)
+					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 190){	//Decrementer X
+				if(options->disp_x > 9){
+					options->disp_x--;
+					sprintf(options->x_buffer, "%d", options->disp_x);
 				}
 			}
 			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 229)
@@ -762,7 +766,7 @@ int main(){
 		#else
 			crayon_memory_mount_romdisk("/cd/XP.img", "/XP");
 		#endif
-		crayon_memory_load_spritesheet(&Windows, NULL, -1, "/XP/Windows.dtex");	//XP doesn't use paletted textures so we avoid it
+		crayon_memory_load_spritesheet(&Windows, NULL, -1, "/XP/Windows.dtex");	//XP doesn't use paletted textures so we don't pass in a palette
 		fs_romdisk_unmount("/XP");
 	}
 	else{
@@ -783,63 +787,44 @@ int main(){
 	setup_bg_untextured_poly(&Bg_polys, MS_options.operating_system, MS_options.sd_present);
 	setup_option_untextured_poly(&Option_polys, MS_options.operating_system);
 
+	//Setting size to 1 since reset_grid will reset it soon anyways
+	//Also due to lang thing we don't know the spritesheet, animation or palette
+	// crayon_memory_set_sprite_array(&MS_grid.draw_grid, 1, 16, 0, 1, 0, 0, 0, 0, NULL, NULL, NULL);
+	crayon_memory_set_sprite_array(&MS_grid.draw_grid, 38 * 21, 16, 0, 1, 0, 0, 0, 0, NULL, NULL, NULL);	//Technically there's no need to make change the size after this
+
 	int iter;
 	int jiter;
 
 	//This is just allow me to easily change between Minesweeper and Prato fiorito
 	uint8_t tile_id = 2;
 	if(!MS_options.language){
-		MS_grid.tile_ss = Board;
-		MS_grid.draw_grid.palette = &Board_P;
+		MS_grid.draw_grid.ss = &Board;
+		MS_grid.draw_grid.anim = &Board.spritesheet_animation_array[tile_id];
+		MS_grid.draw_grid.pal = &Board_P;
 	}
 	else{
-		MS_grid.tile_ss = Windows;
-		for(iter = 0; iter < MS_grid.tile_ss.spritesheet_animation_count; iter++){
-			if(!strcmp(MS_grid.tile_ss.spritesheet_animation_array[iter].animation_name, "italianTiles")){
+		for(iter = 0; iter < Windows.spritesheet_animation_count; iter++){
+			if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "italianTiles")){
 				tile_id = iter;
 				break;
 			}
 		}
-		MS_grid.draw_grid.palette = &Windows_P;
-	}
-	MS_grid.tile_anim = MS_grid.tile_ss.spritesheet_animation_array[tile_id];
 
-	//New draw struct test
-	crayon_sprite_array_t test;
-	crayon_memory_set_sprite_array(&test, 17, MS_grid.tile_anim.animation_frames, 0, 1, 0, 0, 0, 0, !MS_options.operating_system && MS_options.language,
-		&MS_grid.tile_ss, &MS_grid.tile_anim, MS_grid.draw_grid.palette);
-
-	//A diagonal line of stuff
-	for(iter = 0; iter < test.num_sprites; iter++){
-		test.draw_pos[2 * iter] = iter * 16;
-		test.draw_pos[(2 * iter) + 1] = iter * 16;
+		MS_grid.draw_grid.ss = &Windows;
+		MS_grid.draw_grid.anim = &Windows.spritesheet_animation_array[tile_id];
+		MS_grid.draw_grid.pal = &Windows_P;
 	}
 
-	test.frame_coords_keys[0] = 5;
-	test.frame_coords_keys[1] = 0;
-	test.frame_coords_keys[2] = 1;
-	test.frame_coords_keys[3] = 3;
-	test.frame_coords_keys[4] = 7;
-	test.frame_coords_keys[5] = 6;
-	test.frame_coords_keys[6] = 2;
-	test.frame_coords_keys[7] = 4;
-	test.frame_coords_keys[8] = 14;
-	test.frame_coords_keys[9] = 11;
-	test.frame_coords_keys[10] = 8;
-	test.frame_coords_keys[11] = 13;
-	test.frame_coords_keys[12] = 15;
-	test.frame_coords_keys[13] = 12;
-	test.frame_coords_keys[14] = 9;
-	test.frame_coords_keys[15] = 10;
-	test.frame_coords_keys[16] = 2;
-
-	for(iter = 0; iter < test.unique_frames; iter++){
-		graphics_frame_coordinates(test.anim, test.frame_coords_map + (2 * iter), test.frame_coords_map + (2 * iter) + 1, iter);
+	//Setting defaults (These won't ever change again)
+	MS_grid.draw_grid.draw_z[0] = 17;
+	MS_grid.draw_grid.scales[0] = 1;
+	MS_grid.draw_grid.scales[1] = 1;
+	MS_grid.draw_grid.rotations[0] = 0;
+	MS_grid.draw_grid.colours[0] = 0;
+	for(iter = 0; iter < MS_grid.draw_grid.unique_frames; iter++){
+		graphics_frame_coordinates(MS_grid.draw_grid.anim, MS_grid.draw_grid.frame_coords_map + (2 * iter),
+			MS_grid.draw_grid.frame_coords_map + (2 * iter) + 1, iter);
 	}
-
-	test.scales[0] = 1;
-	test.scales[1] = 1;
-	test.draw_z[0] = 80;
 
 	//Get the info for num_changer
 	uint8_t num_changer_id = 4;
@@ -888,12 +873,8 @@ int main(){
 	coord_checker[3] = 184;
 
 	MS_grid.logic_grid = NULL;
-	MS_grid.coord_grid = NULL;
-	MS_grid.frame_grid = NULL;
 
 	reset_grid(&MS_grid, &MS_options, 30, 20, 99);
-
-	uint16_t grid_size = MS_grid.x * MS_grid.start_y;
 
 	//The face frame coords
 	uint16_t face_frame_x;
@@ -944,6 +925,9 @@ int main(){
 	crayon_memory_clone_palette(&Tahoma_P, &White_Tahoma_P, 61);
 	crayon_memory_swap_colour(&White_Tahoma_P, 0xFF000000, 0xFFFFFFFF, 0);	//Swapps black for white
 
+	// error_freeze("Test");	//Reaches here
+
+
 	//The cursor colours
 	crayon_memory_clone_palette(&Icons_P, &cursor_red, 2);
 	crayon_memory_clone_palette(&Icons_P, &cursor_yellow, 3);
@@ -953,6 +937,9 @@ int main(){
 	crayon_memory_swap_colour(&cursor_yellow, 0xFFFFFFFF, 0xFFFFFF00, 0);
 	crayon_memory_swap_colour(&cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
 	crayon_memory_swap_colour(&cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
+
+	// error_freeze("Test");	//Doesn't reach here
+
 
 	#if CRAYON_DEBUG == 1
 	//Stuff for debugging/performance testing
@@ -1244,8 +1231,6 @@ int main(){
 			MS_grid.time_sec = temp_sec;
 		}
 
-		grid_size = MS_grid.x * MS_grid.y;
-
 		time(&os_clock);	//I think this is how I populate it with the current time
 		readable_time = localtime(&os_clock);
 
@@ -1288,7 +1273,7 @@ int main(){
 		graphics_setup_palette(&BIOS_P);
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
-
+	// if(0){
 		//Draw windows graphics using our MinesweeperOpSys struct
 		for(iter = 0; iter < os.sprite_count; iter++){
 			if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "aboutLogo") && MS_options.focus != 4){	//We don't want to draw that unless we're on the about page
@@ -1393,8 +1378,8 @@ int main(){
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 383, 311, 31, 1, 1, 62, "Expert\0");
 
 			//Draw the numbers for x, y and num_mines displays
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 399, 145, 31, 1, 1, 62, MS_options.x_buffer);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 399, 185, 31, 1, 1, 62, MS_options.y_buffer);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 399, 145, 31, 1, 1, 62, MS_options.y_buffer);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 399, 185, 31, 1, 1, 62, MS_options.x_buffer);
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 399, 225, 31, 1, 1, 62, MS_options.m_buffer);
 
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 350, 145, 31, 1, 1, 62, "Height:\0");
@@ -1448,12 +1433,6 @@ int main(){
 		//Draw the reset button face
 		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
 
-		//Draw the grid
-		if(MS_options.focus <= 1){
-			graphics_draw_sprites_OLD(&MS_grid.tile_ss, &MS_grid.tile_anim, MS_grid.coord_grid, MS_grid.frame_grid, 2 * grid_size, grid_size, 17, 1, 1,
-				!MS_options.operating_system && MS_options.language);
-		}
-
 		//Draw the indented tiles ontop of the grid and the cursors themselves
 		uint8_t menus_selected = 0;
 		for(iter = 0; iter < 4; iter++){
@@ -1478,10 +1457,10 @@ int main(){
 					indented_neighbours[0] = top_left_x + MS_grid.start_x;
 					indented_neighbours[1] = top_left_y + MS_grid.start_y;
 					if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + MS_grid.x * press_data[(3 * iter) + 2]] & (1 << 5)){	//If its question marked
-						graphics_frame_coordinates(&MS_grid.tile_anim, indented_frames, indented_frames + 1, 6);
+						graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames, indented_frames + 1, 6);
 					}
 					else{
-						graphics_frame_coordinates(&MS_grid.tile_anim, indented_frames, indented_frames + 1, 7);
+						graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames, indented_frames + 1, 7);
 					}
 					liter = 1;
 				}
@@ -1511,15 +1490,15 @@ int main(){
 						indented_neighbours[2 * liter] = top_left_x + (16 * x_variant) + MS_grid.start_x;
 						indented_neighbours[(2 * liter) + 1] = top_left_y + (16 * y_variant) + MS_grid.start_y;
 						if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * MS_grid.x)] & (1 << 5)){	//Question mark
-							graphics_frame_coordinates(&MS_grid.tile_anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
+							graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
 						}
 						else{
-							graphics_frame_coordinates(&MS_grid.tile_anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);	//Blank
+							graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);	//Blank
 						}
 						liter++;
 					}
 				}
-				graphics_draw_sprites_OLD(&MS_grid.tile_ss, &MS_grid.tile_anim, indented_neighbours, indented_frames, 2 * liter, liter, 18, 1, 1,
+				graphics_draw_sprites_OLD(MS_grid.draw_grid.ss, MS_grid.draw_grid.anim, indented_neighbours, indented_frames, 2 * liter, liter, 18, 1, 1,
 					!MS_options.operating_system && MS_options.language);
 			}
 		}
@@ -1537,14 +1516,22 @@ int main(){
 		if(menus_selected & (1 << 3)){
 			graphics_draw_untextured_poly(145, os.variant_pos[1] - 3, 19, 36, 16, 0x40FFFFFF, 0);
 		}
-
+	// }
 		pvr_list_finish();
+
+		// pvr_list_begin(PVR_LIST_PT_POLY);
+			//Move alot of the TR stuff here or into the OP list
+		// pvr_list_finish();
 
 		//None of these need to be transparent, by using the opaque list we are making the program more efficient
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-		// crayon_graphics_draw_sprites(&test, PVR_LIST_OP_POLY);	//Was used for debugging
+		//Draw the grid
+		if(MS_options.focus <= 1){
+			crayon_graphics_draw_sprites(&MS_grid.draw_grid, PVR_LIST_OP_POLY);
+		}
 
+	// if(0){
 		//Draw the grid's boarder
 		if(MS_options.focus <= 1){
 			custom_poly_boarder(3, MS_grid.start_x, MS_grid.start_y, 16, MS_grid.x * 16, MS_grid.y * 16, 4286611584u, 4294967295u);
@@ -1576,7 +1563,7 @@ int main(){
 			custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000
 			custom_poly_2000_boarder(0, 0, 1, 640, 452);	//The Windows 2000 window boarder
 		}
-
+	// }
 		pvr_list_finish();
 
 		pvr_scene_finish();
@@ -1585,7 +1572,8 @@ int main(){
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
 	//I'm probs forgetting a few things
 	int retVal = 0;
-	retVal += crayon_memory_free_sprite_array(&test, 0, 0);
+	// retVal += crayon_memory_free_sprite_array(&test, 0, 0);
+	retVal += crayon_memory_free_sprite_array(&MS_grid.draw_grid, 0, 0);
 	retVal += crayon_memory_free_spritesheet(&Board);
 	retVal += crayon_memory_free_spritesheet(&Icons);
 	retVal += crayon_memory_free_spritesheet(&Windows);

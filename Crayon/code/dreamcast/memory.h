@@ -40,16 +40,15 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, int8_t palette_id, char *path);
 
 //If given a valid path and a crayon_palette object, it will populate the palette object with the correct data
-extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, char *path, int8_t bpp);
+extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, char *path);
 
 //This will make a new palette struct thats a copy of another one.
 extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id);
 
 //Set initial array sizes and options for your sprite_array
-extern void crayon_memory_set_sprite_array(crayon_sprite_array_t *sprite_array, uint8_t num_sprites,
+extern void crayon_memory_set_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t num_sprites,
 	uint8_t unique_frames, uint8_t multi_draw_z, uint8_t multi_frames, uint8_t multi_scales, uint8_t multi_rotations,
-	uint8_t multi_colours, uint8_t filter, uint8_t palette_num, struct crayon_spritesheet *ss,
-	struct crayon_animation *anim, crayon_palette_t *palette);
+	uint8_t multi_colours, uint8_t filter, crayon_spritesheet_t *ss, crayon_animation_t *anim, crayon_palette_t *palette);
 
 
 //------------------Modifying memory----------------//

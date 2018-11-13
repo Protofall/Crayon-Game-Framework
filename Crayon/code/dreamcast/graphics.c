@@ -290,12 +290,12 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 
 	pvr_sprite_cxt_t context;
 	if(sprite_array->ss->spritesheet_format == 6){  //PAL8BPP format
-	pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(sprite_array->palette_num),
+	pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(sprite_array->pal->palette_id),
 		sprite_array->ss->spritesheet_dims, sprite_array->ss->spritesheet_dims,
 		sprite_array->ss->spritesheet_texture, sprite_array->filter);
 	}
 	else if(sprite_array->ss->spritesheet_format == 5){ //PAL4BPP format
-	pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(sprite_array->palette_num),
+	pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(sprite_array->pal->palette_id),
 		sprite_array->ss->spritesheet_dims, sprite_array->ss->spritesheet_dims,
 		sprite_array->ss->spritesheet_texture, sprite_array->filter);
 	}

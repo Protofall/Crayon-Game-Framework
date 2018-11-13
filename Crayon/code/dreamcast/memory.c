@@ -92,7 +92,7 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 		palette_path[path_length + 3] = 'l';
 		palette_path[path_length + 4] = '\0';
 		cp->palette = NULL;
-		int resultPal = crayon_memory_load_palette(cp, palette_path, (ss->spritesheet_format - 4) * 4);
+		int resultPal = crayon_memory_load_palette(cp, (ss->spritesheet_format - 4) * 4, palette_path);
 			//The function will modify the palette and colour count. Also it sends the BPP through
 		free(palette_path);
 		cp->palette_id = palette_id;
@@ -223,7 +223,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 		palette_path[path_length + 3] = 'l';
 		palette_path[path_length + 4] = '\0';
 		cp->palette = NULL;
-		int resultPal = crayon_memory_load_palette(cp, palette_path, (fp->texture_format - 4) * 4);
+		int resultPal = crayon_memory_load_palette(cp, (fp->texture_format - 4) * 4, palette_path);
 			//The function will modify the palette and colour count. Also it sends the BPP through
 		free(palette_path);
 		cp->palette_id = palette_id;
@@ -388,7 +388,7 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 		palette_path[path_length + 3] = 'l';
 		palette_path[path_length + 4] = '\0';
 		cp->palette = NULL;
-		int resultPal = crayon_memory_load_palette(cp, palette_path, (fm->texture_format - 4) * 4);
+		int resultPal = crayon_memory_load_palette(cp, (fm->texture_format - 4) * 4, palette_path);
 			//The function will modify the palette and colour count. Also it sends the BPP through
 		free(palette_path);
 		cp->palette_id = palette_id;
@@ -445,7 +445,7 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	return result;
 }
 
-extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, char *path, int8_t bpp){
+extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, char *path){
 	uint8_t result = 0;
 	#define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
 	
@@ -490,11 +490,11 @@ extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palet
 	return;
 }
 
-//lol 13 params
-extern void crayon_memory_set_sprite_array(crayon_sprite_array_t *sprite_array, uint8_t num_sprites,
+//lol 12 params
+extern void crayon_memory_set_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t num_sprites,
 	uint8_t unique_frames, uint8_t multi_draw_z, uint8_t multi_frames, uint8_t multi_scales,
-	uint8_t multi_rotations, uint8_t multi_colours, uint8_t filter, uint8_t palette_num,
-	crayon_spritesheet_t *ss, crayon_animation_t *anim, crayon_palette_t *palette){
+	uint8_t multi_rotations, uint8_t multi_colours, uint8_t filter, crayon_spritesheet_t *ss,
+	crayon_animation_t *anim, crayon_palette_t *palette){
 	
 	sprite_array->ss = ss;
 	sprite_array->anim = anim;
@@ -503,7 +503,6 @@ extern void crayon_memory_set_sprite_array(crayon_sprite_array_t *sprite_array, 
 	sprite_array->options = 0 + (multi_colours << 4) + (multi_rotations << 3) + (multi_scales << 2) +
 		(multi_frames << 1) + (multi_draw_z << 0);
 	sprite_array->filter = filter;
-	sprite_array->palette_num = palette_num;
 
 	sprite_array->draw_pos = (float *) malloc(num_sprites * 2 * sizeof(float));
 	sprite_array->draw_z = (uint8_t *) malloc((multi_draw_z ? num_sprites: 1) * sizeof(uint8_t));
@@ -513,7 +512,7 @@ extern void crayon_memory_set_sprite_array(crayon_sprite_array_t *sprite_array, 
 	sprite_array->rotations = (float *) malloc((multi_rotations ? num_sprites: 1) * sizeof(float));
 	sprite_array->colours = (uint32_t *) malloc((multi_colours ? num_sprites: 1) * sizeof(uint32_t));
 
-	sprite_array->palette = palette;
+	sprite_array->pal = palette;
 
 	return;
 }

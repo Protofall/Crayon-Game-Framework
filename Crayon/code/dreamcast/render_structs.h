@@ -36,14 +36,10 @@ typedef struct crayon_sprite_array{
 
 	uint8_t filter;				//0 = none, 2 = Bilinear, 4 = Trilinear1, 6 = Trilinear2
 
-	uint8_t palette_num;		//Also ask if palettes can start at not multiples of 16 or 256
+
 	crayon_spritesheet_t *ss;
 	crayon_animation_t *anim;
-
-	crayon_palette_t *palette;	//CURRENTLY UNUSED, REPLACE palette_num WITH THIS
-									//Actually is this nessisary since its in the ss struct?
-									//Yes because if we have multiple versions of 1 sprite with
-									//multiple palettes then we need a new ss struct for each one
+	crayon_palette_t *pal;	//Also ask if palettes can start at not multiples of 16 or 256
 } crayon_sprite_array_t;
 
 //Used for rendering many untextured polys
