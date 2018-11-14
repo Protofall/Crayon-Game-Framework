@@ -671,6 +671,28 @@ uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os){
 	return menus_selected;
 }
 
+pvr_init_params_t pvr_params = {
+		// Enable opaque, translucent and punch through polygons with size 16
+			//To better explain, the opb_sizes or Object Pointer Buffer sizes
+			//Work like this: Set to zero to disable. Otherwise the higher the
+			//number the more space used (And more efficient under higher loads)
+			//The lower the number, the less space used and less efficient under
+			//high loads. You can choose 0, 8, 16 or 32
+		{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16 },
+
+		// Vertex buffer size 512K
+		512 * 1024,
+
+		// No DMA
+		0,
+
+		// No FSAA
+		0,
+
+		// Translucent Autosort enabled
+		0
+};
+
 int main(){
 	MinesweeperGrid_t MS_grid;	//Contains a bunch of variables related to the grid
 	MinesweeperOptions_t MS_options;	//Contains a bunch of vars related to options
@@ -711,7 +733,7 @@ int main(){
 		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
 	}
 
-	pvr_init_defaults();
+	pvr_init(&pvr_params);
 
 	srand(time(0));	//Set the seed for rand()
 	time_t os_clock;	//Stores the current time
@@ -729,6 +751,7 @@ int main(){
 
 	crayon_spritesheet_t Board, Icons, Windows;
 	crayon_palette_t Board_P, Icons_P, Windows_P, BIOS_P, Tahoma_P;
+	crayon_sprite_array_t indented_tiles;	//When doing an A or X press. Currently unused
 	crayon_font_mono_t BIOS_font;
 	crayon_font_prop_t Tahoma_font;
 	Board.spritesheet_texture = NULL;
@@ -1272,298 +1295,284 @@ int main(){
 		graphics_setup_palette(&Tahoma_P);
 		graphics_setup_palette(&BIOS_P);
 
+		//Transfer more stuff from this list into either the PT or OP lists
 		pvr_list_begin(PVR_LIST_TR_POLY);
-	// if(0){
-		//Draw windows graphics using our MinesweeperOpSys struct
-		for(iter = 0; iter < os.sprite_count; iter++){
-			if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "aboutLogo") && MS_options.focus != 4){	//We don't want to draw that unless we're on the about page
-				continue;
-			}
-			graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[os.ids[iter]],
-				os.coords_pos[3 * iter], os.coords_pos[(3 * iter) + 1], os.coords_pos[(3 * iter) + 2],
-				os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 1);
-				//We choose palette 1 because that's 2000's palette and XP uses RGB565
-		}
-		graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 9, os.variant_pos[1], 20, 1, 1, 62, "Game\0");
-		graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 48, os.variant_pos[1], 20, 1, 1, 62, "Options\0");
-		graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 97, os.variant_pos[1], 20, 1, 1, 62, "Controls\0");
-		graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 149, os.variant_pos[1], 20, 1, 1, 62, "About\0");
 
-		//Updating the time in the bottom right
-		//CONSIDER ONLY UPDATING IF TIME IS DIFFERENT
-		//Will come back to this at a later date to optimise it
-		char time_buffer[9];
-		if(readable_time->tm_hour < 13){
-			if(readable_time->tm_hour == 0){	//When its midnight, display 12:XX AM instead of 00:XX AM
-				readable_time->tm_hour = 12;
-			}
-			sprintf(time_buffer, "%02d:%02d AM", readable_time->tm_hour, readable_time->tm_min);
-		}
-		else{
-			sprintf(time_buffer, "%02d:%02d PM", readable_time->tm_hour - 12, readable_time->tm_min);
-		}
-
-		//The X starting pos varies based on the hour for XP and hour, AM/PM for 2000
-		if(MS_options.operating_system){
-			if(readable_time->tm_hour % 12 < 10){
-				os.variant_pos[2] = 583;
-			}
-			else{
-				os.variant_pos[2] = 586;
-			}
-		}
-		else{
-			uint16_t clock_pos;
-			if(readable_time->tm_hour % 12 < 10){
-				clock_pos = 581;
-			}
-			else{
-				clock_pos = 585;
-			}
-			if(readable_time->tm_hour < 13){
-				clock_pos--;
-			}
-			os.variant_pos[2] = clock_pos;
-		}
-
-		graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, os.variant_pos[2], os.variant_pos[3], 20, 1, 1, os.clock_palette, time_buffer);	//In XP is uses another palette (White text version)
-
-		//DEBUG, REMOVE LATER
-		// char focus_buffer[9];
-		// sprintf(focus_buffer, "Focus: %d", focus);
-		// graphics_draw_text_prop(&Tahoma_font, 580, os.variant_pos[1], 20, 1, 1, 62, focus_buffer);
-		#if CRAYON_DEBUG == 1
-			char fps_buffer[100];
-			sprintf(fps_buffer, "FPS ave: %d, min: %d, max: %d", fps_ave, fps_min, fps_max);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 235, 435, 20, 1, 1, 62, fps_buffer);
-		#endif
-
-		//Some of the options stuff is in opaque list
-		if(MS_options.focus == 2){
-
-			//A draw list for all 3 clicker thingys (Maybe enlarge them?) (MOVE TO OPAQUE LATER)
-			graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[num_changer_id], coord_num_changer,
-				frame_num_changer, 2, 3, 30, 1, 1, 1);
-
-			//Draw all 5 buttons
-			graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[button_id], coord_button,
-				frame_button, 2, 5, 30, 1, 1, 1);
-
-			//Draw all 2 check boxes
-			graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[checker_id], coord_checker,
-				frame_checker, 2, 2, 30, 1, 1, 1);
-
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 189, 145, 31, 1, 1, 62, "Sound\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 189, 185, 31, 1, 1, 62, "Marks (?)\0");
-
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 282, 257, 31, 1, 1, 62, "Save to VMU\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 385, 257, 31, 1, 1, 62, "Apply\0");
-
-			//Without these printf's lxdream crashes when trying to print the best times text...
-				//I've tested this on Redream, Redream + BIOS, DEMUL and real hardware and it works fine there. This is an lxdream bug
-			// printf("Garbage\n");
-			// printf("Garbage\n");
-			// printf("Garbage\n");
-			// printf("Garbage\n");
-			// printf("Garbage\n");
-			// printf("Garbage\n");
-			// printf("Garbage\n");
-
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 190, 280, 31, 1, 1, 62, "Best Times...\n(NOT IMPLEMENTED YET)\0");
-			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 189, 280, 31, 1, 1, 62, "Best Times...\0");
-
-			//Re-position these later
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 204, 311, 31, 1, 1, 62, "Beginner\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 284, 311, 31, 1, 1, 62, "Intemediate\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 383, 311, 31, 1, 1, 62, "Expert\0");
-
-			//Draw the numbers for x, y and num_mines displays
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 399, 145, 31, 1, 1, 62, MS_options.y_buffer);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 399, 185, 31, 1, 1, 62, MS_options.x_buffer);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 399, 225, 31, 1, 1, 62, MS_options.m_buffer);
-
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 350, 145, 31, 1, 1, 62, "Height:\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 350, 185, 31, 1, 1, 62, "Width:\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 350, 225, 31, 1, 1, 62, "Mines:\0");
-
-			/*
-
-
-			Options page will contain these:
-			(DONE) - X dim toggle (Display box with Up/Down buttons)
-			(DONE) - Y dim toggle
-			(DONE) - Num mines togle
-			(DONE) - Beginner, Intermediate, Expert shortcuts (This changes the X, Y and Num_mines toggles)
-			(DONE) - An "Apply" button
-
-			(KINDA DONE) - Sound checkbox
-			(KINDA DONE)- Question checkbox
-			- Italian checkbox? For debugging, maybe
-
-			*/
-
-			//Display high scores here
-		}
-		else if(MS_options.focus == 4){
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version \"Pre-reveal\" (Build 3011: Service Pack 5)\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 160 + 60, 25, 1, 1, 62, "used texconv textures and powered by my Crayon library. I don't own\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 165 + 72, 25, 1, 1, 62, "the rights to Minesweeper nor do I claim to so don't sue me, k?\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 185 + 84, 25, 1, 1, 62, "Katana logo made by Airofoil\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 205 + 96, 25, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 210 + 108, 25, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 140, 215 + 120, 25, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
-		}
-
-		//Draw the flag count and timer
-		digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.num_flags, 20, 65, 17);
-		digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.time_sec, 581, 65, 17);
-
-		//Draw the sd icon
-		if(MS_options.sd_present){
-			graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[2], os.variant_pos[4], os.variant_pos[5], 21, 1, 1, sd_x, sd_y, 1);
-		}
-
-		//Draw the region icon
-		graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[1], os.variant_pos[6], os.variant_pos[7], 21, 1, 1, region_icon_x, region_icon_y, 1);
-
-		//Draw the reset button face
-		graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
-
-		//Draw the indented tiles ontop of the grid and the cursors themselves
-		uint8_t menus_selected = 0;
-		for(iter = 0; iter < 4; iter++){
-			if(player_active & (1 << iter)){
-				//Passing coords as ints because otherwise we can get case where each pixel contains more than 1 texel
-				//ADD A DRAW FOR THE SHADOW
-				uint8_t cursor_palette = 2 + iter;
-				if(player_active == (1 << 0) || player_active == (1 << 1) || player_active == (1 << 2) || player_active == (1 << 3)){
-					cursor_palette = 1;
+			//Draw windows graphics using our MinesweeperOpSys struct
+			for(iter = 0; iter < os.sprite_count; iter++){
+				if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "aboutLogo") && MS_options.focus != 4){	//We don't want to draw that unless we're on the about page
+					continue;
 				}
-				graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[0], (int) cursor_position[2 * iter],
-					(int) cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, cursor_palette);
-
-				//Add code for checking if cursor is hovering over a button
-				menus_selected |= button_hover(cursor_position[(2 * iter)], cursor_position[(2 * iter) + 1], &os);
+				graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[os.ids[iter]],
+					os.coords_pos[3 * iter], os.coords_pos[(3 * iter) + 1], os.coords_pos[(3 * iter) + 2],
+					os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 1);
+					//We choose palette 1 because that's 2000's palette and XP uses RGB565
 			}
-			if(press_data[3 * iter]){
-				uint16_t top_left_x = press_data[(3 * iter) + 1] * 16;
-				uint16_t top_left_y = press_data[(3 * iter) + 2] * 16;
-				uint8_t liter = 0;
-				if(!(MS_grid.logic_grid[press_data[(3 * iter) + 1] + MS_grid.x * press_data[(3 * iter) + 2]] & ((1 << 7) + (1 << 6)))){	//If its not revealed/flagged
-					indented_neighbours[0] = top_left_x + MS_grid.start_x;
-					indented_neighbours[1] = top_left_y + MS_grid.start_y;
-					if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + MS_grid.x * press_data[(3 * iter) + 2]] & (1 << 5)){	//If its question marked
-						graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames, indented_frames + 1, 6);
+
+			//Move these items into draw_sprites lists and make them opaque
+			if(MS_options.focus == 2){
+				//A draw list for all 3 clicker thingys (Maybe enlarge them?)
+				graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[num_changer_id], coord_num_changer,
+					frame_num_changer, 2, 3, 30, 1, 1, 1);
+
+				//Draw all 5 buttons
+				graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[button_id], coord_button,
+					frame_button, 2, 5, 30, 1, 1, 1);
+
+				//Draw all 2 check boxes
+				graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[checker_id], coord_checker,
+					frame_checker, 2, 2, 30, 1, 1, 1);
+			}
+
+			//Draw the flag count and timer (Modify function to draw them as opaque or just redo this part)
+			digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.num_flags, 20, 65, 17);
+			digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.time_sec, 581, 65, 17);
+
+			//Draw the sd icon
+			if(MS_options.sd_present){
+				graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[2], os.variant_pos[4], os.variant_pos[5], 21, 1, 1, sd_x, sd_y, 1);
+			}
+
+			//Draw the region icon
+			graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[1], os.variant_pos[6], os.variant_pos[7], 21, 1, 1, region_icon_x, region_icon_y, 1);
+
+			//Draw the reset button face
+			graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
+
+			//Draw the indented tiles ontop of the grid and the cursors themselves
+			uint8_t menus_selected = 0;
+			for(iter = 0; iter < 4; iter++){
+				if(player_active & (1 << iter)){
+					//Passing coords as ints because otherwise we can get case where each pixel contains more than 1 texel
+					//ADD A DRAW FOR THE SHADOW
+					uint8_t cursor_palette = 2 + iter;
+					if(player_active == (1 << 0) || player_active == (1 << 1) || player_active == (1 << 2) || player_active == (1 << 3)){
+						cursor_palette = 1;
 					}
-					else{
-						graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames, indented_frames + 1, 7);
-					}
-					liter = 1;
+					graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[0], (int) cursor_position[2 * iter],
+						(int) cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, cursor_palette);
+
+					//Add code for checking if cursor is hovering over a button
+					menus_selected |= button_hover(cursor_position[(2 * iter)], cursor_position[(2 * iter) + 1], &os);
 				}
-				if(press_data[3 * iter] == 2){	//For the X press
-					uint8_t valids = neighbouring_tiles(&MS_grid, press_data[(3 * iter) + 1], press_data[(3 * iter) + 2]);	//Get the tiles that are in bounds
-					for(jiter = 0; jiter < 8; jiter++){
-						if(!(valids & (1 << jiter))){	//If out of bounds
-							continue;
-						}
-						int8_t x_variant = 0;
-						if(jiter == 0 || jiter == 3 || jiter == 5){
-							x_variant = -1;
-						}
-						else if(jiter == 2 || jiter == 4 || jiter == 7){
-							x_variant = 1;
-						}
-						int8_t y_variant = 0;
-						if(jiter < 3){
-							y_variant = -1;
-						}
-						else if(jiter > 4){
-							y_variant = 1;
-						}
-						if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * MS_grid.x)] & ((1 << 7) + (1 << 6))){
-							continue;
-						}
-						indented_neighbours[2 * liter] = top_left_x + (16 * x_variant) + MS_grid.start_x;
-						indented_neighbours[(2 * liter) + 1] = top_left_y + (16 * y_variant) + MS_grid.start_y;
-						if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * MS_grid.x)] & (1 << 5)){	//Question mark
-							graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
+				if(press_data[3 * iter]){
+					uint16_t top_left_x = press_data[(3 * iter) + 1] * 16;
+					uint16_t top_left_y = press_data[(3 * iter) + 2] * 16;
+					uint8_t liter = 0;
+					if(!(MS_grid.logic_grid[press_data[(3 * iter) + 1] + MS_grid.x * press_data[(3 * iter) + 2]] & ((1 << 7) + (1 << 6)))){	//If its not revealed/flagged
+						indented_neighbours[0] = top_left_x + MS_grid.start_x;
+						indented_neighbours[1] = top_left_y + MS_grid.start_y;
+						if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + MS_grid.x * press_data[(3 * iter) + 2]] & (1 << 5)){	//If its question marked
+							graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames, indented_frames + 1, 6);
 						}
 						else{
-							graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);	//Blank
+							graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames, indented_frames + 1, 7);
 						}
-						liter++;
+						liter = 1;
 					}
+					if(press_data[3 * iter] == 2){	//For the X press
+						uint8_t valids = neighbouring_tiles(&MS_grid, press_data[(3 * iter) + 1], press_data[(3 * iter) + 2]);	//Get the tiles that are in bounds
+						for(jiter = 0; jiter < 8; jiter++){
+							if(!(valids & (1 << jiter))){	//If out of bounds
+								continue;
+							}
+							int8_t x_variant = 0;
+							if(jiter == 0 || jiter == 3 || jiter == 5){
+								x_variant = -1;
+							}
+							else if(jiter == 2 || jiter == 4 || jiter == 7){
+								x_variant = 1;
+							}
+							int8_t y_variant = 0;
+							if(jiter < 3){
+								y_variant = -1;
+							}
+							else if(jiter > 4){
+								y_variant = 1;
+							}
+							if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * MS_grid.x)] & ((1 << 7) + (1 << 6))){
+								continue;
+							}
+							indented_neighbours[2 * liter] = top_left_x + (16 * x_variant) + MS_grid.start_x;
+							indented_neighbours[(2 * liter) + 1] = top_left_y + (16 * y_variant) + MS_grid.start_y;
+							if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * MS_grid.x)] & (1 << 5)){	//Question mark
+								graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
+							}
+							else{
+								graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);	//Blank
+							}
+							liter++;
+						}
+					}
+					graphics_draw_sprites_OLD(MS_grid.draw_grid.ss, MS_grid.draw_grid.anim, indented_neighbours, indented_frames, 2 * liter, liter, 18, 1, 1,
+						!MS_options.operating_system && MS_options.language);
 				}
-				graphics_draw_sprites_OLD(MS_grid.draw_grid.ss, MS_grid.draw_grid.anim, indented_neighbours, indented_frames, 2 * liter, liter, 18, 1, 1,
-					!MS_options.operating_system && MS_options.language);
 			}
-		}
 
-		//Drawing the highlight boxes
-		if(menus_selected & (1 << 0)){
-			graphics_draw_untextured_poly(5, os.variant_pos[1] - 3, 19, 34, 16, 0x40FFFFFF, 0);	//Font is layer 20
-		}
-		if(menus_selected & (1 << 1)){
-			graphics_draw_untextured_poly(44, os.variant_pos[1] - 3, 19, 44, 16, 0x40FFFFFF, 0);
-		}
-		if(menus_selected & (1 << 2)){
-			graphics_draw_untextured_poly(93, os.variant_pos[1] - 3, 19, 47, 16, 0x40FFFFFF, 0);
-		}
-		if(menus_selected & (1 << 3)){
-			graphics_draw_untextured_poly(145, os.variant_pos[1] - 3, 19, 36, 16, 0x40FFFFFF, 0);
-		}
-	// }
+			//Drawing the highlight boxes
+			if(menus_selected & (1 << 0)){
+				graphics_draw_untextured_poly(5, os.variant_pos[1] - 3, 19, 34, 16, 0x40FFFFFF, 0);	//Font is layer 20
+			}
+			if(menus_selected & (1 << 1)){
+				graphics_draw_untextured_poly(44, os.variant_pos[1] - 3, 19, 44, 16, 0x40FFFFFF, 0);
+			}
+			if(menus_selected & (1 << 2)){
+				graphics_draw_untextured_poly(93, os.variant_pos[1] - 3, 19, 47, 16, 0x40FFFFFF, 0);
+			}
+			if(menus_selected & (1 << 3)){
+				graphics_draw_untextured_poly(145, os.variant_pos[1] - 3, 19, 36, 16, 0x40FFFFFF, 0);
+			}
+
 		pvr_list_finish();
 
-		// pvr_list_begin(PVR_LIST_PT_POLY);
-			//Move alot of the TR stuff here or into the OP list
-		// pvr_list_finish();
+		pvr_list_begin(PVR_LIST_PT_POLY);
+
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 9, os.variant_pos[1], 20, 1, 1, 62, "Game\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 48, os.variant_pos[1], 20, 1, 1, 62, "Options\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 97, os.variant_pos[1], 20, 1, 1, 62, "Controls\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 149, os.variant_pos[1], 20, 1, 1, 62, "About\0");
+
+			//Updating the time in the bottom right
+			//CONSIDER ONLY UPDATING IF TIME IS DIFFERENT
+			//Will come back to this at a later date to optimise it
+			char time_buffer[9];
+			if(readable_time->tm_hour < 13){
+				if(readable_time->tm_hour == 0){	//When its midnight, display 12:XX AM instead of 00:XX AM
+					readable_time->tm_hour = 12;
+				}
+				sprintf(time_buffer, "%02d:%02d AM", readable_time->tm_hour, readable_time->tm_min);
+			}
+			else{
+				sprintf(time_buffer, "%02d:%02d PM", readable_time->tm_hour - 12, readable_time->tm_min);
+			}
+
+			//The X starting pos varies based on the hour for XP and hour, AM/PM for 2000
+			if(MS_options.operating_system){
+				if(readable_time->tm_hour % 12 < 10){
+					os.variant_pos[2] = 583;
+				}
+				else{
+					os.variant_pos[2] = 586;
+				}
+			}
+			else{
+				uint16_t clock_pos;
+				if(readable_time->tm_hour % 12 < 10){
+					clock_pos = 581;
+				}
+				else{
+					clock_pos = 585;
+				}
+				if(readable_time->tm_hour < 13){
+					clock_pos--;
+				}
+				os.variant_pos[2] = clock_pos;
+			}
+
+			//XP uses another palette (White text version)
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, os.variant_pos[2], os.variant_pos[3], 20, 1, 1, os.clock_palette, time_buffer);
+
+			//DEBUG, REMOVE LATER
+			#if CRAYON_DEBUG == 1
+				char fps_buffer[100];
+				sprintf(fps_buffer, "FPS ave: %d, min: %d, max: %d", fps_ave, fps_min, fps_max);
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 235, 435, 20, 1, 1, 62, fps_buffer);
+			#endif
+
+			// Move alot of the TR stuff here or into the OP list
+			if(MS_options.focus == 2){
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 189, 145, 31, 1, 1, 62, "Sound\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 189, 185, 31, 1, 1, 62, "Marks (?)\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 282, 257, 31, 1, 1, 62, "Save to VMU\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 385, 257, 31, 1, 1, 62, "Apply\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 190, 280, 31, 1, 1, 62, "Best Times...\n(NOT IMPLEMENTED YET)\0");
+				// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 189, 280, 31, 1, 1, 62, "Best Times...\0");
+
+				//Re-position these later (Do I still need to?)
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 204, 311, 31, 1, 1, 62, "Beginner\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 284, 311, 31, 1, 1, 62, "Intemediate\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 383, 311, 31, 1, 1, 62, "Expert\0");
+
+				//Draw the numbers for x, y and num_mines displays
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 399, 145, 31, 1, 1, 62, MS_options.y_buffer);
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 399, 185, 31, 1, 1, 62, MS_options.x_buffer);
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 399, 225, 31, 1, 1, 62, MS_options.m_buffer);
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 350, 145, 31, 1, 1, 62, "Height:\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 350, 185, 31, 1, 1, 62, "Width:\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 350, 225, 31, 1, 1, 62, "Mines:\0");
+
+				/*
+
+				Options page will contain these:
+				(DONE) - X dim toggle (Display box with Up/Down buttons)
+				(DONE) - Y dim toggle
+				(DONE) - Num mines togle
+				(DONE) - Beginner, Intermediate, Expert shortcuts (This changes the X, Y and Num_mines toggles)
+				(DONE) - An "Apply" button
+
+				(KINDA DONE) - Sound checkbox
+				(KINDA DONE)- Question checkbox
+				- Italian checkbox? For debugging, maybe
+
+				*/
+
+				//Display high scores here
+			}
+			else if(MS_options.focus == 4){
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version \"Pre-reveal\" (Build 3011: Service Pack 5)\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 160 + 60, 25, 1, 1, 62, "used texconv textures and powered by my Crayon library. I don't own\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 165 + 72, 25, 1, 1, 62, "the rights to Minesweeper nor do I claim to so don't sue me, k?\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 185 + 84, 25, 1, 1, 62, "Katana logo made by Airofoil\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 205 + 96, 25, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 210 + 108, 25, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 215 + 120, 25, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
+			}
+
+		pvr_list_finish();
 
 		//None of these need to be transparent, by using the opaque list we are making the program more efficient
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-		//Draw the grid
-		if(MS_options.focus <= 1){
-			crayon_graphics_draw_sprites(&MS_grid.draw_grid, PVR_LIST_OP_POLY);
-		}
-
-	// if(0){
-		//Draw the grid's boarder
-		if(MS_options.focus <= 1){
-			custom_poly_boarder(3, MS_grid.start_x, MS_grid.start_y, 16, MS_grid.x * 16, MS_grid.y * 16, 4286611584u, 4294967295u);
-		}
-		else{
-			if(MS_options.focus > 1){
-				graphics_draw_untextured_poly(6, 98, 10, 631, 1, 0xFFA0A0A0, 1);
-				graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFD4D0C8, 1);
+			//Draw the grid
+			if(MS_options.focus <= 1){
+				crayon_graphics_draw_sprites(&MS_grid.draw_grid, PVR_LIST_OP_POLY);
 			}
-			if(MS_options.focus == 2){	//Add in the number changer textures here too when I can draw SS in Opaque
-				//Draw all 3 untextured poly number boxes
-				graphics_draw_untextured_array(&Option_polys);
+
+			//Draw the grid's boarder
+			if(MS_options.focus <= 1){
+				custom_poly_boarder(3, MS_grid.start_x, MS_grid.start_y, 16, MS_grid.x * 16, MS_grid.y * 16, 4286611584u, 4294967295u);
 			}
-		}
+			else{
+				if(MS_options.focus > 1){
+					graphics_draw_untextured_poly(6, 98, 10, 631, 1, 0xFFA0A0A0, 1);
+					graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFD4D0C8, 1);
+				}
+				if(MS_options.focus == 2){
+					graphics_draw_untextured_array(&Option_polys);
+				}
+			}
 
-		//Draw the boarders for digit display (I think I should move these calls into digit display itself)
-		custom_poly_boarder(1, 20, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
-			4286611584u, 4294967295u);
-		custom_poly_boarder(1, 581, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
-			4286611584u, 4294967295u);
+			//Draw the boarders for digit display (I think I should move these calls into digit display itself)
+			custom_poly_boarder(1, 20, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
+				4286611584u, 4294967295u);
+			custom_poly_boarder(1, 581, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
+				4286611584u, 4294967295u);
 
-		//Draw the big indent boarder that encapsulates digit displays and face
-		custom_poly_boarder(2, 14, 59, 16, 615, 33, 4286611584u, 4294967295u);
+			//Draw the big indent boarder that encapsulates digit displays and face
+			custom_poly_boarder(2, 14, 59, 16, 615, 33, 4286611584u, 4294967295u);
 
-		//Draw the MS background stuff
-		graphics_draw_untextured_array(&Bg_polys);
+			//Draw the MS background stuff
+			graphics_draw_untextured_array(&Bg_polys);
 
-		if(!MS_options.operating_system){
-			custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000
-			custom_poly_2000_boarder(0, 0, 1, 640, 452);	//The Windows 2000 window boarder
-		}
-	// }
+			if(!MS_options.operating_system){
+				custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000
+				custom_poly_2000_boarder(0, 0, 1, 640, 452);	//The Windows 2000 window boarder
+			}
+
 		pvr_list_finish();
 
 		pvr_scene_finish();
@@ -1572,7 +1581,6 @@ int main(){
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
 	//I'm probs forgetting a few things
 	int retVal = 0;
-	// retVal += crayon_memory_free_sprite_array(&test, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_grid.draw_grid, 0, 0);
 	retVal += crayon_memory_free_spritesheet(&Board);
 	retVal += crayon_memory_free_spritesheet(&Icons);
