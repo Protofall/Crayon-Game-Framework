@@ -106,6 +106,46 @@ uint8_t neighbouring_tiles(MinesweeperGrid_t * grid, int ele_x, int ele_y){
 	return ret_val;
 }
 
+//Pass it in the params and it will modify them based on valids and which tile chosen
+uint8_t neightbours_to_adjustments(int8_t * tile_offset_x, int8_t * tile_offset_y, uint8_t valids, uint8_t tile){
+	if(valids & (1 << tile)){
+		if(tile == 0){
+			*tile_offset_x = -1;
+			*tile_offset_y = -1;
+		}
+		else if(tile == 1){
+			*tile_offset_x = 0;
+			*tile_offset_y = -1;
+		}
+		else if(tile == 2){
+			*tile_offset_x = 1;
+			*tile_offset_y = -1;
+		}
+		else if(tile == 3){
+			*tile_offset_x = -1;
+			*tile_offset_y = 0;
+		}
+		else if(tile == 4){
+			*tile_offset_x = 1;
+			*tile_offset_y = 0;
+		}
+		else if(tile == 5){
+			*tile_offset_x = -1;
+			*tile_offset_y = 1;
+		}
+		else if(tile == 6){
+			*tile_offset_x = 0;
+			*tile_offset_y = 1;
+		}
+		else if(tile == 7){
+			*tile_offset_x = 1;
+			*tile_offset_y = 1;
+		}
+		return 0;
+	}
+	return 1;	//Not valid? tell sender
+}
+
 //Initially called by clear_grid where x and y are always a valid numbers
 void populate_logic(MinesweeperGrid_t * grid, int ele_x, int ele_y){
 	int ele_logic = ele_x + grid->x * ele_y;
@@ -116,7 +156,7 @@ void populate_logic(MinesweeperGrid_t * grid, int ele_x, int ele_y){
 	uint8_t valids = neighbouring_tiles(grid, ele_x, ele_y);
 	uint8_t sum = 0;	//A tiles value
 
-	if((valids & (1 << 0)) && grid->logic_grid[ele_x - 1 + ((ele_y- 1) * grid->x)] % (1 << 4) == 9){sum++;}	//Top Left
+	if((valids & (1 << 0)) && grid->logic_grid[ele_x - 1 + ((ele_y- 1) * grid->x)] % (1 << 4) == 9){sum++;}		//Top Left
 	if((valids & (1 << 1)) && grid->logic_grid[ele_x + ((ele_y - 1) * grid->x)] % (1 << 4) == 9){sum++;}		//Top centre
 	if((valids & (1 << 2)) && grid->logic_grid[ele_x + 1 + ((ele_y - 1) * grid->x)] % (1 << 4) == 9){sum++;}	//Top right
 	if((valids & (1 << 3)) && grid->logic_grid[ele_x - 1 + (ele_y * grid->x)] % (1 << 4) == 9){sum++;}			//Mid Left
@@ -671,6 +711,15 @@ uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os){
 	return menus_selected;
 }
 
+//switches you between English and Italian modes (UNFINISHED)
+	//Maybe make this a part of button_press_logic?
+void language_swap(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, MinesweeperOS_t * os,
+	float cursor_x, float cursor_y){
+		//Check if you're in-bounds of langIcon
+			//if true then swap the draw_array for the MS_grid object to use the italian palette, ss, anim and set lang to !lang
+	return;
+}
+
 pvr_init_params_t pvr_params = {
 		// Enable opaque, translucent and punch through polygons with size 16
 			//To better explain, the opb_sizes or Object Pointer Buffer sizes
@@ -818,25 +867,52 @@ int main(){
 	int iter;
 	int jiter;
 
-	//This is just allow me to easily change between Minesweeper and Prato fiorito
-	uint8_t tile_id = 2;
-	if(!MS_options.language){
+	//Setting up the language spritesheet, animation and palette pointers
+	uint8_t tile_id = 0;
+	for(iter = 0; iter < Board.spritesheet_animation_count; iter++){
+		if(!strcmp(Board.spritesheet_animation_array[iter].animation_name, "tiles")){
+			tile_id = iter;
+			break;
+		}
+	}
+	if(!MS_options.language){	//English
 		MS_grid.draw_grid.ss = &Board;
 		MS_grid.draw_grid.anim = &Board.spritesheet_animation_array[tile_id];
 		MS_grid.draw_grid.pal = &Board_P;
 	}
-	else{
-		for(iter = 0; iter < Windows.spritesheet_animation_count; iter++){
-			if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "italianTiles")){
-				tile_id = iter;
-				break;
-			}
-		}
+	else{	//Italian
+		MS_grid.alt_ss = &Board;
+		MS_grid.alt_anim = &Board.spritesheet_animation_array[tile_id];
+		MS_grid.alt_pal = &Board_P;
+	}
 
+	for(iter = 0; iter < Windows.spritesheet_animation_count; iter++){
+		if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "italianTiles")){
+			tile_id = iter;
+			break;
+		}
+	}
+
+	if(MS_options.language){	//Italian
 		MS_grid.draw_grid.ss = &Windows;
 		MS_grid.draw_grid.anim = &Windows.spritesheet_animation_array[tile_id];
-		MS_grid.draw_grid.pal = &Windows_P;
+		MS_grid.draw_grid.pal = &Windows_P;	//I think this is fine in XP mode
 	}
+	else{	//English
+		MS_grid.alt_ss = &Windows;
+		MS_grid.alt_anim = &Windows.spritesheet_animation_array[tile_id];
+		MS_grid.alt_pal = &Windows_P;
+	}
+
+	//Indent draw list
+	crayon_memory_set_sprite_array(&indented_tiles, 8 * 4, 2, 0, 1, 0, 0, 0, 0, MS_grid.alt_ss, MS_grid.alt_anim, MS_grid.alt_pal);
+	indented_tiles.draw_z[0] = 18;
+	indented_tiles.scales[0] = 1;
+	indented_tiles.scales[1] = 1;
+	indented_tiles.rotations[0] = 0;
+	indented_tiles.colours[0] = 0;
+	graphics_frame_coordinates(indented_tiles.anim, indented_tiles.frame_coords_map + 0, indented_tiles.frame_coords_map + 1, 6);	//Indent question
+	graphics_frame_coordinates(indented_tiles.anim, indented_tiles.frame_coords_map + 2, indented_tiles.frame_coords_map + 3, 7);	//Indent blank
 
 	//Setting defaults (These won't ever change again)
 	MS_grid.draw_grid.draw_z[0] = 17;
@@ -896,7 +972,6 @@ int main(){
 	coord_checker[3] = 184;
 
 	MS_grid.logic_grid = NULL;
-
 	reset_grid(&MS_grid, &MS_options, 30, 20, 99);
 
 	//The face frame coords
@@ -921,10 +996,9 @@ int main(){
 
 	//1st element is type of click, 2nd element is x, 3rd element is y and repeat for all 4 controllers
 	//1st, 0 = none, 1 = A, 2 = X, X press has priority over A press
+	//the x and y are zero indexed like a normal array
 	uint16_t press_data[12] = {0};
 	uint8_t player_movement = 0;	//This tells whether a player is using a joystick (0) or D-Pad (1) Only last 4 bits are used
-	uint16_t indented_neighbours[18];	//For now I'm doing the centre independently, but later I'll add it here
-	uint16_t indented_frames[18];
 
 	//The dreamcast logo to be displayed on the windows taskbar
 	uint16_t region_icon_x = 0;
@@ -948,9 +1022,6 @@ int main(){
 	crayon_memory_clone_palette(&Tahoma_P, &White_Tahoma_P, 61);
 	crayon_memory_swap_colour(&White_Tahoma_P, 0xFF000000, 0xFFFFFFFF, 0);	//Swapps black for white
 
-	// error_freeze("Test");	//Reaches here
-
-
 	//The cursor colours
 	crayon_memory_clone_palette(&Icons_P, &cursor_red, 2);
 	crayon_memory_clone_palette(&Icons_P, &cursor_yellow, 3);
@@ -960,9 +1031,6 @@ int main(){
 	crayon_memory_swap_colour(&cursor_yellow, 0xFFFFFFFF, 0xFFFFFF00, 0);
 	crayon_memory_swap_colour(&cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
 	crayon_memory_swap_colour(&cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
-
-	// error_freeze("Test");	//Doesn't reach here
-
 
 	#if CRAYON_DEBUG == 1
 	//Stuff for debugging/performance testing
@@ -1244,6 +1312,38 @@ int main(){
 			face_frame_id = 0;	//Reset face for new frame
 		}
 
+		//Re-create the indent tile list based on inputs
+		uint8_t indent_count = 0;
+		for(iter = 0; iter < 4; iter++){
+			if(press_data[3 * iter]){	//A or X pressed, centre logic first
+				uint8_t valids;
+				uint16_t ele = press_data[(3 * iter) + 1] + (MS_grid.x * press_data[(3 * iter) + 2]);
+				if(press_data[3 * iter] == 2){	//For the X press
+					valids = neighbouring_tiles(&MS_grid, press_data[(3 * iter) + 1], press_data[(3 * iter) + 2]);	//Get the tiles that are in bounds
+					for(jiter = 0; jiter < 8; jiter++){
+						int8_t tile_offset_x;
+						int8_t tile_offset_y;
+						if(!neightbours_to_adjustments(&tile_offset_x, &tile_offset_y, valids, jiter)){
+							uint16_t ele_offset = ele + tile_offset_x + (tile_offset_y * MS_grid.x);
+							if(!(MS_grid.logic_grid[ele_offset] & ((1 << 7) + (1 << 6)))){
+								indented_tiles.frame_coords_keys[indent_count] = MS_grid.logic_grid[ele_offset] & (1 << 5) ? 0: 1;
+								indented_tiles.draw_pos[(2 * indent_count)] = MS_grid.start_x + (16 * (press_data[(3 * iter) + 1] + tile_offset_x));
+								indented_tiles.draw_pos[(2 * indent_count) + 1] = MS_grid.start_y + (16 * (press_data[(3 * iter) + 2] + tile_offset_y));
+								indent_count++;
+							}
+						}
+					}
+				}
+				if(!(MS_grid.logic_grid[ele] & ((1 << 7) + (1 << 6)))){	//Is unreleaved and not flagged
+					indented_tiles.frame_coords_keys[indent_count] = MS_grid.logic_grid[ele] & (1 << 5) ? 0: 1;
+					indented_tiles.draw_pos[(2 * indent_count)] = MS_grid.start_x + (16 * press_data[(3 * iter) + 1]);
+					indented_tiles.draw_pos[(2 * indent_count) + 1] = MS_grid.start_y + (16 * press_data[(3 * iter) + 2]);
+					indent_count++;
+				}
+			}
+		}
+		indented_tiles.num_sprites = indent_count;	//So we don't display "Garbage info"
+
 		timer_ms_gettime(&current_time, &current_ms_time);
 		if(MS_grid.game_live && MS_grid.time_sec < 999){	//Prevent timer overflows
 			int temp_sec = current_time - start_time + (current_ms_time > start_ms_time); //MS is there to account for the "1st second" inaccuracy
@@ -1354,58 +1454,6 @@ int main(){
 
 					//Add code for checking if cursor is hovering over a button
 					menus_selected |= button_hover(cursor_position[(2 * iter)], cursor_position[(2 * iter) + 1], &os);
-				}
-				if(press_data[3 * iter]){
-					uint16_t top_left_x = press_data[(3 * iter) + 1] * 16;
-					uint16_t top_left_y = press_data[(3 * iter) + 2] * 16;
-					uint8_t liter = 0;
-					if(!(MS_grid.logic_grid[press_data[(3 * iter) + 1] + MS_grid.x * press_data[(3 * iter) + 2]] & ((1 << 7) + (1 << 6)))){	//If its not revealed/flagged
-						indented_neighbours[0] = top_left_x + MS_grid.start_x;
-						indented_neighbours[1] = top_left_y + MS_grid.start_y;
-						if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + MS_grid.x * press_data[(3 * iter) + 2]] & (1 << 5)){	//If its question marked
-							graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames, indented_frames + 1, 6);
-						}
-						else{
-							graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames, indented_frames + 1, 7);
-						}
-						liter = 1;
-					}
-					if(press_data[3 * iter] == 2){	//For the X press
-						uint8_t valids = neighbouring_tiles(&MS_grid, press_data[(3 * iter) + 1], press_data[(3 * iter) + 2]);	//Get the tiles that are in bounds
-						for(jiter = 0; jiter < 8; jiter++){
-							if(!(valids & (1 << jiter))){	//If out of bounds
-								continue;
-							}
-							int8_t x_variant = 0;
-							if(jiter == 0 || jiter == 3 || jiter == 5){
-								x_variant = -1;
-							}
-							else if(jiter == 2 || jiter == 4 || jiter == 7){
-								x_variant = 1;
-							}
-							int8_t y_variant = 0;
-							if(jiter < 3){
-								y_variant = -1;
-							}
-							else if(jiter > 4){
-								y_variant = 1;
-							}
-							if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * MS_grid.x)] & ((1 << 7) + (1 << 6))){
-								continue;
-							}
-							indented_neighbours[2 * liter] = top_left_x + (16 * x_variant) + MS_grid.start_x;
-							indented_neighbours[(2 * liter) + 1] = top_left_y + (16 * y_variant) + MS_grid.start_y;
-							if(MS_grid.logic_grid[press_data[(3 * iter) + 1] + x_variant + ((press_data[(3 * iter) + 2] + y_variant) * MS_grid.x)] & (1 << 5)){	//Question mark
-								graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 6);
-							}
-							else{
-								graphics_frame_coordinates(MS_grid.draw_grid.anim, indented_frames + (2 * liter), indented_frames + (2 * liter) + 1, 7);	//Blank
-							}
-							liter++;
-						}
-					}
-					graphics_draw_sprites_OLD(MS_grid.draw_grid.ss, MS_grid.draw_grid.anim, indented_neighbours, indented_frames, 2 * liter, liter, 18, 1, 1,
-						!MS_options.operating_system && MS_options.language);
 				}
 			}
 
@@ -1540,6 +1588,7 @@ int main(){
 			//Draw the grid
 			if(MS_options.focus <= 1){
 				crayon_graphics_draw_sprites(&MS_grid.draw_grid, PVR_LIST_OP_POLY);
+				crayon_graphics_draw_sprites(&indented_tiles, PVR_LIST_OP_POLY);
 			}
 
 			//Draw the grid's boarder
@@ -1582,6 +1631,7 @@ int main(){
 	//I'm probs forgetting a few things
 	int retVal = 0;
 	retVal += crayon_memory_free_sprite_array(&MS_grid.draw_grid, 0, 0);
+	retVal += crayon_memory_free_sprite_array(&indented_tiles, 0, 0);
 	retVal += crayon_memory_free_spritesheet(&Board);
 	retVal += crayon_memory_free_spritesheet(&Icons);
 	retVal += crayon_memory_free_spritesheet(&Windows);

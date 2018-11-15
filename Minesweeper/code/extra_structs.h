@@ -45,10 +45,13 @@ typedef struct MinesweeperSaveFile{
 
 //Contains the logic for a board
 typedef struct MinesweeperGrid{
-	// crayon_spritesheet_t tile_ss;
-	// crayon_animation_t tile_anim;
-	uint8_t *logic_grid;	//The following 3 arrays are in the crayon_sprite_array_t
+	uint8_t *logic_grid;
 	crayon_sprite_array_t draw_grid;	//Contains the tile positions, frames, UVs and more
+
+	//Set these 3 with the alternate board details for easy language switching
+	crayon_spritesheet_t * alt_ss;
+	crayon_animation_t * alt_anim;
+	crayon_palette_t * alt_pal;
 
 	uint8_t x;
 	uint8_t y;
