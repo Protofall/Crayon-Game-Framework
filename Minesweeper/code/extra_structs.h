@@ -90,9 +90,10 @@ typedef struct MinesweeperOptions{
 	uint8_t disp_mines;
 	char x_buffer[4], y_buffer[4], m_buffer[4];
 
-	//Add some new draw struct pointers/or stack allocated, idk
+	crayon_sprite_array_t buttons;
+	crayon_sprite_array_t checkers;
+	crayon_sprite_array_t number_changers;
 
-	crayon_spritesheet_t *check_box;	//The anim for the checkbox...I might remove this later
 	MinesweeperSaveFile_t savefile;	//Not a pointer since this struct needs the same save file always
 } MinesweeperOptions_t;
 

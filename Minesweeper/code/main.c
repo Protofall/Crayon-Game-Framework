@@ -545,6 +545,7 @@ void cursor_on_grid(MinesweeperGrid_t * grid, uint8_t *in_grid, int *ele_x, int 
 }
 
 //Handles focus related things
+	//Could probably clean up some of this stuff with the draw arrays within the OS struct
 uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, MinesweeperOS_t *os, int id, float *cursor_position, uint32_t previous_buttons, uint32_t buttons){
 	//CLEAN UP THE MAGIC NUMBERS
 	if(options->focus != 1){	//When we get a new score, we don't want to change focus easily
@@ -658,21 +659,15 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 			else if((cursor_position[2 * id] <= 245 + 13) && (cursor_position[(2 * id) + 1] <= 144 + 13)
 					&& cursor_position[2 * id] >= 245 && cursor_position[(2 * id) + 1] >= 144){	//Sound checker
 				options->sound_enabled = !options->sound_enabled;
-				//ADD SOMETHING TO CHANGE THE FRAME
+				options->checkers.frame_coords_keys[0] = options->sound_enabled;	//Update to show the right frame
 			}
 			else if((cursor_position[2 * id] <= 245 + 13) && (cursor_position[(2 * id) + 1] <= 184 + 13)
 					&& cursor_position[2 * id] >= 245 && cursor_position[(2 * id) + 1] >= 184){	//Question mark checker
 				options->question_enabled = !options->question_enabled;
-				//ADD SOMETHING TO CHANGE THE FRAME
+				options->checkers.frame_coords_keys[1] = options->question_enabled;	//Update to show the right frame
 			}
 		}
 	}
-
-	// coord_checker[0] = 245;	//Sound
-	// coord_checker[1] = 144;
-	// coord_checker[2] = 245;	//Question mark
-	// coord_checker[3] = 184;
-	//13,13
 
 	return 0;
 }
@@ -914,7 +909,7 @@ int main(){
 	graphics_frame_coordinates(indented_tiles.anim, indented_tiles.frame_coords_map + 0, indented_tiles.frame_coords_map + 1, 6);	//Indent question
 	graphics_frame_coordinates(indented_tiles.anim, indented_tiles.frame_coords_map + 2, indented_tiles.frame_coords_map + 3, 7);	//Indent blank
 
-	//Setting defaults (These won't ever change again)
+	//Setting defaults for the grid (These won't ever change again)
 	MS_grid.draw_grid.draw_z[0] = 17;
 	MS_grid.draw_grid.scales[0] = 1;
 	MS_grid.draw_grid.scales[1] = 1;
@@ -927,49 +922,74 @@ int main(){
 
 	//Get the info for num_changer
 	uint8_t num_changer_id = 4;
-	uint16_t coord_num_changer[6], frame_num_changer[2];
 	uint8_t button_id = 4;
-	uint16_t coord_button[10], frame_button[2];
 	uint8_t checker_id = 4;
-	uint16_t coord_checker[4], frame_checker[2];
 	for(iter = 0; iter < Windows.spritesheet_animation_count; iter++){
 		if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "button")){
 			button_id = iter;
-			graphics_frame_coordinates(&Windows.spritesheet_animation_array[iter], frame_button, frame_button + 1, 0);
 		}
 		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "checker")){
 			checker_id = iter;
-			graphics_frame_coordinates(&Windows.spritesheet_animation_array[iter], frame_checker, frame_checker + 1, 0);			
 		}
 		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "numberChanger")){
 			num_changer_id = iter;
-			graphics_frame_coordinates(&Windows.spritesheet_animation_array[iter], frame_num_changer, frame_num_changer + 1, 0);
 			// break;
 		}
 	}
 
-	coord_num_changer[0] = 420;
-	coord_num_changer[1] = 140 + (2 * MS_options.operating_system);
-	coord_num_changer[2] = 420;
-	coord_num_changer[3] = 180 + (2 * MS_options.operating_system);
-	coord_num_changer[4] = 420;
-	coord_num_changer[5] = 220 + (2 * MS_options.operating_system);
+	//Options draw structs
+	crayon_memory_set_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[button_id], &Windows_P);
+	crayon_memory_set_sprite_array(&MS_options.checkers, 2, 2, 0, 1, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[checker_id], &Windows_P);
+	crayon_memory_set_sprite_array(&MS_options.number_changers, 3, 1, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[num_changer_id], &Windows_P);
 
-	coord_button[0] = 189;	//Beginner
-	coord_button[1] = 306;
-	coord_button[2] = 275;	//Intermediate
-	coord_button[3] = 306;
-	coord_button[4] = 361;	//Expert
-	coord_button[5] = 306;
-	coord_button[6] = 275;	//Save to VMU
-	coord_button[7] = 252;
-	coord_button[8] = 361;	//Apply
-	coord_button[9] = 252;
+	//Buttons
+	MS_options.buttons.draw_z[0] = 30;
+	MS_options.buttons.scales[0] = 1;
+	MS_options.buttons.scales[1] = 1;
+	MS_options.buttons.rotations[0] = 0;
+	MS_options.buttons.colours[0] = 0;
+	MS_options.buttons.draw_pos[0] = 189;
+	MS_options.buttons.draw_pos[1] = 306;
+	MS_options.buttons.draw_pos[2] = 275;
+	MS_options.buttons.draw_pos[3] = 306;
+	MS_options.buttons.draw_pos[4] = 361;
+	MS_options.buttons.draw_pos[5] = 306;
+	MS_options.buttons.draw_pos[6] = 275;
+	MS_options.buttons.draw_pos[7] = 252;
+	MS_options.buttons.draw_pos[8] = 361;
+	MS_options.buttons.draw_pos[9] = 252;
+	MS_options.buttons.frame_coords_keys[0] = 0;
+	graphics_frame_coordinates(MS_options.buttons.anim, MS_options.buttons.frame_coords_map, MS_options.buttons.frame_coords_map + 1, 0);
 
-	coord_checker[0] = 245;	//Sound
-	coord_checker[1] = 144;
-	coord_checker[2] = 245;	//Question mark
-	coord_checker[3] = 184;
+	//Checkers
+	MS_options.checkers.draw_z[0] = 30;
+	MS_options.checkers.scales[0] = 1;
+	MS_options.checkers.scales[1] = 1;
+	MS_options.checkers.rotations[0] = 0;
+	MS_options.checkers.colours[0] = 0;
+	MS_options.checkers.draw_pos[0] = 245;
+	MS_options.checkers.draw_pos[1] = 144;
+	MS_options.checkers.draw_pos[2] = 245;
+	MS_options.checkers.draw_pos[3] = 184;
+	MS_options.checkers.frame_coords_keys[0] = MS_options.sound_enabled;
+	MS_options.checkers.frame_coords_keys[1] = MS_options.question_enabled;
+	graphics_frame_coordinates(MS_options.checkers.anim, MS_options.checkers.frame_coords_map, MS_options.checkers.frame_coords_map + 1, 0);
+	graphics_frame_coordinates(MS_options.checkers.anim, MS_options.checkers.frame_coords_map + 2, MS_options.checkers.frame_coords_map + 3, 1);
+
+	//Number_changers
+	MS_options.number_changers.draw_z[0] = 30;
+	MS_options.number_changers.scales[0] = 1;
+	MS_options.number_changers.scales[1] = 1;
+	MS_options.number_changers.rotations[0] = 0;
+	MS_options.number_changers.colours[0] = 0;
+	MS_options.number_changers.draw_pos[0] = 420;
+	MS_options.number_changers.draw_pos[1] = 140 + (2 * MS_options.operating_system);
+	MS_options.number_changers.draw_pos[2] = 420;
+	MS_options.number_changers.draw_pos[3] = 180 + (2 * MS_options.operating_system);
+	MS_options.number_changers.draw_pos[4] = 420;
+	MS_options.number_changers.draw_pos[5] = 220 + (2 * MS_options.operating_system);
+	MS_options.number_changers.frame_coords_keys[0] = 0;
+	graphics_frame_coordinates(MS_options.number_changers.anim, MS_options.number_changers.frame_coords_map, MS_options.number_changers.frame_coords_map + 1, 0);
 
 	MS_grid.logic_grid = NULL;
 	reset_grid(&MS_grid, &MS_options, 30, 20, 99);
@@ -1409,21 +1429,6 @@ int main(){
 					//We choose palette 1 because that's 2000's palette and XP uses RGB565
 			}
 
-			//Move these items into draw_sprites lists and make them opaque
-			if(MS_options.focus == 2){
-				//A draw list for all 3 clicker thingys (Maybe enlarge them?)
-				graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[num_changer_id], coord_num_changer,
-					frame_num_changer, 2, 3, 30, 1, 1, 1);
-
-				//Draw all 5 buttons
-				graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[button_id], coord_button,
-					frame_button, 2, 5, 30, 1, 1, 1);
-
-				//Draw all 2 check boxes
-				graphics_draw_sprites_OLD(&Windows, &Windows.spritesheet_animation_array[checker_id], coord_checker,
-					frame_checker, 2, 2, 30, 1, 1, 1);
-			}
-
 			//Draw the flag count and timer (Modify function to draw them as opaque or just redo this part)
 			digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.num_flags, 20, 65, 17);
 			digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.time_sec, 581, 65, 17);
@@ -1585,10 +1590,15 @@ int main(){
 		//None of these need to be transparent, by using the opaque list we are making the program more efficient
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-			//Draw the grid
+			//Draw the grid and the indentations
 			if(MS_options.focus <= 1){
 				crayon_graphics_draw_sprites(&MS_grid.draw_grid, PVR_LIST_OP_POLY);
 				crayon_graphics_draw_sprites(&indented_tiles, PVR_LIST_OP_POLY);
+			}
+			if(MS_options.focus == 2){
+				crayon_graphics_draw_sprites(&MS_options.buttons, PVR_LIST_OP_POLY);
+				crayon_graphics_draw_sprites(&MS_options.checkers, PVR_LIST_OP_POLY);
+				crayon_graphics_draw_sprites(&MS_options.number_changers, PVR_LIST_OP_POLY);
 			}
 
 			//Draw the grid's boarder
@@ -1632,6 +1642,9 @@ int main(){
 	int retVal = 0;
 	retVal += crayon_memory_free_sprite_array(&MS_grid.draw_grid, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&indented_tiles, 0, 0);
+	retVal += crayon_memory_free_sprite_array(&MS_options.checkers, 0, 0);
+	retVal += crayon_memory_free_sprite_array(&MS_options.buttons, 0, 0);
+	retVal += crayon_memory_free_sprite_array(&MS_options.number_changers, 0, 0);
 	retVal += crayon_memory_free_spritesheet(&Board);
 	retVal += crayon_memory_free_spritesheet(&Icons);
 	retVal += crayon_memory_free_spritesheet(&Windows);
