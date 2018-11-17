@@ -706,12 +706,39 @@ uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os){
 	return menus_selected;
 }
 
-//switches you between English and Italian modes (UNFINISHED)
+//switches you between English and Italian modes
 	//Maybe make this a part of button_press_logic?
-void language_swap(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, MinesweeperOS_t * os,
-	float cursor_x, float cursor_y){
-		//Check if you're in-bounds of langIcon
-			//if true then swap the draw_array for the MS_grid object to use the italian palette, ss, anim and set lang to !lang
+void language_swap(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, MinesweeperOS_t * os, float * cursor_pos, uint8_t a_press){
+	if(cursor_pos[0] > os->assets[os->lang_id]->positions[0] && cursor_pos[1] > os->assets[os->lang_id]->positions[1] &&
+		cursor_pos[0] < os->assets[os->lang_id]->positions[0] + os->assets[os->lang_id]->animation->animation_frame_width &&
+		cursor_pos[1] < os->assets[os->lang_id]->positions[1] + os->assets[os->lang_id]->animation->animation_frame_height &&
+		a_press){
+		options->language = !options->language;
+
+		//Switch between english and italian grid ss, anim and pals
+		crayon_spritesheet_t * temp_ss = grid->alt_ss;
+		crayon_animation_t * temp_anim = grid->alt_anim;
+		crayon_palette_t * temp_pal = grid->alt_pal;
+		grid->alt_ss = grid->draw_grid.spritesheet;
+		grid->alt_anim = grid->draw_grid.animation;
+		grid->alt_pal = grid->draw_grid.palette;
+		grid->draw_grid.spritesheet = temp_ss;
+		grid->draw_grid.animation = temp_anim;
+		grid->draw_grid.palette = temp_pal;
+
+		//Swap out grid frame coords
+		uint8_t i;
+		for(i = 0; i < grid->draw_grid.unique_frames; i++){
+			graphics_frame_coordinates(grid->draw_grid.animation, grid->draw_grid.frame_coord_map + (2 * i), grid->draw_grid.frame_coord_map + (2 * i) + 1, i);
+		}
+		//Use alternative frame coords for OS assets
+		for(i = 0; i < os->num_assets; i++){
+			if(os->assets[i]->unique_frames > 1){
+				os->assets[i]->frame_coord_keys[0] = options->language;
+			}
+		}
+
+	}
 	return;
 }
 
@@ -741,6 +768,8 @@ int main(){
 	MinesweeperGrid_t MS_grid;	//Contains a bunch of variables related to the grid
 	MinesweeperOptions_t MS_options;	//Contains a bunch of vars related to options
 
+	//Load a save file here
+
 	//Setting some default variables
 	MS_grid.over_mode = 0;
 	MS_grid.game_live = 0;
@@ -750,8 +779,8 @@ int main(){
 	MS_options.operating_system = 0;
 	MS_options.language = 0;
 	MS_options.focus = 0;
-	
-	MS_options.focus = 2;	//DEBUG
+
+	// MS_options.focus = 2;	//DEBUG
 
 	#if CRAYON_SD_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
@@ -765,9 +794,6 @@ int main(){
 	MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 	if(st->buttons & (1 << 1)){		//B press
 		MS_options.operating_system = 1;
-	}
-	if(st->buttons & (1 << 2)){		//A press
-		MS_options.language = 1;
 	}
 	MAPLE_FOREACH_END()
 
@@ -862,10 +888,7 @@ int main(){
 
 	//Populate OS struct
 	setup_OS_assets(&os, &Windows, &Windows_P, MS_options.operating_system, MS_options.language, MS_options.sd_present);
-	setup_OS_assets_icons(&os, &Icons, &Icons_P, MS_options.language, region);
-
-	int iter;
-	int jiter;
+	setup_OS_assets_icons(&os, &Icons, &Icons_P, MS_options.operating_system, region);
 
 	//Add the clock palette
 	if(MS_options.operating_system){
@@ -883,6 +906,9 @@ int main(){
 	//Also due to lang thing we don't know the spritesheet, animation or palette
 	// crayon_memory_set_sprite_array(&MS_grid.draw_grid, 1, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);
 	crayon_memory_set_sprite_array(&MS_grid.draw_grid, 38 * 21, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);	//Technically there's no need to make change the size after this
+
+	int iter;
+	int jiter;
 
 	//Setting up the language spritesheet, animation and palette pointers
 	uint8_t tile_id = 0;
@@ -1123,6 +1149,7 @@ int main(){
 
 		if(button_press_logic(&MS_grid, &MS_options, button_action, __dev->port, cursor_position, previous_buttons, st->buttons)){break;}	//Is previous_buttons right?
 		button_press_logic_buttons(&MS_grid, &MS_options, &os, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
+		language_swap(&MS_grid, &MS_options, &os, cursor_position + (2 * __dev->port), button_action & (1 << 0));
 
 		//These are only ever set if The cursor is on the grid and A/B/X is/was pressed
 		int ele_x = -1;
@@ -1233,6 +1260,7 @@ int main(){
 
 		if(button_press_logic(&MS_grid, &MS_options, button_action, __dev->port, cursor_position, previous_buttons, st->buttons)){break;}
 		button_press_logic_buttons(&MS_grid, &MS_options, &os, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
+		language_swap(&MS_grid, &MS_options, &os, cursor_position + (2 * __dev->port), button_action & (1 << 0));
 
 		int ele_x = -1;
 		int ele_y = -1;

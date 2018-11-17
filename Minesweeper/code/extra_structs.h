@@ -10,6 +10,7 @@ typedef struct MinesweeperOS{
 	//OS stuff + region and sd
 	crayon_textured_array_t **assets;
 	uint8_t num_assets;
+	uint8_t lang_id;	//Used for detecting a press on the icon
 	uint8_t tabs_y;
 	crayon_textured_array_t sd;
 	crayon_textured_array_t region;

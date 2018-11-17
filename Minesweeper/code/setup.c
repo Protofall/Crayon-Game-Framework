@@ -11,14 +11,14 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			os->assets[i]->positions[0] = 3;
 			os->assets[i]->positions[1] = 447;
 			os->assets[i]->draw_z[0] = 16;
-			// os->assets[i]->scales[0] = 633;	// Umm...the scale only goes up to 255...
+			os->assets[i]->scales[0] = 211;
 		}
 	}
 	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderBottomLeft")){
 		if(sys){
 			os->assets[i]->positions[0] = 0;
 			os->assets[i]->positions[1] = 447;
-			os->assets[i]->draw_z[0] = 16;
+			os->assets[i]->draw_z[0] = 17;
 		}
 	}
 	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderBottomRight")){
@@ -33,7 +33,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			os->assets[i]->positions[0] = 0;
 			os->assets[i]->positions[1] = 29;
 			os->assets[i]->draw_z[0] = 16;
-			// os->assets[i]->scales[0] = 418;
+			os->assets[i]->scales[1] = 209;
 		}
 	}
 	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderRight")){
@@ -41,7 +41,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			os->assets[i]->positions[0] = 637;
 			os->assets[i]->positions[1] = 29;
 			os->assets[i]->draw_z[0] = 16;
-			// os->assets[i]->scales[1] = 418;
+			os->assets[i]->scales[1] = 209;
 		}
 	}
 	else if(!strcmp(os->assets[i]->animation->animation_name, "langIcon")){
@@ -181,8 +181,11 @@ void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, crayon_palet
 			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "button")){
 			id_count++;
 		}
+		if(!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "langIcon")){
+			os->lang_id = i;
+		}
 		uint8_t multi_frames = 0;
-		if(lang){
+		if(ss->spritesheet_animation_array[id_count].animation_frames > 1){
 			multi_frames = 1;
 		}
 		crayon_memory_set_sprite_array(os->assets[i], 1, 2 * multi_frames, 0, multi_frames, 0, 0, 0, 0, 0, ss, &ss->spritesheet_animation_array[id_count], pal);
@@ -224,6 +227,7 @@ void setup_OS_assets_icons(MinesweeperOS_t *os, crayon_spritesheet_t *Icons, cra
 		if(!strcmp(Icons->spritesheet_animation_array[i].animation_name, "sd")){
 			crayon_memory_set_sprite_array(&os->sd, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->spritesheet_animation_array[i], Icons_P);
 			graphics_frame_coordinates(os->sd.animation, os->sd.frame_coord_map, os->sd.frame_coord_map + 1, 0);
+			os->sd.draw_z[0] = 21;
 			os->sd.scales[0] = 1;
 			os->sd.scales[1] = 1;
 			os->sd.flips[0] = 0;
@@ -242,6 +246,7 @@ void setup_OS_assets_icons(MinesweeperOS_t *os, crayon_spritesheet_t *Icons, cra
 		if(!strcmp(Icons->spritesheet_animation_array[i].animation_name, "regionIcons")){
 			crayon_memory_set_sprite_array(&os->region, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->spritesheet_animation_array[i], Icons_P);
 			graphics_frame_coordinates(os->region.animation, os->region.frame_coord_map, os->region.frame_coord_map + 1, region);
+			os->region.draw_z[0] = 21;
 			os->region.scales[0] = 1;
 			os->region.scales[1] = 1;
 			os->region.flips[0] = 0;
@@ -266,6 +271,8 @@ void setup_free_OS_struct(MinesweeperOS_t *os){
 		crayon_memory_free_sprite_array(os->assets[i], 0, 0);
 	}
 	free(os->assets);
+	crayon_memory_free_sprite_array(&os->sd, 0, 0);
+	crayon_memory_free_sprite_array(&os->region, 0, 0);
 }
 
 void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t sd){
