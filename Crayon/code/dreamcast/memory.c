@@ -490,29 +490,30 @@ extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palet
 	return;
 }
 
-//lol 12 params
-extern void crayon_memory_set_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t num_sprites,
-	uint8_t unique_frames, uint8_t multi_draw_z, uint8_t multi_frames, uint8_t multi_scales,
+//lol 13 params
+extern void crayon_memory_set_sprite_array(crayon_textured_array_t *sprite_array, uint16_t num_sprites,
+	uint8_t unique_frames, uint8_t multi_draw_z, uint8_t multi_frames, uint8_t multi_scales, uint8_t multi_flips,
 	uint8_t multi_rotations, uint8_t multi_colours, uint8_t filter, crayon_spritesheet_t *ss,
-	crayon_animation_t *anim, crayon_palette_t *palette){
+	crayon_animation_t *anim, crayon_palette_t *pal){
 	
-	sprite_array->ss = ss;
-	sprite_array->anim = anim;
+	sprite_array->spritesheet = ss;
+	sprite_array->animation = anim;
 	sprite_array->num_sprites = num_sprites;
 	sprite_array->unique_frames = unique_frames;
-	sprite_array->options = 0 + (multi_colours << 4) + (multi_rotations << 3) + (multi_scales << 2) +
-		(multi_frames << 1) + (multi_draw_z << 0);
+	sprite_array->options = 0 + (multi_colours << 5) + (multi_rotations << 4) + (multi_flips << 3) +
+		(multi_scales << 2) + (multi_frames << 1) + (multi_draw_z << 0);
 	sprite_array->filter = filter;
 
-	sprite_array->draw_pos = (float *) malloc(num_sprites * 2 * sizeof(float));
+	sprite_array->positions = (float *) malloc(num_sprites * 2 * sizeof(float));
 	sprite_array->draw_z = (uint8_t *) malloc((multi_draw_z ? num_sprites: 1) * sizeof(uint8_t));
-	sprite_array->frame_coords_keys = (uint8_t *) malloc((multi_frames ? num_sprites: 1) * sizeof(uint8_t));
-	sprite_array->frame_coords_map = (uint16_t *) malloc(unique_frames * 2 * sizeof(uint16_t));
+	sprite_array->frame_coord_keys = (uint8_t *) malloc((multi_frames ? num_sprites: 1) * sizeof(uint8_t));
+	sprite_array->frame_coord_map = (uint16_t *) malloc(unique_frames * 2 * sizeof(uint16_t));
 	sprite_array->scales = (uint8_t *) malloc((multi_scales ? num_sprites: 1) * 2 * sizeof(uint8_t));
+	sprite_array->flips = (uint8_t *) malloc((multi_flips ? num_sprites: 1) * sizeof(uint8_t));
 	sprite_array->rotations = (float *) malloc((multi_rotations ? num_sprites: 1) * sizeof(float));
 	sprite_array->colours = (uint32_t *) malloc((multi_colours ? num_sprites: 1) * sizeof(uint32_t));
 
-	sprite_array->pal = palette;
+	sprite_array->palette = pal;
 
 	return;
 }
@@ -578,18 +579,19 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
 	return 1;
 }
 
-extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array, uint8_t free_ss, uint8_t free_pal){
+extern uint8_t crayon_memory_free_sprite_array(crayon_textured_array_t *sprite_array, uint8_t free_ss, uint8_t free_pal){
 	uint8_t retval = 0;
 	if(free_ss << 0){
-		retval = crayon_memory_free_spritesheet(sprite_array->ss);
+		retval = crayon_memory_free_spritesheet(sprite_array->spritesheet);
 		if(retval){return retval;}
 	}
 
-	free(sprite_array->draw_pos);
+	free(sprite_array->positions);
 	free(sprite_array->draw_z);
-	free(sprite_array->frame_coords_keys);
-	free(sprite_array->frame_coords_map);
+	free(sprite_array->frame_coord_keys);
+	free(sprite_array->frame_coord_map);
 	free(sprite_array->scales);
+	free(sprite_array->flips);
 	free(sprite_array->rotations);
 	free(sprite_array->colours);
 

@@ -46,9 +46,10 @@ extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, char
 extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id);
 
 //Set initial array sizes and options for your sprite_array
-extern void crayon_memory_set_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t num_sprites,
-	uint8_t unique_frames, uint8_t multi_draw_z, uint8_t multi_frames, uint8_t multi_scales, uint8_t multi_rotations,
-	uint8_t multi_colours, uint8_t filter, crayon_spritesheet_t *ss, crayon_animation_t *anim, crayon_palette_t *palette);
+extern void crayon_memory_set_sprite_array(crayon_textured_array_t *sprite_array, uint16_t num_sprites,
+	uint8_t unique_frames, uint8_t multi_draw_z, uint8_t multi_frames, uint8_t multi_scales, uint8_t multi_flips,
+	uint8_t multi_rotations, uint8_t multi_colours, uint8_t filter, crayon_spritesheet_t *ss, crayon_animation_t *anim,
+	crayon_palette_t *pal);
 
 
 //------------------Modifying memory----------------//
@@ -78,7 +79,7 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp);
 //Frees a sprite array
 	//free_ss is XXXX XXPS where P is delete the palette and S is delete the just spritesheet
 	//Can't delete just a palette by passing in (1 << 1), thats intentional
-extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array, uint8_t free_ss, uint8_t free_pal);
+extern uint8_t crayon_memory_free_sprite_array(crayon_textured_array_t *sprite_array, uint8_t free_ss, uint8_t free_pal);
 
 
 //------------------Mounting romdisks------------------//

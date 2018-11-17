@@ -195,7 +195,7 @@ void clear_grid(MinesweeperGrid_t * grid){
 	}
 
 	for(i = 0; i < grid->draw_grid.num_sprites; i++){
-		grid->draw_grid.frame_coords_keys[i] = 0;
+		grid->draw_grid.frame_coord_keys[i] = 0;
 	}
 
 	grid->game_live = 0;
@@ -221,21 +221,21 @@ void reset_grid(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_
 	}
 
 	//New
-	// if(grid->draw_grid.draw_pos != NULL){
-		// free(grid->draw_grid.draw_pos);
+	// if(grid->draw_grid.positions != NULL){
+		// free(grid->draw_grid.positions);
 	// }
-	// if(grid->draw_grid.frame_coords_keys != NULL){
-		// free(grid->draw_grid.frame_coords_keys);
+	// if(grid->draw_grid.frame_coord_keys != NULL){
+		// free(grid->draw_grid.frame_coord_keys);
 	// }
 
 	grid->draw_grid.num_sprites = x * y;
 	grid->logic_grid = (uint8_t *) malloc(grid->draw_grid.num_sprites * sizeof(uint8_t));
 
 	//New
-	// grid->draw_grid.draw_pos = (float *) malloc(2 * grid->draw_grid.num_sprites * sizeof(float));
-	// grid->draw_grid.frame_coords_keys = (uint8_t *) malloc(grid->draw_grid.num_sprites * sizeof(uint8_t));
-	// grid->draw_grid.draw_pos = (float *) malloc(2 * grid->draw_grid.num_sprites * sizeof(float));
-	// grid->draw_grid.frame_coords_keys = (uint8_t *) malloc(grid->draw_grid.num_sprites * sizeof(uint8_t));
+	// grid->draw_grid.positions = (float *) malloc(2 * grid->draw_grid.num_sprites * sizeof(float));
+	// grid->draw_grid.frame_coord_keys = (uint8_t *) malloc(grid->draw_grid.num_sprites * sizeof(uint8_t));
+	// grid->draw_grid.positions = (float *) malloc(2 * grid->draw_grid.num_sprites * sizeof(float));
+	// grid->draw_grid.frame_coord_keys = (uint8_t *) malloc(grid->draw_grid.num_sprites * sizeof(uint8_t));
 
 	//Calculate some start_x stuff. Default for expert is 80, 104
 	grid->start_x = 320 - (grid->x * 8);
@@ -250,8 +250,8 @@ void reset_grid(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_
 		for(i = 0; i < grid->x; i++){   //i is x, j is y
 			uint16_t ele = (j * grid->x * 2) + (2 * i);
 
-			grid->draw_grid.draw_pos[ele] = (float)(grid->start_x + (i * 16));
-			grid->draw_grid.draw_pos[ele + 1] = (float)(grid->start_y + (j * 16));
+			grid->draw_grid.positions[ele] = (float)(grid->start_x + (i * 16));
+			grid->draw_grid.positions[ele + 1] = (float)(grid->start_y + (j * 16));
 		}
 	}
 
@@ -304,10 +304,10 @@ void reveal_map(MinesweeperGrid_t * grid){
 	if(grid->over_mode == 2){
 		for(i = 0; i < grid->x * grid->y; i++){
 			if(grid->logic_grid[i] == 9 || grid->logic_grid[i] == 41){	//Untouched or question marked
-				grid->draw_grid.frame_coords_keys[i] = 3;
+				grid->draw_grid.frame_coord_keys[i] = 3;
 			}
 			if(grid->logic_grid[i] != 73 && grid->logic_grid[i] & 1<<6){	//Untouched or question marked
-				grid->draw_grid.frame_coords_keys[i] = 5;
+				grid->draw_grid.frame_coord_keys[i] = 5;
 			}
 		}
 	}
@@ -315,7 +315,7 @@ void reveal_map(MinesweeperGrid_t * grid){
 		grid->num_flags = 0;
 		for(i = 0; i < grid->x * grid->y; i++){
 			if(grid->logic_grid[i] % (1 << 5) == 9){
-				grid->draw_grid.frame_coords_keys[i] = 1;
+				grid->draw_grid.frame_coord_keys[i] = 1;
 			}
 		}
 	}
@@ -331,15 +331,15 @@ void discover_tile(MinesweeperGrid_t * grid, int ele_x, int ele_y){
 		}
 		if(grid->logic_grid[ele_logic] & 1 << 5){	//If questioned, remove the question mark and set it to a normal tile
 			grid->logic_grid[ele_logic] &= ~(1 << 5);
-			grid->draw_grid.frame_coords_keys[ele_logic] = 0;
+			grid->draw_grid.frame_coord_keys[ele_logic] = 0;
 		}
 		if(grid->logic_grid[ele_logic] == 9){	//If mine
-			grid->draw_grid.frame_coords_keys[ele_logic] = 4;
+			grid->draw_grid.frame_coord_keys[ele_logic] = 4;
 			grid->game_live = 0;
 			grid->over_mode = 1;
 		}
 		else{
-			grid->draw_grid.frame_coords_keys[ele_logic] = 7 + grid->logic_grid[ele_logic];
+			grid->draw_grid.frame_coord_keys[ele_logic] = 7 + grid->logic_grid[ele_logic];
 			grid->non_mines_left--;
 		}
 		grid->logic_grid[ele_logic] |= (1 << 7);
@@ -436,7 +436,7 @@ void b_press(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint16_t 
 				grid->num_flags--;
 			}
 		}
-		grid->draw_grid.frame_coords_keys[ele_logic] = status;
+		grid->draw_grid.frame_coord_keys[ele_logic] = status;
 	}
 	return;
 }
@@ -659,12 +659,12 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 			else if((cursor_position[2 * id] <= 245 + 13) && (cursor_position[(2 * id) + 1] <= 144 + 13)
 					&& cursor_position[2 * id] >= 245 && cursor_position[(2 * id) + 1] >= 144){	//Sound checker
 				options->sound_enabled = !options->sound_enabled;
-				options->checkers.frame_coords_keys[0] = options->sound_enabled;	//Update to show the right frame
+				options->checkers.frame_coord_keys[0] = options->sound_enabled;	//Update to show the right frame
 			}
 			else if((cursor_position[2 * id] <= 245 + 13) && (cursor_position[(2 * id) + 1] <= 184 + 13)
 					&& cursor_position[2 * id] >= 245 && cursor_position[(2 * id) + 1] >= 184){	//Question mark checker
 				options->question_enabled = !options->question_enabled;
-				options->checkers.frame_coords_keys[1] = options->question_enabled;	//Update to show the right frame
+				options->checkers.frame_coord_keys[1] = options->question_enabled;	//Update to show the right frame
 			}
 		}
 	}
@@ -781,7 +781,10 @@ int main(){
 
 	srand(time(0));	//Set the seed for rand()
 	time_t os_clock;	//Stores the current time
-	struct tm *readable_time;
+	struct tm *time_struct;
+	int8_t hour = -1;
+	int8_t minute = -1;
+	char time_buffer[9];
 
 	float cursor_position[8];
 	cursor_position[0] = 100;
@@ -795,7 +798,7 @@ int main(){
 
 	crayon_spritesheet_t Board, Icons, Windows;
 	crayon_palette_t Board_P, Icons_P, Windows_P, BIOS_P, Tahoma_P;
-	crayon_sprite_array_t indented_tiles;	//When doing an A or X press. Currently unused
+	crayon_textured_array_t indented_tiles;	//When doing an A or X press. Currently unused
 	crayon_font_mono_t BIOS_font;
 	crayon_font_prop_t Tahoma_font;
 	Board.spritesheet_texture = NULL;
@@ -856,8 +859,8 @@ int main(){
 
 	//Setting size to 1 since reset_grid will reset it soon anyways
 	//Also due to lang thing we don't know the spritesheet, animation or palette
-	// crayon_memory_set_sprite_array(&MS_grid.draw_grid, 1, 16, 0, 1, 0, 0, 0, 0, NULL, NULL, NULL);
-	crayon_memory_set_sprite_array(&MS_grid.draw_grid, 38 * 21, 16, 0, 1, 0, 0, 0, 0, NULL, NULL, NULL);	//Technically there's no need to make change the size after this
+	// crayon_memory_set_sprite_array(&MS_grid.draw_grid, 1, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);
+	crayon_memory_set_sprite_array(&MS_grid.draw_grid, 38 * 21, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);	//Technically there's no need to make change the size after this
 
 	int iter;
 	int jiter;
@@ -871,9 +874,9 @@ int main(){
 		}
 	}
 	if(!MS_options.language){	//English
-		MS_grid.draw_grid.ss = &Board;
-		MS_grid.draw_grid.anim = &Board.spritesheet_animation_array[tile_id];
-		MS_grid.draw_grid.pal = &Board_P;
+		MS_grid.draw_grid.spritesheet = &Board;
+		MS_grid.draw_grid.animation = &Board.spritesheet_animation_array[tile_id];
+		MS_grid.draw_grid.palette = &Board_P;
 	}
 	else{	//Italian
 		MS_grid.alt_ss = &Board;
@@ -889,9 +892,9 @@ int main(){
 	}
 
 	if(MS_options.language){	//Italian
-		MS_grid.draw_grid.ss = &Windows;
-		MS_grid.draw_grid.anim = &Windows.spritesheet_animation_array[tile_id];
-		MS_grid.draw_grid.pal = &Windows_P;	//I think this is fine in XP mode
+		MS_grid.draw_grid.spritesheet = &Windows;
+		MS_grid.draw_grid.animation = &Windows.spritesheet_animation_array[tile_id];
+		MS_grid.draw_grid.palette = &Windows_P;	//I think this is fine in XP mode
 	}
 	else{	//English
 		MS_grid.alt_ss = &Windows;
@@ -900,14 +903,14 @@ int main(){
 	}
 
 	//Indent draw list
-	crayon_memory_set_sprite_array(&indented_tiles, 8 * 4, 2, 0, 1, 0, 0, 0, 0, MS_grid.alt_ss, MS_grid.alt_anim, MS_grid.alt_pal);
+	crayon_memory_set_sprite_array(&indented_tiles, 8 * 4, 2, 0, 1, 0, 0, 0, 0, 0, MS_grid.alt_ss, MS_grid.alt_anim, MS_grid.alt_pal);
 	indented_tiles.draw_z[0] = 18;
 	indented_tiles.scales[0] = 1;
 	indented_tiles.scales[1] = 1;
 	indented_tiles.rotations[0] = 0;
 	indented_tiles.colours[0] = 0;
-	graphics_frame_coordinates(indented_tiles.anim, indented_tiles.frame_coords_map + 0, indented_tiles.frame_coords_map + 1, 6);	//Indent question
-	graphics_frame_coordinates(indented_tiles.anim, indented_tiles.frame_coords_map + 2, indented_tiles.frame_coords_map + 3, 7);	//Indent blank
+	graphics_frame_coordinates(indented_tiles.animation, indented_tiles.frame_coord_map + 0, indented_tiles.frame_coord_map + 1, 6);	//Indent question
+	graphics_frame_coordinates(indented_tiles.animation, indented_tiles.frame_coord_map + 2, indented_tiles.frame_coord_map + 3, 7);	//Indent blank
 
 	//Setting defaults for the grid (These won't ever change again)
 	MS_grid.draw_grid.draw_z[0] = 17;
@@ -916,8 +919,8 @@ int main(){
 	MS_grid.draw_grid.rotations[0] = 0;
 	MS_grid.draw_grid.colours[0] = 0;
 	for(iter = 0; iter < MS_grid.draw_grid.unique_frames; iter++){
-		graphics_frame_coordinates(MS_grid.draw_grid.anim, MS_grid.draw_grid.frame_coords_map + (2 * iter),
-			MS_grid.draw_grid.frame_coords_map + (2 * iter) + 1, iter);
+		graphics_frame_coordinates(MS_grid.draw_grid.animation, MS_grid.draw_grid.frame_coord_map + (2 * iter),
+			MS_grid.draw_grid.frame_coord_map + (2 * iter) + 1, iter);
 	}
 
 	//Get the info for num_changer
@@ -938,9 +941,9 @@ int main(){
 	}
 
 	//Options draw structs
-	crayon_memory_set_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[button_id], &Windows_P);
-	crayon_memory_set_sprite_array(&MS_options.checkers, 2, 2, 0, 1, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[checker_id], &Windows_P);
-	crayon_memory_set_sprite_array(&MS_options.number_changers, 3, 1, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[num_changer_id], &Windows_P);
+	crayon_memory_set_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[button_id], &Windows_P);
+	crayon_memory_set_sprite_array(&MS_options.checkers, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[checker_id], &Windows_P);
+	crayon_memory_set_sprite_array(&MS_options.number_changers, 3, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[num_changer_id], &Windows_P);
 
 	//Buttons
 	MS_options.buttons.draw_z[0] = 30;
@@ -948,18 +951,18 @@ int main(){
 	MS_options.buttons.scales[1] = 1;
 	MS_options.buttons.rotations[0] = 0;
 	MS_options.buttons.colours[0] = 0;
-	MS_options.buttons.draw_pos[0] = 189;
-	MS_options.buttons.draw_pos[1] = 306;
-	MS_options.buttons.draw_pos[2] = 275;
-	MS_options.buttons.draw_pos[3] = 306;
-	MS_options.buttons.draw_pos[4] = 361;
-	MS_options.buttons.draw_pos[5] = 306;
-	MS_options.buttons.draw_pos[6] = 275;
-	MS_options.buttons.draw_pos[7] = 252;
-	MS_options.buttons.draw_pos[8] = 361;
-	MS_options.buttons.draw_pos[9] = 252;
-	MS_options.buttons.frame_coords_keys[0] = 0;
-	graphics_frame_coordinates(MS_options.buttons.anim, MS_options.buttons.frame_coords_map, MS_options.buttons.frame_coords_map + 1, 0);
+	MS_options.buttons.positions[0] = 189;
+	MS_options.buttons.positions[1] = 306;
+	MS_options.buttons.positions[2] = 275;
+	MS_options.buttons.positions[3] = 306;
+	MS_options.buttons.positions[4] = 361;
+	MS_options.buttons.positions[5] = 306;
+	MS_options.buttons.positions[6] = 275;
+	MS_options.buttons.positions[7] = 252;
+	MS_options.buttons.positions[8] = 361;
+	MS_options.buttons.positions[9] = 252;
+	MS_options.buttons.frame_coord_keys[0] = 0;
+	graphics_frame_coordinates(MS_options.buttons.animation, MS_options.buttons.frame_coord_map, MS_options.buttons.frame_coord_map + 1, 0);
 
 	//Checkers
 	MS_options.checkers.draw_z[0] = 30;
@@ -967,14 +970,14 @@ int main(){
 	MS_options.checkers.scales[1] = 1;
 	MS_options.checkers.rotations[0] = 0;
 	MS_options.checkers.colours[0] = 0;
-	MS_options.checkers.draw_pos[0] = 245;
-	MS_options.checkers.draw_pos[1] = 144;
-	MS_options.checkers.draw_pos[2] = 245;
-	MS_options.checkers.draw_pos[3] = 184;
-	MS_options.checkers.frame_coords_keys[0] = MS_options.sound_enabled;
-	MS_options.checkers.frame_coords_keys[1] = MS_options.question_enabled;
-	graphics_frame_coordinates(MS_options.checkers.anim, MS_options.checkers.frame_coords_map, MS_options.checkers.frame_coords_map + 1, 0);
-	graphics_frame_coordinates(MS_options.checkers.anim, MS_options.checkers.frame_coords_map + 2, MS_options.checkers.frame_coords_map + 3, 1);
+	MS_options.checkers.positions[0] = 245;
+	MS_options.checkers.positions[1] = 144;
+	MS_options.checkers.positions[2] = 245;
+	MS_options.checkers.positions[3] = 184;
+	MS_options.checkers.frame_coord_keys[0] = MS_options.sound_enabled;
+	MS_options.checkers.frame_coord_keys[1] = MS_options.question_enabled;
+	graphics_frame_coordinates(MS_options.checkers.animation, MS_options.checkers.frame_coord_map, MS_options.checkers.frame_coord_map + 1, 0);
+	graphics_frame_coordinates(MS_options.checkers.animation, MS_options.checkers.frame_coord_map + 2, MS_options.checkers.frame_coord_map + 3, 1);
 
 	//Number_changers
 	MS_options.number_changers.draw_z[0] = 30;
@@ -982,14 +985,14 @@ int main(){
 	MS_options.number_changers.scales[1] = 1;
 	MS_options.number_changers.rotations[0] = 0;
 	MS_options.number_changers.colours[0] = 0;
-	MS_options.number_changers.draw_pos[0] = 420;
-	MS_options.number_changers.draw_pos[1] = 140 + (2 * MS_options.operating_system);
-	MS_options.number_changers.draw_pos[2] = 420;
-	MS_options.number_changers.draw_pos[3] = 180 + (2 * MS_options.operating_system);
-	MS_options.number_changers.draw_pos[4] = 420;
-	MS_options.number_changers.draw_pos[5] = 220 + (2 * MS_options.operating_system);
-	MS_options.number_changers.frame_coords_keys[0] = 0;
-	graphics_frame_coordinates(MS_options.number_changers.anim, MS_options.number_changers.frame_coords_map, MS_options.number_changers.frame_coords_map + 1, 0);
+	MS_options.number_changers.positions[0] = 420;
+	MS_options.number_changers.positions[1] = 140 + (2 * MS_options.operating_system);
+	MS_options.number_changers.positions[2] = 420;
+	MS_options.number_changers.positions[3] = 180 + (2 * MS_options.operating_system);
+	MS_options.number_changers.positions[4] = 420;
+	MS_options.number_changers.positions[5] = 220 + (2 * MS_options.operating_system);
+	MS_options.number_changers.frame_coord_keys[0] = 0;
+	graphics_frame_coordinates(MS_options.number_changers.animation, MS_options.number_changers.frame_coord_map, MS_options.number_changers.frame_coord_map + 1, 0);
 
 	MS_grid.logic_grid = NULL;
 	reset_grid(&MS_grid, &MS_options, 30, 20, 99);
@@ -1346,18 +1349,18 @@ int main(){
 						if(!neightbours_to_adjustments(&tile_offset_x, &tile_offset_y, valids, jiter)){
 							uint16_t ele_offset = ele + tile_offset_x + (tile_offset_y * MS_grid.x);
 							if(!(MS_grid.logic_grid[ele_offset] & ((1 << 7) + (1 << 6)))){
-								indented_tiles.frame_coords_keys[indent_count] = MS_grid.logic_grid[ele_offset] & (1 << 5) ? 0: 1;
-								indented_tiles.draw_pos[(2 * indent_count)] = MS_grid.start_x + (16 * (press_data[(3 * iter) + 1] + tile_offset_x));
-								indented_tiles.draw_pos[(2 * indent_count) + 1] = MS_grid.start_y + (16 * (press_data[(3 * iter) + 2] + tile_offset_y));
+								indented_tiles.frame_coord_keys[indent_count] = MS_grid.logic_grid[ele_offset] & (1 << 5) ? 0: 1;
+								indented_tiles.positions[(2 * indent_count)] = MS_grid.start_x + (16 * (press_data[(3 * iter) + 1] + tile_offset_x));
+								indented_tiles.positions[(2 * indent_count) + 1] = MS_grid.start_y + (16 * (press_data[(3 * iter) + 2] + tile_offset_y));
 								indent_count++;
 							}
 						}
 					}
 				}
 				if(!(MS_grid.logic_grid[ele] & ((1 << 7) + (1 << 6)))){	//Is unreleaved and not flagged
-					indented_tiles.frame_coords_keys[indent_count] = MS_grid.logic_grid[ele] & (1 << 5) ? 0: 1;
-					indented_tiles.draw_pos[(2 * indent_count)] = MS_grid.start_x + (16 * press_data[(3 * iter) + 1]);
-					indented_tiles.draw_pos[(2 * indent_count) + 1] = MS_grid.start_y + (16 * press_data[(3 * iter) + 2]);
+					indented_tiles.frame_coord_keys[indent_count] = MS_grid.logic_grid[ele] & (1 << 5) ? 0: 1;
+					indented_tiles.positions[(2 * indent_count)] = MS_grid.start_x + (16 * press_data[(3 * iter) + 1]);
+					indented_tiles.positions[(2 * indent_count) + 1] = MS_grid.start_y + (16 * press_data[(3 * iter) + 2]);
 					indent_count++;
 				}
 			}
@@ -1375,7 +1378,7 @@ int main(){
 		}
 
 		time(&os_clock);	//I think this is how I populate it with the current time
-		readable_time = localtime(&os_clock);
+		time_struct = localtime(&os_clock);
 
 		#if CRAYON_DEBUG == 1
 			pvr_get_stats(&pvr_stats);	//Get the framerate
@@ -1488,38 +1491,40 @@ int main(){
 			//Updating the time in the bottom right
 			//CONSIDER ONLY UPDATING IF TIME IS DIFFERENT
 			//Will come back to this at a later date to optimise it
-			char time_buffer[9];
-			if(readable_time->tm_hour < 13){
-				if(readable_time->tm_hour == 0){	//When its midnight, display 12:XX AM instead of 00:XX AM
-					readable_time->tm_hour = 12;
-				}
-				sprintf(time_buffer, "%02d:%02d AM", readable_time->tm_hour, readable_time->tm_min);
-			}
-			else{
-				sprintf(time_buffer, "%02d:%02d PM", readable_time->tm_hour - 12, readable_time->tm_min);
-			}
-
-			//The X starting pos varies based on the hour for XP and hour, AM/PM for 2000
-			if(MS_options.operating_system){
-				if(readable_time->tm_hour % 12 < 10){
-					os.variant_pos[2] = 583;
+			if(hour != time_struct->tm_hour || minute != time_struct->tm_min){
+				hour = time_struct->tm_hour;
+				minute = time_struct->tm_min;
+				if(time_struct->tm_hour < 13){
+					if(time_struct->tm_hour == 0){	//When its midnight, display 12:XX AM instead of 00:XX AM
+						time_struct->tm_hour = 12;
+					}
+					sprintf(time_buffer, "%02d:%02d AM", time_struct->tm_hour, time_struct->tm_min);
 				}
 				else{
-					os.variant_pos[2] = 586;
+					sprintf(time_buffer, "%02d:%02d PM", time_struct->tm_hour - 12, time_struct->tm_min);
 				}
-			}
-			else{
-				uint16_t clock_pos;
-				if(readable_time->tm_hour % 12 < 10){
-					clock_pos = 581;
+				//The X starting pos varies based on the hour for XP and hour, AM/PM for 2000
+				if(MS_options.operating_system){
+					if(time_struct->tm_hour % 12 < 10){
+						os.variant_pos[2] = 583;
+					}
+					else{
+						os.variant_pos[2] = 586;
+					}
 				}
 				else{
-					clock_pos = 585;
+					uint16_t clock_pos;
+					if(time_struct->tm_hour % 12 < 10){
+						clock_pos = 581;
+					}
+					else{
+						clock_pos = 585;
+					}
+					if(time_struct->tm_hour < 13){
+						clock_pos--;
+					}
+					os.variant_pos[2] = clock_pos;
 				}
-				if(readable_time->tm_hour < 13){
-					clock_pos--;
-				}
-				os.variant_pos[2] = clock_pos;
 			}
 
 			//XP uses another palette (White text version)

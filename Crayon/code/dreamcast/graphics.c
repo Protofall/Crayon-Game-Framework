@@ -284,26 +284,26 @@ extern uint8_t graphics_draw_sprites_OLD(const struct crayon_spritesheet *ss,
 }
 
 //Need to come back and do rotations and maybe colour?
-extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode){
 
 	float u0, v0, u1, v1;
 
 	pvr_sprite_cxt_t context;
-	if(sprite_array->ss->spritesheet_format == 6){  //PAL8BPP format
-	pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(sprite_array->pal->palette_id),
-		sprite_array->ss->spritesheet_dims, sprite_array->ss->spritesheet_dims,
-		sprite_array->ss->spritesheet_texture, sprite_array->filter);
+	if(sprite_array->spritesheet->spritesheet_format == 6){  //PAL8BPP format
+	pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL8BPP | PVR_TXRFMT_8BPP_PAL(sprite_array->palette->palette_id),
+		sprite_array->spritesheet->spritesheet_dims, sprite_array->spritesheet->spritesheet_dims,
+		sprite_array->spritesheet->spritesheet_texture, sprite_array->filter);
 	}
-	else if(sprite_array->ss->spritesheet_format == 5){ //PAL4BPP format
-	pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(sprite_array->pal->palette_id),
-		sprite_array->ss->spritesheet_dims, sprite_array->ss->spritesheet_dims,
-		sprite_array->ss->spritesheet_texture, sprite_array->filter);
+	else if(sprite_array->spritesheet->spritesheet_format == 5){ //PAL4BPP format
+	pvr_sprite_cxt_txr(&context, poly_list_mode, PVR_TXRFMT_PAL4BPP | PVR_TXRFMT_4BPP_PAL(sprite_array->palette->palette_id),
+		sprite_array->spritesheet->spritesheet_dims, sprite_array->spritesheet->spritesheet_dims,
+		sprite_array->spritesheet->spritesheet_texture, sprite_array->filter);
 	}
-	else if(sprite_array->ss->spritesheet_format == 0 || sprite_array->ss->spritesheet_format == 1 ||
-	sprite_array->ss->spritesheet_format == 2){  //ARGB1555, RGB565 and RGB4444
-		pvr_sprite_cxt_txr(&context, poly_list_mode, (sprite_array->ss->spritesheet_format) << 27,
-		sprite_array->ss->spritesheet_dims, sprite_array->ss->spritesheet_dims,
-		sprite_array->ss->spritesheet_texture, sprite_array->filter);
+	else if(sprite_array->spritesheet->spritesheet_format == 0 || sprite_array->spritesheet->spritesheet_format == 1 ||
+	sprite_array->spritesheet->spritesheet_format == 2){  //ARGB1555, RGB565 and RGB4444
+		pvr_sprite_cxt_txr(&context, poly_list_mode, (sprite_array->spritesheet->spritesheet_format) << 27,
+		sprite_array->spritesheet->spritesheet_dims, sprite_array->spritesheet->spritesheet_dims,
+		sprite_array->spritesheet->spritesheet_texture, sprite_array->filter);
 	}
 	else{ //Unknown format
 		return 1;
@@ -319,10 +319,10 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 		vert.cz = sprite_array->draw_z[0];
 	}
 	if(!(sprite_array->options & (1 << 1))){	//All share the same frame
-		u0 = sprite_array->frame_coords_map[sprite_array->frame_coords_keys[0]] / (float)sprite_array->ss->spritesheet_dims;
-		v0 = sprite_array->frame_coords_map[sprite_array->frame_coords_keys[0] + 1] / (float)sprite_array->ss->spritesheet_dims;
-		u1 = u0 + sprite_array->anim->animation_frame_width / (float)sprite_array->ss->spritesheet_dims;
-		v1 = v0 + sprite_array->anim->animation_frame_height / (float)sprite_array->ss->spritesheet_dims;
+		u0 = sprite_array->frame_coord_map[sprite_array->frame_coord_keys[0]] / (float)sprite_array->spritesheet->spritesheet_dims;
+		v0 = sprite_array->frame_coord_map[sprite_array->frame_coord_keys[0] + 1] / (float)sprite_array->spritesheet->spritesheet_dims;
+		u1 = u0 + sprite_array->animation->animation_frame_width / (float)sprite_array->spritesheet->spritesheet_dims;
+		v1 = v0 + sprite_array->animation->animation_frame_height / (float)sprite_array->spritesheet->spritesheet_dims;
 		vert.auv = PVR_PACK_16BIT_UV(u0, v0);
 		vert.buv = PVR_PACK_16BIT_UV(u1, v0);
 		vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
@@ -333,14 +333,19 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 	pvr_prim(&header, sizeof(header));
 	uint16_t i;
 	for(i = 0; i < sprite_array->num_sprites; i++){
-		vert.ax = floor(sprite_array->draw_pos[2 * i]);	//We floor the values since we're doing 2D and they'll look messed up if we have position "11.5", however scales can mess this up
-		vert.ay = floor(sprite_array->draw_pos[(2 * i) + 1]);
-		vert.bx = floor(sprite_array->draw_pos[2 * i] + sprite_array->anim->animation_frame_width) * sprite_array->scales[2 * i * !!(sprite_array->options & (1 << 2))];
-		vert.by = floor(sprite_array->draw_pos[(2 * i) + 1]);
-		vert.cx = floor(sprite_array->draw_pos[2 * i] + sprite_array->anim->animation_frame_width) * sprite_array->scales[2 * i * !!(sprite_array->options & (1 << 2))];
-		vert.cy = floor(sprite_array->draw_pos[(2 * i) + 1] + sprite_array->anim->animation_frame_height) * sprite_array->scales[(2 * i * !!(sprite_array->options & (1 << 2))) + 1];
-		vert.dx = floor(sprite_array->draw_pos[2 * i]);
-		vert.dy = floor(sprite_array->draw_pos[(2 * i) + 1] + sprite_array->anim->animation_frame_height) * sprite_array->scales[(2 * i * !!(sprite_array->options & (1 << 2))) + 1];
+		//We floor the values since we're doing 2D and they'll look messed up if we have position "11.5", however scales can mess this up
+		vert.ax = floor(sprite_array->positions[2 * i]);
+		vert.ay = floor(sprite_array->positions[(2 * i) + 1]);
+		vert.bx = floor(sprite_array->positions[2 * i] + sprite_array->animation->animation_frame_width) *
+			sprite_array->scales[2 * i * !!(sprite_array->options & (1 << 2))];
+		vert.by = floor(sprite_array->positions[(2 * i) + 1]);
+		vert.cx = floor(sprite_array->positions[2 * i] + sprite_array->animation->animation_frame_width) *
+			sprite_array->scales[2 * i * !!(sprite_array->options & (1 << 2))];
+		vert.cy = floor(sprite_array->positions[(2 * i) + 1] + sprite_array->animation->animation_frame_height) *
+			sprite_array->scales[(2 * i * !!(sprite_array->options & (1 << 2))) + 1];
+		vert.dx = floor(sprite_array->positions[2 * i]);
+		vert.dy = floor(sprite_array->positions[(2 * i) + 1] + sprite_array->animation->animation_frame_height) *
+			sprite_array->scales[(2 * i * !!(sprite_array->options & (1 << 2))) + 1];
 		
 
 		if(sprite_array->options & (1 << 0)){	//z
@@ -350,23 +355,30 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 		}
 
 		if(sprite_array->options & (1 << 1)){	//frame
-			u0 = sprite_array->frame_coords_map[(2 * sprite_array->frame_coords_keys[i])] / (float)sprite_array->ss->spritesheet_dims;
-			v0 = sprite_array->frame_coords_map[(2 * sprite_array->frame_coords_keys[i]) + 1] / (float)sprite_array->ss->spritesheet_dims;
-			u1 = u0 + sprite_array->anim->animation_frame_width / (float)sprite_array->ss->spritesheet_dims;
-			v1 = v0 + sprite_array->anim->animation_frame_height / (float)sprite_array->ss->spritesheet_dims;
+			u0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[i])] / (float)sprite_array->spritesheet->spritesheet_dims;
+			v0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[i]) + 1] / (float)sprite_array->spritesheet->spritesheet_dims;
+			u1 = u0 + sprite_array->animation->animation_frame_width / (float)sprite_array->spritesheet->spritesheet_dims;
+			v1 = v0 + sprite_array->animation->animation_frame_height / (float)sprite_array->spritesheet->spritesheet_dims;
 			vert.auv = PVR_PACK_16BIT_UV(u0, v0);
 			vert.buv = PVR_PACK_16BIT_UV(u1, v0);
 			vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
 		}
 
-		if(sprite_array->options & (1 << 3)){	//rotations (Unimplemented)
+		if(sprite_array->options & (1 << 3)){	//flips (Unimplemented)
 			;
 		}
 		else{
 			;
 		}
 
-		if(sprite_array->options & (1 << 4)){	//colour (Unimplemented)
+		if(sprite_array->options & (1 << 4)){	//rotations (Unimplemented)
+			;
+		}
+		else{
+			;
+		}
+
+		if(sprite_array->options & (1 << 5)){	//colour (Unimplemented)
 			;
 		}
 		else{
@@ -380,7 +392,7 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 }
 
 //I'll come back to this later
-extern uint8_t crayon_graphics_draw_polys(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_polys(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode){
 	return 0;
 }
 

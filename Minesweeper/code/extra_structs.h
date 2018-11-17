@@ -7,6 +7,7 @@
 
 //Should add some code here to move the sd and region icons (Or store their x/y's here)
 typedef struct MinesweeperOS{
+	//The the OS related assets (Aside from icons and clock)
 	uint8_t *ids;	//Animation ids
 	uint16_t *coords_pos;	//The x and y for placing it
 	uint16_t *coords_frame;	//The frame coordinates for UV
@@ -46,7 +47,7 @@ typedef struct MinesweeperSaveFile{
 //Contains the logic for a board
 typedef struct MinesweeperGrid{
 	uint8_t *logic_grid;
-	crayon_sprite_array_t draw_grid;	//Contains the tile positions, frames, UVs and more
+	crayon_textured_array_t draw_grid;	//Contains the tile positions, frames, UVs and more
 
 	//Set these 3 with the alternate board details for easy language switching
 	crayon_spritesheet_t * alt_ss;
@@ -90,9 +91,9 @@ typedef struct MinesweeperOptions{
 	uint8_t disp_mines;
 	char x_buffer[4], y_buffer[4], m_buffer[4];
 
-	crayon_sprite_array_t buttons;
-	crayon_sprite_array_t checkers;
-	crayon_sprite_array_t number_changers;
+	crayon_textured_array_t buttons;
+	crayon_textured_array_t checkers;
+	crayon_textured_array_t number_changers;
 
 	MinesweeperSaveFile_t savefile;	//Not a pointer since this struct needs the same save file always
 } MinesweeperOptions_t;
