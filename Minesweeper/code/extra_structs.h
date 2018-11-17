@@ -7,34 +7,22 @@
 
 //Should add some code here to move the sd and region icons (Or store their x/y's here)
 typedef struct MinesweeperOS{
-	//The the OS related assets (Aside from icons and clock)
-	uint8_t *ids;	//Animation ids
-	uint16_t *coords_pos;	//The x and y for placing it
-	uint16_t *coords_frame;	//The frame coordinates for UV
-	uint16_t *scale;	//The scale factor
-	uint8_t sprite_count;	//Number of sprites to draw
-	crayon_spritesheet_t *windows_ss;	//The spritesheet for the windows assets
+	//OS stuff + region and sd
+	crayon_textured_array_t **assets;
+	uint8_t num_assets;
+	uint8_t tabs_y;
+	crayon_textured_array_t sd;
+	crayon_textured_array_t region;
 
-	//These two are for stuff that appear in both OSes, but vary depending on which OS you use
-	uint16_t *variant_pos;	//Records the x and y for all the OS dependent stuff not in OS spritesheet
-	uint8_t clock_palette;	//The palette for the clock to use
+	uint16_t clock_x;
+	uint16_t clock_y;
+	crayon_palette_t * clock_palette;	//The palette for the clock to use
+
 } MinesweeperOS_t;
-
-/*
-
-OS dependent stuff
-
-[Menu_X] [Menu_Y]	//Game, Options, About
-[Clock_X] [Clock_Y]
-[Icon_Eject_X] [Icon_Eject_Y]
-[Icon_DC_X] [Icon_DC_Y]
-[Icon_BS_X] [Icon_BS_Y]
-
-*/
 
 typedef struct MinesweeperSaveFile{
 	uint8_t BS_Mode;	//Bulletsweeper mode. 0 for never won, 1 for Beat with 1 player, 2 for beat with 2 players, etc.
-	uint8_t checkbox_options;	//Sound and Question marks
+	uint8_t options;	//Sound and Question marks, Italian, OS, other
 	uint16_t times[6];	//First 3 are Single player, last 3 are multiplayer
 	char record_names[11][6];	//6 names, 11 chars long (Last char is \0 so really 10)
 

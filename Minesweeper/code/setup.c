@@ -1,302 +1,271 @@
 #include "setup.h"
 
-void setup_pos_lookup_table(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys, uint8_t iter, uint8_t sd){
-	uint8_t anim_id = os->ids[iter];
-	if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "aboutLogo")){
+void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t sd){
+	if(!strcmp(os->assets[i]->animation->animation_name, "aboutLogo")){
+		os->assets[i]->positions[0] = 100;
+		os->assets[i]->positions[1] = 120;
+		os->assets[i]->draw_z[0] = 19;
+	}
+	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderBottom")){
 		if(sys){
-			os->coords_pos[iter * 3] = 100;
-			os->coords_pos[(iter * 3) + 1] = 120;
-			os->coords_pos[(iter * 3) + 2] = 19;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
-		}
-		else{
-			os->coords_pos[iter * 3] = 100;
-			os->coords_pos[(iter * 3) + 1] = 120;
-			os->coords_pos[(iter * 3) + 2] = 19;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[0] = 3;
+			os->assets[i]->positions[1] = 447;
+			os->assets[i]->draw_z[0] = 16;
+			// os->assets[i]->scales[0] = 633;	// Umm...the scale only goes up to 255...
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "boarderBottom")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderBottomLeft")){
 		if(sys){
-			os->coords_pos[iter * 3] = 3;
-			os->coords_pos[(iter * 3) + 1] = 447;
-			os->coords_pos[(iter * 3) + 2] = 16;
-			os->scale[iter * 2] = 633;
-			os->scale[(iter * 2) + 1] = 1;
-		}
-		else{
-			;
+			os->assets[i]->positions[0] = 0;
+			os->assets[i]->positions[1] = 447;
+			os->assets[i]->draw_z[0] = 16;
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "boarderBottomLeft")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderBottomRight")){
 		if(sys){
-			os->coords_pos[iter * 3] = 0;
-			os->coords_pos[(iter * 3) + 1] = 447;
-			os->coords_pos[(iter * 3) + 2] = 16;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
-		}
-		else{
-			;
+			os->assets[i]->positions[0] = 636;
+			os->assets[i]->positions[1] = 447;
+			os->assets[i]->draw_z[0] = 17;
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "boarderBottomRight")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderLeft")){
 		if(sys){
-			os->coords_pos[iter * 3] = 636;
-			os->coords_pos[(iter * 3) + 1] = 447;
-			os->coords_pos[(iter * 3) + 2] = 17;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
-		}
-		else{
-			;
+			os->assets[i]->positions[0] = 0;
+			os->assets[i]->positions[1] = 29;
+			os->assets[i]->draw_z[0] = 16;
+			// os->assets[i]->scales[0] = 418;
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "boarderLeft")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderRight")){
 		if(sys){
-			os->coords_pos[iter * 3] = 0;
-			os->coords_pos[(iter * 3) + 1] = 29;
-			os->coords_pos[(iter * 3) + 2] = 16;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 418;
-		}
-		else{
-			;
+			os->assets[i]->positions[0] = 637;
+			os->assets[i]->positions[1] = 29;
+			os->assets[i]->draw_z[0] = 16;
+			// os->assets[i]->scales[1] = 418;
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "boarderRight")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "langIcon")){
 		if(sys){
-			os->coords_pos[iter * 3] = 637;
-			os->coords_pos[(iter * 3) + 1] = 29;
-			os->coords_pos[(iter * 3) + 2] = 16;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 418;
-		}
-		else{
-			;
-		}
-	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "langIcon")){
-		if(sys){	//Adjust this with sd
-			os->coords_pos[(iter * 3) + 1] = 457;
-			os->coords_pos[(iter * 3) + 2] = 17;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[1] = 457;
+			os->assets[i]->draw_z[0] = 17;
 			if(sd){
-				os->coords_pos[iter * 3] = 501;
+				os->assets[i]->positions[0] = 501;
 			}
 			else{
-				os->coords_pos[iter * 3] = 521;
+				os->assets[i]->positions[0] = 521;
 			}
 		}
 		else{
-			os->coords_pos[(iter * 3) + 1] = 459;
-			os->coords_pos[(iter * 3) + 2] = 17;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[1] = 459;
+			os->assets[i]->draw_z[0] = 17;
 			if(sd){
-				os->coords_pos[iter * 3] = 512;
+				os->assets[i]->positions[0] = 512;
 			}
 			else{
-				os->coords_pos[iter * 3] = 530;
+				os->assets[i]->positions[0] = 530;
 			}
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "taskbarCurrentTask")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "taskbarCurrentTask")){
 		if(sys){
-			os->coords_pos[iter * 3] = 106;
-			os->coords_pos[(iter * 3) + 1] = 450;
-			os->coords_pos[(iter * 3) + 2] = 17;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[0] = 106;
+			os->assets[i]->positions[1] = 450;
+			os->assets[i]->draw_z[0] = 17;
 		}
 		else{
-			os->coords_pos[iter * 3] = 71;
-			os->coords_pos[(iter * 3) + 1] = 456;
-			os->coords_pos[(iter * 3) + 2] = 17;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[0] = 71;
+			os->assets[i]->positions[1] = 456;
+			os->assets[i]->draw_z[0] = 17;
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "taskbarFiller")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "taskbarFiller")){
 		if(sys){
-			os->coords_pos[iter * 3] = 266;
-			os->coords_pos[(iter * 3) + 1] = 450;
-			os->coords_pos[(iter * 3) + 2] = 16;
-			os->scale[iter * 2] = 94;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[0] = 266;
+			os->assets[i]->positions[1] = 450;
+			os->assets[i]->draw_z[0] = 16;
+			os->assets[i]->scales[0] = 94;
+		}
+	}
+	else if(!strcmp(os->assets[i]->animation->animation_name, "taskbarStart")){
+		if(sys){
+			os->assets[i]->positions[0] = 0;
+			os->assets[i]->positions[1] = 450;
+			os->assets[i]->draw_z[0] = 16;
 		}
 		else{
-			;
+			os->assets[i]->positions[0] = 2;
+			os->assets[i]->positions[1] = 456;
+			os->assets[i]->draw_z[0] = 16;
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "taskbarStart")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "taskbarTimeFiller")){
 		if(sys){
-			os->coords_pos[iter * 3] = 0;
-			os->coords_pos[(iter * 3) + 1] = 450;
-			os->coords_pos[(iter * 3) + 2] = 16;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
-		}
-		else{
-			os->coords_pos[iter * 3] = 2;
-			os->coords_pos[(iter * 3) + 1] = 456;
-			os->coords_pos[(iter * 3) + 2] = 16;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
-		}
-	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "taskbarTimeFiller")){
-		if(sys){
-			os->coords_pos[(iter * 3) + 1] = 450;
-			os->coords_pos[(iter * 3) + 2] = 17;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[1] = 450;
+			os->assets[i]->draw_z[0] = 17;
 			if(sd){
-				os->coords_pos[iter * 3] = 609 - 20;
-				os->scale[iter * 2] = 9;
+				os->assets[i]->positions[0] = 589;
+				os->assets[i]->scales[0] = 9;
 			}
 			else{
-				os->coords_pos[iter * 3] = 609;
-				os->scale[iter * 2] = 1;
+				os->assets[i]->positions[0] = 609;
 			}
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "taskbarTimeLeft")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "taskbarTimeLeft")){
 		if(sys){
-			os->coords_pos[iter * 3] = 547;
-			os->coords_pos[(iter * 3) + 1] = 450;
-			os->coords_pos[(iter * 3) + 2] = 17;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[1] = 450;
+			os->assets[i]->draw_z[0] = 17;
 			if(sd){
-				os->coords_pos[iter * 3] = 547 - 20;
+				os->assets[i]->positions[0] = 527;
 			}
 			else{
-				os->coords_pos[iter * 3] = 547;
+				os->assets[i]->positions[0] = 547;
 			}
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "taskbarTimeRight")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "taskbarTimeRight")){
 		if(sys){
-			os->coords_pos[iter * 3] = 612;
-			os->coords_pos[(iter * 3) + 1] = 450;
-			os->coords_pos[(iter * 3) + 2] = 18;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[0] = 612;
+			os->assets[i]->positions[1] = 450;
+			os->assets[i]->draw_z[0] = 18;
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "topbarAdjusts")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "topbarAdjusts")){
 		if(sys){
-			os->coords_pos[iter * 3] = 568;
-			os->coords_pos[(iter * 3) + 1] = 0;
-			os->coords_pos[(iter * 3) + 2] = 17;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[0] = 568;
+			os->assets[i]->positions[1] = 0;
+			os->assets[i]->draw_z[0] = 17;
 		}
 		else{
-			os->coords_pos[iter * 3] = 585;
-			os->coords_pos[(iter * 3) + 1] = 5;
-			os->coords_pos[(iter * 3) + 2] = 17;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[0] = 585;
+			os->assets[i]->positions[1] = 5;
+			os->assets[i]->draw_z[0] = 17;
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "topbarFiller")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "topbarFiller")){
 		if(sys){
-			os->coords_pos[iter * 3] = 105;
-			os->coords_pos[(iter * 3) + 1] = 0;
-			os->coords_pos[(iter * 3) + 2] = 16;
-			os->scale[iter * 2] = 155;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[0] = 105;
+			os->assets[i]->positions[1] = 0;
+			os->assets[i]->draw_z[0] = 16;
+			os->assets[i]->scales[0] = 155;
 		}
 	}
-	else if(!strcmp(ss->spritesheet_animation_array[anim_id].animation_name, "topbarName")){
+	else if(!strcmp(os->assets[i]->animation->animation_name, "topbarName")){
 		if(sys){
-			os->coords_pos[iter * 3] = 0;
-			os->coords_pos[(iter * 3) + 1] = 0;
-			os->coords_pos[(iter * 3) + 2] = 16;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[0] = 0;
+			os->assets[i]->positions[1] = 0;
+			os->assets[i]->draw_z[0] = 16;
 		}
 		else{
-			os->coords_pos[iter * 3] = 6;
-			os->coords_pos[(iter * 3) + 1] = 5;
-			os->coords_pos[(iter * 3) + 2] = 16;
-			os->scale[iter * 2] = 1;
-			os->scale[(iter * 2) + 1] = 1;
+			os->assets[i]->positions[0] = 6;
+			os->assets[i]->positions[1] = 5;
+			os->assets[i]->draw_z[0] = 16;
 		}
-	}
-	else{
-		error_freeze("Unlisted file detected. %s", ss->spritesheet_animation_array[os->ids[anim_id]].animation_name);
 	}
 }
 
-//There seems to be an allocation issue here...
-void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys, uint8_t lang, uint8_t sd){
-	os->sprite_count = ss->spritesheet_animation_count - 4;	//Two anims we won't included. ItalianTiles, buttons and num_changer
-	os->ids = (uint8_t *) malloc(os->sprite_count * sizeof(uint8_t));	//Because we don't include the ital-tiles, this makes other code easier
-	os->coords_pos = (uint16_t *) malloc(3 * os->sprite_count * sizeof(uint16_t));	//x, y, z
-	os->coords_frame = (uint16_t *) malloc(2 * os->sprite_count * sizeof(uint16_t));	//u, v
-	os->scale = (uint16_t *) malloc(2 * os->sprite_count * sizeof(uint16_t));	//scale x/y
-	os->windows_ss = ss;
+// void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys, uint8_t lang, uint8_t sd, uint8_t region){
+void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, crayon_palette_t *pal, uint8_t sys, uint8_t lang, uint8_t sd){
+	os->num_assets = ss->spritesheet_animation_count - 4;	//Minus 4 because of removed assets
+	os->assets = (crayon_textured_array_t **) malloc(os->num_assets * sizeof(crayon_textured_array_t *));	//Allocate space for all OS draw struct pointers
+
+	//Allocate space for all draw structs
+	uint8_t i;
 	uint8_t id_count = 0;
-	uint8_t iter;
-	for(iter = 0; iter < os->sprite_count; iter++){
-		//Skip over the 4 assets we don't want in this list
+	//For all of them except the sd and region icons
+	for(i = 0; i < os->num_assets; i++){
+		os->assets[i] = (crayon_textured_array_t *) malloc(sizeof(crayon_textured_array_t));
 		while(!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "italianTiles") ||
 			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "numberChanger") ||
 			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "checker") ||
 			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "button")){
 			id_count++;
 		}
-		graphics_frame_coordinates(&ss->spritesheet_animation_array[id_count],
-			os->coords_frame + (2 * iter), os->coords_frame + (2 * iter) + 1,
-			lang ? ss->spritesheet_animation_array[id_count].animation_frames - 1: 0);
-		//Since all assets we will store here only have 2 frames if the 2nd frame is italian and we're in italian mode, then choose that
-		os->ids[iter] = id_count;
+		uint8_t multi_frames = 0;
+		if(lang){
+			multi_frames = 1;
+		}
+		crayon_memory_set_sprite_array(os->assets[i], 1, 2 * multi_frames, 0, multi_frames, 0, 0, 0, 0, 0, ss, &ss->spritesheet_animation_array[id_count], pal);
+		os->assets[i]->scales[0] = 1;
+		os->assets[i]->scales[1] = 1;
+		os->assets[i]->flips[0] = 0;
+		os->assets[i]->rotations[0] = 0;
+		os->assets[i]->colours[0] = 0;
+		setup_pos_lookup_table(os, sys, i, sd);
+		graphics_frame_coordinates(os->assets[i]->animation, os->assets[i]->frame_coord_map + 0, os->assets[i]->frame_coord_map + 1, 0);
+		if(os->assets[i]->animation->animation_frames > 1){
+			graphics_frame_coordinates(os->assets[i]->animation, os->assets[i]->frame_coord_map + 2, os->assets[i]->frame_coord_map + 3, 1);
+		}
+		if(lang && os->assets[i]->animation->animation_frames > 1){
+			os->assets[i]->frame_coord_keys[0] = 1;
+		}
+		else{
+			os->assets[i]->frame_coord_keys[0] = 0;
+		}
 		id_count++;
 	}
-	for(iter = 0; iter < os->sprite_count; iter++){
-		setup_pos_lookup_table(os, ss, sys, iter, sd);
-	}
 
-	//Confirm all these positions are accurate
-	os->variant_pos = (uint16_t *) malloc(10 * sizeof(uint16_t));
+	//The y position of the tabs
 	if(sys){
-		os->clock_palette = 61;
-		// os->variant_pos[0] = 0;	//Unused, just hear so its easy to get the item you want
-		os->variant_pos[1] = 33;
-		os->variant_pos[2] = 581;	//The X for this and other changes based on time (Right alighned) so have this be 640 - const - sum of width of chars
-		os->variant_pos[3] = 460;
-		os->variant_pos[4] = 533;
-		os->variant_pos[5] = 457;
-		os->variant_pos[6] = 553;
-		os->variant_pos[7] = 456;
-		os->variant_pos[8] = 0;	//The BS mode icon will go here eventually
-		os->variant_pos[9] = 0;
+		os->tabs_y = 33;
+		os->clock_x = 581;
+		os->clock_y = 460;
 	}
 	else{
-		os->clock_palette = 62;
-		// os->variant_pos[0] = 0;	//Unused, just hear so its easy to get the item you want
-		os->variant_pos[1] = 30;
-		os->variant_pos[2] = 581;	//Same as id 2 from XP
-		os->variant_pos[3] = 463;
-		os->variant_pos[4] = 530;
-		os->variant_pos[5] = 459;
-		os->variant_pos[6] = 548;
-		os->variant_pos[7] = 458;
-		os->variant_pos[8] = 0;	//The BS mode icon will go here eventually
-		os->variant_pos[9] = 0;
+		os->tabs_y = 30;
+		os->clock_x = 581;
+		os->clock_y = 463;
+	}
+}
+
+void setup_OS_assets_icons(MinesweeperOS_t *os, crayon_spritesheet_t *Icons, crayon_palette_t *Icons_P, uint8_t sys, uint8_t region){
+	uint8_t i;
+	for(i = 0; i < Icons->spritesheet_animation_count; i++){
+		if(!strcmp(Icons->spritesheet_animation_array[i].animation_name, "sd")){
+			crayon_memory_set_sprite_array(&os->sd, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->spritesheet_animation_array[i], Icons_P);
+			graphics_frame_coordinates(os->sd.animation, os->sd.frame_coord_map, os->sd.frame_coord_map + 1, 0);
+			os->sd.scales[0] = 1;
+			os->sd.scales[1] = 1;
+			os->sd.flips[0] = 0;
+			os->sd.rotations[0] = 0;
+			os->sd.colours[0] = 0;
+			os->sd.frame_coord_keys[0] = 0;
+			if(sys){
+				os->sd.positions[0] = 533;	//sd
+				os->sd.positions[1] = 457;
+			}
+			else{
+				os->sd.positions[0] = 530;	//sd
+				os->sd.positions[1] = 459;
+			}
+		}
+		if(!strcmp(Icons->spritesheet_animation_array[i].animation_name, "regionIcons")){
+			crayon_memory_set_sprite_array(&os->region, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->spritesheet_animation_array[i], Icons_P);
+			graphics_frame_coordinates(os->region.animation, os->region.frame_coord_map, os->region.frame_coord_map + 1, region);
+			os->region.scales[0] = 1;
+			os->region.scales[1] = 1;
+			os->region.flips[0] = 0;
+			os->region.rotations[0] = 0;
+			os->region.colours[0] = 0;
+			os->region.frame_coord_keys[0] = 0;
+			if(sys){
+				os->region.positions[0] = 553;	//region
+				os->region.positions[1] = 456;
+			}
+			else{
+				os->region.positions[0] = 548;	//region
+				os->region.positions[1] = 458;
+			}
+		}
 	}
 }
 
 void setup_free_OS_struct(MinesweeperOS_t *os){
-	free(os->ids);
-	free(os->coords_pos);
-	free(os->coords_frame);
-	free(os->scale);
+	uint8_t i;
+	for(i = 0; i < os->num_assets; i++){
+		crayon_memory_free_sprite_array(os->assets[i], 0, 0);
+	}
+	free(os->assets);
 }
 
 void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t sd){

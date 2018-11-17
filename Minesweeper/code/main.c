@@ -551,20 +551,20 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 	if(options->focus != 1){	//When we get a new score, we don't want to change focus easily
 		//Top 4 options
 		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){
-			if((cursor_position[2 * id] <= 9 + 27 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
-					&& cursor_position[2 * id] >= 9 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
+			if((cursor_position[2 * id] <= 9 + 27 + 3) && (cursor_position[(2 * id) + 1] <= os->tabs_y + 13)
+					&& cursor_position[2 * id] >= 9 - 4 && cursor_position[(2 * id) + 1] >= os->tabs_y - 3){
 				options->focus = 0;
 			}
-			else if((cursor_position[2 * id] <= 48 + 37 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
-					&& cursor_position[2 * id] >= 48 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
+			else if((cursor_position[2 * id] <= 48 + 37 + 3) && (cursor_position[(2 * id) + 1] <= os->tabs_y + 13)
+					&& cursor_position[2 * id] >= 48 - 4 && cursor_position[(2 * id) + 1] >= os->tabs_y - 3){
 				options->focus = 2;
 			}
-			else if((cursor_position[2 * id] <= 97 + 40 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
-					&& cursor_position[2 * id] >= 97 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
+			else if((cursor_position[2 * id] <= 97 + 40 + 3) && (cursor_position[(2 * id) + 1] <= os->tabs_y + 13)
+					&& cursor_position[2 * id] >= 97 - 4 && cursor_position[(2 * id) + 1] >= os->tabs_y - 3){
 				options->focus = 3;
 			}
-			else if((cursor_position[2 * id] <= 149 + 29 + 3) && (cursor_position[(2 * id) + 1] <= os->variant_pos[1] + 13)
-					&& cursor_position[2 * id] >= 149 - 4 && cursor_position[(2 * id) + 1] >= os->variant_pos[1] - 3){
+			else if((cursor_position[2 * id] <= 149 + 29 + 3) && (cursor_position[(2 * id) + 1] <= os->tabs_y + 13)
+					&& cursor_position[2 * id] >= 149 - 4 && cursor_position[(2 * id) + 1] >= os->tabs_y - 3){
 				options->focus = 4;
 			}
 		}
@@ -691,16 +691,16 @@ uint8_t button_press_logic(MinesweeperGrid_t * grid, MinesweeperOptions_t * opti
 //Called in draw function, if cursor hovers over a button then return the button map (Either no bits or 1 bit will be set)
 uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os){
 	uint8_t menus_selected = 0;
-	if((cursor_x <= 39) && (cursor_y <= os->variant_pos[1] + 13) && cursor_x >= 5 && cursor_y >= os->variant_pos[1] - 3){
+	if((cursor_x <= 39) && (cursor_y <= os->tabs_y + 13) && cursor_x >= 5 && cursor_y >= os->tabs_y - 3){
 		menus_selected += (1 << 0);
 	}
-	else if((cursor_x <= 88) && (cursor_y <= os->variant_pos[1] + 13) && cursor_x >= 44 && cursor_y >= os->variant_pos[1] - 3){
+	else if((cursor_x <= 88) && (cursor_y <= os->tabs_y + 13) && cursor_x >= 44 && cursor_y >= os->tabs_y - 3){
 		menus_selected += (1 << 1);
 	}
-	else if((cursor_x <= 140) && (cursor_y <= os->variant_pos[1] + 13) && cursor_x >= 93 && cursor_y >= os->variant_pos[1] - 3){
+	else if((cursor_x <= 140) && (cursor_y <= os->tabs_y + 13) && cursor_x >= 93 && cursor_y >= os->tabs_y - 3){
 		menus_selected += (1 << 2);
 	}
-	else if((cursor_x <= 181) && (cursor_y <= os->variant_pos[1] + 13) && cursor_x >= 145 && cursor_y >= os->variant_pos[1] - 3){
+	else if((cursor_x <= 181) && (cursor_y <= os->tabs_y + 13) && cursor_x >= 145 && cursor_y >= os->tabs_y - 3){
 		menus_selected += (1 << 3);
 	}
 	return menus_selected;
@@ -750,7 +750,8 @@ int main(){
 	MS_options.operating_system = 0;
 	MS_options.language = 0;
 	MS_options.focus = 0;
-	// MS_options.focus = 2;	//DEBUG
+	
+	MS_options.focus = 2;	//DEBUG
 
 	#if CRAYON_SD_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
@@ -797,7 +798,8 @@ int main(){
 	cursor_position[7] = 66;
 
 	crayon_spritesheet_t Board, Icons, Windows;
-	crayon_palette_t Board_P, Icons_P, Windows_P, BIOS_P, Tahoma_P;
+	crayon_palette_t Board_P, Icons_P, Windows_P, BIOS_P, Tahoma_P, White_Tahoma_P,
+		cursor_red, cursor_yellow, cursor_green, cursor_blue;
 	crayon_textured_array_t indented_tiles;	//When doing an A or X press. Currently unused
 	crayon_font_mono_t BIOS_font;
 	crayon_font_prop_t Tahoma_font;
@@ -851,7 +853,27 @@ int main(){
 
 	//Make the OS struct and populate it
 	MinesweeperOS_t os;
-	setup_OS_assets(&os, &Windows, MS_options.operating_system, MS_options.language, MS_options.sd_present);
+
+	//The dreamcast logo to be displayed on the windows taskbar
+	uint8_t region = flashrom_get_region();
+	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1 despite having a region
+		region = 0;
+	}
+
+	//Populate OS struct
+	setup_OS_assets(&os, &Windows, &Windows_P, MS_options.operating_system, MS_options.language, MS_options.sd_present);
+	setup_OS_assets_icons(&os, &Icons, &Icons_P, MS_options.language, region);
+
+	int iter;
+	int jiter;
+
+	//Add the clock palette
+	if(MS_options.operating_system){
+		os.clock_palette = &White_Tahoma_P;
+	}
+	else{
+		os.clock_palette = &Tahoma_P;
+	}
 
 	//Setup the untextured poly structs
 	setup_bg_untextured_poly(&Bg_polys, MS_options.operating_system, MS_options.sd_present);
@@ -861,9 +883,6 @@ int main(){
 	//Also due to lang thing we don't know the spritesheet, animation or palette
 	// crayon_memory_set_sprite_array(&MS_grid.draw_grid, 1, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);
 	crayon_memory_set_sprite_array(&MS_grid.draw_grid, 38 * 21, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);	//Technically there's no need to make change the size after this
-
-	int iter;
-	int jiter;
 
 	//Setting up the language spritesheet, animation and palette pointers
 	uint8_t tile_id = 0;
@@ -907,6 +926,7 @@ int main(){
 	indented_tiles.draw_z[0] = 18;
 	indented_tiles.scales[0] = 1;
 	indented_tiles.scales[1] = 1;
+	indented_tiles.flips[0] = 0;
 	indented_tiles.rotations[0] = 0;
 	indented_tiles.colours[0] = 0;
 	graphics_frame_coordinates(indented_tiles.animation, indented_tiles.frame_coord_map + 0, indented_tiles.frame_coord_map + 1, 6);	//Indent question
@@ -916,6 +936,7 @@ int main(){
 	MS_grid.draw_grid.draw_z[0] = 17;
 	MS_grid.draw_grid.scales[0] = 1;
 	MS_grid.draw_grid.scales[1] = 1;
+	MS_grid.draw_grid.flips[0] = 0;
 	MS_grid.draw_grid.rotations[0] = 0;
 	MS_grid.draw_grid.colours[0] = 0;
 	for(iter = 0; iter < MS_grid.draw_grid.unique_frames; iter++){
@@ -936,7 +957,6 @@ int main(){
 		}
 		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "numberChanger")){
 			num_changer_id = iter;
-			// break;
 		}
 	}
 
@@ -949,6 +969,7 @@ int main(){
 	MS_options.buttons.draw_z[0] = 30;
 	MS_options.buttons.scales[0] = 1;
 	MS_options.buttons.scales[1] = 1;
+	MS_options.buttons.flips[0] = 0;
 	MS_options.buttons.rotations[0] = 0;
 	MS_options.buttons.colours[0] = 0;
 	MS_options.buttons.positions[0] = 189;
@@ -968,6 +989,7 @@ int main(){
 	MS_options.checkers.draw_z[0] = 30;
 	MS_options.checkers.scales[0] = 1;
 	MS_options.checkers.scales[1] = 1;
+	MS_options.checkers.flips[0] = 0;
 	MS_options.checkers.rotations[0] = 0;
 	MS_options.checkers.colours[0] = 0;
 	MS_options.checkers.positions[0] = 245;
@@ -983,6 +1005,7 @@ int main(){
 	MS_options.number_changers.draw_z[0] = 30;
 	MS_options.number_changers.scales[0] = 1;
 	MS_options.number_changers.scales[1] = 1;
+	MS_options.number_changers.flips[0] = 0;
 	MS_options.number_changers.rotations[0] = 0;
 	MS_options.number_changers.colours[0] = 0;
 	MS_options.number_changers.positions[0] = 420;
@@ -1023,25 +1046,11 @@ int main(){
 	uint16_t press_data[12] = {0};
 	uint8_t player_movement = 0;	//This tells whether a player is using a joystick (0) or D-Pad (1) Only last 4 bits are used
 
-	//The dreamcast logo to be displayed on the windows taskbar
-	uint16_t region_icon_x = 0;
-	uint16_t region_icon_y = 0;
-	int8_t region = flashrom_get_region() - 1;
-	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1 despite having a region
-		region = 3;
-	}
-	graphics_frame_coordinates(&Icons.spritesheet_animation_array[1], &region_icon_x, &region_icon_y, region);
-
 	float thumb_x = 0;
 	float thumb_y = 0;
 	uint8_t thumb_active;
 
-	uint16_t sd_x;
-	uint16_t sd_y;
-	graphics_frame_coordinates(&Icons.spritesheet_animation_array[2], &sd_x, &sd_y, 0);
-
 	//The palette for XP's clock
-	crayon_palette_t White_Tahoma_P, cursor_red, cursor_yellow, cursor_green, cursor_blue;
 	crayon_memory_clone_palette(&Tahoma_P, &White_Tahoma_P, 61);
 	crayon_memory_swap_colour(&White_Tahoma_P, 0xFF000000, 0xFFFFFFFF, 0);	//Swapps black for white
 
@@ -1421,28 +1430,9 @@ int main(){
 		//Transfer more stuff from this list into either the PT or OP lists
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
-			//Draw windows graphics using our MinesweeperOpSys struct
-			for(iter = 0; iter < os.sprite_count; iter++){
-				if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "aboutLogo") && MS_options.focus != 4){	//We don't want to draw that unless we're on the about page
-					continue;
-				}
-				graphics_draw_sprite(&Windows, &Windows.spritesheet_animation_array[os.ids[iter]],
-					os.coords_pos[3 * iter], os.coords_pos[(3 * iter) + 1], os.coords_pos[(3 * iter) + 2],
-					os.scale[2 * iter], os.scale[(2 * iter) + 1], os.coords_frame[2 * iter], os.coords_frame[(2 *iter) + 1], 1);
-					//We choose palette 1 because that's 2000's palette and XP uses RGB565
-			}
-
 			//Draw the flag count and timer (Modify function to draw them as opaque or just redo this part)
 			digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.num_flags, 20, 65, 17);
 			digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.time_sec, 581, 65, 17);
-
-			//Draw the sd icon
-			if(MS_options.sd_present){
-				graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[2], os.variant_pos[4], os.variant_pos[5], 21, 1, 1, sd_x, sd_y, 1);
-			}
-
-			//Draw the region icon
-			graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[1], os.variant_pos[6], os.variant_pos[7], 21, 1, 1, region_icon_x, region_icon_y, 1);
 
 			//Draw the reset button face
 			graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
@@ -1465,32 +1455,42 @@ int main(){
 				}
 			}
 
-			//Drawing the highlight boxes
+			//Drawing the highlight boxes (Maybe make a change so they're brighter in XP?)
 			if(menus_selected & (1 << 0)){
-				graphics_draw_untextured_poly(5, os.variant_pos[1] - 3, 19, 34, 16, 0x40FFFFFF, 0);	//Font is layer 20
+				graphics_draw_untextured_poly(5, os.tabs_y - 3, 19, 34, 16, 0x40FFFFFF, 0);	//Font is layer 20
 			}
 			if(menus_selected & (1 << 1)){
-				graphics_draw_untextured_poly(44, os.variant_pos[1] - 3, 19, 44, 16, 0x40FFFFFF, 0);
+				graphics_draw_untextured_poly(44, os.tabs_y - 3, 19, 44, 16, 0x40FFFFFF, 0);
 			}
 			if(menus_selected & (1 << 2)){
-				graphics_draw_untextured_poly(93, os.variant_pos[1] - 3, 19, 47, 16, 0x40FFFFFF, 0);
+				graphics_draw_untextured_poly(93, os.tabs_y - 3, 19, 47, 16, 0x40FFFFFF, 0);
 			}
 			if(menus_selected & (1 << 3)){
-				graphics_draw_untextured_poly(145, os.variant_pos[1] - 3, 19, 36, 16, 0x40FFFFFF, 0);
+				graphics_draw_untextured_poly(145, os.tabs_y - 3, 19, 36, 16, 0x40FFFFFF, 0);
 			}
 
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 9, os.variant_pos[1], 20, 1, 1, 62, "Game\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 48, os.variant_pos[1], 20, 1, 1, 62, "Options\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 97, os.variant_pos[1], 20, 1, 1, 62, "Controls\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 149, os.variant_pos[1], 20, 1, 1, 62, "About\0");
+			for(iter = 0; iter < os.num_assets; iter++){
+				if(!strcmp(os.assets[iter]->animation->animation_name, "aboutLogo") && MS_options.focus != 4){	//We don't want to draw that unless we're on the about page
+					continue;
+				}
+				crayon_graphics_draw_sprites(os.assets[iter], PVR_LIST_PT_POLY);
+			}
+
+			//Draw the sd icon
+			if(MS_options.sd_present){
+				crayon_graphics_draw_sprites(&os.sd, PVR_LIST_OP_POLY);
+			}
+
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 9, os.tabs_y, 20, 1, 1, 62, "Game\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 48, os.tabs_y, 20, 1, 1, 62, "Options\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 97, os.tabs_y, 20, 1, 1, 62, "Controls\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 149, os.tabs_y, 20, 1, 1, 62, "About\0");
 
 			//Updating the time in the bottom right
-			//CONSIDER ONLY UPDATING IF TIME IS DIFFERENT
-			//Will come back to this at a later date to optimise it
 			if(hour != time_struct->tm_hour || minute != time_struct->tm_min){
 				hour = time_struct->tm_hour;
 				minute = time_struct->tm_min;
@@ -1506,10 +1506,10 @@ int main(){
 				//The X starting pos varies based on the hour for XP and hour, AM/PM for 2000
 				if(MS_options.operating_system){
 					if(time_struct->tm_hour % 12 < 10){
-						os.variant_pos[2] = 583;
+						os.clock_x = 583;
 					}
 					else{
-						os.variant_pos[2] = 586;
+						os.clock_x = 586;
 					}
 				}
 				else{
@@ -1523,12 +1523,12 @@ int main(){
 					if(time_struct->tm_hour < 13){
 						clock_pos--;
 					}
-					os.variant_pos[2] = clock_pos;
+					os.clock_x = clock_pos;
 				}
 			}
 
 			//XP uses another palette (White text version)
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, os.variant_pos[2], os.variant_pos[3], 20, 1, 1, os.clock_palette, time_buffer);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, os.clock_x, os.clock_y, 20, 1, 1, os.clock_palette->palette_id, time_buffer);
 
 			//DEBUG, REMOVE LATER
 			#if CRAYON_DEBUG == 1
@@ -1605,6 +1605,9 @@ int main(){
 				crayon_graphics_draw_sprites(&MS_options.checkers, PVR_LIST_OP_POLY);
 				crayon_graphics_draw_sprites(&MS_options.number_changers, PVR_LIST_OP_POLY);
 			}
+
+			//Draw the region icon
+			crayon_graphics_draw_sprites(&os.region, PVR_LIST_OP_POLY);
 
 			//Draw the grid's boarder
 			if(MS_options.focus <= 1){
