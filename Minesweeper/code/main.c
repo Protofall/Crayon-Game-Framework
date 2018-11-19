@@ -644,17 +644,17 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 				sprintf(options->y_buffer, "%d", options->disp_y);
 				sprintf(options->m_buffer, "%d", options->disp_mines);
 			}
+			else if((cursor_position[2 * id] <= 275 + 75) && (cursor_position[(2 * id) + 1] <= 252 + 23)
+					&& cursor_position[2 * id] >= 275 && cursor_position[(2 * id) + 1] >= 252){	//Save to VMU (UNFINISHED)
+				error_freeze("UNIMPLEMENTED");
+			}
 			else if((cursor_position[2 * id] <= 361 + 75) && (cursor_position[(2 * id) + 1] <= 252 + 23)
 					&& cursor_position[2 * id] >= 361 && cursor_position[(2 * id) + 1] >= 252){	//Apply
 				if(options->disp_mines > (options->disp_x - 1) * (options->disp_y - 1)){
 					options->disp_mines = (options->disp_x - 1) * (options->disp_y - 1);
 					sprintf(options->m_buffer, "%d", options->disp_mines);
 				}
-				reset_grid(grid, options, options->disp_x, options->disp_y, options->disp_mines);	//Doesn't reset the face...the var is global, but the anim isn't...
-			}
-			else if((cursor_position[2 * id] <= 361 + 75) && (cursor_position[(2 * id) + 1] <= 306 + 23)
-					&& cursor_position[2 * id] >= 361 && cursor_position[(2 * id) + 1] >= 306){	//Save to VMU (UNFINISHED)
-				;
+				reset_grid(grid, options, options->disp_x, options->disp_y, options->disp_mines);	//Doesn't reset the face...
 			}
 			else if((cursor_position[2 * id] <= 245 + 13) && (cursor_position[(2 * id) + 1] <= 144 + 13)
 					&& cursor_position[2 * id] >= 245 && cursor_position[(2 * id) + 1] >= 144){	//Sound checker
@@ -887,7 +887,9 @@ int main(){
 	}
 
 	//Populate OS struct
+	// error_freeze("test1");
 	setup_OS_assets(&os, &Windows, &Windows_P, MS_options.operating_system, MS_options.language, MS_options.sd_present);
+	// error_freeze("test2");
 	setup_OS_assets_icons(&os, &Icons, &Icons_P, MS_options.operating_system, region);
 
 	//Add the clock palette
