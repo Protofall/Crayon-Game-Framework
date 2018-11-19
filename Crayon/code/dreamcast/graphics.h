@@ -35,12 +35,6 @@ extern uint8_t graphics_draw_sprite(const struct crayon_spritesheet *ss,
 	float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
 	uint8_t paletteNumber);
 
-//Testing drawing multiple of same thing CHANGE fd_size TO "BOOLEAN" (0/1)
-	//Will be removed soon
-extern uint8_t graphics_draw_sprites_OLD(const struct crayon_spritesheet *ss,
-	const struct crayon_animation *anim, uint16_t *draw_coords, uint16_t *frame_data, uint16_t fd_size,
-	uint16_t num_sprites, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber);
-
 //(Delete other multi sprite draw after and keep original as a learner version for noobies)
 //poly_list mode is for the tr/pt/op render list macro we want to use. Might move this param into the struct...
 extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode);	//UNFINISHED (No colour/rotation yet)

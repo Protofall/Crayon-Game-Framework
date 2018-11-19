@@ -28,9 +28,7 @@ typedef struct crayon_spritesheet{
 	pvr_ptr_t spritesheet_texture;
 	char *spritesheet_name;	//Might be useful for when it comes time to un-mount a romdisk, otherwise I don't think its needed
 	uint16_t spritesheet_dims;	//Since a pvr texture must be a square, we don't need height/width
-	uint8_t spritesheet_format;	//1 for 4BPP, 2 for 8BPP, 3 for RGB565 and 4 for ARGB4444 (0 for unknown)
-								//CHANGE TO UINT32 AND JUST SAVE WHOLE FORMAT
-	// uint32_t spritesheet_format;
+	int spritesheet_format;	//The raw dtex type value
 
 	crayon_animation_t *spritesheet_animation_array;	//Allows me to make an array of animation_t pointers
 	uint8_t spritesheet_animation_count;	//The number of animations per spritesheet
@@ -55,8 +53,7 @@ num_rows num_chars_row_1 num_chars_row_2 (etc)
 typedef struct crayon_font_prop{
 	pvr_ptr_t fontsheet_texture;
 	uint16_t fontsheet_dim;
-	uint8_t texture_format;	//Contains the texel format
-	// uint32_t texture_format;
+	int texture_format;		//The raw dtex type value
 	uint8_t *char_width;	//Num elements equal to num_chars
 	uint8_t char_height;
 	uint8_t *chars_per_row;	//Total of array is num_rows
@@ -72,8 +69,7 @@ typedef struct crayon_font_prop{
 typedef struct crayon_font_mono{
 	pvr_ptr_t fontsheet_texture;
 	uint16_t fontsheet_dim;
-	uint8_t texture_format;	//Contains the texel format
-	// uint32_t texture_format;
+	int texture_format;		//The raw dtex type value
 	uint8_t char_width;
 	uint8_t char_height;
 	uint8_t num_columns;

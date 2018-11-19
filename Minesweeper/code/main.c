@@ -887,9 +887,7 @@ int main(){
 	}
 
 	//Populate OS struct
-	// error_freeze("test1");
 	setup_OS_assets(&os, &Windows, &Windows_P, MS_options.operating_system, MS_options.language, MS_options.sd_present);
-	// error_freeze("test2");
 	setup_OS_assets_icons(&os, &Icons, &Icons_P, MS_options.operating_system, region);
 
 	//Add the clock palette
