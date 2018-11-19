@@ -5,7 +5,6 @@
 
 //This file exist just to make the main file a little bit more clean
 
-//Should add some code here to move the sd and region icons (Or store their x/y's here)
 typedef struct MinesweeperOS{
 	//OS stuff + region and sd
 	crayon_textured_array_t **assets;

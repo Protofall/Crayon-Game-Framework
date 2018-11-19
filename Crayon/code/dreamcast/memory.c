@@ -1,21 +1,30 @@
 #include "memory.h"
 
-extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, dtex_header_t *dtex_header, char *texture_path){	
+extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *dims, int *format, char *texture_path){
 	uint8_t dtex_result = 0;
+	dtex_header_t dtex_header;
 
 	#define DTEX_ERROR(n) {dtex_result = n; goto DTEX_cleanup;}
 
 		FILE *texture_file = fopen(texture_path, "rb");
 		if(!texture_file){DTEX_ERROR(1);}
 
-		if(fread(dtex_header, sizeof(dtex_header_t), 1, texture_file) != 1){DTEX_ERROR(2);}
+		if(fread(&dtex_header, sizeof(dtex_header_t), 1, texture_file) != 1){DTEX_ERROR(2);}
 
-		if(memcmp(dtex_header->magic, "DTEX", 4)){DTEX_ERROR(3);}
+		if(memcmp(dtex_header.magic, "DTEX", 4)){DTEX_ERROR(3);}
 
-		*dtex = pvr_mem_malloc(dtex_header->size);
+		*dtex = pvr_mem_malloc(dtex_header.size);
 		if(!*dtex){DTEX_ERROR(4);}
 
-		if(fread(*dtex, dtex_header->size, 1, texture_file) != 1){DTEX_ERROR(5);}
+		if(fread(*dtex, dtex_header.size, 1, texture_file) != 1){DTEX_ERROR(5);}
+
+		if(dtex_header.width > dtex_header.height){
+			*dims = dtex_header.width;
+		}
+		else{
+			*dims = dtex_header.height;
+		}
+		*format = dtex_header.type;
 
 	#undef DTEX_ERROR
 
@@ -35,54 +44,26 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	// Load texture
 	//---------------------------------------------------------------------------
 
-	dtex_header_t dtex_header;
-	uint8_t dtex_result = crayon_memory_load_dtex(&ss->spritesheet_texture, &dtex_header, path);
+	uint8_t dtex_result = crayon_memory_load_dtex(&ss->spritesheet_texture, &ss->spritesheet_dims, &ss->spritesheet_format, path);
+
 	if(dtex_result){ERROR(dtex_result);}
 
-	// Write all metadata except palette stuff
-	//---------------------------------------------------------------------------
+	uint8_t texture_format = (((1 << 3) - 1) & (ss->spritesheet_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
 
-	if(dtex_header.width > dtex_header.height){
-		ss->spritesheet_dims = dtex_header.width;
-	}
-	else{
-		ss->spritesheet_dims = dtex_header.height;
-	}
-
-	//This assumes no mip-mapping, no stride, twiddled on, its uncompressed and no stride setting (I might edit this later to allow for compressed)
-	if(dtex_header.type == 0x00000000){ //ARGB1555
-		ss->spritesheet_format = 0;
-	}
-	if(dtex_header.type == 0x08000000){ //RGB565
-		ss->spritesheet_format = 1;
-	}
-	else if(dtex_header.type == 0x10000000){ //ARGB4444
-		ss->spritesheet_format = 2;
-	}
-	else if(dtex_header.type == 0x28000000){ //PAL4BPP
-		ss->spritesheet_format = 5;
-	}
-	else if(dtex_header.type == 0x30000000){ //PAL8BPP
-		ss->spritesheet_format = 6;
-	}
-	else{    
+	//Unknown/unsupported format
+	if(texture_format != 0 && texture_format != 1 && texture_format != 2 && texture_format != 5 && texture_format != 6){
 		ERROR(6);
 	}
 
-	/*
-	The correct formats are
-	bits 27-29 : Pixel format
-	0 = ARGB1555
-	1 = RGB565
-	2 = ARGB4444
-	3 = YUV422
-	4 = BUMPMAP
-	5 = PAL4BPP
-	6 = PAL8BPP
-	*/
-
+	uint8_t bpp = 0;
+	if(texture_format == 5){
+		bpp = 4;
+	}
+	else if(texture_format == 6){
+		bpp = 8;
+	}
 	int path_length = strlen(path);
-	if(palette_id >= 0 && (ss->spritesheet_format == 5 || ss->spritesheet_format == 6)){	//If we pass in -1, then we skip palettes
+	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
 		char *palette_path = (char *) malloc((path_length + 5)*sizeof(char));
 		if(!palette_path){ERROR(7);}
 		strcpy(palette_path, path);
@@ -92,7 +73,7 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 		palette_path[path_length + 3] = 'l';
 		palette_path[path_length + 4] = '\0';
 		cp->palette = NULL;
-		int resultPal = crayon_memory_load_palette(cp, (ss->spritesheet_format - 4) * 4, palette_path);
+		int resultPal = crayon_memory_load_palette(cp, bpp, palette_path);
 			//The function will modify the palette and colour count. Also it sends the BPP through
 		free(palette_path);
 		cp->palette_id = palette_id;
@@ -178,42 +159,25 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	// Load texture
 	//---------------------------------------------------------------------------
 
-	dtex_header_t dtex_header;
-	uint8_t dtex_result = crayon_memory_load_dtex(&fp->fontsheet_texture, &dtex_header, path);
+	uint8_t dtex_result = crayon_memory_load_dtex(&fp->fontsheet_texture, &fp->fontsheet_dim, &fp->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	// Write all metadata except palette stuff
-	//---------------------------------------------------------------------------
+	uint8_t texture_format = (((1 << 3) - 1) & (fp->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
 
-	if(dtex_header.width > dtex_header.height){
-		fp->fontsheet_dim = dtex_header.width;
-	}
-	else{
-		fp->fontsheet_dim = dtex_header.height;
-	}
-
-	//This assumes same stuff as spritesheet loader does
-	if(dtex_header.type == 0x00000000){ //ARGB1555
-		fp->texture_format = 0;
-	}
-	if(dtex_header.type == 0x08000000){ //RGB565
-		fp->texture_format = 1;
-	}
-	else if(dtex_header.type == 0x10000000){ //ARGB4444
-		fp->texture_format = 2;
-	}
-	else if(dtex_header.type == 0x28000000){ //PAL4BPP
-		fp->texture_format = 5;
-	}
-	else if(dtex_header.type == 0x30000000){ //PAL8BPP
-		fp->texture_format = 6;
-	}
-	else{    
+	//Unknown/unsupported format
+	if(texture_format != 0 && texture_format != 1 && texture_format != 2 && texture_format != 5 && texture_format != 6){
 		ERROR(6);
 	}
 
+	uint8_t bpp = 0;
+	if(texture_format == 5){
+		bpp = 4;
+	}
+	else if(texture_format == 6){
+		bpp = 8;
+	}
 	int path_length = strlen(path);
-	if(palette_id >= 0 && (fp->texture_format == 5 || fp->texture_format == 6)){	//If we pass in -1, then we skip palettes
+	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
 		char *palette_path = (char *) malloc((path_length + 5)*sizeof(char));
 		if(!palette_path){ERROR(7);}
 		strcpy(palette_path, path);
@@ -223,7 +187,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 		palette_path[path_length + 3] = 'l';
 		palette_path[path_length + 4] = '\0';
 		cp->palette = NULL;
-		int resultPal = crayon_memory_load_palette(cp, (fp->texture_format - 4) * 4, palette_path);
+		int resultPal = crayon_memory_load_palette(cp, bpp, palette_path);
 			//The function will modify the palette and colour count. Also it sends the BPP through
 		free(palette_path);
 		cp->palette_id = palette_id;
@@ -343,42 +307,25 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	// Load texture
 	//---------------------------------------------------------------------------
 
-	dtex_header_t dtex_header;
-	uint8_t dtex_result = crayon_memory_load_dtex(&fm->fontsheet_texture, &dtex_header, path);
+	uint8_t dtex_result = crayon_memory_load_dtex(&fm->fontsheet_texture, &fm->fontsheet_dim, &fm->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	// Write all metadata except palette stuff
-	//---------------------------------------------------------------------------
+	uint8_t texture_format = (((1 << 3) - 1) & (fm->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
 
-	if(dtex_header.width > dtex_header.height){
-		fm->fontsheet_dim = dtex_header.width;
-	}
-	else{
-		fm->fontsheet_dim = dtex_header.height;
-	}
-
-	//This assumes same stuff as spritesheet loader does
-	if(dtex_header.type == 0x00000000){ //ARGB1555
-		fm->texture_format = 0;
-	}
-	if(dtex_header.type == 0x08000000){ //RGB565
-		fm->texture_format = 1;
-	}
-	else if(dtex_header.type == 0x10000000){ //ARGB4444
-		fm->texture_format = 2;
-	}
-	else if(dtex_header.type == 0x28000000){ //PAL4BPP
-		fm->texture_format = 5;
-	}
-	else if(dtex_header.type == 0x30000000){ //PAL8BPP
-		fm->texture_format = 6;
-	}
-	else{    
+	//Unknown/unsupported format
+	if(texture_format != 0 && texture_format != 1 && texture_format != 2 && texture_format != 5 && texture_format != 6){
 		ERROR(6);
 	}
 
+	uint8_t bpp = 0;
+	if(texture_format == 5){
+		bpp = 4;
+	}
+	else if(texture_format == 6){
+		bpp = 8;
+	}
 	int path_length = strlen(path);
-	if(palette_id >= 0 && (fm->texture_format == 5 || fm->texture_format == 6)){	//If we pass in -1, then we skip palettes
+	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
 		char *palette_path = (char *) malloc((path_length + 5)*sizeof(char));
 		if(!palette_path){ERROR(7);}
 		strcpy(palette_path, path);
@@ -388,7 +335,7 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 		palette_path[path_length + 3] = 'l';
 		palette_path[path_length + 4] = '\0';
 		cp->palette = NULL;
-		int resultPal = crayon_memory_load_palette(cp, (fm->texture_format - 4) * 4, palette_path);
+		int resultPal = crayon_memory_load_palette(cp, bpp, palette_path);
 			//The function will modify the palette and colour count. Also it sends the BPP through
 		free(palette_path);
 		cp->palette_id = palette_id;
