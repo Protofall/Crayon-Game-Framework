@@ -27,36 +27,36 @@ extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, dtex_header_t *dtex_head
 }
 
 //UNTESTED
-// extern uint8_t new_crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *dims, uint32_t *format, char *texture_path){
-// 	uint8_t dtex_result = 0;
-// 	dtex_header_t dtex_header;
+extern uint8_t new_crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *dims, uint32_t *format, char *texture_path){
+	uint8_t dtex_result = 0;
+	dtex_header_t dtex_header;
 
-// 	#define DTEX_ERROR(n) {dtex_result = n; goto DTEX_cleanup;}
+	#define DTEX_ERROR(n) {dtex_result = n; goto DTEX_cleanup;}
 
-// 		FILE *texture_file = fopen(texture_path, "rb");
-// 		if(!texture_file){DTEX_ERROR(1);}
+		FILE *texture_file = fopen(texture_path, "rb");
+		if(!texture_file){DTEX_ERROR(1);}
 
-// 		// if(fread(&dtex_header, sizeof(dtex_header_t), 1, texture_file) != 1){DTEX_ERROR(2);}
-// 		if(fread(&dtex_header, sizeof(dtex_header), 1, texture_file) != 1){DTEX_ERROR(2);}
+		// if(fread(&dtex_header, sizeof(dtex_header_t), 1, texture_file) != 1){DTEX_ERROR(2);}
+		if(fread(&dtex_header, sizeof(dtex_header), 1, texture_file) != 1){DTEX_ERROR(2);}
 
-// 		if(memcmp(dtex_header.magic, "DTEX", 4)){DTEX_ERROR(3);}
+		if(memcmp(dtex_header.magic, "DTEX", 4)){DTEX_ERROR(3);}
 
-// 		*dtex = pvr_mem_malloc(dtex_header.size);
-// 		if(!*dtex){DTEX_ERROR(4);}
+		*dtex = pvr_mem_malloc(dtex_header.size);
+		if(!*dtex){DTEX_ERROR(4);}
 
-// 		if(fread(*dtex, dtex_header.size, 1, texture_file) != 1){DTEX_ERROR(5);}
+		if(fread(*dtex, dtex_header.size, 1, texture_file) != 1){DTEX_ERROR(5);}
 
-// 		// *dims = dtex_header.width;	//We assume we only load square dtex files
-// 		// *format = dtex_header.type;
+		*dims = dtex_header.width;	//We assume we only load square dtex files
+		*format = dtex_header.type;
 
-// 	#undef DTEX_ERROR
+	#undef DTEX_ERROR
 
-// 	DTEX_cleanup:
+	DTEX_cleanup:
 
-// 	if(texture_file){fclose(texture_file);}
+	if(texture_file){fclose(texture_file);}
 
-// 	return dtex_result;
-// }
+	return dtex_result;
+}
 
 extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_t *cp, int8_t palette_id, char *path){
 	uint8_t result = 0;
@@ -68,9 +68,30 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	//---------------------------------------------------------------------------
 
 	dtex_header_t dtex_header;
-	uint8_t dtex_result = crayon_memory_load_dtex(&ss->spritesheet_texture, &dtex_header, path);
+	// uint8_t dtex_result = crayon_memory_load_dtex(&ss->spritesheet_texture, &dtex_header, path);
+	uint32_t ref;	//A placeholder for castin to the format var
+	uint8_t dtex_result = new_crayon_memory_load_dtex(&ss->spritesheet_texture, &ss->spritesheet_dims, &ref, path);
 	// uint8_t dtex_result = new_crayon_memory_load_dtex(&ss->spritesheet_texture, &ss->spritesheet_dims, &ss->spritesheet_format, path);
 	if(dtex_result){ERROR(dtex_result);}
+
+	if(ref == 0x00000000){ //ARGB1555
+		ss->spritesheet_format = 0;
+	}
+	else if(ref == 0x08000000){ //RGB565
+		ss->spritesheet_format = 1;
+	}
+	else if(ref == 0x10000000){ //ARGB4444
+		ss->spritesheet_format = 2;
+	}
+	else if(ref == 0x28000000){ //PAL4BPP
+		ss->spritesheet_format = 5;
+	}
+	else if(ref == 0x30000000){ //PAL8BPP
+		ss->spritesheet_format = 6;
+	}
+	else{    
+		ERROR(6);
+	}
 
 	// Write all metadata except palette stuff
 	//---------------------------------------------------------------------------
@@ -94,33 +115,33 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	// 	ERROR(6);
 	// }
 
-	if(dtex_header.width > dtex_header.height){
-		ss->spritesheet_dims = dtex_header.width;
-	}
-	else{
-		ss->spritesheet_dims = dtex_header.height;
-	}
+	// if(dtex_header.width > dtex_header.height){
+	// 	ss->spritesheet_dims = dtex_header.width;
+	// }
+	// else{
+	// 	ss->spritesheet_dims = dtex_header.height;
+	// }
 
-	//This assumes no mip-mapping, no stride, twiddled on, its uncompressed and no stride setting (I might edit this later to allow for compressed)
-	if(dtex_header.type == 0x00000000){ //ARGB1555
-		ss->spritesheet_format = 0;
-	}
-	if(dtex_header.type == 0x08000000){ //RGB565
-		ss->spritesheet_format = 1;
-	}
-	else if(dtex_header.type == 0x10000000){ //ARGB4444
-		ss->spritesheet_format = 2;
-	}
-	else if(dtex_header.type == 0x28000000){ //PAL4BPP
-		ss->spritesheet_format = 5;
-	}
-	else if(dtex_header.type == 0x30000000){ //PAL8BPP
-		ss->spritesheet_format = 6;
-	}
-	else{
-		// error_freeze("format 0x%x", dtex_header.type);
-		ERROR(6);
-	}
+	// //This assumes no mip-mapping, no stride, twiddled on, its uncompressed and no stride setting (I might edit this later to allow for compressed)
+	// if(dtex_header.type == 0x00000000){ //ARGB1555
+	// 	ss->spritesheet_format = 0;
+	// }
+	// if(dtex_header.type == 0x08000000){ //RGB565
+	// 	ss->spritesheet_format = 1;
+	// }
+	// else if(dtex_header.type == 0x10000000){ //ARGB4444
+	// 	ss->spritesheet_format = 2;
+	// }
+	// else if(dtex_header.type == 0x28000000){ //PAL4BPP
+	// 	ss->spritesheet_format = 5;
+	// }
+	// else if(dtex_header.type == 0x30000000){ //PAL8BPP
+	// 	ss->spritesheet_format = 6;
+	// }
+	// else{
+	// 	// error_freeze("format 0x%x", dtex_header.type);
+	// 	ERROR(6);
+	// }
 
 	/*
 	The correct formats are
