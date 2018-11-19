@@ -6,6 +6,57 @@
 // #include <dc/maple.h>
 // #include <dc/maple/controller.h> //For the "Press start to exit" thing
 
+#define CRAYON_SD_MODE 0
+
+#if CRAYON_SD_MODE == 1
+	//For mounting the sd dir
+	#include <dc/sd.h>
+	#include <kos/blockdev.h>
+	#include <ext2/fs_ext2.h>
+#endif
+
+#if CRAYON_SD_MODE == 1
+	#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
+
+	static void unmount_ext2_sd(){
+		fs_ext2_unmount("/sd");
+		fs_ext2_shutdown();
+		sd_shutdown();
+	}
+
+	static int mount_ext2_sd(){
+		kos_blockdev_t sd_dev;
+		uint8 partition_type;
+
+		// Initialize the sd card if its present
+		if(sd_init()){
+			return 1;
+		}
+
+		// Grab the block device for the first partition on the SD card. Note that
+		// you must have the SD card formatted with an MBR partitioning scheme
+		if(sd_blockdev_for_partition(0, &sd_dev, &partition_type)){
+			return 2;
+		}
+
+		// Check to see if the MBR says that we have a Linux partition
+		if(partition_type != 0x83){
+			return 3;
+		}
+
+		// Initialize fs_ext2 and attempt to mount the device
+		if(fs_ext2_init()){
+			return 4;
+		}
+
+		//Mount the SD card to the sd dir in the VFS
+		if(fs_ext2_mount("/sd", &sd_dev, MNT_MODE)){
+			return 5;
+		}
+		return 0;
+	}
+#endif
+
 pvr_init_params_t pvr_params = {
 		// Enable opaque, translucent and punch through polygons with size 16
 			//To better explain, the opb_sizes or Object Pointer Buffer sizes
@@ -29,7 +80,19 @@ pvr_init_params_t pvr_params = {
 };
 
 int main(){
-	vid_set_mode(DM_640x480_VGA, PM_RGB565);
+	#if CRAYON_SD_MODE == 1
+		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
+		if(sdRes != 0){
+			error_freeze("SD care couldn't be mounted: %d", sdRes);
+		}
+	#endif
+
+	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
+		vid_set_mode(DM_640x480_VGA, PM_RGB565);
+	}
+	else{	//Else its RGB and we default to NTSC interlace
+		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
+	}
 
 	pvr_init(&pvr_params);
 
@@ -39,7 +102,11 @@ int main(){
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P;
 
-	crayon_memory_mount_romdisk("/cd/colourMod.img", "/files");
+	#if CRAYON_SD_MODE == 1
+		crayon_memory_mount_romdisk("/sd/colourMod.img", "/files");
+	#else
+		crayon_memory_mount_romdisk("/cd/colourMod.img", "/files");
+	#endif
 
 	crayon_memory_load_prop_font_sheet(&Tahoma, &Tahoma_P, 0, "/files/Fonts/Tahoma_font.dtex");
 	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 1, "/files/Fonts/BIOS_font.dtex");
@@ -47,6 +114,10 @@ int main(){
 	crayon_memory_load_spritesheet(&Dwarf, NULL, -1, "/files/Dwarf.dtex");
 
 	fs_romdisk_unmount("/files");
+
+	#if CRAYON_SD_MODE == 1
+		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
+	#endif
 
 	crayon_memory_set_sprite_array(&Dwarf_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Dwarf, &Dwarf.spritesheet_animation_array[0], NULL);
 	Dwarf_Draw.positions[0] = 50;
@@ -96,6 +167,7 @@ int main(){
 		pvr_list_finish();
 
 		pvr_scene_finish();
+
 	}
 
 	//Confirm everything was unloaded successfully (Should equal zero)

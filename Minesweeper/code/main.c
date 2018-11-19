@@ -877,6 +877,10 @@ int main(){
 		fs_romdisk_unmount("/2000");
 	}
 
+	#if CRAYON_SD_MODE == 1
+		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
+	#endif
+
 	//Make the OS struct and populate it
 	MinesweeperOS_t os;
 
@@ -906,7 +910,6 @@ int main(){
 	//Also due to lang thing we don't know the spritesheet, animation or palette
 	// crayon_memory_set_sprite_array(&MS_grid.draw_grid, 1, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);
 	crayon_memory_set_sprite_array(&MS_grid.draw_grid, 38 * 21, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);	//Technically there's no need to make change the size after this
-
 	int iter;
 	int jiter;
 
@@ -1090,6 +1093,7 @@ int main(){
 	crayon_memory_swap_colour(&cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
 	crayon_memory_swap_colour(&cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
 
+
 	#if CRAYON_DEBUG == 1
 	//Stuff for debugging/performance testing
 		pvr_stats_t pvr_stats;
@@ -1098,11 +1102,7 @@ int main(){
 		int fps_ave, fps_min, fps_max;
 	#endif
 
-	#if CRAYON_SD_MODE == 1
-		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
-	#endif
-
-	while(1){		
+	while(1){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
 		if(st->joyx > 0){	//Converting from -128, 127 to -1, 1 CHECK IF I'M DIVIDING RIGHT (Should they be all 127 or 128 or this?)
@@ -1510,7 +1510,7 @@ int main(){
 
 			//Draw the sd icon
 			if(MS_options.sd_present){
-				crayon_graphics_draw_sprites(&os.sd, PVR_LIST_OP_POLY);
+				crayon_graphics_draw_sprites(&os.sd, PVR_LIST_PT_POLY);
 			}
 
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 9, os.tabs_y, 20, 1, 1, 62, "Game\0");
