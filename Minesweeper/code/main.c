@@ -783,7 +783,7 @@ int main(){
 	MS_options.language = 0;
 	MS_options.focus = 0;
 
-	// MS_options.focus = 2;	//DEBUG
+	// MS_options.focus = 1;	//DEBUG
 
 	#if CRAYON_SD_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
@@ -979,10 +979,14 @@ int main(){
 	//Get the info for num_changer
 	uint8_t num_changer_id = 4;
 	uint8_t button_id = 4;
+	uint8_t miniButton_id = 4;
 	uint8_t checker_id = 4;
 	for(iter = 0; iter < Windows.spritesheet_animation_count; iter++){
 		if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "button")){
 			button_id = iter;
+		}
+		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "miniButton")){
+			miniButton_id = iter;
 		}
 		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "checker")){
 			checker_id = iter;
@@ -992,7 +996,7 @@ int main(){
 		}
 	}
 
-	crayon_textured_array_t face;
+	crayon_textured_array_t face, mini_buttons, key_big_buttons;
 	crayon_memory_set_sprite_array(&face, 1, 5, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[0], &Board_P);
 	face.scales[0] = 1;
 	face.scales[1] = 1;
@@ -1008,6 +1012,50 @@ int main(){
 	graphics_frame_coordinates(face.animation, face.frame_coord_map + 4, face.frame_coord_map + 5, 2);
 	graphics_frame_coordinates(face.animation, face.frame_coord_map + 6, face.frame_coord_map + 7, 3);
 	graphics_frame_coordinates(face.animation, face.frame_coord_map + 8, face.frame_coord_map + 9, 4);
+
+	//26 letters, 2 shifts, and ", !" and ". ?" buttons
+	crayon_memory_set_sprite_array(&mini_buttons, 31, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[miniButton_id], &Windows_P);
+	mini_buttons.scales[0] = 1;
+	mini_buttons.scales[1] = 1;
+	mini_buttons.flips[0] = 0;
+	mini_buttons.rotations[0] = 0;
+	mini_buttons.colours[0] = 0;
+	mini_buttons.draw_z[0] = 30;
+	mini_buttons.frame_coord_keys[0] = 0;
+	graphics_frame_coordinates(mini_buttons.animation, mini_buttons.frame_coord_map, mini_buttons.frame_coord_map + 1, 0);
+
+	uint8_t keyboard_start_x = 120;
+	uint8_t keyboard_start_y = 120;
+
+	for(iter = 0; iter < 31; iter++){
+		if(iter < 11){
+			mini_buttons.positions[2 * iter] = keyboard_start_x + (iter * 27);
+			mini_buttons.positions[(2 * iter) + 1] = keyboard_start_y;
+		}
+		else if(iter < 20){
+			mini_buttons.positions[2 * iter] = keyboard_start_x + ((iter - 11) * 27) - 12;
+			mini_buttons.positions[(2 * iter) + 1] = keyboard_start_y + 30 - 3;
+		}
+		else{
+			mini_buttons.positions[2 * iter] = keyboard_start_x + ((iter - 20) * 27);
+			mini_buttons.positions[(2 * iter) + 1] = keyboard_start_y + 60 - 6;	
+		}
+	}
+
+	//Space and Enter
+	crayon_memory_set_sprite_array(&key_big_buttons, 2, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[button_id], &Windows_P);
+	key_big_buttons.scales[0] = 1;
+	key_big_buttons.scales[1] = 1;
+	key_big_buttons.flips[0] = 0;
+	key_big_buttons.rotations[0] = 0;
+	key_big_buttons.colours[0] = 0;
+	key_big_buttons.draw_z[0] = 30;
+	key_big_buttons.frame_coord_keys[0] = 0;
+	key_big_buttons.positions[0] = keyboard_start_x + (9 * 27) - 12;
+	key_big_buttons.positions[1] = keyboard_start_y + 27;
+	key_big_buttons.positions[2] = keyboard_start_x - 35 + (33 * 9) / 2;	//(330 OR 297) / 2 - 35 + keyboard_start_x
+	key_big_buttons.positions[3] = keyboard_start_y + 90 - 9;
+	graphics_frame_coordinates(key_big_buttons.animation, key_big_buttons.frame_coord_map, key_big_buttons.frame_coord_map + 1, 0);
 
 	//Options draw structs
 	crayon_memory_set_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[button_id], &Windows_P);
@@ -1586,27 +1634,70 @@ int main(){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 235, 435, 20, 1, 1, 62, fps_buffer);
 			#endif
 
-			// Move alot of the TR stuff here or into the OP list
-			if(MS_options.focus == 2){
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 189, 145, 31, 1, 1, 62, "Sound\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 189, 185, 31, 1, 1, 62, "Marks (?)\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 282, 257, 31, 1, 1, 62, "Save to VMU\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 385, 257, 31, 1, 1, 62, "Apply\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 190, 280, 31, 1, 1, 62, "Best Times...\n(NOT IMPLEMENTED YET)\0");
-				// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 189, 280, 31, 1, 1, 62, "Best Times...\0");
+			if(MS_options.focus == 1){
+				// if(caps){
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[0] + 6, mini_buttons.positions[1] + 5, 31, 1, 1, Tahoma_P.palette_id, "Q\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[2] + 6, mini_buttons.positions[3] + 5, 31, 1, 1, Tahoma_P.palette_id, "W\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[4] + 6, mini_buttons.positions[5] + 5, 31, 1, 1, Tahoma_P.palette_id, "E\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[6] + 6, mini_buttons.positions[7] + 5, 31, 1, 1, Tahoma_P.palette_id, "R\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[8] + 6, mini_buttons.positions[9] + 5, 31, 1, 1, Tahoma_P.palette_id, "T\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[10] + 6, mini_buttons.positions[11] + 5, 31, 1, 1, Tahoma_P.palette_id, "Y\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[12] + 6, mini_buttons.positions[13] + 5, 31, 1, 1, Tahoma_P.palette_id, "U\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[14] + 6, mini_buttons.positions[15] + 5, 31, 1, 1, Tahoma_P.palette_id, "I\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[16] + 6, mini_buttons.positions[17] + 5, 31, 1, 1, Tahoma_P.palette_id, "O\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[18] + 6, mini_buttons.positions[19] + 5, 31, 1, 1, Tahoma_P.palette_id, "P\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[20] + 6, mini_buttons.positions[21] + 5, 31, 1, 1, Tahoma_P.palette_id, "<\0");
+
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[22] + 6, mini_buttons.positions[23] + 5, 31, 1, 1, Tahoma_P.palette_id, "A\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[24] + 6, mini_buttons.positions[25] + 5, 31, 1, 1, Tahoma_P.palette_id, "S\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[26] + 6, mini_buttons.positions[27] + 5, 31, 1, 1, Tahoma_P.palette_id, "D\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[28] + 6, mini_buttons.positions[29] + 5, 31, 1, 1, Tahoma_P.palette_id, "F\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[30] + 6, mini_buttons.positions[31] + 5, 31, 1, 1, Tahoma_P.palette_id, "G\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[32] + 6, mini_buttons.positions[33] + 5, 31, 1, 1, Tahoma_P.palette_id, "H\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[34] + 6, mini_buttons.positions[35] + 5, 31, 1, 1, Tahoma_P.palette_id, "J\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[36] + 6, mini_buttons.positions[37] + 5, 31, 1, 1, Tahoma_P.palette_id, "K\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[38] + 6, mini_buttons.positions[39] + 5, 31, 1, 1, Tahoma_P.palette_id, "L\0");
+
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[40] + 6, mini_buttons.positions[41] + 5, 31, 1, 1, Tahoma_P.palette_id, "^\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[42] + 6, mini_buttons.positions[43] + 5, 31, 1, 1, Tahoma_P.palette_id, "Z\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[44] + 6, mini_buttons.positions[45] + 5, 31, 1, 1, Tahoma_P.palette_id, "X\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[46] + 6, mini_buttons.positions[47] + 5, 31, 1, 1, Tahoma_P.palette_id, "C\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[48] + 6, mini_buttons.positions[49] + 5, 31, 1, 1, Tahoma_P.palette_id, "V\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[50] + 6, mini_buttons.positions[51] + 5, 31, 1, 1, Tahoma_P.palette_id, "B\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[52] + 6, mini_buttons.positions[53] + 5, 31, 1, 1, Tahoma_P.palette_id, "N\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[54] + 6, mini_buttons.positions[55] + 5, 31, 1, 1, Tahoma_P.palette_id, "M\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[56] + 6, mini_buttons.positions[57] + 5, 31, 1, 1, Tahoma_P.palette_id, ",\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[58] + 6, mini_buttons.positions[59] + 5, 31, 1, 1, Tahoma_P.palette_id, ".\0");
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons.positions[60] + 6, mini_buttons.positions[61] + 5, 31, 1, 1, Tahoma_P.palette_id, "^\0");
+				// }
+				// else{
+					// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, mini_buttons[0], mini_buttons[1], 31, 1, 1, Tahoma_P.palette_id, "1\0");
+				// }
+
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, key_big_buttons.positions[0] + 24, key_big_buttons.positions[1] + 5, 31, 1, 1, Tahoma_P.palette_id, "Enter\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, key_big_buttons.positions[2] + 24, key_big_buttons.positions[3] + 5, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
+
+			}
+			else if(MS_options.focus == 2){
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 189, 145, 31, 1, 1, Tahoma_P.palette_id, "Sound\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 189, 185, 31, 1, 1, Tahoma_P.palette_id, "Marks (?)\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 282, 257, 31, 1, 1, Tahoma_P.palette_id, "Save to VMU\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 370, 257, 31, 1, 1, Tahoma_P.palette_id, "Update Grid\0");
+				// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 190, 280, 31, 1, 1, Tahoma_P.palette_id, "Best Times...\n(NOT IMPLEMENTED YET)\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 189, 280, 31, 1, 1, Tahoma_P.palette_id, "Best Times...\0");
 
 				//Re-position these later (Do I still need to?)
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 204, 311, 31, 1, 1, 62, "Beginner\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 284, 311, 31, 1, 1, 62, "Intemediate\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 383, 311, 31, 1, 1, 62, "Expert\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 204, 311, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 284, 311, 31, 1, 1, Tahoma_P.palette_id, "Intemediate\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 383, 311, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
 
 				//Draw the numbers for x, y and num_mines displays
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 399, 145, 31, 1, 1, 62, MS_options.y_buffer);
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 399, 185, 31, 1, 1, 62, MS_options.x_buffer);
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 399, 225, 31, 1, 1, 62, MS_options.m_buffer);
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 350, 145, 31, 1, 1, 62, "Height:\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 350, 185, 31, 1, 1, 62, "Width:\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 350, 225, 31, 1, 1, 62, "Mines:\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 399, 145, 31, 1, 1, Tahoma_P.palette_id, MS_options.y_buffer);
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 399, 185, 31, 1, 1, Tahoma_P.palette_id, MS_options.x_buffer);
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 399, 225, 31, 1, 1, Tahoma_P.palette_id, MS_options.m_buffer);
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 350, 145, 31, 1, 1, Tahoma_P.palette_id, "Height:\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 350, 185, 31, 1, 1, Tahoma_P.palette_id, "Width:\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 350, 225, 31, 1, 1, Tahoma_P.palette_id, "Mines:\0");
 
 				/*
 
@@ -1648,8 +1739,12 @@ int main(){
 			if(MS_options.focus <= 1){
 				crayon_graphics_draw_sprites(&MS_grid.draw_grid, PVR_LIST_OP_POLY);
 				crayon_graphics_draw_sprites(&indented_tiles, PVR_LIST_OP_POLY);
+				if(MS_options.focus == 1){
+					crayon_graphics_draw_sprites(&mini_buttons, PVR_LIST_OP_POLY);	//Draw the high score keyboard
+					crayon_graphics_draw_sprites(&key_big_buttons, PVR_LIST_OP_POLY);	//Draw the high score keyboard
+				}
 			}
-			if(MS_options.focus == 2){
+			else if(MS_options.focus == 2){
 				crayon_graphics_draw_sprites(&MS_options.buttons, PVR_LIST_OP_POLY);
 				crayon_graphics_draw_sprites(&MS_options.checkers, PVR_LIST_OP_POLY);
 				crayon_graphics_draw_sprites(&MS_options.number_changers, PVR_LIST_OP_POLY);
@@ -1708,6 +1803,8 @@ int main(){
 	retVal += crayon_memory_free_sprite_array(&MS_grid.draw_grid, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&indented_tiles, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&face, 0, 0);
+	retVal += crayon_memory_free_sprite_array(&mini_buttons, 0, 0);
+	retVal += crayon_memory_free_sprite_array(&key_big_buttons, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.checkers, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.buttons, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.number_changers, 0, 0);
