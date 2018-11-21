@@ -486,14 +486,15 @@ void grid_indent_logic(MinesweeperGrid_t * grid, int ele_x, int ele_y, uint8_t i
 	press_data[(3 * id) + 2] = ele_y;
 }
 
-void face_logic(MinesweeperGrid_t * grid, uint8_t *face_frame_id, int id, float *cursor_position, uint8_t A_held, uint8_t X_held){
+//Pass in a pointer to the beginning of the queried cursor's position
+void face_logic(MinesweeperGrid_t * grid, crayon_textured_array_t * face, float *cursor_position, uint8_t A_held, uint8_t X_held){
 	if(A_held || X_held){
-		if(!grid->over_mode && !*face_frame_id){	//Basically face_frame_id != 2, 3 or 4
-			*face_frame_id = 1;	//Apply suprised face
+		if(!grid->over_mode && !face->frame_coord_keys[0]){	//Basically face_frame_id != 2, 3 or 4
+			face->frame_coord_keys[0] = 1;
 		}
-		if(A_held && (cursor_position[2 * id] <= 307 + 26) && (cursor_position[(2 * id) + 1] <= 64 + 26)
-			&& cursor_position[2 * id] >= 307 && cursor_position[(2 * id) + 1] >= 64){	//If hovering over face and press on it
-			*face_frame_id = 4;
+		if(A_held && (cursor_position[0] <= face->positions[0] + 26) && (cursor_position[1] <= face->positions[1] + 26)
+			&& cursor_position[0] >= face->positions[0] && cursor_position[1] >= face->positions[1]){	//If hovering over face and holding on it
+			face->frame_coord_keys[0] = 4;
 		}
 	}
 }
@@ -545,26 +546,27 @@ void cursor_on_grid(MinesweeperGrid_t * grid, uint8_t *in_grid, int *ele_x, int 
 }
 
 //Handles focus related things
-	//Could probably clean up some of this stuff with the draw arrays within the OS struct
-uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, MinesweeperOS_t *os, int id, float *cursor_position, uint32_t previous_buttons, uint32_t buttons){
+//cursor_pos is a pointer to the beginning of the cursor we are checking with
+uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, MinesweeperOS_t *os, crayon_textured_array_t * face,
+	float *cursor_pos, uint32_t previous_buttons, uint32_t buttons){
 	//CLEAN UP THE MAGIC NUMBERS
 	if(options->focus != 1){	//When we get a new score, we don't want to change focus easily
 		//Top 4 options
 		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){
-			if((cursor_position[2 * id] <= 9 + 27 + 3) && (cursor_position[(2 * id) + 1] <= os->tabs_y + 13)
-					&& cursor_position[2 * id] >= 9 - 4 && cursor_position[(2 * id) + 1] >= os->tabs_y - 3){
+			if((cursor_pos[0] <= 9 + 27 + 3) && (cursor_pos[1] <= os->tabs_y + 13)
+					&& cursor_pos[0] >= 9 - 4 && cursor_pos[1] >= os->tabs_y - 3){
 				options->focus = 0;
 			}
-			else if((cursor_position[2 * id] <= 48 + 37 + 3) && (cursor_position[(2 * id) + 1] <= os->tabs_y + 13)
-					&& cursor_position[2 * id] >= 48 - 4 && cursor_position[(2 * id) + 1] >= os->tabs_y - 3){
+			else if((cursor_pos[0] <= 48 + 37 + 3) && (cursor_pos[1] <= os->tabs_y + 13)
+					&& cursor_pos[0] >= 48 - 4 && cursor_pos[1] >= os->tabs_y - 3){
 				options->focus = 2;
 			}
-			else if((cursor_position[2 * id] <= 97 + 40 + 3) && (cursor_position[(2 * id) + 1] <= os->tabs_y + 13)
-					&& cursor_position[2 * id] >= 97 - 4 && cursor_position[(2 * id) + 1] >= os->tabs_y - 3){
+			else if((cursor_pos[0] <= 97 + 40 + 3) && (cursor_pos[1] <= os->tabs_y + 13)
+					&& cursor_pos[0] >= 97 - 4 && cursor_pos[1] >= os->tabs_y - 3){
 				options->focus = 3;
 			}
-			else if((cursor_position[2 * id] <= 149 + 29 + 3) && (cursor_position[(2 * id) + 1] <= os->tabs_y + 13)
-					&& cursor_position[2 * id] >= 149 - 4 && cursor_position[(2 * id) + 1] >= os->tabs_y - 3){
+			else if((cursor_pos[0] <= 149 + 29 + 3) && (cursor_pos[1] <= os->tabs_y + 13)
+					&& cursor_pos[0] >= 149 - 4 && cursor_pos[1] >= os->tabs_y - 3){
 				options->focus = 4;
 			}
 		}
@@ -572,36 +574,36 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 
 	if(options->focus == 2){
 		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){	//When we get a new score, we don't want to change focus easily
-			if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 149)
-					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 140){	//Incrementer Y
+			if((cursor_pos[0] <= 436) && (cursor_pos[1] <= 149)
+					&& cursor_pos[0] >= 420 && cursor_pos[1] >= 140){	//Incrementer Y
 				if(options->disp_y < 21){
 					options->disp_y++;
 					sprintf(options->y_buffer, "%d", options->disp_y);
 				}
 			}
-			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 159)
-					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 150){	//Decrementer Y
+			else if((cursor_pos[0] <= 436) && (cursor_pos[1] <= 159)
+					&& cursor_pos[0] >= 420 && cursor_pos[1] >= 150){	//Decrementer Y
 				if(options->disp_y > 9){
 					options->disp_y--;
 					sprintf(options->y_buffer, "%d", options->disp_y);
 				}
 			}
-			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 189)
-					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 180){	//Incrementer X
+			else if((cursor_pos[0] <= 436) && (cursor_pos[1] <= 189)
+					&& cursor_pos[0] >= 420 && cursor_pos[1] >= 180){	//Incrementer X
 				if(options->disp_x < 38){
 					options->disp_x++;
 					sprintf(options->x_buffer, "%d", options->disp_x);
 				}
 			}
-			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 199)
-					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 190){	//Decrementer X
+			else if((cursor_pos[0] <= 436) && (cursor_pos[1] <= 199)
+					&& cursor_pos[0] >= 420 && cursor_pos[1] >= 190){	//Decrementer X
 				if(options->disp_x > 9){
 					options->disp_x--;
 					sprintf(options->x_buffer, "%d", options->disp_x);
 				}
 			}
-			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 229)
-					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 220){	//Incrementer Num Mines
+			else if((cursor_pos[0] <= 436) && (cursor_pos[1] <= 229)
+					&& cursor_pos[0] >= 420 && cursor_pos[1] >= 220){	//Incrementer Num Mines
 				if(options->disp_mines < (options->disp_x - 1) * (options->disp_y - 1)){
 					options->disp_mines++;
 				}
@@ -610,15 +612,15 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 				}
 				sprintf(options->m_buffer, "%d", options->disp_mines);
 			}
-			else if((cursor_position[2 * id] <= 436) && (cursor_position[(2 * id) + 1] <= 239)
-					&& cursor_position[2 * id] >= 420 && cursor_position[(2 * id) + 1] >= 230){	//Decrementer Num Mines
+			else if((cursor_pos[0] <= 436) && (cursor_pos[1] <= 239)
+					&& cursor_pos[0] >= 420 && cursor_pos[1] >= 230){	//Decrementer Num Mines
 				if(options->disp_mines > 10){
 					options->disp_mines--;
 					sprintf(options->m_buffer, "%d", options->disp_mines);
 				}
 			}
-			else if((cursor_position[2 * id] <= 189 + 75) && (cursor_position[(2 * id) + 1] <= 306 + 23)
-					&& cursor_position[2 * id] >= 189 && cursor_position[(2 * id) + 1] >= 306){	//Beginner
+			else if((cursor_pos[0] <= options->buttons.positions[0] + 75) && (cursor_pos[1] <= options->buttons.positions[1] + 23)
+					&& cursor_pos[0] >= options->buttons.positions[0] && cursor_pos[1] >= options->buttons.positions[1]){	//Beginner
 				options->disp_x = 9;
 				options->disp_y = 9;
 				options->disp_mines = 10;
@@ -626,8 +628,8 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 				sprintf(options->y_buffer, "%d", options->disp_y);
 				sprintf(options->m_buffer, "%d", options->disp_mines);
 			}
-			else if((cursor_position[2 * id] <= 275 + 75) && (cursor_position[(2 * id) + 1] <= 306 + 23)
-					&& cursor_position[2 * id] >= 275 && cursor_position[(2 * id) + 1] >= 306){	//Intermediate
+			else if((cursor_pos[0] <= options->buttons.positions[2] + 75) && (cursor_pos[1] <= options->buttons.positions[3] + 23)
+					&& cursor_pos[0] >= options->buttons.positions[2] && cursor_pos[1] >= options->buttons.positions[3]){	//Intermediate
 				options->disp_x = 16;
 				options->disp_y = 16;
 				options->disp_mines = 40;
@@ -635,8 +637,8 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 				sprintf(options->y_buffer, "%d", options->disp_y);
 				sprintf(options->m_buffer, "%d", options->disp_mines);
 			}
-			else if((cursor_position[2 * id] <= 361 + 75) && (cursor_position[(2 * id) + 1] <= 306 + 23)
-					&& cursor_position[2 * id] >= 361 && cursor_position[(2 * id) + 1] >= 306){	//Expert
+			else if((cursor_pos[0] <= options->buttons.positions[4] + 75) && (cursor_pos[1] <= options->buttons.positions[5] + 23)
+					&& cursor_pos[0] >= options->buttons.positions[4] && cursor_pos[1] >= options->buttons.positions[5]){	//Expert
 				options->disp_x = 30;
 				options->disp_y = 20;
 				options->disp_mines = 99;
@@ -644,25 +646,26 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 				sprintf(options->y_buffer, "%d", options->disp_y);
 				sprintf(options->m_buffer, "%d", options->disp_mines);
 			}
-			else if((cursor_position[2 * id] <= 275 + 75) && (cursor_position[(2 * id) + 1] <= 252 + 23)
-					&& cursor_position[2 * id] >= 275 && cursor_position[(2 * id) + 1] >= 252){	//Save to VMU (UNFINISHED)
-				error_freeze("UNIMPLEMENTED");
+			else if((cursor_pos[0] <= options->buttons.positions[6] + 75) && (cursor_pos[1] <= options->buttons.positions[7] + 23)
+					&& cursor_pos[0] >= options->buttons.positions[6] && cursor_pos[1] >= options->buttons.positions[7]){	//Save to VMU (UNFINISHED)
+				// error_freeze("UNIMPLEMENTED");
 			}
-			else if((cursor_position[2 * id] <= 361 + 75) && (cursor_position[(2 * id) + 1] <= 252 + 23)
-					&& cursor_position[2 * id] >= 361 && cursor_position[(2 * id) + 1] >= 252){	//Apply
+			else if((cursor_pos[0] <= options->buttons.positions[8] + 75) && (cursor_pos[1] <= options->buttons.positions[9] + 23)
+					&& cursor_pos[0] >= options->buttons.positions[8] && cursor_pos[1] >= options->buttons.positions[9]){	//Apply
 				if(options->disp_mines > (options->disp_x - 1) * (options->disp_y - 1)){
 					options->disp_mines = (options->disp_x - 1) * (options->disp_y - 1);
 					sprintf(options->m_buffer, "%d", options->disp_mines);
 				}
-				reset_grid(grid, options, options->disp_x, options->disp_y, options->disp_mines);	//Doesn't reset the face...
+				reset_grid(grid, options, options->disp_x, options->disp_y, options->disp_mines);
+				face->frame_coord_keys[0] = 0;	//Reset the face
 			}
-			else if((cursor_position[2 * id] <= 245 + 13) && (cursor_position[(2 * id) + 1] <= 144 + 13)
-					&& cursor_position[2 * id] >= 245 && cursor_position[(2 * id) + 1] >= 144){	//Sound checker
+			else if((cursor_pos[0] <= options->checkers.positions[0] + 13) && (cursor_pos[1] <= options->checkers.positions[1] + 13)
+					&& cursor_pos[0] >= options->checkers.positions[0] && cursor_pos[1] >= options->checkers.positions[1]){	//Sound checker
 				options->sound_enabled = !options->sound_enabled;
 				options->checkers.frame_coord_keys[0] = options->sound_enabled;	//Update to show the right frame
 			}
-			else if((cursor_position[2 * id] <= 245 + 13) && (cursor_position[(2 * id) + 1] <= 184 + 13)
-					&& cursor_position[2 * id] >= 245 && cursor_position[(2 * id) + 1] >= 184){	//Question mark checker
+			else if((cursor_pos[0] <= options->checkers.positions[2] + 13) && (cursor_pos[1] <= options->checkers.positions[3] + 13)
+					&& cursor_pos[0] >= options->checkers.positions[2] && cursor_pos[1] >= options->checkers.positions[3]){	//Question mark checker
 				options->question_enabled = !options->question_enabled;
 				options->checkers.frame_coord_keys[1] = options->question_enabled;	//Update to show the right frame
 			}
@@ -989,6 +992,23 @@ int main(){
 		}
 	}
 
+	crayon_textured_array_t face;
+	crayon_memory_set_sprite_array(&face, 1, 5, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[0], &Board_P);
+	face.scales[0] = 1;
+	face.scales[1] = 1;
+	face.flips[0] = 0;
+	face.rotations[0] = 0;
+	face.colours[0] = 0;
+	face.positions[0] = 307;
+	face.positions[1] = 64;
+	face.draw_z[0] = 16;
+	face.frame_coord_keys[0] = 0;	//Neutral face
+	graphics_frame_coordinates(face.animation, face.frame_coord_map + 0, face.frame_coord_map + 1, 0);
+	graphics_frame_coordinates(face.animation, face.frame_coord_map + 2, face.frame_coord_map + 3, 1);
+	graphics_frame_coordinates(face.animation, face.frame_coord_map + 4, face.frame_coord_map + 5, 2);
+	graphics_frame_coordinates(face.animation, face.frame_coord_map + 6, face.frame_coord_map + 7, 3);
+	graphics_frame_coordinates(face.animation, face.frame_coord_map + 8, face.frame_coord_map + 9, 4);
+
 	//Options draw structs
 	crayon_memory_set_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[button_id], &Windows_P);
 	crayon_memory_set_sprite_array(&MS_options.checkers, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[checker_id], &Windows_P);
@@ -1048,11 +1068,6 @@ int main(){
 
 	MS_grid.logic_grid = NULL;
 	reset_grid(&MS_grid, &MS_options, 30, 20, 99);
-
-	//The face frame coords
-	uint16_t face_frame_x;
-	uint16_t face_frame_y;
-	uint8_t face_frame_id = 0;	//0 normal, 1 suprised, 2 ded, 3 sunny, 4 indented
 
 	//For the timer
 	uint32_t current_time = 0;
@@ -1141,14 +1156,22 @@ int main(){
 
 		//Use the buttons previously pressed to control what happens here
 		button_action = 0;
-		button_action |= ((previous_buttons[__dev->port] & CONT_A) && !(st->buttons & CONT_A)) << 0;	//A released
-		button_action |= ((previous_buttons[__dev->port] & CONT_X) && !(st->buttons & CONT_X)) << 1;	//X released
-		button_action |= (!(previous_buttons[__dev->port] & CONT_B) && (st->buttons & CONT_B)) << 2;	//B pressed
+		if((previous_buttons[__dev->port] & CONT_X) && !(st->buttons & CONT_X)){	//X released
+			button_action |= (1 << 1);
+		}
+		else{
+			if((previous_buttons[__dev->port] & CONT_A) && !(st->buttons & CONT_A)){	//A released
+				button_action |= (1 << 0);
+			}
+			if(!(previous_buttons[__dev->port] & CONT_B) && (st->buttons & CONT_B)){	//B pressed
+				button_action |= (1 << 2);
+			}
+		}
 		button_action |= (!(previous_buttons[__dev->port] & CONT_Y) && (st->buttons & CONT_Y)) << 3;	//Y pressed
 		button_action |= ((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && !(start_primed & (1 << 4))) << 4;	//If we press start, but we haven't done active prime yet and we aren't invalidated
 
-		if(button_press_logic(&MS_grid, &MS_options, button_action, __dev->port, cursor_position, previous_buttons, st->buttons)){break;}	//Is previous_buttons right?
-		button_press_logic_buttons(&MS_grid, &MS_options, &os, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
+		if(button_press_logic(&MS_grid, &MS_options, button_action, __dev->port, cursor_position, previous_buttons, st->buttons)){break;}
+		button_press_logic_buttons(&MS_grid, &MS_options, &os, &face, cursor_position + (2 * __dev->port), previous_buttons[__dev->port], st->buttons);
 		language_swap(&MS_grid, &MS_options, &os, cursor_position + (2 * __dev->port), button_action & (1 << 0));
 
 		//These are only ever set if The cursor is on the grid and A/B/X is/was pressed
@@ -1225,7 +1248,7 @@ int main(){
 			}
 		}
 
-		face_logic(&MS_grid, &face_frame_id, __dev->port, cursor_position, !!(st->buttons & (CONT_A)), !!(st->buttons & (CONT_X)));
+		face_logic(&MS_grid, &face, cursor_position + (2 * __dev->port), !!(st->buttons & (CONT_A)), !!(st->buttons & (CONT_X)));
 
 		if(MS_options.focus == 0){
 			grid_indent_logic(&MS_grid, ele_x, ele_y, in_grid, __dev->port, press_data, !!(st->buttons & (CONT_A)), !!(st->buttons & (CONT_X)), !!(st->buttons & (CONT_B)), 0);
@@ -1236,7 +1259,7 @@ int main(){
 		MAPLE_FOREACH_END()
 
 		//NOTE TO SELF: Break up some of the controller code into functions since its shared between the controller and the mouse
-		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_MOUSE, mouse_state_t, st)	//Mouse support (Currently incomplete)
+		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_MOUSE, mouse_state_t, st)	//Mouse support
 
 		//In emulators like lxdream this will usually trigger instantly since it doesn't do mouse buttons that well
 		if(!(player_active & (1 << __dev->port))){	//Player is there, but hasn't been activated yet
@@ -1248,18 +1271,24 @@ int main(){
 			}
 		}
 
-		//Use the buttons previously pressed to control what happens here (Mouse logic needs improvements (Indent code is wrong for Left/Right middle press))
 		button_action = 0;
-		button_action |= ((previous_buttons[__dev->port] & MOUSE_LEFTBUTTON) && !(st->buttons & MOUSE_LEFTBUTTON)
-			&& !(previous_buttons[__dev->port] & MOUSE_RIGHTBUTTON)) << 0;	//Left released and Right wasn't held down
-		button_action |= ((((previous_buttons[__dev->port] & MOUSE_SIDEBUTTON) && !(st->buttons & MOUSE_SIDEBUTTON)) ||
-			(previous_buttons[__dev->port] & MOUSE_LEFTBUTTON && previous_buttons[__dev->port] & MOUSE_RIGHTBUTTON &&
-			(!(st->buttons & MOUSE_LEFTBUTTON) != !(st->buttons & MOUSE_RIGHTBUTTON))))) << 1;	//Side released or Left/Right released while other is still held down and the game isn't over
-		button_action |= (!(previous_buttons[__dev->port] & MOUSE_RIGHTBUTTON) && (st->buttons & MOUSE_RIGHTBUTTON)
-			&& !(st->buttons & MOUSE_LEFTBUTTON)) << 2;	//Right pressed (Without Left) and the game isn't over
+		//Side was released OR (L and R were pressed, but now (L OR R) is released)
+		if(((previous_buttons[__dev->port] & MOUSE_SIDEBUTTON) && !(st->buttons & MOUSE_SIDEBUTTON)) ||
+			((previous_buttons[__dev->port] & MOUSE_LEFTBUTTON) && (previous_buttons[__dev->port] & MOUSE_RIGHTBUTTON) &&
+				(!(st->buttons & MOUSE_LEFTBUTTON) || !(st->buttons & MOUSE_RIGHTBUTTON)))){	//X released
+			button_action |= (1 << 1);
+		}
+		else{
+			if((previous_buttons[__dev->port] & MOUSE_LEFTBUTTON) && !(st->buttons & MOUSE_LEFTBUTTON)){	//A released
+				button_action |= (1 << 0);
+			}
+			if(!(previous_buttons[__dev->port] & MOUSE_RIGHTBUTTON) && (st->buttons & MOUSE_RIGHTBUTTON)){	//B pressed
+				button_action |= (1 << 2);
+			}
+		}
 
 		if(button_press_logic(&MS_grid, &MS_options, button_action, __dev->port, cursor_position, previous_buttons, st->buttons)){break;}
-		button_press_logic_buttons(&MS_grid, &MS_options, &os, __dev->port, cursor_position, previous_buttons[__dev->port], st->buttons);
+		button_press_logic_buttons(&MS_grid, &MS_options, &os, &face, cursor_position + (2 * __dev->port), previous_buttons[__dev->port], st->buttons);
 		language_swap(&MS_grid, &MS_options, &os, cursor_position + (2 * __dev->port), button_action & (1 << 0));
 
 		int ele_x = -1;
@@ -1287,7 +1316,8 @@ int main(){
 			cursor_position[2 * __dev->port] = 0;
 		}
 
-		face_logic(&MS_grid, &face_frame_id, __dev->port, cursor_position, !!(st->buttons & (MOUSE_LEFTBUTTON)), !!(st->buttons & (MOUSE_SIDEBUTTON)));	//Might need to change the X/Side button code
+		//Might need to change the X/Side button code
+		face_logic(&MS_grid, &face, cursor_position + (2 * __dev->port), !!(st->buttons & (MOUSE_LEFTBUTTON)), !!(st->buttons & (MOUSE_SIDEBUTTON)));
 
 		if(MS_options.focus == 0){
 			grid_indent_logic(&MS_grid, ele_x, ele_y, in_grid, __dev->port, press_data, !!(st->buttons & (MOUSE_LEFTBUTTON)),
@@ -1300,14 +1330,13 @@ int main(){
 
 		//X101 0000 (Where every controller is doing an impure press)
 		if((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
-			face_frame_id = 4;
+			face.frame_coord_keys[0] = 4;
 		}
-
 
 		//XX01 XXXX (Where every controller is doing an impure press)
 		if(!(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && (start_primed % (1 << 4))){
 			start_primed |= (1 << 5);	//Now an invalid press
-			face_frame_id = 0;
+			face.frame_coord_keys[0] = 0;
 		}
 
 		//X011 0000 (Start is released, but it was invalid)
@@ -1319,7 +1348,7 @@ int main(){
 		if(!(start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
 			clear_grid(&MS_grid);
 			start_primed = 0;
-			face_frame_id = 0;
+			face.frame_coord_keys[0] = 0;
 		}
 
 		start_primed = start_primed & ((1 << 5) + (1 << 4));	//Clears all bits except active and invalidness
@@ -1336,7 +1365,7 @@ int main(){
 				if(MS_options.sound_enabled){ //play "won" sound
 					snd_sfx_play(Sound_Win, 192, 128);	//Right now this can play when dead
 				}
-				face_frame_id = 3;
+				face.frame_coord_keys[0] = 3;
 			}
 			else{	//Tiles are left, you must have been blown up
 				MS_grid.over_mode = 2;
@@ -1348,28 +1377,23 @@ int main(){
 						snd_sfx_play(Sound_Death, 192, 128);
 					}
 				}
-				face_frame_id = 2;
+				face.frame_coord_keys[0] = 2;
 			}
 		}
 
 		//When releasing a start press (Or it becomes impure), we want to revert back to the gameover faced instead of the normal face
-		if(MS_grid.over_mode && face_frame_id != 4){
+		if(MS_grid.over_mode && face.frame_coord_keys[0] != 4){
 			if(MS_grid.non_mines_left == 0){
-				face_frame_id = 3;
+				face.frame_coord_keys[0] = 3;
 			}
 			else{
-				face_frame_id = 2;
+				face.frame_coord_keys[0] = 2;
 			}
 		}
 
 		//Right now this is always triggered when a game ends and thanks to "revealed" it only triggers once
 		if(!MS_grid.revealed && !MS_grid.game_live && MS_grid.over_mode){
 			reveal_map(&MS_grid);
-		}
-
-		graphics_frame_coordinates(&Board.spritesheet_animation_array[0], &face_frame_x, &face_frame_y, face_frame_id);
-		if(face_frame_id != 2 && face_frame_id != 3){	//So the ded/sunnies/end sound code will only be triggered on the turn the game ends
-			face_frame_id = 0;	//Reset face for new frame
 		}
 
 		//Re-create the indent tile list based on inputs
@@ -1461,9 +1485,6 @@ int main(){
 			//Draw the flag count and timer (Modify function to draw them as opaque or just redo this part)
 			digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.num_flags, 20, 65, 17);
 			digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.time_sec, 581, 65, 17);
-
-			//Draw the reset button face
-			graphics_draw_sprite(&Board, &Board.spritesheet_animation_array[0], 307, 64, 16, 1, 1, face_frame_x, face_frame_y, 0);
 
 			//Draw the indented tiles ontop of the grid and the cursors themselves
 			uint8_t menus_selected = 0;
@@ -1637,6 +1658,9 @@ int main(){
 			//Draw the region icon
 			crayon_graphics_draw_sprites(&os.region, PVR_LIST_OP_POLY);
 
+			//Draw the reset Face
+			crayon_graphics_draw_sprites(&face, PVR_LIST_OP_POLY);
+
 			//Draw the grid's boarder
 			if(MS_options.focus <= 1){
 				custom_poly_boarder(3, MS_grid.start_x, MS_grid.start_y, 16, MS_grid.x * 16, MS_grid.y * 16, 4286611584u, 4294967295u);
@@ -1671,6 +1695,11 @@ int main(){
 		pvr_list_finish();
 
 		pvr_scene_finish();
+
+		//Update the face for the new frame (Unless the game is over)
+		if(face.frame_coord_keys[0] != 2 && face.frame_coord_keys[0] != 3){
+			face.frame_coord_keys[0] = 0;
+		}
 	}
 
 	//Confirm everything was unloaded successfully (Should equal zero) This code is never triggered under normal circumstances
@@ -1678,6 +1707,7 @@ int main(){
 	int retVal = 0;
 	retVal += crayon_memory_free_sprite_array(&MS_grid.draw_grid, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&indented_tiles, 0, 0);
+	retVal += crayon_memory_free_sprite_array(&face, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.checkers, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.buttons, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.number_changers, 0, 0);
