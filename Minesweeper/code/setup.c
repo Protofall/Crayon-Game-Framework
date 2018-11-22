@@ -366,7 +366,7 @@ void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t
 	}
 }
 
-void setup_option_untextured_poly(crayon_untextured_array_t *Options, uint8_t os){
+void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_textured_array_t * num_changers, uint8_t os){
 	if(!os){
 		Options->num_polys = 15;	//Windows 2000 has a extra polys
 	}
@@ -382,7 +382,8 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, uint8_t os
 	Options->options = (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4);	//Z, C, D and O enabled
 
 	uint16_t x, y[3];
-	x = 395; y[0] = 140; y[1] = 180; y[2] = 220;
+	x = num_changers->positions[0] - 25; y[0] = num_changers->positions[1] - (2 * os);
+	y[1] = num_changers->positions[3] - (2 * os); y[2] = num_changers->positions[5] - (2 * os);
 	int i;
 
 	if(!os){
