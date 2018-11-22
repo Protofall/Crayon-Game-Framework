@@ -20,18 +20,6 @@ typedef struct MinesweeperOS{
 
 } MinesweeperOS_t;
 
-typedef struct MinesweeperSaveFile{
-	uint8_t BS_Mode;	//Bulletsweeper mode. 0 for never won, 1 for Beat with 1 player, 2 for beat with 2 players, etc.
-	uint8_t options;	//Sound and Question marks, Italian, OS, other
-	uint16_t times[6];	//First 3 are Single player, last 3 are multiplayer
-	char record_names[11][6];	//6 names, 11 chars long (Last char is \0 so really 10)
-
-	//Prefered grid settings
-	uint8_t pref_height;
-	uint8_t pref_width;
-	uint8_t pref_mines;
-} MinesweeperSaveFile_t;
-
 //Contains the logic for a board
 typedef struct MinesweeperGrid{
 	uint8_t *logic_grid;
@@ -61,6 +49,18 @@ typedef struct MinesweeperGrid{
 								//on any grid. Defeault 15
 } MinesweeperGrid_t;
 
+typedef struct MinesweeperSaveFile{
+	// uint8_t BS_Mode;	//Bulletsweeper mode. 0 for never won, 1 for Beat with 1 player, 2 for beat with 2 players, etc.
+	uint8_t options;	//Sound and Question marks, English/Italian, OS, other
+	uint16_t times[6];	//First 3 are Single player, last 3 are multiplayer
+	char record_names[6][11];	//6 names, 11 chars long (Last char is \0 so really 10)
+
+	//Prefered grid settings
+	uint8_t pref_height;
+	uint8_t pref_width;
+	uint8_t pref_mines;
+} MinesweeperSaveFile_t;
+
 //Contains game options and focus (Windows tab)
 typedef struct MinesweeperOptions{
 	uint8_t sd_present;			//If an ext2 formatted SD card is detected, this this becomes true
@@ -71,7 +71,8 @@ typedef struct MinesweeperOptions{
 	uint8_t language;			//0 for English, 1 for Italian. This affects the font language and
 								//the Minesweeper/Prato fiorito themes
 
-	uint8_t focus;
+	uint8_t focus;	//0 = normal game, 1 = type name (High score), 2 = display high scores, 3 = options,
+					//4 = controls, 5 = about
 
 	//For the options page (Apply only affects these 3 and not the checkboxes)
 	uint8_t disp_x;
@@ -83,9 +84,16 @@ typedef struct MinesweeperOptions{
 	crayon_textured_array_t checkers;
 	crayon_textured_array_t number_changers;
 
-	MinesweeperSaveFile_t savefile;	//Not a pointer since this struct needs the same save file always
+	MinesweeperSaveFile_t save_file;	//Not a pointer since this struct needs the same save file always
 } MinesweeperOptions_t;
 
-//Add a cursor/button combo struct?
+//Contains the data related to the keyboard where you enter a high score
+typedef struct MinesweeperKeyboard{
+	char type_buffer[11];
+	int8_t chars_typed;
+	crayon_textured_array_t mini_buttons, key_big_buttons;
+	int8_t caps;
+	// uint16_t time;	//Might be redundant, idk
+} MinesweeperKeyboard_t;
 
 #endif
