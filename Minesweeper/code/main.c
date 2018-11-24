@@ -778,8 +778,7 @@ int main(){
 	MS_options.sd_present = 0;
 	MS_options.focus = 0;
 
-	MS_options.focus = 1;	//DEBUG
-	MS_options.focus = 3;	//DEBUG
+	// MS_options.focus = 1;	//DEBUG
 
 	//Check for save file or valid VMU here
 
@@ -1045,20 +1044,20 @@ int main(){
 	MS_keyboard.mini_buttons.frame_coord_keys[0] = 0;
 	graphics_frame_coordinates(MS_keyboard.mini_buttons.animation, MS_keyboard.mini_buttons.frame_coord_map, MS_keyboard.mini_buttons.frame_coord_map + 1, 0);
 
-	uint8_t keyboard_start_x = 120;
-	uint8_t keyboard_start_y = 120;
+	uint8_t keyboard_start_x = 161;
+	uint16_t keyboard_start_y = 250;
 
 	for(iter = 0; iter < 31; iter++){
 		if(iter < 11){
-			MS_keyboard.mini_buttons.positions[2 * iter] = keyboard_start_x + (iter * 27);
+			MS_keyboard.mini_buttons.positions[2 * iter] = keyboard_start_x + (iter * 27) + 12;
 			MS_keyboard.mini_buttons.positions[(2 * iter) + 1] = keyboard_start_y;
 		}
 		else if(iter < 20){
-			MS_keyboard.mini_buttons.positions[2 * iter] = keyboard_start_x + ((iter - 11) * 27) - 12;
+			MS_keyboard.mini_buttons.positions[2 * iter] = keyboard_start_x + ((iter - 11) * 27);
 			MS_keyboard.mini_buttons.positions[(2 * iter) + 1] = keyboard_start_y + 30 - 3;
 		}
 		else{
-			MS_keyboard.mini_buttons.positions[2 * iter] = keyboard_start_x + ((iter - 20) * 27);
+			MS_keyboard.mini_buttons.positions[2 * iter] = keyboard_start_x + ((iter - 20) * 27) + 12;
 			MS_keyboard.mini_buttons.positions[(2 * iter) + 1] = keyboard_start_y + 60 - 6;	
 		}
 	}
@@ -1072,10 +1071,10 @@ int main(){
 	MS_keyboard.key_big_buttons.colours[0] = 0;
 	MS_keyboard.key_big_buttons.draw_z[0] = 30;
 	MS_keyboard.key_big_buttons.frame_coord_keys[0] = 0;
-	MS_keyboard.key_big_buttons.positions[0] = keyboard_start_x + (9 * 27) - 12;
+	MS_keyboard.key_big_buttons.positions[0] = keyboard_start_x + 243;
 	MS_keyboard.key_big_buttons.positions[1] = keyboard_start_y + 27;
-	MS_keyboard.key_big_buttons.positions[2] = keyboard_start_x - 35 + (33 * 9) / 2;	//(330 OR 297) / 2 - 35 + keyboard_start_x
-	MS_keyboard.key_big_buttons.positions[3] = keyboard_start_y + 90 - 9;
+	MS_keyboard.key_big_buttons.positions[2] = keyboard_start_x + 128;
+	MS_keyboard.key_big_buttons.positions[3] = keyboard_start_y + 81;
 	graphics_frame_coordinates(MS_keyboard.key_big_buttons.animation, MS_keyboard.key_big_buttons.frame_coord_map, MS_keyboard.key_big_buttons.frame_coord_map + 1, 0);
 
 	//Options draw structs
@@ -1725,9 +1724,11 @@ int main(){
 					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[58] + 6, MS_keyboard.mini_buttons.positions[59] + 5, 31, 1, 1, Tahoma_P.palette_id, ".\0");
 				}
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[20] + 6, MS_keyboard.mini_buttons.positions[21] + 5, 31, 1, 1, Tahoma_P.palette_id, "<\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[20] + 5, MS_keyboard.mini_buttons.positions[21] + 5, 31, 1, 1, Tahoma_P.palette_id, "<-\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[40] + 6, MS_keyboard.mini_buttons.positions[41] + 5, 31, 1, 1, Tahoma_P.palette_id, "^\0");	
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[40] + 6, MS_keyboard.mini_buttons.positions[41] + 5, 31, 1, 1, Tahoma_P.palette_id, "_\0");	
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[60] + 6, MS_keyboard.mini_buttons.positions[61] + 5, 31, 1, 1, Tahoma_P.palette_id, "^\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[60] + 6, MS_keyboard.mini_buttons.positions[61] + 5, 31, 1, 1, Tahoma_P.palette_id, "_\0");
 
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.key_big_buttons.positions[0] + 24, MS_keyboard.key_big_buttons.positions[1] + 5, 31, 1, 1, Tahoma_P.palette_id, "Enter\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.key_big_buttons.positions[2] + 24, MS_keyboard.key_big_buttons.positions[3] + 5, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
@@ -1792,6 +1793,12 @@ int main(){
 				if(MS_options.focus == 1){
 					crayon_graphics_draw_sprites(&MS_keyboard.mini_buttons, PVR_LIST_OP_POLY);	//Draw the high score keyboard
 					crayon_graphics_draw_sprites(&MS_keyboard.key_big_buttons, PVR_LIST_OP_POLY);	//Draw the high score keyboard
+					if(MS_options.operating_system){
+						custom_poly_XP_boarder(keyboard_start_x - 8, keyboard_start_y - 88, 24, 318 + 16, 105 + 96);
+					}
+					else{
+						custom_poly_2000_boarder(keyboard_start_x - 8, keyboard_start_y - 88, 24, 318 + 16, 105 + 96);
+					}
 				}
 			}
 			else if(MS_options.focus == 3){
@@ -1813,7 +1820,12 @@ int main(){
 			else{
 				if(MS_options.focus >= 3){	//The yellowy background + dividing line
 					graphics_draw_untextured_poly(6, 98, 10, 631, 1, 0xFFA0A0A0, 1);
-					graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFD4D0C8, 1);
+					if(MS_options.operating_system){
+						graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFECE9D8, 1);
+					}
+					else{
+						graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFD4D0C8, 1);
+					}
 				}
 				if(MS_options.focus == 3){
 					graphics_draw_untextured_array(&Option_polys);	//The boxes the numbers go in
