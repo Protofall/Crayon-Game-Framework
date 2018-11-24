@@ -93,7 +93,6 @@ typedef struct MinesweeperKeyboard{
 	int8_t chars_typed;
 	crayon_textured_array_t mini_buttons, key_big_buttons;
 	int8_t caps;
-	// uint16_t time;	//Might be redundant, idk
 } MinesweeperKeyboard_t;
 
 #endif
