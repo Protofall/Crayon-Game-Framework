@@ -19,4 +19,6 @@ void setup_free_OS_struct(MinesweeperOS_t *os);
 void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t sd);
 void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_textured_array_t * num_changers, uint8_t os);
 
+void setup_keys(MinesweeperKeyboard_t * keyboard);
+
 #endif
