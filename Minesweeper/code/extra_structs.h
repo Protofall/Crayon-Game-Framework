@@ -44,6 +44,8 @@ typedef struct MinesweeperGrid{
 	uint8_t revealed;
 	int time_sec;
 
+	uint8_t difficulty;	//1 = beginner, 2 = intermediate, 3 = expert. 0 means its a custom map
+
 	// uint8_t players_allowed;	//1111, if you want to make a competative mode this can help
 								//It goes P1, P2, P3, P4. I'm made it so all players can work
 								//on any grid. Defeault 15
@@ -91,8 +93,12 @@ typedef struct MinesweeperOptions{
 typedef struct MinesweeperKeyboard{
 	char type_buffer[11];
 	int8_t chars_typed;
+	uint16_t type_box_x, type_box_y;
 	crayon_textured_array_t mini_buttons, key_big_buttons;
 	int8_t caps;
+	char upper_keys[31];	//If we add more keys later on, change these sizes
+	char lower_keys[31];	//If we add more keys later on, change these sizes
+	int8_t record_index;
 } MinesweeperKeyboard_t;
 
 #endif
