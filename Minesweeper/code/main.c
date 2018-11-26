@@ -879,8 +879,6 @@ int main(){
 	MS_options.sd_present = 0;
 	MS_options.focus = 0;
 
-	// MS_options.focus = 1;	//DEBUG
-
 	//Check for save file or valid VMU here
 
 	//If a save already exists
@@ -1787,83 +1785,34 @@ int main(){
 			#endif
 
 			if(MS_options.focus == 1){
-				if(MS_keyboard.caps){
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[0] + 6, MS_keyboard.mini_buttons.positions[1] + 5, 31, 1, 1, Tahoma_P.palette_id, "Q\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[2] + 6, MS_keyboard.mini_buttons.positions[3] + 5, 31, 1, 1, Tahoma_P.palette_id, "W\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[4] + 6, MS_keyboard.mini_buttons.positions[5] + 5, 31, 1, 1, Tahoma_P.palette_id, "E\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[6] + 6, MS_keyboard.mini_buttons.positions[7] + 5, 31, 1, 1, Tahoma_P.palette_id, "R\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[8] + 6, MS_keyboard.mini_buttons.positions[9] + 5, 31, 1, 1, Tahoma_P.palette_id, "T\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[10] + 6, MS_keyboard.mini_buttons.positions[11] + 5, 31, 1, 1, Tahoma_P.palette_id, "Y\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[12] + 6, MS_keyboard.mini_buttons.positions[13] + 5, 31, 1, 1, Tahoma_P.palette_id, "U\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[14] + 6, MS_keyboard.mini_buttons.positions[15] + 5, 31, 1, 1, Tahoma_P.palette_id, "I\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[16] + 6, MS_keyboard.mini_buttons.positions[17] + 5, 31, 1, 1, Tahoma_P.palette_id, "O\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[18] + 6, MS_keyboard.mini_buttons.positions[19] + 5, 31, 1, 1, Tahoma_P.palette_id, "P\0");
+				char key_buffer[4];
+				for(iter = 0; iter < MS_keyboard.mini_buttons.num_sprites; iter++){
+					if(MS_keyboard.caps){
+						key_buffer[0] = MS_keyboard.upper_keys[iter];
+					}
+					else{
+						key_buffer[0] = MS_keyboard.lower_keys[iter];
+					}
 
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[22] + 6, MS_keyboard.mini_buttons.positions[23] + 5, 31, 1, 1, Tahoma_P.palette_id, "A\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[24] + 6, MS_keyboard.mini_buttons.positions[25] + 5, 31, 1, 1, Tahoma_P.palette_id, "S\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[26] + 6, MS_keyboard.mini_buttons.positions[27] + 5, 31, 1, 1, Tahoma_P.palette_id, "D\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[28] + 6, MS_keyboard.mini_buttons.positions[29] + 5, 31, 1, 1, Tahoma_P.palette_id, "F\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[30] + 6, MS_keyboard.mini_buttons.positions[31] + 5, 31, 1, 1, Tahoma_P.palette_id, "G\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[32] + 6, MS_keyboard.mini_buttons.positions[33] + 5, 31, 1, 1, Tahoma_P.palette_id, "H\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[34] + 6, MS_keyboard.mini_buttons.positions[35] + 5, 31, 1, 1, Tahoma_P.palette_id, "J\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[36] + 6, MS_keyboard.mini_buttons.positions[37] + 5, 31, 1, 1, Tahoma_P.palette_id, "K\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[38] + 6, MS_keyboard.mini_buttons.positions[39] + 5, 31, 1, 1, Tahoma_P.palette_id, "L\0");
+					if(MS_keyboard.upper_keys[iter] == '<'){
+						key_buffer[1] = '-';
+						key_buffer[2] = '\0';
+					}
+					else{
+						key_buffer[1] = '\0';
+					}
 
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[42] + 6, MS_keyboard.mini_buttons.positions[43] + 5, 31, 1, 1, Tahoma_P.palette_id, "Z\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[44] + 6, MS_keyboard.mini_buttons.positions[45] + 5, 31, 1, 1, Tahoma_P.palette_id, "X\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[46] + 6, MS_keyboard.mini_buttons.positions[47] + 5, 31, 1, 1, Tahoma_P.palette_id, "C\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[48] + 6, MS_keyboard.mini_buttons.positions[49] + 5, 31, 1, 1, Tahoma_P.palette_id, "V\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[50] + 6, MS_keyboard.mini_buttons.positions[51] + 5, 31, 1, 1, Tahoma_P.palette_id, "B\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[52] + 6, MS_keyboard.mini_buttons.positions[53] + 5, 31, 1, 1, Tahoma_P.palette_id, "N\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[54] + 6, MS_keyboard.mini_buttons.positions[55] + 5, 31, 1, 1, Tahoma_P.palette_id, "M\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[56] + 6, MS_keyboard.mini_buttons.positions[57] + 5, 31, 1, 1, Tahoma_P.palette_id, "!\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[58] + 6, MS_keyboard.mini_buttons.positions[59] + 5, 31, 1, 1, Tahoma_P.palette_id, "?\0");
+					if(MS_keyboard.upper_keys[iter] == '^'){
+						graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[(2 * iter)] + 6, MS_keyboard.mini_buttons.positions[(2 * iter) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, "_");
+					}
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[(2 * iter)] + 6, MS_keyboard.mini_buttons.positions[(2 * iter) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, key_buffer);
 				}
-				else{
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[0] + 6, MS_keyboard.mini_buttons.positions[1] + 5, 31, 1, 1, Tahoma_P.palette_id, "q\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[2] + 6, MS_keyboard.mini_buttons.positions[3] + 5, 31, 1, 1, Tahoma_P.palette_id, "w\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[4] + 6, MS_keyboard.mini_buttons.positions[5] + 5, 31, 1, 1, Tahoma_P.palette_id, "e\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[6] + 6, MS_keyboard.mini_buttons.positions[7] + 5, 31, 1, 1, Tahoma_P.palette_id, "r\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[8] + 6, MS_keyboard.mini_buttons.positions[9] + 5, 31, 1, 1, Tahoma_P.palette_id, "t\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[10] + 6, MS_keyboard.mini_buttons.positions[11] + 5, 31, 1, 1, Tahoma_P.palette_id, "y\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[12] + 6, MS_keyboard.mini_buttons.positions[13] + 5, 31, 1, 1, Tahoma_P.palette_id, "u\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[14] + 6, MS_keyboard.mini_buttons.positions[15] + 5, 31, 1, 1, Tahoma_P.palette_id, "i\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[16] + 6, MS_keyboard.mini_buttons.positions[17] + 5, 31, 1, 1, Tahoma_P.palette_id, "o\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[18] + 6, MS_keyboard.mini_buttons.positions[19] + 5, 31, 1, 1, Tahoma_P.palette_id, "p\0");
-
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[22] + 6, MS_keyboard.mini_buttons.positions[23] + 5, 31, 1, 1, Tahoma_P.palette_id, "a\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[24] + 6, MS_keyboard.mini_buttons.positions[25] + 5, 31, 1, 1, Tahoma_P.palette_id, "s\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[26] + 6, MS_keyboard.mini_buttons.positions[27] + 5, 31, 1, 1, Tahoma_P.palette_id, "d\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[28] + 6, MS_keyboard.mini_buttons.positions[29] + 5, 31, 1, 1, Tahoma_P.palette_id, "f\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[30] + 6, MS_keyboard.mini_buttons.positions[31] + 5, 31, 1, 1, Tahoma_P.palette_id, "g\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[32] + 6, MS_keyboard.mini_buttons.positions[33] + 5, 31, 1, 1, Tahoma_P.palette_id, "h\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[34] + 6, MS_keyboard.mini_buttons.positions[35] + 5, 31, 1, 1, Tahoma_P.palette_id, "j\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[36] + 6, MS_keyboard.mini_buttons.positions[37] + 5, 31, 1, 1, Tahoma_P.palette_id, "k\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[38] + 6, MS_keyboard.mini_buttons.positions[39] + 5, 31, 1, 1, Tahoma_P.palette_id, "l\0");
-
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[42] + 6, MS_keyboard.mini_buttons.positions[43] + 5, 31, 1, 1, Tahoma_P.palette_id, "z\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[44] + 6, MS_keyboard.mini_buttons.positions[45] + 5, 31, 1, 1, Tahoma_P.palette_id, "x\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[46] + 6, MS_keyboard.mini_buttons.positions[47] + 5, 31, 1, 1, Tahoma_P.palette_id, "c\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[48] + 6, MS_keyboard.mini_buttons.positions[49] + 5, 31, 1, 1, Tahoma_P.palette_id, "v\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[50] + 6, MS_keyboard.mini_buttons.positions[51] + 5, 31, 1, 1, Tahoma_P.palette_id, "b\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[52] + 6, MS_keyboard.mini_buttons.positions[53] + 5, 31, 1, 1, Tahoma_P.palette_id, "n\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[54] + 6, MS_keyboard.mini_buttons.positions[55] + 5, 31, 1, 1, Tahoma_P.palette_id, "m\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[56] + 6, MS_keyboard.mini_buttons.positions[57] + 5, 31, 1, 1, Tahoma_P.palette_id, ",\0");
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[58] + 6, MS_keyboard.mini_buttons.positions[59] + 5, 31, 1, 1, Tahoma_P.palette_id, ".\0");
-				}
-
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[20] + 5, MS_keyboard.mini_buttons.positions[21] + 5, 31, 1, 1, Tahoma_P.palette_id, "<-\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[40] + 6, MS_keyboard.mini_buttons.positions[41] + 5, 31, 1, 1, Tahoma_P.palette_id, "^\0");	
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[40] + 6, MS_keyboard.mini_buttons.positions[41] + 5, 31, 1, 1, Tahoma_P.palette_id, "_\0");	
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[60] + 6, MS_keyboard.mini_buttons.positions[61] + 5, 31, 1, 1, Tahoma_P.palette_id, "^\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[60] + 6, MS_keyboard.mini_buttons.positions[61] + 5, 31, 1, 1, Tahoma_P.palette_id, "_\0");
 
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.key_big_buttons.positions[0] + 24, MS_keyboard.key_big_buttons.positions[1] + 5, 31, 1, 1, Tahoma_P.palette_id, "Enter\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.key_big_buttons.positions[2] + 24, MS_keyboard.key_big_buttons.positions[3] + 5, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
 
 				//The text the user types
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 6, MS_keyboard.type_box_y + 5, 31, 1, 1, Tahoma_P.palette_id, MS_keyboard.type_buffer);
-				// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 6, MS_keyboard.type_box_y + 5, 31, 1, 1, Tahoma_P.palette_id, "%%%%%%%%%%\0");
 			}
 			else if(MS_options.focus == 3){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[0] - 56, MS_options.checkers.positions[1] + 1, 31, 1, 1, Tahoma_P.palette_id, "Sound\0");
@@ -1886,8 +1835,7 @@ int main(){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[4] - 70, MS_options.number_changers.positions[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Mines:\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[4] - 21, MS_options.number_changers.positions[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.m_buffer);
 
-				//Display the high scores (Score themselves not displayed yet)
-				// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 95, MS_options.buttons.positions[1] + 5, 31, 1, 1, Tahoma_P.palette_id, "%%%%%%%%%%\n");
+				//Display the high scores
 				char record_buffer[16];
 				uint8_t x_offset = 125;
 				for(iter = 0; iter < 6; iter++){
