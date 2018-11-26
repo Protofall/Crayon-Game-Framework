@@ -452,69 +452,8 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_tex
 
 //Made this a function just to reduce the line number in main
 void setup_keys(MinesweeperKeyboard_t * keyboard){
-	keyboard->upper_keys[0] = 'Q';
-	keyboard->upper_keys[1] = 'W';
-	keyboard->upper_keys[2] = 'E';
-	keyboard->upper_keys[3] = 'R';
-	keyboard->upper_keys[4] = 'T';
-	keyboard->upper_keys[5] = 'Y';
-	keyboard->upper_keys[6] = 'U';
-	keyboard->upper_keys[7] = 'I';
-	keyboard->upper_keys[8] = 'O';
-	keyboard->upper_keys[9] = 'P';
-	keyboard->upper_keys[10] = '<';	//bACK SPACE
-	keyboard->upper_keys[11] = 'A';
-	keyboard->upper_keys[12] = 'S';
-	keyboard->upper_keys[13] = 'D';
-	keyboard->upper_keys[14] = 'F';
-	keyboard->upper_keys[15] = 'G';
-	keyboard->upper_keys[16] = 'H';
-	keyboard->upper_keys[17] = 'J';
-	keyboard->upper_keys[18] = 'K';
-	keyboard->upper_keys[19] = 'L';
-	keyboard->upper_keys[20] = '^';	//sHIFT
-	keyboard->upper_keys[21] = 'Z';
-	keyboard->upper_keys[22] = 'X';
-	keyboard->upper_keys[23] = 'C';
-	keyboard->upper_keys[24] = 'V';
-	keyboard->upper_keys[25] = 'B';
-	keyboard->upper_keys[26] = 'N';
-	keyboard->upper_keys[27] = 'M';
-	keyboard->upper_keys[28] = '!';
-	keyboard->upper_keys[29] = '?';
-	keyboard->upper_keys[30] = '^';	//sHIFT
 
-	keyboard->lower_keys[0] = 'q';
-	keyboard->lower_keys[1] = 'w';
-	keyboard->lower_keys[2] = 'e';
-	keyboard->lower_keys[3] = 'r';
-	keyboard->lower_keys[4] = 't';
-	keyboard->lower_keys[5] = 'y';
-	keyboard->lower_keys[6] = 'u';
-	keyboard->lower_keys[7] = 'i';
-	keyboard->lower_keys[8] = 'o';
-	keyboard->lower_keys[9] = 'p';
-	keyboard->lower_keys[10] = '<';	//back space
-	keyboard->lower_keys[11] = 'a';
-	keyboard->lower_keys[12] = 's';
-	keyboard->lower_keys[13] = 'd';
-	keyboard->lower_keys[14] = 'f';
-	keyboard->lower_keys[15] = 'g';
-	keyboard->lower_keys[16] = 'h';
-	keyboard->lower_keys[17] = 'j';
-	keyboard->lower_keys[18] = 'k';
-	keyboard->lower_keys[19] = 'l';
-	keyboard->lower_keys[20] = '^';	//shift
-	keyboard->lower_keys[21] = 'z';
-	keyboard->lower_keys[22] = 'x';
-	keyboard->lower_keys[23] = 'c';
-	keyboard->lower_keys[24] = 'v';
-	keyboard->lower_keys[25] = 'b';
-	keyboard->lower_keys[26] = 'n';
-	keyboard->lower_keys[27] = 'm';
-	keyboard->lower_keys[28] = ',';
-	keyboard->lower_keys[29] = '.';
-	keyboard->lower_keys[30] = '^';	//shift
-
+	keyboard->upper_keys = "QWERTYUIOP<ASDFGHJKL^ZXCVBNM!?^";
+	keyboard->lower_keys = "qwertyuiop<asdfghjkl^zxcvbnm,.^";
 	return;
 }

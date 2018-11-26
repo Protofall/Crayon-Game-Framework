@@ -96,8 +96,10 @@ typedef struct MinesweeperKeyboard{
 	uint16_t type_box_x, type_box_y;
 	crayon_textured_array_t mini_buttons, key_big_buttons;
 	int8_t caps;
-	char upper_keys[31];	//If we add more keys later on, change these sizes
-	char lower_keys[31];	//If we add more keys later on, change these sizes
+
+	const char * upper_keys;
+	const char * lower_keys;
+
 	int8_t record_index;
 } MinesweeperKeyboard_t;
 

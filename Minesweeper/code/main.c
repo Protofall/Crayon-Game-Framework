@@ -722,30 +722,27 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[0] + 75) && (cursor_pos[1] <= options->buttons.positions[1] + 23)
 					&& cursor_pos[0] >= options->buttons.positions[0] && cursor_pos[1] >= options->buttons.positions[1]){	//Beginner
-				options->disp_x = 9;
-				options->disp_y = 9;
-				options->disp_mines = 10;
 				sprintf(options->x_buffer, "%d", options->disp_x);
 				sprintf(options->y_buffer, "%d", options->disp_y);
 				sprintf(options->m_buffer, "%d", options->disp_mines);
+				reset_grid(grid, options, 9, 9, 10);
+				face->frame_coord_keys[0] = 0;	//Reset the face
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[2] + 75) && (cursor_pos[1] <= options->buttons.positions[3] + 23)
 					&& cursor_pos[0] >= options->buttons.positions[2] && cursor_pos[1] >= options->buttons.positions[3]){	//Intermediate
-				options->disp_x = 16;
-				options->disp_y = 16;
-				options->disp_mines = 40;
 				sprintf(options->x_buffer, "%d", options->disp_x);
 				sprintf(options->y_buffer, "%d", options->disp_y);
 				sprintf(options->m_buffer, "%d", options->disp_mines);
+				reset_grid(grid, options, 16, 16, 40);
+				face->frame_coord_keys[0] = 0;
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[4] + 75) && (cursor_pos[1] <= options->buttons.positions[5] + 23)
 					&& cursor_pos[0] >= options->buttons.positions[4] && cursor_pos[1] >= options->buttons.positions[5]){	//Expert
-				options->disp_x = 30;
-				options->disp_y = 20;
-				options->disp_mines = 99;
 				sprintf(options->x_buffer, "%d", options->disp_x);
 				sprintf(options->y_buffer, "%d", options->disp_y);
 				sprintf(options->m_buffer, "%d", options->disp_mines);
+				reset_grid(grid, options, 30, 20, 99);
+				face->frame_coord_keys[0] = 0;
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[6] + 75) && (cursor_pos[1] <= options->buttons.positions[7] + 23)
 					&& cursor_pos[0] >= options->buttons.positions[6] && cursor_pos[1] >= options->buttons.positions[7]){	//Save to VMU (UNFINISHED)
@@ -758,7 +755,7 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 					sprintf(options->m_buffer, "%d", options->disp_mines);
 				}
 				reset_grid(grid, options, options->disp_x, options->disp_y, options->disp_mines);
-				face->frame_coord_keys[0] = 0;	//Reset the face
+				face->frame_coord_keys[0] = 0;
 			}
 			else if((cursor_pos[0] <= options->checkers.positions[0] + 13) && (cursor_pos[1] <= options->checkers.positions[1] + 13)
 					&& cursor_pos[0] >= options->checkers.positions[0] && cursor_pos[1] >= options->checkers.positions[1]){	//Sound checker
@@ -901,12 +898,6 @@ int main(){
 		MS_options.save_file.pref_width = 30;
 		MS_options.save_file.pref_height = 20;
 		MS_options.save_file.pref_mines = 99;
-
-		//Remove these 4 later
-		MS_options.save_file.pref_width = 9;
-		MS_options.save_file.pref_height = 9;
-		MS_options.save_file.pref_mines = 10;
-		MS_options.sound_enabled = 0;
 	}
 
 	#if CRAYON_SD_MODE == 1
@@ -1187,6 +1178,8 @@ int main(){
 	MS_keyboard.key_big_buttons.positions[3] = keyboard_start_y + 81;
 	graphics_frame_coordinates(MS_keyboard.key_big_buttons.animation, MS_keyboard.key_big_buttons.frame_coord_map, MS_keyboard.key_big_buttons.frame_coord_map + 1, 0);
 
+	// error_freeze("%s", MS_keyboard.upper_keys);
+
 	//Options draw structs
 	crayon_memory_set_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[button_id], &Windows_P);
 	crayon_memory_set_sprite_array(&MS_options.checkers, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[checker_id], &Windows_P);
@@ -1199,15 +1192,15 @@ int main(){
 	MS_options.buttons.flips[0] = 0;
 	MS_options.buttons.rotations[0] = 0;
 	MS_options.buttons.colours[0] = 0;
-	MS_options.buttons.positions[0] = 20;	//Beginner
+	MS_options.buttons.positions[0] = 250;	//Beginner
 	MS_options.buttons.positions[1] = 140;
-	MS_options.buttons.positions[2] = 20;	//Intermediate
+	MS_options.buttons.positions[2] = MS_options.buttons.positions[0];	//Intermediate
 	MS_options.buttons.positions[3] = MS_options.buttons.positions[1] + 50;
-	MS_options.buttons.positions[4] = 20;	//Expert
+	MS_options.buttons.positions[4] = MS_options.buttons.positions[0];	//Expert
 	MS_options.buttons.positions[5] = MS_options.buttons.positions[1] + 100;
-	MS_options.buttons.positions[6] = 420;	//Save to VMU
+	MS_options.buttons.positions[6] = 20;	//Save to VMU
 	MS_options.buttons.positions[7] = 210;
-	MS_options.buttons.positions[8] = 420;	//Update Grid
+	MS_options.buttons.positions[8] = MS_options.buttons.positions[6];	//Update Grid
 	MS_options.buttons.positions[9] = MS_options.buttons.positions[7] + 30;
 	MS_options.buttons.frame_coord_keys[0] = 0;
 	graphics_frame_coordinates(MS_options.buttons.animation, MS_options.buttons.frame_coord_map, MS_options.buttons.frame_coord_map + 1, 0);
@@ -1219,9 +1212,9 @@ int main(){
 	MS_options.checkers.flips[0] = 0;
 	MS_options.checkers.rotations[0] = 0;
 	MS_options.checkers.colours[0] = 0;
-	MS_options.checkers.positions[0] = 480;	//Sound
+	MS_options.checkers.positions[0] = MS_options.buttons.positions[6] + 60;	//Sound
 	MS_options.checkers.positions[1] = 144;
-	MS_options.checkers.positions[2] = 480;	//Questions
+	MS_options.checkers.positions[2] = MS_options.checkers.positions[0];	//Questions
 	MS_options.checkers.positions[3] = MS_options.checkers.positions[1] + 40;
 	MS_options.checkers.frame_coord_keys[0] = MS_options.sound_enabled;
 	MS_options.checkers.frame_coord_keys[1] = MS_options.question_enabled;
@@ -1235,11 +1228,11 @@ int main(){
 	MS_options.number_changers.flips[0] = 0;
 	MS_options.number_changers.rotations[0] = 0;
 	MS_options.number_changers.colours[0] = 0;
-	MS_options.number_changers.positions[0] = 608;	//Height
+	MS_options.number_changers.positions[0] = MS_options.checkers.positions[0] + 128;	//Height (208)
 	MS_options.number_changers.positions[1] = 140 + (2 * MS_options.operating_system);
-	MS_options.number_changers.positions[2] = 608;	//Width
+	MS_options.number_changers.positions[2] = MS_options.number_changers.positions[0];	//Width
 	MS_options.number_changers.positions[3] = MS_options.number_changers.positions[1] + 50;
-	MS_options.number_changers.positions[4] = 608;	//Mines
+	MS_options.number_changers.positions[4] = MS_options.number_changers.positions[0];	//Mines
 	MS_options.number_changers.positions[5] = MS_options.number_changers.positions[1] + 100;
 	MS_options.number_changers.frame_coord_keys[0] = 0;
 	graphics_frame_coordinates(MS_options.number_changers.animation, MS_options.number_changers.frame_coord_map, MS_options.number_changers.frame_coord_map + 1, 0);
@@ -1289,7 +1282,6 @@ int main(){
 	crayon_memory_swap_colour(&cursor_yellow, 0xFFFFFFFF, 0xFFFFFF00, 0);
 	crayon_memory_swap_colour(&cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
 	crayon_memory_swap_colour(&cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
-
 
 	#if CRAYON_DEBUG == 1
 	//Stuff for debugging/performance testing
@@ -1785,7 +1777,29 @@ int main(){
 			#endif
 
 			if(MS_options.focus == 1){
-				char key_buffer[4];
+
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, keyboard_start_x + 89, keyboard_start_y - 80, 31, 1, 1, Tahoma_P.palette_id, "You have the fastest time for\0");
+				if(MS_keyboard.record_index == 0){
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, keyboard_start_x + 94, keyboard_start_y - 80 + 12, 31, 1, 1, Tahoma_P.palette_id, "Single Player Beginner level\0");
+				}
+				else if(MS_keyboard.record_index == 1){
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, keyboard_start_x + 84, keyboard_start_y - 80 + 12, 31, 1, 1, Tahoma_P.palette_id, "Single Player Intermediate level\0");
+				}
+				else if(MS_keyboard.record_index == 2){
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, keyboard_start_x + 99, keyboard_start_y - 80 + 12, 31, 1, 1, Tahoma_P.palette_id, "Single Player Expert level\0");
+				}
+				else if(MS_keyboard.record_index == 3){
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, keyboard_start_x + 99, keyboard_start_y - 80 + 12, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer Beginner level\0");
+				}
+				else if(MS_keyboard.record_index == 4){
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, keyboard_start_x + 89, keyboard_start_y - 80 + 12, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer Intermediate level\0");
+				}
+				else if(MS_keyboard.record_index == 5){
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, keyboard_start_x + 104, keyboard_start_y - 80 + 12, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer Expert level\0");
+				}
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, keyboard_start_x + 101, keyboard_start_y - 80 + 24, 31, 1, 1, Tahoma_P.palette_id, "Please enter your name.\0");
+
+				char key_buffer[3];
 				for(iter = 0; iter < MS_keyboard.mini_buttons.num_sprites; iter++){
 					if(MS_keyboard.caps){
 						key_buffer[0] = MS_keyboard.upper_keys[iter];
@@ -1812,7 +1826,7 @@ int main(){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.key_big_buttons.positions[2] + 24, MS_keyboard.key_big_buttons.positions[3] + 5, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
 
 				//The text the user types
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 6, MS_keyboard.type_box_y + 5, 31, 1, 1, Tahoma_P.palette_id, MS_keyboard.type_buffer);
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 6, MS_keyboard.type_box_y + 5, 31, 1, 1, Tahoma_P.palette_id, MS_keyboard.type_buffer);				
 			}
 			else if(MS_options.focus == 3){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[0] - 56, MS_options.checkers.positions[1] + 1, 31, 1, 1, Tahoma_P.palette_id, "Sound\0");
