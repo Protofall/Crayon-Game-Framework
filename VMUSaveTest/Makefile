@@ -20,7 +20,7 @@ rm-elf:
 	-rm -f romdisk_boot.*
 
 example.elf: $(OBJS) romdisk_boot.o 
-	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) -o $@ $(KOS_START) $^ -lpng -lz -lm $(KOS_LIBS)
+	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) -o $@ $(KOS_START) $^ -lz -lm $(KOS_LIBS)
 
 romdisk_boot.img:
 	$(KOS_GENROMFS) -f $@ -d romdisk_boot -v
