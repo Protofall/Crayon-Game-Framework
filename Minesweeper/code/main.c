@@ -1178,8 +1178,6 @@ int main(){
 	MS_keyboard.key_big_buttons.positions[3] = keyboard_start_y + 81;
 	graphics_frame_coordinates(MS_keyboard.key_big_buttons.animation, MS_keyboard.key_big_buttons.frame_coord_map, MS_keyboard.key_big_buttons.frame_coord_map + 1, 0);
 
-	// error_freeze("%s", MS_keyboard.upper_keys);
-
 	//Options draw structs
 	crayon_memory_set_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[button_id], &Windows_P);
 	crayon_memory_set_sprite_array(&MS_options.checkers, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[checker_id], &Windows_P);
@@ -1826,7 +1824,7 @@ int main(){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.key_big_buttons.positions[2] + 24, MS_keyboard.key_big_buttons.positions[3] + 5, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
 
 				//The text the user types
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 6, MS_keyboard.type_box_y + 5, 31, 1, 1, Tahoma_P.palette_id, MS_keyboard.type_buffer);				
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 6, MS_keyboard.type_box_y + 5, 31, 1, 1, Tahoma_P.palette_id, MS_keyboard.type_buffer);
 			}
 			else if(MS_options.focus == 3){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[0] - 56, MS_options.checkers.positions[1] + 1, 31, 1, 1, Tahoma_P.palette_id, "Sound\0");
