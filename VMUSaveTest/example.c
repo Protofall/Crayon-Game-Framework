@@ -28,10 +28,11 @@ The black and white palette is FF FF 00 F0 00 (Then the rest is zeroes)
 
 The colours are fully white and fully black. Then means 1 hex latter = 1 channel.
 
-So we have FF FF which is white and 00 F0 (or F0 00 00) which is black
+So we have FF FF which is white and 00 F0 (or F0 00) which is black
 
 */
-int DC_SaveToVMU(char *src){
+
+int DC_CreateVMUSaveFile(char *src){
 	char dst[32];
 
 	vmu_pkg_t pkg;
@@ -64,8 +65,11 @@ int DC_SaveToVMU(char *src){
 	pkg.eyecatch_type = VMUPKG_EC_NONE;
 
 	// Save the newly created VMU save to the VMU
-	fs_unlink(dst);							//Errors out
 	file_t file = fs_open(dst, O_WRONLY);	//Errors out
+	if(file == -1){
+		printf("File DNE\n");
+	}
+	printf("%d\n", file);
 	fs_write(file, pkg_out, pkg_size);
 	fs_close(file);							//Errors out
 
@@ -88,9 +92,6 @@ int main(void){
 	save.var1 = 20000;
 	save.var2 = 41;
 
-	// unsigned char * icon;	//uint8_t
-	// unsigned short * palette;	//uint16_t
-
 	file_t file;
 
 	file = fs_open("/rd/IMAGE.BIN", O_RDONLY);
@@ -105,7 +106,7 @@ int main(void){
 	fs_read(file, palette, filesize2);
 	fs_close(file);
 
-	DC_SaveToVMU("hii");
+	DC_CreateVMUSaveFile("hii");
 
 	while(1){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
