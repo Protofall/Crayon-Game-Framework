@@ -2,6 +2,7 @@
 #define MS_EXTRA_STRUCTS_H
 
 #include "../../Crayon/code/dreamcast/texture_structs.h"
+#include "savefile.h"
 
 //This file exist just to make the main file a little bit more clean
 
@@ -51,19 +52,6 @@ typedef struct MinesweeperGrid{
 								//on any grid. Defeault 15
 } MinesweeperGrid_t;
 
-//+ save icon should be 2 blocks long
-typedef struct MinesweeperSaveFile{
-	// uint8_t BS_Mode;	//Bulletsweeper mode. 0 for never won, 1 for Beat with 1 player, 2 for beat with 2 players, etc.
-	uint8_t options;	//Sound and Question marks, English/Italian, OS, other
-	uint16_t times[6];	//First 3 are Single player, last 3 are multiplayer
-	char record_names[6][11];	//6 names, 11 chars long (Last char is \0 so really 10)
-
-	//Prefered grid settings
-	uint8_t pref_height;
-	uint8_t pref_width;
-	uint8_t pref_mines;
-} MinesweeperSaveFile_t;
-
 //Contains game options and focus (Windows tab)
 typedef struct MinesweeperOptions{
 	uint8_t sd_present;			//If an ext2 formatted SD card is detected, this this becomes true
@@ -73,6 +61,7 @@ typedef struct MinesweeperOptions{
 	uint8_t operating_system;	//0 for 2000, 1 for XP
 	uint8_t language;			//0 for English, 1 for Italian. This affects the font language and
 								//the Minesweeper/Prato fiorito themes
+	uint8_t htz;				//Whatever refresh rate you chose. Currently unused
 
 	uint8_t focus;	//0 = normal game, 1 = type name (High score), 2 = display high scores, 3 = options,
 					//4 = controls, 5 = about
@@ -86,6 +75,8 @@ typedef struct MinesweeperOptions{
 	crayon_textured_array_t buttons;
 	crayon_textured_array_t checkers;
 	crayon_textured_array_t number_changers;
+
+	int8_t vmu_present;		//1 is there's a valid VMU plugged in, 0 if there isn't (Doesn't check if VMU has enough space)
 
 	MinesweeperSaveFile_t save_file;	//Not a pointer since this struct needs the same save file always
 } MinesweeperOptions_t;
