@@ -51,6 +51,7 @@ typedef struct MinesweeperGrid{
 								//on any grid. Defeault 15
 } MinesweeperGrid_t;
 
+//+ save icon should be 2 blocks long
 typedef struct MinesweeperSaveFile{
 	// uint8_t BS_Mode;	//Bulletsweeper mode. 0 for never won, 1 for Beat with 1 player, 2 for beat with 2 players, etc.
 	uint8_t options;	//Sound and Question marks, English/Italian, OS, other
