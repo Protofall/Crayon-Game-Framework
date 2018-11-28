@@ -219,6 +219,10 @@ void reset_grid(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_
 	grid->y = y;
 	grid->num_mines = mine_count;
 
+	options->save_file.pref_height = y;
+	options->save_file.pref_width = x;
+	options->save_file.pref_mines = mine_count;
+
 	//Used for checking and setting high scores
 	if(x == 9 && y == 9 && mine_count == 10){	//Beginner
 		grid->difficulty = 1;
@@ -226,7 +230,7 @@ void reset_grid(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_
 	else if(x == 16 && y == 16 && mine_count == 40){	//Intermediate
 		grid->difficulty = 2;
 	}
-	else if(x == 30 && y == 20 && mine_count == 99){	//Expert
+	else if(x == 30 && y == 16 && mine_count == 99){	//Expert
 		grid->difficulty = 3;
 	}
 	else{	//Custom grid
@@ -745,8 +749,14 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 				face->frame_coord_keys[0] = 0;
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[6] + 75) && (cursor_pos[1] <= options->buttons.positions[7] + 23)
-					&& cursor_pos[0] >= options->buttons.positions[6] && cursor_pos[1] >= options->buttons.positions[7]){	//Save to VMU (UNFINISHED)
-				// error_freeze("UNIMPLEMENTED");
+					&& cursor_pos[0] >= options->buttons.positions[6] && cursor_pos[1] >= options->buttons.positions[7]){	//Save to VMU
+				if(options->vmu_present){
+					options->save_file.options = options->question_enabled + (options->sound_enabled << 1)
+						+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
+					// sprite_array->options = 0 + (multi_colours << 5) + (multi_rotations << 4) + (multi_flips << 3) +
+					// 	(multi_scales << 2) + (multi_frames << 1) + (multi_draw_z << 0);
+					save_uncompressed(0, 1, &options->save_file);
+				}
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[8] + 75) && (cursor_pos[1] <= options->buttons.positions[9] + 23)
 					&& cursor_pos[0] >= options->buttons.positions[8] && cursor_pos[1] >= options->buttons.positions[9]){	//Apply
@@ -876,27 +886,61 @@ int main(){
 	MS_options.sd_present = 0;
 	MS_options.focus = 0;
 
-	//Check for save file or valid VMU here
+	// MS_options.focus = 3;	//DEBUG
+
+	//Load the VMU icon data
+	#if CRAYON_SD_MODE == 1
+		crayon_memory_mount_romdisk("/sd/SaveFile.img", "/Save");
+	#else
+		crayon_memory_mount_romdisk("/cd/SaveFile.img", "/Save");
+	#endif
+
+	file_t icon_files;
+
+	icon_files = fs_open("/Save/IMAGE.BIN", O_RDONLY);
+	save_file_icon = (unsigned char *) malloc(fs_total(icon_files));
+	fs_read(icon_files, save_file_icon, fs_total(icon_files));
+	fs_close(icon_files);
+
+	icon_files = fs_open("/Save/PALLETTE.BIN", O_RDONLY);
+	save_file_palette = (unsigned short *) malloc(fs_total(icon_files));
+	fs_read(icon_files, save_file_palette, fs_total(icon_files));
+	fs_close(icon_files);
+
+	fs_romdisk_unmount("/SaveFile");
 
 	//If a save already exists
-	if(0){
-		;
-		//DON'T FORGET TO SET THE PREFS
+	int8_t load_res = load_uncompressed(0, 1, &MS_options.save_file);	//Does return zero if a save file is present...
+	if(load_res == 0){
+		MS_options.vmu_present = 1;
+		MS_options.question_enabled = !!(MS_options.save_file.options & (1 << 0));
+		MS_options.sound_enabled = !!(MS_options.save_file.options & (1 << 1));
+		MS_options.operating_system = !!(MS_options.save_file.options & (1 << 2));
+		MS_options.language = !!(MS_options.save_file.options & (1 << 3));
+		MS_options.htz = !!(MS_options.save_file.options & (1 << 4));
 	}
 	else{	//No save exists or VMU isn't present
+		if(load_res == -1){	//VMU is there, but it has no save file (Doesn't check if full)
+			MS_options.vmu_present = 1;
+		}
+		else{
+			MS_options.vmu_present = 0;
+		}
 		MS_options.question_enabled = 1;
 		MS_options.sound_enabled = 1;
 		MS_options.operating_system = 0;
 		MS_options.language = 0;
+		MS_options.htz = 0;
 
-		// MS_options.save_file.options = ;
+		MS_options.save_file.options = 3;	//sound + questions
+
 		int8_t i;
 		for(i = 0; i < 6; i++){
 			strcpy(MS_options.save_file.record_names[i], "Anonymous\0");
 			MS_options.save_file.times[i] = 999;
 		}
 		MS_options.save_file.pref_width = 30;
-		MS_options.save_file.pref_height = 20;
+		MS_options.save_file.pref_height = 16;
 		MS_options.save_file.pref_mines = 99;
 	}
 
@@ -911,7 +955,7 @@ int main(){
 	//Later OS will be chosen in BIOS and language through save file name
 	MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 	if(st->buttons & (1 << 1)){		//B press
-		MS_options.operating_system = 1;
+		MS_options.operating_system = !MS_options.operating_system;
 	}
 	MAPLE_FOREACH_END()
 
@@ -1860,17 +1904,30 @@ int main(){
 			}
 			else if(MS_options.focus == 5){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version \"Pre-reveal\" (Build 3011: Service Pack 5)\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.0 (Build 3011: Service Pack 5)\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 160 + 60, 25, 1, 1, 62, "used texconv textures and powered by my Crayon library. I don't own\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 165 + 72, 25, 1, 1, 62, "the rights to Minesweeper nor do I claim to so don't sue me, k?\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 185 + 84, 25, 1, 1, 62, "Katana logo made by Airofoil\0");
+				// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 185 + 84, 25, 1, 1, 62, "Katana logo made by Airofoil\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 205 + 96, 25, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 210 + 108, 25, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 215 + 120, 25, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
 			}
+
+			// char bad_buffer[100];
+			// sprintf(bad_buffer, "%d, %d, %d, %d, %d, %d, %d", MS_options.save_file.options, MS_options.save_file.times[0], MS_options.save_file.times[1],
+			// 	MS_options.save_file.times[2], MS_options.save_file.times[3], MS_options.save_file.times[4], MS_options.save_file.times[5]);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 100, 350, 25, 1, 1, 62, bad_buffer);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 100, 350 + 12, 25, 1, 1, 62, MS_options.save_file.record_names[0]);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 100 + 100, 350 + 12, 25, 1, 1, 62, MS_options.save_file.record_names[1]);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 100 + 200, 350 + 12, 25, 1, 1, 62, MS_options.save_file.record_names[2]);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 100 + 300, 350 + 12, 25, 1, 1, 62, MS_options.save_file.record_names[3]);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 100 + 400, 350 + 12, 25, 1, 1, 62, MS_options.save_file.record_names[4]);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 100, 350 + 24, 25, 1, 1, 62, MS_options.save_file.record_names[5]);
+			// sprintf(bad_buffer, "%d, %d, %d", MS_options.save_file.pref_height, MS_options.save_file.pref_width, MS_options.save_file.pref_mines);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 100, 350 + 36, 25, 1, 1, 62, bad_buffer);
 
 		pvr_list_finish();
 
@@ -1980,6 +2037,10 @@ int main(){
 	snd_sfx_unload(Sound_Death_Italian);
 	snd_sfx_unload(Sound_Win);
 	setup_free_OS_struct(&os);
+
+	free(save_file_icon);
+	free(save_file_palette);
+
 	error_freeze("Free-ing result %d!\n", retVal);
 
 	return 0;
