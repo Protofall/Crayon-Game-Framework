@@ -16,7 +16,7 @@ typedef struct MinesweeperSaveFile{
 	// uint8_t BS_Mode;	//Bulletsweeper mode. 0 for never won, 1 for Beat with 1 player, 2 for beat with 2 players, etc.
 	uint8_t options;	//XXXX LOSQ (Language, OS, Sound, Questions)
 	uint16_t times[6];	//First 3 are Single player, last 3 are multiplayer
-	char record_names[6][11];	//6 names, 11 chars long (Last char is \0 so really 10)
+	char record_names[6][16];	//6 names, 11 chars long (Last char is \0 so really 10)
 
 	//Prefered grid settings
 	uint8_t pref_height;
