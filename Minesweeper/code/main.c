@@ -593,12 +593,18 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 
 					//Save this record
 					options->save_file.times[keyboard->record_index] = time;
-					// options->save_file.record_names[keyboard->record_index] = keyboard->type_buffer;
 					strcpy(options->save_file.record_names[keyboard->record_index], keyboard->type_buffer);
 
 					//Reset the buffer for the next score
 					keyboard->type_buffer[0] = '\0';
 					keyboard->chars_typed = 0;
+
+					//It makes sense to save the record immediately
+					if(options->vmu_present){
+						options->save_file.options = options->question_enabled + (options->sound_enabled << 1)
+							+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
+						save_uncompressed(options->vmu_port, options->vmu_slot, &options->save_file);
+					}
 
 					//Resume focus 0 (Normal game play)
 					options->focus = 0;	//Change to 2 later when I make that screen
@@ -606,7 +612,7 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 				else if((cursor_pos[0] >= keyboard->key_big_buttons.positions[2]) && (cursor_pos[1] >= keyboard->key_big_buttons.positions[3])
 					&& cursor_pos[0] <= keyboard->key_big_buttons.positions[2] + keyboard->key_big_buttons.animation->animation_frame_width &&
 					cursor_pos[1] <= keyboard->key_big_buttons.positions[3] + keyboard->key_big_buttons.animation->animation_frame_height){	//Space pressed
-					if(keyboard->chars_typed <= 9){
+					if(keyboard->chars_typed < 15){
 						keyboard->type_buffer[keyboard->chars_typed + 1] = '\0';
 						keyboard->type_buffer[keyboard->chars_typed] = ' ';
 						keyboard->chars_typed++;
@@ -632,7 +638,7 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 				}
 
 				//else append the new char
-				if(keyboard->chars_typed <= 9){
+				if(keyboard->chars_typed < 15){
 					keyboard->type_buffer[keyboard->chars_typed + 1] = '\0';
 					if(keyboard->caps){
 						keyboard->type_buffer[keyboard->chars_typed] = keyboard->upper_keys[i];
@@ -753,9 +759,7 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 				if(options->vmu_present){
 					options->save_file.options = options->question_enabled + (options->sound_enabled << 1)
 						+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
-					// sprite_array->options = 0 + (multi_colours << 5) + (multi_rotations << 4) + (multi_flips << 3) +
-					// 	(multi_scales << 2) + (multi_frames << 1) + (multi_draw_z << 0);
-					save_uncompressed(0, 1, &options->save_file);
+					save_uncompressed(options->vmu_port, options->vmu_slot, &options->save_file);
 				}
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[8] + 75) && (cursor_pos[1] <= options->buttons.positions[9] + 23)
@@ -886,8 +890,6 @@ int main(){
 	MS_options.sd_present = 0;
 	MS_options.focus = 0;
 
-	// MS_options.focus = 3;	//DEBUG
-
 	//Load the VMU icon data
 	#if CRAYON_SD_MODE == 1
 		crayon_memory_mount_romdisk("/sd/SaveFile.img", "/Save");
@@ -909,8 +911,12 @@ int main(){
 
 	fs_romdisk_unmount("/SaveFile");
 
+	//Change this later to search for any valid slot
+	MS_options.vmu_port = 0;
+	MS_options.vmu_slot = 1;
+
 	//If a save already exists
-	int8_t load_res = load_uncompressed(0, 1, &MS_options.save_file);	//Does return zero if a save file is present...
+	int8_t load_res = load_uncompressed(MS_options.vmu_port, MS_options.vmu_slot, &MS_options.save_file);
 	if(load_res == 0){
 		MS_options.vmu_present = 1;
 		MS_options.question_enabled = !!(MS_options.save_file.options & (1 << 0));
@@ -937,6 +943,7 @@ int main(){
 		int8_t i;
 		for(i = 0; i < 6; i++){
 			strcpy(MS_options.save_file.record_names[i], "Anonymous\0");
+			// strcpy(MS_options.save_file.record_names[i], "%%%%%%%%%%%%%%%\0");	//Longest possible name
 			MS_options.save_file.times[i] = 999;
 		}
 		MS_options.save_file.pref_width = 30;
@@ -1188,7 +1195,7 @@ int main(){
 
 	uint8_t keyboard_start_x = 161;
 	uint16_t keyboard_start_y = 250;
-	MS_keyboard.type_box_x = keyboard_start_x - 8 + 107;
+	MS_keyboard.type_box_x = keyboard_start_x - 8 + 71;
 	MS_keyboard.type_box_y = keyboard_start_y - 88 + 56;
 	//Bix box is 334 wide. half is 167. 11 times 10 is 110. + 10 (Each side) is 120. 167 - 60 = 107
 
@@ -1234,13 +1241,13 @@ int main(){
 	MS_options.buttons.flips[0] = 0;
 	MS_options.buttons.rotations[0] = 0;
 	MS_options.buttons.colours[0] = 0;
-	MS_options.buttons.positions[0] = 250;	//Beginner
-	MS_options.buttons.positions[1] = 140;
+	MS_options.buttons.positions[0] = 20;	//Beginner
+	MS_options.buttons.positions[1] = 320;
 	MS_options.buttons.positions[2] = MS_options.buttons.positions[0];	//Intermediate
-	MS_options.buttons.positions[3] = MS_options.buttons.positions[1] + 50;
+	MS_options.buttons.positions[3] = MS_options.buttons.positions[1] + 30;
 	MS_options.buttons.positions[4] = MS_options.buttons.positions[0];	//Expert
-	MS_options.buttons.positions[5] = MS_options.buttons.positions[1] + 100;
-	MS_options.buttons.positions[6] = 20;	//Save to VMU
+	MS_options.buttons.positions[5] = MS_options.buttons.positions[1] + 60;
+	MS_options.buttons.positions[6] = 220;	//Save to VMU
 	MS_options.buttons.positions[7] = 210;
 	MS_options.buttons.positions[8] = MS_options.buttons.positions[6];	//Update Grid
 	MS_options.buttons.positions[9] = MS_options.buttons.positions[7] + 30;
@@ -1255,7 +1262,7 @@ int main(){
 	MS_options.checkers.rotations[0] = 0;
 	MS_options.checkers.colours[0] = 0;
 	MS_options.checkers.positions[0] = MS_options.buttons.positions[6] + 60;	//Sound
-	MS_options.checkers.positions[1] = 144;
+	MS_options.checkers.positions[1] = MS_options.buttons.positions[7] - 66;
 	MS_options.checkers.positions[2] = MS_options.checkers.positions[0];	//Questions
 	MS_options.checkers.positions[3] = MS_options.checkers.positions[1] + 40;
 	MS_options.checkers.frame_coord_keys[0] = MS_options.sound_enabled;
@@ -1271,7 +1278,7 @@ int main(){
 	MS_options.number_changers.rotations[0] = 0;
 	MS_options.number_changers.colours[0] = 0;
 	MS_options.number_changers.positions[0] = MS_options.checkers.positions[0] + 128;	//Height (208)
-	MS_options.number_changers.positions[1] = 140 + (2 * MS_options.operating_system);
+	MS_options.number_changers.positions[1] = MS_options.buttons.positions[7] - 70 + (2 * MS_options.operating_system);
 	MS_options.number_changers.positions[2] = MS_options.number_changers.positions[0];	//Width
 	MS_options.number_changers.positions[3] = MS_options.number_changers.positions[1] + 50;
 	MS_options.number_changers.positions[4] = MS_options.number_changers.positions[0];	//Mines
@@ -1874,9 +1881,9 @@ int main(){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[0] - 56, MS_options.checkers.positions[1] + 1, 31, 1, 1, Tahoma_P.palette_id, "Sound\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[2] - 56, MS_options.checkers.positions[3] + 1, 31, 1, 1, Tahoma_P.palette_id, "Marks (?)\0");
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0], MS_options.buttons.positions[1] - 30, 31, 1, 1, Tahoma_P.palette_id, "Best Times...\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 125, MS_options.buttons.positions[1] - 30, 31, 1, 1, Tahoma_P.palette_id, "Single Player\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 255, MS_options.buttons.positions[1] - 30, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0], MS_options.buttons.positions[1] - 20, 31, 1, 1, Tahoma_P.palette_id, "Best Times...\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 125, MS_options.buttons.positions[1] - 20, 31, 1, 1, Tahoma_P.palette_id, "Single Player\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 345, MS_options.buttons.positions[1] - 20, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 15, MS_options.buttons.positions[1] + 5, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[2] + 9, MS_options.buttons.positions[3] + 5, 31, 1, 1, Tahoma_P.palette_id, "Intemediate\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[4] + 22, MS_options.buttons.positions[5] + 5, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
@@ -1892,11 +1899,11 @@ int main(){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[4] - 21, MS_options.number_changers.positions[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.m_buffer);
 
 				//Display the high scores
-				char record_buffer[16];
-				uint8_t x_offset = 125;
+				char record_buffer[21];
+				uint16_t x_offset = 125;
 				for(iter = 0; iter < 6; iter++){
 					if(iter == 3){
-						x_offset = 255;
+						x_offset = 345;
 					}
 					sprintf(record_buffer, "%s: %d", MS_options.save_file.record_names[iter], MS_options.save_file.times[iter]);
 					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[(2 * (iter % 3))] + x_offset, MS_options.buttons.positions[(2 * (iter % 3)) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, record_buffer);
@@ -1904,7 +1911,7 @@ int main(){
 			}
 			else if(MS_options.focus == 5){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.0 (Build 3011: Service Pack 5)\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.0.0 (Build 3011: Service Pack 5)\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
@@ -1916,7 +1923,7 @@ int main(){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 215 + 120, 25, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
 			}
 
-			// char bad_buffer[100];
+			// char bad_buffer[110];
 			// sprintf(bad_buffer, "%d, %d, %d, %d, %d, %d, %d", MS_options.save_file.options, MS_options.save_file.times[0], MS_options.save_file.times[1],
 			// 	MS_options.save_file.times[2], MS_options.save_file.times[3], MS_options.save_file.times[4], MS_options.save_file.times[5]);
 			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 100, 350, 25, 1, 1, 62, bad_buffer);
@@ -1943,13 +1950,13 @@ int main(){
 					crayon_graphics_draw_sprites(&MS_keyboard.key_big_buttons, PVR_LIST_OP_POLY);	//Draw the high score keyboard
 					if(MS_options.operating_system){
 						custom_poly_XP_boarder(keyboard_start_x - 8, keyboard_start_y - 88, 19, 318 + 16, 105 + 96);
-						graphics_draw_untextured_poly(MS_keyboard.type_box_x, MS_keyboard.type_box_y, 25, 120, 20, 0xFF7F9DB9, 1);	//Blue outline
-						graphics_draw_untextured_poly(MS_keyboard.type_box_x + 1, MS_keyboard.type_box_y + 1, 26, 118, 18, 0xFFFFFFFF, 1);	//White box
+						graphics_draw_untextured_poly(MS_keyboard.type_box_x, MS_keyboard.type_box_y, 25, 120 + 56, 20, 0xFF7F9DB9, 1);	//Blue outline
+						graphics_draw_untextured_poly(MS_keyboard.type_box_x + 1, MS_keyboard.type_box_y + 1, 26, 118 + 56, 18, 0xFFFFFFFF, 1);	//White box
 
 					}
 					else{
 						custom_poly_2000_boarder(keyboard_start_x - 8, keyboard_start_y - 88, 19, 318 + 16, 105 + 96);
-						custom_poly_2000_text_boarder(MS_keyboard.type_box_x, MS_keyboard.type_box_y, 24, 120, 20);
+						custom_poly_2000_text_boarder(MS_keyboard.type_box_x, MS_keyboard.type_box_y, 24, 120 + 56, 20);
 					}
 				}
 			}
