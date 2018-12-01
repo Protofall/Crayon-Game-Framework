@@ -751,7 +751,7 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 				sprintf(options->x_buffer, "%d", options->disp_x);
 				sprintf(options->y_buffer, "%d", options->disp_y);
 				sprintf(options->m_buffer, "%d", options->disp_mines);
-				reset_grid(grid, options, 30, 20, 99);
+				reset_grid(grid, options, 30, 16, 99);
 				face->frame_coord_keys[0] = 0;
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[6] + 75) && (cursor_pos[1] <= options->buttons.positions[7] + 23)
@@ -1911,7 +1911,7 @@ int main(){
 			}
 			else if(MS_options.focus == 5){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.0.0 (Build 3011: Service Pack 5)\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.0.1 (Build 3011: Service Pack 5)\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
