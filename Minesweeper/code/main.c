@@ -662,28 +662,33 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 	float *cursor_pos, uint32_t previous_buttons, uint32_t buttons){
 	//CLEAN UP THE MAGIC NUMBERS
 	if(options->focus != 1){	//When we get a new score, we don't want to change focus easily
-		//Top 4 options
 		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){
-			if((cursor_pos[0] <= 9 + 27 + 3) && (cursor_pos[1] <= os->tabs_y + 13)
-					&& cursor_pos[0] >= 9 - 4 && cursor_pos[1] >= os->tabs_y - 3){
-				options->focus = 0;
-			}
-			else if((cursor_pos[0] <= 48 + 37 + 3) && (cursor_pos[1] <= os->tabs_y + 13)
-					&& cursor_pos[0] >= 48 - 4 && cursor_pos[1] >= os->tabs_y - 3){
-				options->focus = 3;
-			}
-			else if((cursor_pos[0] <= 97 + 40 + 3) && (cursor_pos[1] <= os->tabs_y + 13)
-					&& cursor_pos[0] >= 97 - 4 && cursor_pos[1] >= os->tabs_y - 3){
-				options->focus = 4;
-			}
-			else if((cursor_pos[0] <= 149 + 29 + 3) && (cursor_pos[1] <= os->tabs_y + 13)
-					&& cursor_pos[0] >= 149 - 4 && cursor_pos[1] >= os->tabs_y - 3){
-				options->focus = 5;
+			if(cursor_pos[1] <= os->tabs_y + 13 && cursor_pos[1] >= os->tabs_y - 4){
+				if((cursor_pos[0] <= options->tabs_x[0] + options->tabs_width[0] + 4) && 
+						cursor_pos[0] >= options->tabs_x[0] - 4){
+					options->focus = 0;
+				}
+				else if((cursor_pos[0] <= options->tabs_x[1] + options->tabs_width[1] + 4) && 
+						cursor_pos[0] >= options->tabs_x[1] - 4){
+					options->focus = 2;
+				}
+				else if((cursor_pos[0] <= options->tabs_x[2] + options->tabs_width[2] + 4) && 
+						cursor_pos[0] >= options->tabs_x[2] - 4){
+					options->focus = 3;
+				}
+				else if((cursor_pos[0] <= options->tabs_x[3] + options->tabs_width[3] + 4) && 
+						cursor_pos[0] >= options->tabs_x[3] - 4){
+					options->focus = 4;
+				}
+				else if((cursor_pos[0] <= options->tabs_x[4] + options->tabs_width[4] + 4) && 
+						cursor_pos[0] >= options->tabs_x[4] - 4){
+					options->focus = 5;
+				}
 			}
 		}
 	}
 
-	if(options->focus == 3){
+	if(options->focus == 2){
 		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){	//When we get a new score, we don't want to change focus easily
 			if((cursor_pos[0] <= options->number_changers.positions[0] + 16) && (cursor_pos[1] <= options->number_changers.positions[1] + 9)
 					&& cursor_pos[0] >= options->number_changers.positions[0] && cursor_pos[1] >= options->number_changers.positions[1]){	//Incrementer Y
@@ -803,22 +808,22 @@ uint8_t button_press_logic(MinesweeperGrid_t * grid, MinesweeperOptions_t * opti
 	return 0;
 }
 
-//Called in draw function, if cursor hovers over a button then return the button map (Either no bits or 1 bit will be set)
-uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os){
-	uint8_t menus_selected = 0;
-	if((cursor_x <= 39) && (cursor_y <= os->tabs_y + 13) && cursor_x >= 5 && cursor_y >= os->tabs_y - 3){
-		menus_selected += (1 << 0);
+uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os, MinesweeperOptions_t * options){
+	if(cursor_y > os->tabs_y + 13 || cursor_y < os->tabs_y - 3){	//If not on the box layer, just return instantly
+		//!(var <= x && var >= y) == var > x || var < y
+		//var <= 5 && var >= 0 becomes var > 5 || var < 0
+		return 0;
+
 	}
-	else if((cursor_x <= 88) && (cursor_y <= os->tabs_y + 13) && cursor_x >= 44 && cursor_y >= os->tabs_y - 3){
-		menus_selected += (1 << 1);
+
+	uint8_t i;
+	for(i = 0; i < 5; i++){
+		if(cursor_x >= options->tabs_x[i] - 4 && cursor_x <= options->tabs_x[i] + options->tabs_width[i] + 4){
+			return (1 << i);
+		}
 	}
-	else if((cursor_x <= 140) && (cursor_y <= os->tabs_y + 13) && cursor_x >= 93 && cursor_y >= os->tabs_y - 3){
-		menus_selected += (1 << 2);
-	}
-	else if((cursor_x <= 181) && (cursor_y <= os->tabs_y + 13) && cursor_x >= 145 && cursor_y >= os->tabs_y - 3){
-		menus_selected += (1 << 3);
-	}
-	return menus_selected;
+
+	return 0;
 }
 
 //switches you between English and Italian modes
@@ -1062,6 +1067,16 @@ int main(){
 	//Populate OS struct
 	setup_OS_assets(&os, &Windows, &Windows_P, MS_options.operating_system, MS_options.language, MS_options.sd_present);
 	setup_OS_assets_icons(&os, &Icons, &Icons_P, MS_options.operating_system, region);
+	MS_options.tabs_x[0] = 9;	//Game
+	MS_options.tabs_width[0] = 27;
+	MS_options.tabs_x[1] = MS_options.tabs_x[0] + MS_options.tabs_width[0] + 15;	//Options
+	MS_options.tabs_width[1] = 37;
+	MS_options.tabs_x[2] = MS_options.tabs_x[1] + MS_options.tabs_width[1] + 15 ;	//Best Times
+	MS_options.tabs_width[2] = 46;
+	MS_options.tabs_x[3] = MS_options.tabs_x[2] + MS_options.tabs_width[2] + 15 ;	//Controls
+	MS_options.tabs_width[3] = 40;
+	MS_options.tabs_x[4] = MS_options.tabs_x[3] + MS_options.tabs_width[3] + 15 ;	//About
+	MS_options.tabs_width[4] = 29;
 
 	//Add the clock palette
 	if(MS_options.operating_system){
@@ -1241,15 +1256,15 @@ int main(){
 	MS_options.buttons.flips[0] = 0;
 	MS_options.buttons.rotations[0] = 0;
 	MS_options.buttons.colours[0] = 0;
-	MS_options.buttons.positions[0] = 20;	//Beginner
-	MS_options.buttons.positions[1] = 320;
-	MS_options.buttons.positions[2] = MS_options.buttons.positions[0];	//Intermediate
-	MS_options.buttons.positions[3] = MS_options.buttons.positions[1] + 30;
-	MS_options.buttons.positions[4] = MS_options.buttons.positions[0];	//Expert
-	MS_options.buttons.positions[5] = MS_options.buttons.positions[1] + 60;
-	MS_options.buttons.positions[6] = 220;	//Save to VMU
+	MS_options.buttons.positions[0] = 408;	//Beginner
+	MS_options.buttons.positions[1] = 138 + (2 * MS_options.operating_system);
+	MS_options.buttons.positions[2] = MS_options.buttons.positions[0];			//Intermediate
+	MS_options.buttons.positions[3] = MS_options.buttons.positions[1] + 50;
+	MS_options.buttons.positions[4] = MS_options.buttons.positions[0];			//Expert
+	MS_options.buttons.positions[5] = MS_options.buttons.positions[3] + 50;
+	MS_options.buttons.positions[6] = MS_options.buttons.positions[0] - 247;	//Save to VMU
 	MS_options.buttons.positions[7] = 210;
-	MS_options.buttons.positions[8] = MS_options.buttons.positions[6];	//Update Grid
+	MS_options.buttons.positions[8] = MS_options.buttons.positions[6];			//Update Grid
 	MS_options.buttons.positions[9] = MS_options.buttons.positions[7] + 30;
 	MS_options.buttons.frame_coord_keys[0] = 0;
 	graphics_frame_coordinates(MS_options.buttons.animation, MS_options.buttons.frame_coord_map, MS_options.buttons.frame_coord_map + 1, 0);
@@ -1263,7 +1278,7 @@ int main(){
 	MS_options.checkers.colours[0] = 0;
 	MS_options.checkers.positions[0] = MS_options.buttons.positions[6] + 60;	//Sound
 	MS_options.checkers.positions[1] = MS_options.buttons.positions[7] - 66;
-	MS_options.checkers.positions[2] = MS_options.checkers.positions[0];	//Questions
+	MS_options.checkers.positions[2] = MS_options.checkers.positions[0];		//Questions
 	MS_options.checkers.positions[3] = MS_options.checkers.positions[1] + 40;
 	MS_options.checkers.frame_coord_keys[0] = MS_options.sound_enabled;
 	MS_options.checkers.frame_coord_keys[1] = MS_options.question_enabled;
@@ -1277,8 +1292,8 @@ int main(){
 	MS_options.number_changers.flips[0] = 0;
 	MS_options.number_changers.rotations[0] = 0;
 	MS_options.number_changers.colours[0] = 0;
-	MS_options.number_changers.positions[0] = MS_options.checkers.positions[0] + 128;	//Height (208)
-	MS_options.number_changers.positions[1] = MS_options.buttons.positions[7] - 70 + (2 * MS_options.operating_system);
+	MS_options.number_changers.positions[0] = MS_options.checkers.positions[0] + 128;	//Height
+	MS_options.number_changers.positions[1] = MS_options.buttons.positions[1] + 2;
 	MS_options.number_changers.positions[2] = MS_options.number_changers.positions[0];	//Width
 	MS_options.number_changers.positions[3] = MS_options.number_changers.positions[1] + 50;
 	MS_options.number_changers.positions[4] = MS_options.number_changers.positions[0];	//Mines
@@ -1739,22 +1754,17 @@ int main(){
 						(int) cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, cursor_palette);
 
 					//Add code for checking if cursor is hovering over a button
-					menus_selected |= button_hover(cursor_position[(2 * iter)], cursor_position[(2 * iter) + 1], &os);
+					// menus_selected |= button_hover(cursor_position[(2 * iter)], cursor_position[(2 * iter) + 1], &os);
+					menus_selected |= button_hover(cursor_position[(2 * iter)], cursor_position[(2 * iter) + 1], &os, &MS_options);
 				}
 			}
 
 			//Drawing the highlight boxes (Maybe make a change so they're brighter in XP?)
-			if(menus_selected & (1 << 0)){
-				graphics_draw_untextured_poly(5, os.tabs_y - 3, 19, 34, 16, 0x40FFFFFF, 0);	//Font is layer 20
-			}
-			if(menus_selected & (1 << 1)){
-				graphics_draw_untextured_poly(44, os.tabs_y - 3, 19, 44, 16, 0x40FFFFFF, 0);
-			}
-			if(menus_selected & (1 << 2)){
-				graphics_draw_untextured_poly(93, os.tabs_y - 3, 19, 47, 16, 0x40FFFFFF, 0);
-			}
-			if(menus_selected & (1 << 3)){
-				graphics_draw_untextured_poly(145, os.tabs_y - 3, 19, 36, 16, 0x40FFFFFF, 0);
+			for(iter = 0; iter < 5; iter++){
+				if(menus_selected & (1 << iter)){
+					graphics_draw_untextured_poly(MS_options.tabs_x[iter] - 4, os.tabs_y - 3, 19,
+						(MS_options.tabs_width[iter] + 8), 16, 0x40FFFFFF, 0);	//Font is layer 20
+				}
 			}
 
 		pvr_list_finish();
@@ -1773,10 +1783,11 @@ int main(){
 				crayon_graphics_draw_sprites(&os.sd, PVR_LIST_PT_POLY);
 			}
 
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 9, os.tabs_y, 20, 1, 1, 62, "Game\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 48, os.tabs_y, 20, 1, 1, 62, "Options\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 97, os.tabs_y, 20, 1, 1, 62, "Controls\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 149, os.tabs_y, 20, 1, 1, 62, "About\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[0], os.tabs_y, 20, 1, 1, 62, "Game\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[1], os.tabs_y, 20, 1, 1, 62, "Options\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[2], os.tabs_y, 20, 1, 1, 62, "Best Times\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[3], os.tabs_y, 20, 1, 1, 62, "Controls\0");
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[4], os.tabs_y, 20, 1, 1, 62, "About\0");
 
 			//Updating the time in the bottom right
 			if(hour != time_struct->tm_hour || minute != time_struct->tm_min){
@@ -1877,13 +1888,10 @@ int main(){
 				//The text the user types
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 6, MS_keyboard.type_box_y + 5, 31, 1, 1, Tahoma_P.palette_id, MS_keyboard.type_buffer);
 			}
-			else if(MS_options.focus == 3){
+			else if(MS_options.focus == 2){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[0] - 56, MS_options.checkers.positions[1] + 1, 31, 1, 1, Tahoma_P.palette_id, "Sound\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[2] - 56, MS_options.checkers.positions[3] + 1, 31, 1, 1, Tahoma_P.palette_id, "Marks (?)\0");
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0], MS_options.buttons.positions[1] - 20, 31, 1, 1, Tahoma_P.palette_id, "Best Times...\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 125, MS_options.buttons.positions[1] - 20, 31, 1, 1, Tahoma_P.palette_id, "Single Player\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 345, MS_options.buttons.positions[1] - 20, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 15, MS_options.buttons.positions[1] + 5, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[2] + 9, MS_options.buttons.positions[3] + 5, 31, 1, 1, Tahoma_P.palette_id, "Intemediate\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[4] + 22, MS_options.buttons.positions[5] + 5, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
@@ -1897,6 +1905,14 @@ int main(){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[2] - 21, MS_options.number_changers.positions[3] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.x_buffer);
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[4] - 70, MS_options.number_changers.positions[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Mines:\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[4] - 21, MS_options.number_changers.positions[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.m_buffer);
+			}
+			else if(MS_options.focus == 3){
+
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 156, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 156 + 24, 31, 1, 1, Tahoma_P.palette_id, "Intemediate\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 156 + 48, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + 125, 156 - 24, 31, 1, 1, Tahoma_P.palette_id, "Single Player\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + 345, 156 - 24, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer\0");
 
 				//Display the high scores
 				char record_buffer[21];
@@ -1906,18 +1922,19 @@ int main(){
 						x_offset = 345;
 					}
 					sprintf(record_buffer, "%s: %d", MS_options.save_file.record_names[iter], MS_options.save_file.times[iter]);
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[(2 * (iter % 3))] + x_offset, MS_options.buttons.positions[(2 * (iter % 3)) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, record_buffer);
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + x_offset, 156 + ((iter % 3) * 24), 31, 1, 1, Tahoma_P.palette_id, record_buffer);
 				}
 			}
 			else if(MS_options.focus == 5){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.0.1 (Build 3011: Service Pack 5)\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.1.0 (Build 3011: Service Pack 5)\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 160 + 60, 25, 1, 1, 62, "used texconv textures and powered by my Crayon library. I don't own\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 165 + 72, 25, 1, 1, 62, "the rights to Minesweeper nor do I claim to so don't sue me, k?\0");
 				// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 185 + 84, 25, 1, 1, 62, "Katana logo made by Airofoil\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 185 + 84, 25, 1, 1, 62, "Dreamcast controller and mouse art made by JamoHTP\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 205 + 96, 25, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 210 + 108, 25, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 215 + 120, 25, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
@@ -1942,7 +1959,7 @@ int main(){
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
 			//Draw the grid and the indentations
-			if(MS_options.focus <= 2){
+			if(MS_options.focus <= 1){
 				crayon_graphics_draw_sprites(&MS_grid.draw_grid, PVR_LIST_OP_POLY);
 				crayon_graphics_draw_sprites(&indented_tiles, PVR_LIST_OP_POLY);
 				if(MS_options.focus == 1){
@@ -1960,7 +1977,7 @@ int main(){
 					}
 				}
 			}
-			else if(MS_options.focus == 3){
+			else if(MS_options.focus == 2){
 				crayon_graphics_draw_sprites(&MS_options.buttons, PVR_LIST_OP_POLY);
 				crayon_graphics_draw_sprites(&MS_options.checkers, PVR_LIST_OP_POLY);
 				crayon_graphics_draw_sprites(&MS_options.number_changers, PVR_LIST_OP_POLY);
@@ -1973,11 +1990,11 @@ int main(){
 			crayon_graphics_draw_sprites(&face, PVR_LIST_OP_POLY);
 
 			//Draw the grid's boarder
-			if(MS_options.focus <= 2){
+			if(MS_options.focus <= 1){
 				custom_poly_boarder(3, MS_grid.start_x, MS_grid.start_y, 16, MS_grid.x * 16, MS_grid.y * 16, 4286611584u, 4294967295u);
 			}
 			else{
-				if(MS_options.focus >= 3){	//The yellowy background + dividing line
+				if(MS_options.focus >= 2){	//The yellowy background + dividing line
 					graphics_draw_untextured_poly(6, 98, 10, 631, 1, 0xFFA0A0A0, 1);
 					if(MS_options.operating_system){
 						graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFECE9D8, 1);
@@ -1986,7 +2003,7 @@ int main(){
 						graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFD4D0C8, 1);
 					}
 				}
-				if(MS_options.focus == 3){
+				if(MS_options.focus == 2){
 					graphics_draw_untextured_array(&Option_polys);	//The boxes the numbers go in
 				}
 			}

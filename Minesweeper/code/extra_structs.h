@@ -76,6 +76,9 @@ typedef struct MinesweeperOptions{
 	crayon_textured_array_t checkers;
 	crayon_textured_array_t number_changers;
 
+	uint16_t tabs_x[5];
+	uint8_t tabs_width[5];
+
 	int8_t vmu_present;		//1 is there's a valid VMU plugged in, 0 if there isn't (Doesn't check if VMU has enough space)
 	int8_t vmu_port;
 	int8_t vmu_slot;

@@ -164,7 +164,6 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 	}
 }
 
-// void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, uint8_t sys, uint8_t lang, uint8_t sd, uint8_t region){
 void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, crayon_palette_t *pal, uint8_t sys, uint8_t lang, uint8_t sd){
 	os->num_assets = ss->spritesheet_animation_count - 5;	//Minus 5 because of removed assets
 	os->assets = (crayon_textured_array_t **) malloc(os->num_assets * sizeof(crayon_textured_array_t *));	//Allocate space for all OS draw struct pointers
