@@ -196,3 +196,83 @@ void custom_poly_XP_boarder(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x, i
 
 	return;
 }
+
+//Has issues with diagonal lines
+//However it doesn't affect any of my lines so its not really a problem
+//(x1,y1 are always both less than x2,y2)
+void custom_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t z){
+
+	pvr_poly_cxt_t cxt;
+	pvr_poly_hdr_t hdr;
+	pvr_vertex_t vert;
+
+	pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
+	pvr_poly_compile(&hdr, &cxt);
+	pvr_prim(&hdr, sizeof(hdr));
+
+	vert.argb = (255 << 24);
+	vert.oargb = 0;
+	vert.flags = PVR_CMD_VERTEX;
+
+	//Top left
+	vert.x = x1;
+	vert.y = y1;
+	vert.z = z;
+	pvr_prim(&vert, sizeof(vert));
+
+	//Convert the coords to my standard of vert 1 being to the left of vert 2
+		//Dunno what happens if vert 1 is lower than vert 2
+	// if(x1 > x2){
+	// 	uint16_t temp = x2;
+	// 	x1 = x2;
+	// 	x2 = temp;
+	// }
+	// if(x1 > x2){
+		// ;
+	// }
+	// if(y1 > y2){
+		// ;
+	// }
+
+	int16_t y_diff = y2 - y1;
+	int16_t x_diff = x2 - x1;
+
+	//Absolute them
+	if(y_diff < 0){y_diff *= -1;}
+	if(x_diff < 0){x_diff *= -1;}
+
+	if(x_diff > y_diff){	//Wider than taller
+		//Top right
+		vert.x = x2 + 1;
+		vert.y = y1;
+		pvr_prim(&vert, sizeof(vert));
+
+		//Bottom left
+		vert.x = x1;
+		vert.y = y2 + 1;
+		pvr_prim(&vert, sizeof(vert));
+
+		//Bottom right
+		vert.x = x2 + 1;
+		vert.y = y2 + 1;
+		vert.flags = PVR_CMD_VERTEX_EOL;
+		pvr_prim(&vert, sizeof(vert));
+
+	}
+	else if(x_diff <= y_diff){	//taller than wider
+		vert.x = x1 + 1;
+		vert.y = y1;
+		pvr_prim(&vert, sizeof(vert));
+
+		vert.x = x2;
+		vert.y = y2 + 1;
+		pvr_prim(&vert, sizeof(vert));
+
+		vert.x = x2 + 1;
+		vert.y = y2 + 1;
+		vert.flags = PVR_CMD_VERTEX_EOL;
+		pvr_prim(&vert, sizeof(vert));
+	}
+
+	return;
+}
