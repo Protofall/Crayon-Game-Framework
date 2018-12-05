@@ -1018,8 +1018,6 @@ int main(){
 		crayon_memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	#endif
 
-	MS_options.focus = 4;
-
 	//I like to put the font's paletets at the very back of the system (But really, its probably better standard to go first)
 	crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 63, "/Minesweeper/Fonts/BIOS_font.dtex");
 	crayon_memory_load_prop_font_sheet(&Tahoma_font, &Tahoma_P, 62, "/Minesweeper/Fonts/Tahoma_font.dtex");
@@ -1336,13 +1334,13 @@ int main(){
 	MS_options.buttons.rotations[0] = 0;
 	MS_options.buttons.colours[0] = 0;
 	MS_options.buttons.positions[0] = 408;	//Beginner
-	MS_options.buttons.positions[1] = 138 + (2 * MS_options.operating_system);
+	MS_options.buttons.positions[1] = 113 + (2 * MS_options.operating_system);
 	MS_options.buttons.positions[2] = MS_options.buttons.positions[0];			//Intermediate
 	MS_options.buttons.positions[3] = MS_options.buttons.positions[1] + 50;
 	MS_options.buttons.positions[4] = MS_options.buttons.positions[0];			//Expert
 	MS_options.buttons.positions[5] = MS_options.buttons.positions[3] + 50;
 	MS_options.buttons.positions[6] = MS_options.buttons.positions[0] - 247;	//Save to VMU
-	MS_options.buttons.positions[7] = 210;
+	MS_options.buttons.positions[7] = 185;
 	MS_options.buttons.positions[8] = MS_options.buttons.positions[6];			//Update Grid
 	MS_options.buttons.positions[9] = MS_options.buttons.positions[7] + 30;
 	MS_options.buttons.frame_coord_keys[0] = 0;
@@ -1987,11 +1985,11 @@ int main(){
 			}
 			else if(MS_options.focus == 3){
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 156, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 156 + 24, 31, 1, 1, Tahoma_P.palette_id, "Intemediate\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 156 + 48, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + 125, 156 - 24, 31, 1, 1, Tahoma_P.palette_id, "Single Player\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + 345, 156 - 24, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144 + 24, 31, 1, 1, Tahoma_P.palette_id, "Intemediate\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144 + 48, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + 125, 144 - 24, 31, 1, 1, Tahoma_P.palette_id, "Single Player\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + 345, 144 - 24, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer\0");
 
 				//Display the high scores
 				char record_buffer[21];
@@ -2001,7 +1999,7 @@ int main(){
 						x_offset = 345;
 					}
 					sprintf(record_buffer, "%s: %d", MS_options.save_file.record_names[iter], MS_options.save_file.times[iter]);
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + x_offset, 156 + ((iter % 3) * 24), 31, 1, 1, Tahoma_P.palette_id, record_buffer);
+					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + x_offset, 144 + ((iter % 3) * 24), 31, 1, 1, Tahoma_P.palette_id, record_buffer);
 				}
 			}
 			else if(MS_options.focus == 4){
@@ -2080,28 +2078,19 @@ int main(){
 				crayon_graphics_draw_sprites(&MS_options.number_changers, PVR_LIST_OP_POLY);
 			}
 			else if(MS_options.focus == 4){
-
 				custom_draw_line(261, 189, 318, 189, 33);	//Controller 4
 				custom_draw_line(283, 210, 318, 210, 33);	//Controller 2
 				custom_draw_line(261, 230, 318, 230, 33);	//Controller 1
 				custom_draw_line(228, 222, 234, 250, 33);	//Controller 3 diag
 				custom_draw_line(234, 250, 318, 250, 33);	//Controller 3
-
-				// custom_draw_line(168, 302, 168, 330, 33);	//Controller 5
-				// custom_draw_line(168, 302, 168, 330, 33);	//Controller 5
-				// custom_draw_line(168, 302, 168, 330, 33);	//Controller 5
-				// custom_draw_line(168, 302, 168, 330, 33);	//Controller 5
-
-				// custom_draw_line(101, 103, 101, 105, 33);	//Test. It takes pixels 103, 104 and 105 (Ends are inclusive)
-				// custom_draw_line(113, 111, 115, 111, 33);	//Test. It takes pixels 113, 114 and 115 (Ends are inclusive)
-
-
-				// custom_draw_line(113, 111, 115, 113, 33);	//Test
-				// custom_draw_line(90, 120, 93, 125, 33);		//Test
-
-
-
 				custom_draw_line(168, 302, 168, 316, 33);	//Controller 5
+
+				custom_draw_line(387, 156, 394, 168, 33);	//Mouse 1 diag
+				custom_draw_line(394, 168, 464, 168, 33);	//Mouse 1
+				custom_draw_line(595, 156, 588, 168, 33);	//Mouse 2 diag
+				custom_draw_line(518, 168, 588, 168, 33);	//Mouse 2
+				custom_draw_line(396, 189, 419, 189, 33);	//Mouse 3
+
 				custom_draw_line(334, 77, 342, 77, 33);		//Face 5
 			}
 

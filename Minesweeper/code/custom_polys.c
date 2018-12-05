@@ -197,9 +197,9 @@ void custom_poly_XP_boarder(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x, i
 	return;
 }
 
-//Has issues with diagonal lines
-//However it doesn't affect any of my lines so its not really a problem
-//(x1,y1 are always both less than x2,y2)
+//Has issues with some diagonal lines. If this happens try
+//swapping the 1 coords with the 2 coords, that seems to work
+	//Later add some code to swap them if in the wrong order?
 void custom_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t z){
 
 	pvr_poly_cxt_t cxt;
@@ -244,12 +244,12 @@ void custom_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_
 	if(x_diff > y_diff){	//Wider than taller
 		//Top right
 		vert.x = x2 + 1;
-		vert.y = y1;
+		vert.y = y2;
 		pvr_prim(&vert, sizeof(vert));
 
 		//Bottom left
 		vert.x = x1;
-		vert.y = y2 + 1;
+		vert.y = y1 + 1;
 		pvr_prim(&vert, sizeof(vert));
 
 		//Bottom right
