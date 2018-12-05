@@ -1072,7 +1072,7 @@ int main(){
 	MS_options.tabs_x[1] = MS_options.tabs_x[0] + MS_options.tabs_width[0] + 15;	//Options
 	MS_options.tabs_width[1] = 37;
 	MS_options.tabs_x[2] = MS_options.tabs_x[1] + MS_options.tabs_width[1] + 15 ;	//Best Times
-	MS_options.tabs_width[2] = 46;
+	MS_options.tabs_width[2] = 51;
 	MS_options.tabs_x[3] = MS_options.tabs_x[2] + MS_options.tabs_width[2] + 15 ;	//Controls
 	MS_options.tabs_width[3] = 40;
 	MS_options.tabs_x[4] = MS_options.tabs_x[3] + MS_options.tabs_width[3] + 15 ;	//About
@@ -1839,8 +1839,14 @@ int main(){
 			//Drawing the highlight boxes (Maybe make a change so they're brighter in XP?)
 			for(iter = 0; iter < 5; iter++){
 				if(menus_selected & (1 << iter)){
-					graphics_draw_untextured_poly(MS_options.tabs_x[iter] - 4, os.tabs_y - 3, 19,
-						(MS_options.tabs_width[iter] + 8), 16, 0x40FFFFFF, 0);	//Font is layer 20
+					if(MS_options.operating_system){	//Highlight is more opaque so its more noticable
+						graphics_draw_untextured_poly(MS_options.tabs_x[iter] - 4, os.tabs_y - 3, 19,
+							(MS_options.tabs_width[iter] + 8), 16, 0x80FFFFFF, 0);	//Font is layer 20
+					}
+					else{
+						graphics_draw_untextured_poly(MS_options.tabs_x[iter] - 4, os.tabs_y - 3, 19,
+							(MS_options.tabs_width[iter] + 8), 16, 0x40FFFFFF, 0);	//Font is layer 20
+					}
 				}
 			}
 
