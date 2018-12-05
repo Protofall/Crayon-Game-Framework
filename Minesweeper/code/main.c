@@ -1184,9 +1184,9 @@ int main(){
 	devices.flips[0] = 0;
 	devices.rotations[0] = 0;
 	devices.colours[0] = 0;
-	devices.positions[0] = 30;
+	devices.positions[0] = 40;
 	devices.positions[1] = 108;
-	devices.positions[2] = 640 - 256 - devices.positions[0];
+	devices.positions[2] = 640 - 256 - 20;
 	devices.positions[3] = devices.positions[1];
 	devices.draw_z[0] = 31;
 	devices.frame_coord_keys[0] = 0;
@@ -1194,9 +1194,52 @@ int main(){
 	graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 0, devices.frame_coord_map + 1, 0);
 	graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 2, devices.frame_coord_map + 3, 1);
 
+	//Dot for legend numbers (5 for gamepad and 3 for mouse legend, 1 for face, 5 in the legend)
+	crayon_textured_array_t legend_dot;
+	crayon_memory_set_sprite_array(&legend_dot, 14, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[1], &Controllers_P);
+	legend_dot.scales[0] = 1;
+	legend_dot.scales[1] = 1;
+	legend_dot.flips[0] = 0;
+	legend_dot.rotations[0] = 0;
+	legend_dot.colours[0] = 0;
+	legend_dot.positions[0] = 380;
+	legend_dot.positions[1] = 140;
+	legend_dot.positions[2] = 588;
+	legend_dot.positions[3] = 140;
+	legend_dot.positions[4] = 380;
+	legend_dot.positions[5] = 182;
+
+	legend_dot.positions[6] = 320;
+	legend_dot.positions[7] = 182;
+	legend_dot.positions[8] = legend_dot.positions[6];
+	legend_dot.positions[9] = legend_dot.positions[7] + 21;
+	legend_dot.positions[10] = legend_dot.positions[6];
+	legend_dot.positions[11] = legend_dot.positions[7] + 41;
+	legend_dot.positions[12] = legend_dot.positions[6];
+	legend_dot.positions[13] = legend_dot.positions[7] + 61;
+	legend_dot.positions[14] = 161;
+	legend_dot.positions[15] = legend_dot.positions[6] - 2;
+
+	legend_dot.positions[16] = 344;
+	legend_dot.positions[17] = 70;
+
+	legend_dot.positions[18] = 200;
+	legend_dot.positions[19] = 366;
+	legend_dot.positions[20] = legend_dot.positions[18];
+	legend_dot.positions[21] = legend_dot.positions[19] + 16;
+	legend_dot.positions[22] = legend_dot.positions[18];
+	legend_dot.positions[23] = legend_dot.positions[21] + 16;
+	legend_dot.positions[24] = legend_dot.positions[18];
+	legend_dot.positions[25] = legend_dot.positions[23] + 16;
+	legend_dot.positions[26] = legend_dot.positions[18];
+	legend_dot.positions[27] = legend_dot.positions[25] + 16;
+	legend_dot.draw_z[0] = 33;
+	legend_dot.frame_coord_keys[0] = 0;
+	graphics_frame_coordinates(legend_dot.animation, legend_dot.frame_coord_map + 0, legend_dot.frame_coord_map + 1, 0);
+
 	//Controller swirl
 	crayon_textured_array_t cont_swirl;
-	crayon_memory_set_sprite_array(&cont_swirl, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[1], &Controllers_P);
+	crayon_memory_set_sprite_array(&cont_swirl, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[2], &Controllers_P);
 	cont_swirl.scales[0] = 1;
 	cont_swirl.scales[1] = 1;
 	cont_swirl.flips[0] = 0;
@@ -1204,11 +1247,8 @@ int main(){
 	cont_swirl.colours[0] = 0;
 	cont_swirl.positions[0] = devices.positions[0] + 118;
 	cont_swirl.positions[1] = devices.positions[1] + 10;
-	// cont_swirl.positions[2] = devices.positions[2] + 119;
-	// cont_swirl.positions[3] = devices.positions[3] + 99;
 	cont_swirl.draw_z[0] = 32;
 	cont_swirl.frame_coord_keys[0] = 0;
-	// cont_swirl.frame_coord_keys[1] = 0;
 	graphics_frame_coordinates(cont_swirl.animation, cont_swirl.frame_coord_map + 0, cont_swirl.frame_coord_map + 1, region);
 
 
@@ -1968,6 +2008,31 @@ int main(){
 				// The controllers and their swirls
 				crayon_graphics_draw_sprites(&devices, PVR_LIST_PT_POLY);
 				crayon_graphics_draw_sprites(&cont_swirl, PVR_LIST_PT_POLY);
+
+				//Draw legend dot stuff
+				crayon_graphics_draw_sprites(&legend_dot, PVR_LIST_PT_POLY);
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[0] + 5, legend_dot.positions[1] + 3, 34, 1, 1, 61, "1\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[2] + 5, legend_dot.positions[3] + 3, 34, 1, 1, 61, "2\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[4] + 5, legend_dot.positions[5] + 3, 34, 1, 1, 61, "3\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[6] + 5, legend_dot.positions[7] + 3, 34, 1, 1, 61, "4\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[8] + 5, legend_dot.positions[9] + 3, 34, 1, 1, 61, "2\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[10] + 5, legend_dot.positions[11] + 3, 34, 1, 1, 61, "1\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[12] + 5, legend_dot.positions[13] + 3, 34, 1, 1, 61, "3\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[14] + 5, legend_dot.positions[15] + 3, 34, 1, 1, 61, "5\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[16] + 5, legend_dot.positions[17] + 3, 34, 1, 1, 61, "5\0");
+
+				//Legend part
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[18] + 5, legend_dot.positions[19] + 3, 34, 1, 1, 61, "1\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[18] + 20, legend_dot.positions[19] + 3, 34, 1, 1, 62, "Reveal a tile\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 5, legend_dot.positions[21] + 3, 34, 1, 1, 61, "2\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 20, legend_dot.positions[21] + 3, 34, 1, 1, 62, "Mark a tile\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[22] + 5, legend_dot.positions[23] + 3, 34, 1, 1, 61, "3\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[22] + 20, legend_dot.positions[23] + 3, 34, 1, 1, 62, "Reveal neighbouring tiles\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 5, legend_dot.positions[25] + 3, 34, 1, 1, 61, "4\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 20, legend_dot.positions[25] + 3, 34, 1, 1, 62, "Swap between thumbstick and dpad controls\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[26] + 5, legend_dot.positions[27] + 3, 34, 1, 1, 61, "5\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[26] + 20, legend_dot.positions[27] + 3, 34, 1, 1, 62, "Shortcut to reset the grid\0");
+
 			}
 			else if(MS_options.focus == 5){
 
@@ -2013,6 +2078,31 @@ int main(){
 				crayon_graphics_draw_sprites(&MS_options.buttons, PVR_LIST_OP_POLY);
 				crayon_graphics_draw_sprites(&MS_options.checkers, PVR_LIST_OP_POLY);
 				crayon_graphics_draw_sprites(&MS_options.number_changers, PVR_LIST_OP_POLY);
+			}
+			else if(MS_options.focus == 4){
+
+				custom_draw_line(261, 189, 318, 189, 33);	//Controller 4
+				custom_draw_line(283, 210, 318, 210, 33);	//Controller 2
+				custom_draw_line(261, 230, 318, 230, 33);	//Controller 1
+				custom_draw_line(228, 222, 234, 250, 33);	//Controller 3 diag
+				custom_draw_line(234, 250, 318, 250, 33);	//Controller 3
+
+				// custom_draw_line(168, 302, 168, 330, 33);	//Controller 5
+				// custom_draw_line(168, 302, 168, 330, 33);	//Controller 5
+				// custom_draw_line(168, 302, 168, 330, 33);	//Controller 5
+				// custom_draw_line(168, 302, 168, 330, 33);	//Controller 5
+
+				// custom_draw_line(101, 103, 101, 105, 33);	//Test. It takes pixels 103, 104 and 105 (Ends are inclusive)
+				// custom_draw_line(113, 111, 115, 111, 33);	//Test. It takes pixels 113, 114 and 115 (Ends are inclusive)
+
+
+				// custom_draw_line(113, 111, 115, 113, 33);	//Test
+				// custom_draw_line(90, 120, 93, 125, 33);		//Test
+
+
+
+				custom_draw_line(168, 302, 168, 316, 33);	//Controller 5
+				custom_draw_line(334, 77, 342, 77, 33);		//Face 5
 			}
 
 			//Draw the region icon
@@ -2074,6 +2164,7 @@ int main(){
 	retVal += crayon_memory_free_sprite_array(&indented_tiles, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&face, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&devices, 0, 0);
+	retVal += crayon_memory_free_sprite_array(&legend_dot, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&cont_swirl, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_keyboard.mini_buttons, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_keyboard.key_big_buttons, 0, 0);
