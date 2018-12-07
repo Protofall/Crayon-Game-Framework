@@ -1824,7 +1824,7 @@ int main(){
 				if(player_active & (1 << iter)){
 					//Passing coords as ints because otherwise we can get case where each pixel contains more than 1 texel
 					//ADD A DRAW FOR THE SHADOW
-					uint8_t cursor_palette = 2 + iter;
+					uint8_t cursor_palette = 8 + iter;	//I should be basing this off the palettes, but I'd need to change to much
 					if(player_active == (1 << 0) || player_active == (1 << 1) || player_active == (1 << 2) || player_active == (1 << 3)){
 						cursor_palette = 1;
 					}
@@ -1965,8 +1965,8 @@ int main(){
 					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[(2 * iter)] + 6, MS_keyboard.mini_buttons.positions[(2 * iter) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, key_buffer);
 				}
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.key_big_buttons.positions[0] + 24, MS_keyboard.key_big_buttons.positions[1] + 5, 31, 1, 1, Tahoma_P.palette_id, "Enter\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.key_big_buttons.positions[2] + 24, MS_keyboard.key_big_buttons.positions[3] + 5, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.key_big_buttons.positions[0] + 24, MS_keyboard.key_big_buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Enter\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.key_big_buttons.positions[2] + 24, MS_keyboard.key_big_buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
 
 				//The text the user types
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 6, MS_keyboard.type_box_y + 5, 31, 1, 1, Tahoma_P.palette_id, MS_keyboard.type_buffer);
@@ -1975,11 +1975,11 @@ int main(){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[0] - 56, MS_options.checkers.positions[1] + 1, 31, 1, 1, Tahoma_P.palette_id, "Sound\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[2] - 56, MS_options.checkers.positions[3] + 1, 31, 1, 1, Tahoma_P.palette_id, "Marks (?)\0");
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 15, MS_options.buttons.positions[1] + 5, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[2] + 9, MS_options.buttons.positions[3] + 5, 31, 1, 1, Tahoma_P.palette_id, "Intemediate\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[4] + 22, MS_options.buttons.positions[5] + 5, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[6] + 7, MS_options.buttons.positions[7] + 5, 31, 1, 1, Tahoma_P.palette_id, "Save to VMU\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[8] + 9, MS_options.buttons.positions[9] + 5, 31, 1, 1, Tahoma_P.palette_id, "Update Grid\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 15, MS_options.buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[2] + 9, MS_options.buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Intemediate\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[4] + 22, MS_options.buttons.positions[5] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[6] + 7, MS_options.buttons.positions[7] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Save to VMU\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[8] + 9, MS_options.buttons.positions[9] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Update Grid\0");
 
 				//Draw the numbers for x, y and num_mines displays
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[0] - 70, MS_options.number_changers.positions[1] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Height:\0");
@@ -2031,9 +2031,9 @@ int main(){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 5, legend_dot.positions[21] + 3, 34, 1, 1, 61, "2\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 20, legend_dot.positions[21] + 3, 34, 1, 1, 62, "Mark a tile\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[22] + 5, legend_dot.positions[23] + 3, 34, 1, 1, 61, "3\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[22] + 20, legend_dot.positions[23] + 3, 34, 1, 1, 62, "Reveal neighbouring tiles\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[22] + 20, legend_dot.positions[23] + 3, 34, 1, 1, 62, "Reveal neighbouring tiles.     and     together on mouse performs this action\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 5, legend_dot.positions[25] + 3, 34, 1, 1, 61, "4\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 20, legend_dot.positions[25] + 3, 34, 1, 1, 62, "Swap between thumbstick and dpad controls\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 20, legend_dot.positions[25] + 3, 34, 1, 1, 62, "Swap between thumbstick and D-pad controls\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[26] + 5, legend_dot.positions[27] + 3, 34, 1, 1, 61, "5\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[26] + 20, legend_dot.positions[27] + 3, 34, 1, 1, 62, "Shortcut to reset the grid\0");
 
@@ -2048,7 +2048,7 @@ int main(){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 160 + 60, 25, 1, 1, 62, "used texconv textures and powered by my Crayon library. I don't own\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 165 + 72, 25, 1, 1, 62, "the rights to Minesweeper nor do I claim to so don't sue me, k?\0");
 				// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 185 + 84, 25, 1, 1, 62, "Katana logo made by Airofoil\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 185 + 84, 25, 1, 1, 62, "Dreamcast controller and mouse pixel art made by JamoHTP\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 185 + 84, 25, 1, 1, 62, "Dreamcast controller and mouse pixel art was made by JamoHTP\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 205 + 96, 25, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 210 + 108, 25, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 215 + 120, 25, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
