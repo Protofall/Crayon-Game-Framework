@@ -1708,16 +1708,17 @@ int main(){
 			}
 		}
 
-		//No mines left, game is over and we weren't doing a custom grid
-			//This triggers on every frame the game is over. not the initial one
+		//No mines left, game is over and we weren't doing a custom grid (Also not revealed yet)
 		if(MS_grid.non_mines_left == 0 && MS_grid.over_mode && MS_grid.difficulty && !MS_grid.revealed){
 			if(player_active == (1 << 0) || player_active == (1 << 1) || player_active == (1 << 2) || player_active == (1 << 3)){	//Only one player
 				MS_keyboard.record_index = MS_grid.difficulty - 1;
 			}
-			else{
+			else{	//Multiplayer
 				MS_keyboard.record_index = MS_grid.difficulty + 2;
 			}
-			if(MS_grid.time_sec < MS_options.save_file.times[MS_keyboard.record_index]){	//Change this to check active players
+			if(MS_grid.time_sec < MS_options.save_file.times[MS_keyboard.record_index]){
+				strcpy(MS_keyboard.type_buffer, MS_options.save_file.record_names[MS_keyboard.record_index]);	//The keyboard contains the previous master's name
+				MS_keyboard.chars_typed = strlen(MS_keyboard.type_buffer);
 				MS_options.focus = 1;
 			}
 		}
