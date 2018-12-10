@@ -27,6 +27,8 @@ typedef struct MinesweeperSaveFile{
 unsigned char * save_file_icon;		//uint8_t
 unsigned short * save_file_palette;	//uint16_t
 
+int vmu_load_icon();
+
 int save_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save);
 int load_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save);
 

@@ -895,24 +895,27 @@ int main(){
 	MS_options.sd_present = 0;
 	MS_options.focus = 0;
 
-	//Load the VMU icon data
+	//Load the VMU icon data (The icon appears distorted in SD mode though...I don't see why)
 	#if CRAYON_SD_MODE == 1
 		crayon_memory_mount_romdisk("/sd/SaveFile.img", "/Save");
 	#else
 		crayon_memory_mount_romdisk("/cd/SaveFile.img", "/Save");
 	#endif
 
-	file_t icon_files;
+	vmu_load_icon();
 
-	icon_files = fs_open("/Save/IMAGE.BIN", O_RDONLY);
-	save_file_icon = (unsigned char *) malloc(fs_total(icon_files));
-	fs_read(icon_files, save_file_icon, fs_total(icon_files));
-	fs_close(icon_files);
+	// file_t icon_files;
 
-	icon_files = fs_open("/Save/PALLETTE.BIN", O_RDONLY);
-	save_file_palette = (unsigned short *) malloc(fs_total(icon_files));
-	fs_read(icon_files, save_file_palette, fs_total(icon_files));
-	fs_close(icon_files);
+	// //Replaces this with an fopen
+	// icon_files = fs_open("/Save/IMAGE.BIN", O_RDONLY);
+	// save_file_icon = (unsigned char *) malloc(fs_total(icon_files));
+	// fs_read(icon_files, save_file_icon, fs_total(icon_files));
+	// fs_close(icon_files);
+
+	// icon_files = fs_open("/Save/PALLETTE.BIN", O_RDONLY);
+	// save_file_palette = (unsigned short *) malloc(fs_total(icon_files));
+	// fs_read(icon_files, save_file_palette, fs_total(icon_files));
+	// fs_close(icon_files);
 
 	fs_romdisk_unmount("/SaveFile");
 
@@ -1192,14 +1195,16 @@ int main(){
 	graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 0, devices.frame_coord_map + 1, 0);
 	graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 2, devices.frame_coord_map + 3, 1);
 
-	//Dot for legend numbers (5 for gamepad and 3 for mouse legend, 1 for face, 5 in the legend)
+	//Dot for legend numbers (5 for gamepad and 3 for mouse legend, 1 for face, 11 in the legend)
 	crayon_textured_array_t legend_dot;
-	crayon_memory_set_sprite_array(&legend_dot, 14, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[1], &Controllers_P);
+	crayon_memory_set_sprite_array(&legend_dot, 20, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[1], &Controllers_P);
 	legend_dot.scales[0] = 1;
 	legend_dot.scales[1] = 1;
 	legend_dot.flips[0] = 0;
 	legend_dot.rotations[0] = 0;
 	legend_dot.colours[0] = 0;
+
+	//Mouse
 	legend_dot.positions[0] = 380;
 	legend_dot.positions[1] = 140;
 	legend_dot.positions[2] = 588;
@@ -1207,6 +1212,7 @@ int main(){
 	legend_dot.positions[4] = 380;
 	legend_dot.positions[5] = 182;
 
+	//Controller
 	legend_dot.positions[6] = 320;
 	legend_dot.positions[7] = 182;
 	legend_dot.positions[8] = legend_dot.positions[6];
@@ -1218,19 +1224,38 @@ int main(){
 	legend_dot.positions[14] = 161;
 	legend_dot.positions[15] = legend_dot.positions[6] - 2;
 
+	//Face
 	legend_dot.positions[16] = 344;
 	legend_dot.positions[17] = 70;
 
+	//Legend
 	legend_dot.positions[18] = 200;
 	legend_dot.positions[19] = 366;
-	legend_dot.positions[20] = legend_dot.positions[18];
-	legend_dot.positions[21] = legend_dot.positions[19] + 16;
+	legend_dot.positions[20] = legend_dot.positions[18] + 23;
+	legend_dot.positions[21] = legend_dot.positions[19];
+
 	legend_dot.positions[22] = legend_dot.positions[18];
-	legend_dot.positions[23] = legend_dot.positions[21] + 16;
-	legend_dot.positions[24] = legend_dot.positions[18];
-	legend_dot.positions[25] = legend_dot.positions[23] + 16;
+	legend_dot.positions[23] = legend_dot.positions[19] + 16;
+	legend_dot.positions[24] = legend_dot.positions[18] + 23;
+	legend_dot.positions[25] = legend_dot.positions[19] + 16;
+
 	legend_dot.positions[26] = legend_dot.positions[18];
-	legend_dot.positions[27] = legend_dot.positions[25] + 16;
+	legend_dot.positions[27] = legend_dot.positions[19] + 32;
+	legend_dot.positions[28] = legend_dot.positions[18] + 23;
+	legend_dot.positions[29] = legend_dot.positions[19] + 32;
+	legend_dot.positions[30] = legend_dot.positions[18] + 23 + 23 + 6;
+	legend_dot.positions[31] = legend_dot.positions[19] + 32;
+	legend_dot.positions[32] = legend_dot.positions[18] + 23 + 23 + 6 + 23 + 7;
+	legend_dot.positions[33] = legend_dot.positions[19] + 32;
+
+	legend_dot.positions[34] = legend_dot.positions[18];
+	legend_dot.positions[35] = legend_dot.positions[19] + 48;
+
+	legend_dot.positions[36] = legend_dot.positions[18];
+	legend_dot.positions[37] = legend_dot.positions[19] + 64;
+	legend_dot.positions[38] = legend_dot.positions[18] + 23;
+	legend_dot.positions[39] = legend_dot.positions[19] + 64;
+
 	legend_dot.draw_z[0] = 33;
 	legend_dot.frame_coord_keys[0] = 0;
 	graphics_frame_coordinates(legend_dot.animation, legend_dot.frame_coord_map + 0, legend_dot.frame_coord_map + 1, 0);
@@ -1977,7 +2002,7 @@ int main(){
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[2] - 56, MS_options.checkers.positions[3] + 1, 31, 1, 1, Tahoma_P.palette_id, "Marks (?)\0");
 
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 15, MS_options.buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[2] + 9, MS_options.buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Intemediate\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[2] + 7, MS_options.buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Intermediate\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[4] + 22, MS_options.buttons.positions[5] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[6] + 7, MS_options.buttons.positions[7] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Save to VMU\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[8] + 9, MS_options.buttons.positions[9] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Update Grid\0");
@@ -1993,7 +2018,7 @@ int main(){
 			else if(MS_options.focus == 3){
 
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144 + 24, 31, 1, 1, Tahoma_P.palette_id, "Intemediate\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144 + 24, 31, 1, 1, Tahoma_P.palette_id, "Intermediate\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144 + 48, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + 125, 144 - 24, 31, 1, 1, Tahoma_P.palette_id, "Single Player\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + 345, 144 - 24, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer\0");
@@ -2016,33 +2041,44 @@ int main(){
 
 				//Draw legend dot stuff
 				crayon_graphics_draw_sprites(&legend_dot, PVR_LIST_PT_POLY);
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[0] + 5, legend_dot.positions[1] + 3, 34, 1, 1, 61, "1\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[2] + 5, legend_dot.positions[3] + 3, 34, 1, 1, 61, "2\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[4] + 5, legend_dot.positions[5] + 3, 34, 1, 1, 61, "3\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[0] + 5, legend_dot.positions[1] + 3, 34, 1, 1, 61, "6\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[2] + 5, legend_dot.positions[3] + 3, 34, 1, 1, 61, "7\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[4] + 5, legend_dot.positions[5] + 3, 34, 1, 1, 61, "8\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[6] + 5, legend_dot.positions[7] + 3, 34, 1, 1, 61, "4\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[8] + 5, legend_dot.positions[9] + 3, 34, 1, 1, 61, "2\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[10] + 5, legend_dot.positions[11] + 3, 34, 1, 1, 61, "1\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[12] + 5, legend_dot.positions[13] + 3, 34, 1, 1, 61, "3\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[14] + 5, legend_dot.positions[15] + 3, 34, 1, 1, 61, "5\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[16] + 5, legend_dot.positions[17] + 3, 34, 1, 1, 61, "5\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[16] + 5, legend_dot.positions[17] + 3, 34, 1, 1, 61, "9\0");
 
 				//Legend part
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[18] + 5, legend_dot.positions[19] + 3, 34, 1, 1, 61, "1\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[18] + 20, legend_dot.positions[19] + 3, 34, 1, 1, 62, "Reveal a tile\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 5, legend_dot.positions[21] + 3, 34, 1, 1, 61, "2\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 20, legend_dot.positions[21] + 3, 34, 1, 1, 62, "Mark a tile\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[22] + 5, legend_dot.positions[23] + 3, 34, 1, 1, 61, "3\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[22] + 20, legend_dot.positions[23] + 3, 34, 1, 1, 62, "Reveal neighbouring tiles.     and     together on mouse performs this action\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 5, legend_dot.positions[25] + 3, 34, 1, 1, 61, "4\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 20, legend_dot.positions[25] + 3, 34, 1, 1, 62, "Swap between thumbstick and D-pad controls\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[26] + 5, legend_dot.positions[27] + 3, 34, 1, 1, 61, "5\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[26] + 20, legend_dot.positions[27] + 3, 34, 1, 1, 62, "Shortcut to reset the grid\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] - 6, legend_dot.positions[21] + 3, 34, 1, 1, 62, ",\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 5, legend_dot.positions[21] + 3, 34, 1, 1, 61, "6\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 18, legend_dot.positions[21] + 3, 34, 1, 1, 62, "Reveal a tile\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[22] + 5, legend_dot.positions[23] + 3, 34, 1, 1, 61, "2\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] - 6, legend_dot.positions[25] + 3, 34, 1, 1, 62, ",\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 5, legend_dot.positions[25] + 3, 34, 1, 1, 61, "7\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 18, legend_dot.positions[25] + 3, 34, 1, 1, 62, "Mark a tile\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[26] + 5, legend_dot.positions[27] + 3, 34, 1, 1, 61, "3\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[28] - 6, legend_dot.positions[29] + 3, 34, 1, 1, 62, ",\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[28] + 5, legend_dot.positions[29] + 3, 34, 1, 1, 61, "8\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[28] + 17, legend_dot.positions[29] + 3, 34, 1, 1, 62, ", (       +       )\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[30] + 5, legend_dot.positions[31] + 3, 34, 1, 1, 61, "6\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[32] + 5, legend_dot.positions[33] + 3, 34, 1, 1, 61, "7\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[32] + 24, legend_dot.positions[33] + 3, 34, 1, 1, 62, "Reveal neighbouring tiles\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[34] + 5, legend_dot.positions[35] + 3, 34, 1, 1, 61, "4\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[34] + 18, legend_dot.positions[35] + 3, 34, 1, 1, 62, "Swap between thumbstick and D-pad controls\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[36] + 5, legend_dot.positions[37] + 3, 34, 1, 1, 61, "5\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[38] - 6, legend_dot.positions[39] + 3, 34, 1, 1, 62, ",\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[38] + 5, legend_dot.positions[39] + 3, 34, 1, 1, 61, "9\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[38] + 18, legend_dot.positions[39] + 3, 34, 1, 1, 62, "Shortcut to reset the grid\0");
 
 			}
 			else if(MS_options.focus == 5){
 
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.1.0 (Build 3011: Service Pack 5)\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.2.0 (Build 3011: Service Pack 5)\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");

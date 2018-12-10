@@ -1,5 +1,22 @@
 #include "savefile.h"
 
+int vmu_load_icon(){
+
+	file_t icon_files;
+
+	icon_files = fs_open("/Save/IMAGE.BIN", O_RDONLY);
+	save_file_icon = (unsigned char *) malloc(fs_total(icon_files));
+	fs_read(icon_files, save_file_icon, fs_total(icon_files));
+	fs_close(icon_files);
+
+	icon_files = fs_open("/Save/PALLETTE.BIN", O_RDONLY);
+	save_file_palette = (unsigned short *) malloc(fs_total(icon_files));
+	fs_read(icon_files, save_file_palette, fs_total(icon_files));
+	fs_close(icon_files);
+
+	return 0;
+}
+
 int save_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out, *data;
