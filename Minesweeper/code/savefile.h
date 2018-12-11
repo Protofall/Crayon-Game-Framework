@@ -28,27 +28,40 @@ typedef struct MinesweeperSaveFile{
 //by reference into a function and if you want to modify the save file data easily
 //or even use different save files for one game
 typedef struct SaveFileDetails{
-	MinesweeperSaveFile_t save_file;	//Currently not malloc-ed
+	MinesweeperSaveFile_t save_file;
 
 	unsigned char * save_file_icon;		//uint8_t
 	unsigned short * save_file_palette;	//uint16_t
 
-	char * long_description;
-	char * short_description;
-	char * save_name;
-	char * save_id;
+	char long_description[36];
+	char short_description[20];
+	char save_name[26];		//Name is 32 chars long max I think and its prefixed with "/vmu/XX/"
+	char save_id[20];
 
-	uint8_t port;
-	uint8_t slot;
+	int8_t port;
+	int8_t slot;
 
 	uint8_t valid_vmus;			//VMUs with enough space for a save file
 	uint8_t valid_vmu_screens;
 
+	size_t save_file_size;
+
 } SaveFileDetails_t;
 
-int vmu_load_icon(SaveFileDetails_t * save);
-int vmu_free_icon(SaveFileDetails_t * save);
+void vmu_load_icon(SaveFileDetails_t * save);
+void vmu_free_icon(SaveFileDetails_t * save);
+
+uint8_t vmu_get_bit(uint8_t valid_vmus, int8_t port, int8_t slot);	//returns boolean
+void vmu_set_bit(uint8_t * valid_vmus, int8_t port, int8_t slot);
+uint8_t vmu_check_for_savefile(SaveFileDetails_t * save, int8_t port, int8_t slot);	//0 if save DNE. 1 if it does
+uint16_t vmu_get_save_block_count(size_t savefile_size);
+
+uint8_t vmu_valid(SaveFileDetails_t * save);
+uint8_t vmu_valid_screens();
+
+uint8_t vmu_get_savefiles(SaveFileDetails_t * save);	//Returns an 8 bit var for each VMU
+
 int vmu_save_uncompressed(SaveFileDetails_t * save);
-int vmu_load_uncompressed(SaveFileDetails_t * save);
+uint8_t vmu_load_uncompressed(SaveFileDetails_t * save);
 
 #endif

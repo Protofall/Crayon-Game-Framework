@@ -1,6 +1,6 @@
 #include "savefile.h"
 
-int vmu_load_icon(SaveFileDetails_t * save){
+void vmu_load_icon(SaveFileDetails_t * save){
 
 	file_t icon_files;
 
@@ -14,15 +14,174 @@ int vmu_load_icon(SaveFileDetails_t * save){
 	fs_read(icon_files, save->save_file_palette, fs_total(icon_files));
 	fs_close(icon_files);
 
-	return 0;
+	return;
 }
 
-int vmu_free_icon(SaveFileDetails_t * save){
+void vmu_free_icon(SaveFileDetails_t * save){
 
 	free(save->save_file_icon);
 	free(save->save_file_palette);
 
-	return 0;
+	return;
+}
+
+/*
+
+port	slot	bit
+0		1		(1 << 7)
+0		2		(1 << 6)
+1		1		(1 << 5)
+1		2		(1 << 4)
+2		1		(1 << 3)
+2		2		(1 << 2)
+3		1		(1 << 1)
+3		2		(1 << 0)
+
+*/
+
+uint8_t vmu_get_bit(uint8_t valid_vmus, int8_t port, int8_t slot){
+	return !!(valid_vmus & (1 << ((2 - slot) + 6 - (2 * port))));
+}
+
+void vmu_set_bit(uint8_t * valid_vmus, int8_t port, int8_t slot){
+	*valid_vmus |= (1 << ((2 - slot) + 6 - (2 * port)));
+	return;
+}
+
+//Note this assumes the vmu chosen is valid
+uint8_t vmu_check_for_savefile(SaveFileDetails_t * save, int8_t port, int8_t slot){
+	vmu_pkg_t pkg;
+	uint8 *pkg_out;
+	int pkg_size;
+	FILE *fp;
+	char savename[32];
+
+	sprintf(savename, "/vmu/%c%d/", port + 97, slot);
+	strcat(savename, "MINESWEEPER.s");
+
+	//File DNE
+	if(!(fp = fopen(savename, "rb"))){
+		return 0;
+	}
+
+	fseek(fp, 0, SEEK_SET);
+	fseek(fp, 0, SEEK_END);
+	pkg_size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	pkg_out = (uint8 *)malloc(pkg_size);
+	fread(pkg_out, pkg_size, 1, fp);
+	fclose(fp);
+
+	vmu_pkg_parse(pkg_out, &pkg);
+
+	free(pkg_out);
+
+	//CURRENTLY THEY'RE ALL HARDCODED and don't work...
+	//The IDs don't match
+	// if(strcmp(pkg.app_id, save->save_id)){
+	// 	return 0;
+	// }
+	// if(strcmp(pkg.app_id, "Proto_Minesweeper")){
+	// 	return 0;
+	// }
+	return 1;
+}
+
+//Note Crayon doesn't bother supporting eye catchers. Also hard coded for 1 icon
+	//I used the "vmu_pkg_build" function's source as a guide for this
+uint16_t vmu_get_save_block_count(size_t savefile_size){
+	int pkg_size, icon_cnt, data_len;
+	icon_cnt = 1;
+	data_len = savefile_size;
+
+	//Get the total number of bytes. Keep in mind we need to think about the icon/s
+	pkg_size = sizeof(vmu_hdr_t) + 512 * icon_cnt + data_len;
+
+	return pkg_size >> 9;	//2^9 is 512 so this gets us the number of blocks
+}
+
+//UNFINISHED
+uint8_t vmu_valid(SaveFileDetails_t * save){
+	maple_device_t *vmu;
+	uint8_t valid_vmus = 0;	//a1a2b1b2c1c2d1d2
+
+	int i, j;
+	for(i = 0; i <= 3; i++){
+		for(j = 1; j <= 2; j++){
+			//No device present
+			if(!(vmu = maple_enum_dev(i, j))){
+				continue;
+			}
+
+			//Not valid or a memory card
+			if(!vmu->valid || !(vmu->info.functions & MAPLE_FUNC_MEMCARD)){
+				continue;
+			}
+
+			//Check if a save file DNE
+			if(!vmu_check_for_savefile(save, i, j)){
+				//Not enough free space for a savefile
+				if(vmufs_free_blocks(vmu) < vmu_get_save_block_count(save->save_file_size)){
+					continue;
+				}
+			}
+
+			//If we get to here, this VMU is valid
+			vmu_set_bit(&valid_vmus, i, j);	//Sets wrong bit
+		}
+	}
+
+	return valid_vmus;
+}
+
+uint8_t vmu_valid_screens(){
+	maple_device_t *vmu;
+	uint8_t valid_screens = 0;	//a1a2b1b2c1c2d1d2
+
+	int i, j;
+	for(i = 0; i <= 3; i++){
+		for(j = 1; j <= 2; j++){
+			if(!(vmu = maple_enum_dev(i, j))){
+				continue;
+			}
+
+			if(!vmu->valid || !(vmu->info.functions & MAPLE_FUNC_LCD)){
+				continue;
+			}
+
+			//If we got here, we have a screen
+			vmu_set_bit(&valid_screens, i, j);
+		}
+	}
+
+	return valid_screens;
+}
+
+uint8_t vmu_get_savefiles(SaveFileDetails_t * save){
+	maple_device_t *vmu;
+	uint8_t valid_saves = 0;	//a1a2b1b2c1c2d1d2
+
+	int i, j;
+	for(i = 0; i <= 3; i++){
+		for(j = 1; j <= 2; j++){
+			//No device present
+			if(!(vmu = maple_enum_dev(i, j))){
+				continue;
+			}
+
+			//Not valid or a memory card
+			if(!vmu->valid || !(vmu->info.functions & MAPLE_FUNC_MEMCARD)){
+				continue;
+			}
+
+			if(vmu_check_for_savefile(save, i, j)){
+				vmu_set_bit(&valid_saves, i, j);
+			}
+		}
+	}
+
+	return valid_saves;
 }
 
 int vmu_save_uncompressed(SaveFileDetails_t * save){
@@ -35,20 +194,7 @@ int vmu_save_uncompressed(SaveFileDetails_t * save){
 	int rv = 0, blocks_freed = 0;
 	file_t f;
 
-	//Invalid controller/port
-	if(save->port < 0 || save->port > 3 || save->slot < 1 || save->slot > 2){
-		return -2;
-	}
-
-	// Make sure there's a VMU in port a1.
-		//Change this later to check all slots or the requested slots
-	if(!(vmu = maple_enum_dev(save->port, save->slot))){
-		return -100;
-	}
-
-	if(!vmu->valid || !(vmu->info.functions & MAPLE_FUNC_MEMCARD)){
-		return -100;
-	}
+	vmu = maple_enum_dev(save->port, save->slot);
 
 	//Only 20 chara allowed at max (21 if you include '\0')
 	sprintf(savename, "/vmu/%c%d/", save->port + 97, save->slot);	//port gets converted to a, b, c or d. unit is unit
@@ -107,26 +253,15 @@ int vmu_save_uncompressed(SaveFileDetails_t * save){
 	return rv;
 }
 
-int vmu_load_uncompressed(SaveFileDetails_t * save){
+uint8_t vmu_load_uncompressed(SaveFileDetails_t * save){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
 	FILE *fp;
 	char savename[32];
-	maple_device_t *vmu;	//Used for checking if VMU is plugged in
+	// maple_device_t *vmu;	//Used for checking if VMU is plugged in
 
-	//Invalid controller/port
-	if(save->port < 0 || save->port > 3 || save->slot < 1 || save->slot > 2){
-		return 1;
-	}
-
-	if(!(vmu = maple_enum_dev(save->port, save->slot))){
-		return 2;
-	}
-
-	if(!vmu->valid || !(vmu->info.functions & MAPLE_FUNC_MEMCARD)){
-		return 3;
-	}
+	// vmu = maple_enum_dev(save->port, save->slot);
 
 	//Only 20 chara allowed at max (21 if you include '\0')
 	sprintf(savename, "/vmu/%c%d/", save->port + 97, save->slot);	//port gets converted to a, b, c or d. unit is unit
@@ -134,7 +269,7 @@ int vmu_load_uncompressed(SaveFileDetails_t * save){
 
 	//If the VMU isn't plugged in, this will fail anyways
 	if(!(fp = fopen(savename, "rb"))){
-		return -1;
+		return 1;
 	}
 
 	fseek(fp, 0, SEEK_SET);
