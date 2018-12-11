@@ -79,11 +79,11 @@ typedef struct MinesweeperOptions{
 	uint16_t tabs_x[5];
 	uint8_t tabs_width[5];
 
+	SaveFileDetails_t save;
 	int8_t vmu_present;		//1 is there's a valid VMU plugged in, 0 if there isn't (Doesn't check if VMU has enough space)
-	int8_t vmu_port;
-	int8_t vmu_slot;
 
-	MinesweeperSaveFile_t save_file;	//Not a pointer since this struct needs the same save file always
+	// MinesweeperSaveFile_t save_file;	//Not a pointer since this struct needs the same save file always
+
 } MinesweeperOptions_t;
 
 //Contains the data related to the keyboard where you enter a high score
