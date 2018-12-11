@@ -24,12 +24,31 @@ typedef struct MinesweeperSaveFile{
 	uint8_t pref_mines;
 } MinesweeperSaveFile_t;
 
-unsigned char * save_file_icon;		//uint8_t
-unsigned short * save_file_palette;	//uint16_t
+//The struct that contains all of a save file info. This is useful for passing
+//by reference into a function and if you want to modify the save file data easily
+//or even use different save files for one game
+typedef struct SaveFileDetails{
+	MinesweeperSaveFile_t save_file;	//Currently not malloc-ed
 
-int vmu_load_icon();
+	unsigned char * save_file_icon;		//uint8_t
+	unsigned short * save_file_palette;	//uint16_t
 
-int save_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save);
-int load_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save);
+	char * long_description;
+	char * short_description;
+	char * save_name;
+	char * save_id;
+
+	uint8_t port;
+	uint8_t slot;
+
+	uint8_t valid_vmus;			//VMUs with enough space for a save file
+	uint8_t valid_vmu_screens;
+
+} SaveFileDetails_t;
+
+int vmu_load_icon(SaveFileDetails_t * save);
+int vmu_free_icon(SaveFileDetails_t * save);
+int vmu_save_uncompressed(SaveFileDetails_t * save);
+int vmu_load_uncompressed(SaveFileDetails_t * save);
 
 #endif

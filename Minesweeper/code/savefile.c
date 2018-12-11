@@ -1,23 +1,31 @@
 #include "savefile.h"
 
-int vmu_load_icon(){
+int vmu_load_icon(SaveFileDetails_t * save){
 
 	file_t icon_files;
 
 	icon_files = fs_open("/Save/IMAGE.BIN", O_RDONLY);
-	save_file_icon = (unsigned char *) malloc(fs_total(icon_files));
-	fs_read(icon_files, save_file_icon, fs_total(icon_files));
+	save->save_file_icon = (unsigned char *) malloc(fs_total(icon_files));
+	fs_read(icon_files, save->save_file_icon, fs_total(icon_files));
 	fs_close(icon_files);
 
 	icon_files = fs_open("/Save/PALLETTE.BIN", O_RDONLY);
-	save_file_palette = (unsigned short *) malloc(fs_total(icon_files));
-	fs_read(icon_files, save_file_palette, fs_total(icon_files));
+	save->save_file_palette = (unsigned short *) malloc(fs_total(icon_files));
+	fs_read(icon_files, save->save_file_palette, fs_total(icon_files));
 	fs_close(icon_files);
 
 	return 0;
 }
 
-int save_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save){
+int vmu_free_icon(SaveFileDetails_t * save){
+
+	free(save->save_file_icon);
+	free(save->save_file_palette);
+
+	return 0;
+}
+
+int vmu_save_uncompressed(SaveFileDetails_t * save){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out, *data;
 	int pkg_size;
@@ -28,13 +36,13 @@ int save_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save){
 	file_t f;
 
 	//Invalid controller/port
-	if(port < 0 || port > 3 || unit < 1 || unit > 2){
+	if(save->port < 0 || save->port > 3 || save->slot < 1 || save->slot > 2){
 		return -2;
 	}
 
 	// Make sure there's a VMU in port a1.
 		//Change this later to check all slots or the requested slots
-	if(!(vmu = maple_enum_dev(port, unit))){
+	if(!(vmu = maple_enum_dev(save->port, save->slot))){
 		return -100;
 	}
 
@@ -43,7 +51,7 @@ int save_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save){
 	}
 
 	//Only 20 chara allowed at max (21 if you include '\0')
-	sprintf(savename, "/vmu/%c%d/", port + 97, unit);	//port gets converted to a, b, c or d. unit is unit
+	sprintf(savename, "/vmu/%c%d/", save->port + 97, save->slot);	//port gets converted to a, b, c or d. unit is unit
 	strcat(savename, "MINESWEEPER.s");
 
 	int filesize = sizeof(MinesweeperSaveFile_t);
@@ -52,15 +60,15 @@ int save_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save){
 		free(data);
 		return -1;
 	}
-	memcpy(data, save, sizeof(MinesweeperSaveFile_t));	//Last param is num of bytes and sizeof returns in bytes
+	memcpy(data, &save->save_file, sizeof(MinesweeperSaveFile_t));	//Last param is num of bytes and sizeof returns in bytes
 
 	sprintf(pkg.desc_long, "Made with Crayon by Protofall");
 	strcpy(pkg.desc_short, "Minesweeper");
 	strcpy(pkg.app_id, "Proto_Minesweeper");
 	pkg.icon_cnt = 1;
 	pkg.icon_anim_speed = 0;
-	memcpy(pkg.icon_pal, save_file_palette, 32);
-	pkg.icon_data = save_file_icon;
+	memcpy(pkg.icon_pal, save->save_file_palette, 32);
+	pkg.icon_data = save->save_file_icon;
 	pkg.eyecatch_type = VMUPKG_EC_NONE;
 	pkg.data_len = sizeof(MinesweeperSaveFile_t);	//Double check this, but I think its right
 	pkg.data = data;
@@ -99,7 +107,7 @@ int save_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save){
 	return rv;
 }
 
-int load_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save){
+int vmu_load_uncompressed(SaveFileDetails_t * save){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
@@ -108,11 +116,11 @@ int load_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save){
 	maple_device_t *vmu;	//Used for checking if VMU is plugged in
 
 	//Invalid controller/port
-	if(port < 0 || port > 3 || unit < 1 || unit > 2){
+	if(save->port < 0 || save->port > 3 || save->slot < 1 || save->slot > 2){
 		return 1;
 	}
 
-	if(!(vmu = maple_enum_dev(port, unit))){
+	if(!(vmu = maple_enum_dev(save->port, save->slot))){
 		return 2;
 	}
 
@@ -121,7 +129,7 @@ int load_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save){
 	}
 
 	//Only 20 chara allowed at max (21 if you include '\0')
-	sprintf(savename, "/vmu/%c%d/", port + 97, unit);	//port gets converted to a, b, c or d. unit is unit
+	sprintf(savename, "/vmu/%c%d/", save->port + 97, save->slot);	//port gets converted to a, b, c or d. unit is unit
 	strcat(savename, "MINESWEEPER.s");
 
 	//If the VMU isn't plugged in, this will fail anyways
@@ -141,7 +149,7 @@ int load_uncompressed(uint8_t port, uint8_t unit, MinesweeperSaveFile_t * save){
 	vmu_pkg_parse(pkg_out, &pkg);
 
 	//Read the pkg data into my struct
-	memcpy(save, pkg.data, sizeof(MinesweeperSaveFile_t));
+	memcpy(&save->save_file, pkg.data, sizeof(MinesweeperSaveFile_t));
 
 	free(pkg_out);
 
