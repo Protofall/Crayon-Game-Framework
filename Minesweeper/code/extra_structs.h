@@ -80,7 +80,7 @@ typedef struct MinesweeperOptions{
 	uint8_t tabs_width[5];
 
 	SaveFileDetails_t save;
-	int8_t vmu_present;		//1 is there's a valid VMU plugged in, 0 if there isn't (Doesn't check if VMU has enough space)
+	// int8_t vmu_present;		//1 is there's a valid VMU plugged in, 0 if there isn't (Doesn't check if VMU has enough space)
 
 	// MinesweeperSaveFile_t save_file;	//Not a pointer since this struct needs the same save file always
 

@@ -600,7 +600,7 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 					keyboard->chars_typed = 0;
 
 					//It makes sense to save the record immediately
-					if(options->vmu_present){
+					if(options->save.valid_vmus){
 						options->save.save_file.options = options->question_enabled + (options->sound_enabled << 1)
 							+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
 						vmu_save_uncompressed(&options->save);
@@ -761,7 +761,7 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[6] + 75) && (cursor_pos[1] <= options->buttons.positions[7] + 23)
 					&& cursor_pos[0] >= options->buttons.positions[6] && cursor_pos[1] >= options->buttons.positions[7]){	//Save to VMU
-				if(options->vmu_present){
+				if(options->save.valid_vmus){
 					options->save.save_file.options = options->question_enabled + (options->sound_enabled << 1)
 						+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
 					vmu_save_uncompressed(&options->save);
@@ -908,33 +908,60 @@ int main(){
 	fs_romdisk_unmount("/SaveFile");
 
 	//Change this later to search for any valid slot
-	MS_options.save.port = 0;
-	MS_options.save.slot = 1;
+	MS_options.save.valid_vmus = vmu_valid(&MS_options.save);
+	MS_options.save.valid_vmu_screens = vmu_valid_screens();
+	uint8_t vmus_with_saves = vmu_get_savefiles(&MS_options.save);	//11 and 31...but it prefers 31?
+	MS_options.save.port = -1;
+	MS_options.save.slot = -1;
+	MS_options.save.save_file_size = sizeof(MinesweeperSaveFile_t);
+
+	uint8_t vmu_checked = 0;
+
+	//Find the first save file (if it exists)
+	int iter;
+	int jiter;
+	for(iter = 0; iter <= 3; iter++){
+		for(jiter = 1; jiter <= 2; jiter++){
+			if(vmu_get_bit(vmus_with_saves, iter, jiter)){	//Use the left most VMU
+				MS_options.save.port = iter;
+				MS_options.save.slot = jiter;
+				goto Exit_loop_1;
+			}
+		}
+	}
+	Exit_loop_1:
 
 	//If a save already exists
-	int8_t load_res = vmu_load_uncompressed(&MS_options.save);
-	if(load_res == 0){
-		MS_options.vmu_present = 1;
+	vmu_load_uncompressed(&MS_options.save);
+	if(MS_options.save.valid_vmus && MS_options.save.port != -1 && MS_options.save.slot != -1){
 		MS_options.question_enabled = !!(MS_options.save.save_file.options & (1 << 0));
 		MS_options.sound_enabled = !!(MS_options.save.save_file.options & (1 << 1));
 		MS_options.operating_system = !!(MS_options.save.save_file.options & (1 << 2));
 		MS_options.language = !!(MS_options.save.save_file.options & (1 << 3));
 		MS_options.htz = !!(MS_options.save.save_file.options & (1 << 4));
 	}
-	else{	//No save exists or VMU isn't present
-		if(load_res == -1){	//VMU is there, but it has no save file (Doesn't check if full)
-			MS_options.vmu_present = 1;
+	else{	//No VMU isn't present or no save file yet
+		//If we don't already have a savefile, choose a VMU
+		if(MS_options.save.valid_vmus){
+			for(iter = 0; iter <= 3; iter++){
+				for(jiter = 1; jiter <= 2; jiter++){
+					if(vmu_get_bit(MS_options.save.valid_vmus, iter, jiter)){	//Use the left most VMU
+						MS_options.save.port = iter;
+						MS_options.save.slot = jiter;
+						goto Exit_loop_2;
+					}
+				}
+			}
 		}
-		else{
-			MS_options.vmu_present = 0;
-		}
+		Exit_loop_2:
+
 		MS_options.question_enabled = 1;
 		MS_options.sound_enabled = 1;
 		MS_options.operating_system = 0;
 		MS_options.language = 0;
 		MS_options.htz = 0;
 
-		MS_options.save.save_file.options = 3;	//sound + questions
+		MS_options.save.save_file.options = (MS_options.sound_enabled << 1) + (MS_options.question_enabled << 0);
 
 		int8_t i;
 		for(i = 0; i < 6; i++){
@@ -1081,8 +1108,6 @@ int main(){
 	//Also due to lang thing we don't know the spritesheet, animation or palette
 	// crayon_memory_set_sprite_array(&MS_grid.draw_grid, 1, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);
 	crayon_memory_set_sprite_array(&MS_grid.draw_grid, 38 * 21, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);	//Technically there's no need to make change the size after this
-	int iter;
-	int jiter;
 
 	//Setting up the language spritesheet, animation and palette pointers
 	uint8_t tile_id = 0;
@@ -1867,6 +1892,21 @@ int main(){
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
+
+			//DEBUG
+			char snum[16];
+			sprintf(snum, "%d\n", MS_options.save.valid_vmus);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80, 50, 1, 1, 62, snum);		//170, 01010101
+			sprintf(snum, "%d\n", MS_options.save.valid_vmu_screens);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 12, 50, 1, 1, 62, snum);	//170
+			sprintf(snum, "%d\n", vmus_with_saves);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 24, 50, 1, 1, 62, snum);	//34, 00100010
+			sprintf(snum, "%d\n", MS_options.save.port);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 36, 50, 1, 1, 62, snum);	//3
+			sprintf(snum, "%d\n", MS_options.save.slot);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 48, 50, 1, 1, 62, snum);	//1
+			sprintf(snum, "%d\n", vmu_checked);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 60, 50, 1, 1, 62, snum);	//0, This should be 1
 
 			for(iter = 0; iter < os.num_assets; iter++){
 				if(!strcmp(os.assets[iter]->animation->animation_name, "aboutLogo") && MS_options.focus != 5){	//We don't want to draw that unless we're on the about page
