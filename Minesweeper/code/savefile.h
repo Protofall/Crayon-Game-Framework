@@ -32,6 +32,13 @@ typedef struct SaveFileDetails{
 
 	unsigned char * save_file_icon;		//uint8_t
 	unsigned short * save_file_palette;	//uint16_t
+	//Later add control for icon_count and icon_anim_speed
+		//Only thing to do is to pass these params into vmu_init_savefile()
+		//And modify vmu_get_save_block_count() to use the icon_count
+
+	//save file pointer. maybe a void pointer?
+	uint8_t * savefile_data;
+	size_t savefile_size;
 
 	char desc_long[32];
 	char desc_short[16];
@@ -43,36 +50,41 @@ typedef struct SaveFileDetails{
 
 	uint8_t valid_vmus;			//VMUs with enough space for a save file
 	uint8_t valid_vmu_screens;
-
-	//save file pointer. maybe a void pointer?
-	//uint8_t * save_file_data;
-	size_t save_file_size;
-
 } SaveFileDetails_t;
 
-//Internal use
 
-uint8_t vmu_check_for_savefile(SaveFileDetails_t * save, int8_t port, int8_t slot);	//0 if save DNE. 1 if it does
+//-------------------------Internal use------------------------------
+
+
+uint8_t vmu_check_for_savefile(SaveFileDetails_t * save_details, int8_t port, int8_t slot);	//0 if save DNE. 1 if it does
 uint8_t vmu_check_for_device(int8_t port, int8_t slot, uint32_t function);	//1 if device is valid
 uint16_t vmu_get_save_block_count(size_t savefile_size);	//Returns the number of blocks your save file will need (Uncompressed)
 
-//Both internal and external
+
+//-------------------------Both internal and external----------------
+
 
 uint8_t vmu_get_bit(uint8_t vmu_bitmap, int8_t port, int8_t slot);	//Returns boolean
 void vmu_set_bit(uint8_t * vmu_bitmap, int8_t port, int8_t slot);	//Updates vmu_bitmap
 
-//Called externally
 
-void vmu_load_icon(SaveFileDetails_t * save);
-void vmu_free_icon(SaveFileDetails_t * save);
+//-------------------------Called externally-------------------------
+
+
+void vmu_load_icon(SaveFileDetails_t * save_details, char * image, char * palette);
+void vmu_free_icon(SaveFileDetails_t * save_details);
+
+//Set some defaults easily. Call this first
+void vmu_init_savefile(SaveFileDetails_t * save_details,  uint8_t * savefile_data, size_t savefile_size,
+	char * desc_long, char * desc_short, char * app_id, char * save_name);
 
 //Returns an 8 bit var for each VMU (a1a2b1b2c1c2d1d2)
-uint8_t vmu_get_valid_vmus(SaveFileDetails_t * save);
-uint8_t vmu_get_savefiles(SaveFileDetails_t * save);
+uint8_t vmu_get_valid_vmus(SaveFileDetails_t * save_details);
+uint8_t vmu_get_savefiles(SaveFileDetails_t * save_details);
 uint8_t vmu_get_valid_screens();
 
-uint8_t vmu_load_uncompressed(SaveFileDetails_t * save);
-int vmu_save_uncompressed(SaveFileDetails_t * save);
+uint8_t vmu_load_uncompressed(SaveFileDetails_t * save_details);
+int vmu_save_uncompressed(SaveFileDetails_t * save_details);
 
 //Add a save delete function 
 // int vmufs_delete(maple_device_t * dev, const char * fn)

@@ -61,7 +61,7 @@ typedef struct MinesweeperOptions{
 	uint8_t operating_system;	//0 for 2000, 1 for XP
 	uint8_t language;			//0 for English, 1 for Italian. This affects the font language and
 								//the Minesweeper/Prato fiorito themes
-	uint8_t htz;				//Whatever refresh rate you chose. Currently unused
+	uint8_t htz;				//Whatever refresh rate you chose. 0 = 50, 1 = 60
 
 	uint8_t focus;	//0 = normal game, 1 = type name (High score), 2 = display high scores, 3 = options,
 					//4 = controls, 5 = about
@@ -79,10 +79,8 @@ typedef struct MinesweeperOptions{
 	uint16_t tabs_x[5];
 	uint8_t tabs_width[5];
 
-	SaveFileDetails_t save;
-	// int8_t vmu_present;		//1 is there's a valid VMU plugged in, 0 if there isn't (Doesn't check if VMU has enough space)
-
-	// MinesweeperSaveFile_t save_file;	//Not a pointer since this struct needs the same save file always
+	SaveFileDetails_t save_details;
+	MinesweeperSaveFile_t save_file;	//CURRENTLY UNUSED (Need to stop using the save in the save details function)
 
 } MinesweeperOptions_t;
 

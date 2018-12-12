@@ -219,9 +219,9 @@ void reset_grid(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_
 	grid->y = y;
 	grid->num_mines = mine_count;
 
-	options->save.save_file.pref_height = y;
-	options->save.save_file.pref_width = x;
-	options->save.save_file.pref_mines = mine_count;
+	options->save_details.save_file.pref_height = y;
+	options->save_details.save_file.pref_width = x;
+	options->save_details.save_file.pref_mines = mine_count;
 
 	//Used for checking and setting high scores
 	if(x == 9 && y == 9 && mine_count == 10){	//Beginner
@@ -592,19 +592,17 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 					}
 
 					//Save this record
-					options->save.save_file.times[keyboard->record_index] = time;
-					strcpy(options->save.save_file.record_names[keyboard->record_index], keyboard->type_buffer);
+					options->save_details.save_file.times[keyboard->record_index] = time;
+					strcpy(options->save_details.save_file.record_names[keyboard->record_index], keyboard->type_buffer);
 
 					//Reset the buffer for the next score
 					keyboard->type_buffer[0] = '\0';
 					keyboard->chars_typed = 0;
 
 					//It makes sense to save the record immediately
-					if(options->save.valid_vmus){
-						options->save.save_file.options = options->question_enabled + (options->sound_enabled << 1)
-							+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
-						vmu_save_uncompressed(&options->save);
-					}
+					options->save_details.save_file.options = options->question_enabled + (options->sound_enabled << 1)
+						+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
+					vmu_save_uncompressed(&options->save_details);
 
 					//Resume focus 0 (Normal game play)
 					options->focus = 0;	//Change to 2 later when I make that screen
@@ -761,12 +759,9 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[6] + 75) && (cursor_pos[1] <= options->buttons.positions[7] + 23)
 					&& cursor_pos[0] >= options->buttons.positions[6] && cursor_pos[1] >= options->buttons.positions[7]){	//Save to VMU
-				if(options->save.valid_vmus){
-					options->save.save_file.options = options->question_enabled + (options->sound_enabled << 1)
-						+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
-					vmu_save_uncompressed(&options->save);
-
-				}
+				options->save_details.save_file.options = options->question_enabled + (options->sound_enabled << 1)
+					+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
+				vmu_save_uncompressed(&options->save_details);
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[8] + 75) && (cursor_pos[1] <= options->buttons.positions[9] + 23)
 					&& cursor_pos[0] >= options->buttons.positions[8] && cursor_pos[1] >= options->buttons.positions[9]){	//Apply
@@ -903,31 +898,26 @@ int main(){
 		crayon_memory_mount_romdisk("/cd/SaveFile.img", "/Save");
 	#endif
 
-	vmu_load_icon(&MS_options.save);
+	vmu_load_icon(&MS_options.save_details, "/Save/IMAGE.BIN", "/Save/PALLETTE.BIN");
 
 	fs_romdisk_unmount("/SaveFile");
 
-	//Setting some save_detail vars
-	strcpy(MS_options.save.desc_long, "Made with Crayon by Protofall\0");
-	strcpy(MS_options.save.desc_short, "Minesweeper\0");
-	strcpy(MS_options.save.app_id, "Proto_Minesweep\0");
-	strcpy(MS_options.save.save_name, "MINESWEEPER.s\0");
-	MS_options.save.save_file_size = sizeof(MinesweeperSaveFile_t);
+	//Setting the default save_detail vars
+	vmu_init_savefile(&MS_options.save_details,  NULL, sizeof(MinesweeperSaveFile_t),
+	"Made with Crayon by Protofall\0", "Minesweeper\0", "Proto_Minesweep\0", "MINESWEEPER.s\0");
 
-	MS_options.save.valid_vmus = vmu_get_valid_vmus(&MS_options.save);
-	MS_options.save.valid_vmu_screens = vmu_get_valid_screens();
-	uint8_t vmus_with_saves = vmu_get_savefiles(&MS_options.save);
-	MS_options.save.port = -1;
-	MS_options.save.slot = -1;
+	MS_options.save_details.valid_vmus = vmu_get_valid_vmus(&MS_options.save_details);
+	MS_options.save_details.valid_vmu_screens = vmu_get_valid_screens();
+	uint8_t vmus_with_saves = vmu_get_savefiles(&MS_options.save_details);
 
-	//Find the first save file (if it exists)
+	//Find the first savefile (if it exists)
 	int iter;
 	int jiter;
 	for(iter = 0; iter <= 3; iter++){
 		for(jiter = 1; jiter <= 2; jiter++){
 			if(vmu_get_bit(vmus_with_saves, iter, jiter)){	//Use the left most VMU
-				MS_options.save.port = iter;
-				MS_options.save.slot = jiter;
+				MS_options.save_details.port = iter;
+				MS_options.save_details.slot = jiter;
 				goto Exit_loop_1;
 			}
 		}
@@ -935,22 +925,22 @@ int main(){
 	Exit_loop_1:
 
 	//If a save already exists
-	vmu_load_uncompressed(&MS_options.save);
-	if(MS_options.save.valid_vmus && MS_options.save.port != -1 && MS_options.save.slot != -1){
-		MS_options.question_enabled = !!(MS_options.save.save_file.options & (1 << 0));
-		MS_options.sound_enabled = !!(MS_options.save.save_file.options & (1 << 1));
-		MS_options.operating_system = !!(MS_options.save.save_file.options & (1 << 2));
-		MS_options.language = !!(MS_options.save.save_file.options & (1 << 3));
-		MS_options.htz = !!(MS_options.save.save_file.options & (1 << 4));
+	vmu_load_uncompressed(&MS_options.save_details);
+	if(MS_options.save_details.valid_vmus && MS_options.save_details.port != -1 && MS_options.save_details.slot != -1){
+		MS_options.question_enabled = !!(MS_options.save_details.save_file.options & (1 << 0));
+		MS_options.sound_enabled = !!(MS_options.save_details.save_file.options & (1 << 1));
+		MS_options.operating_system = !!(MS_options.save_details.save_file.options & (1 << 2));
+		MS_options.language = !!(MS_options.save_details.save_file.options & (1 << 3));
+		MS_options.htz = !!(MS_options.save_details.save_file.options & (1 << 4));
 	}
-	else{	//No VMU isn't present or no save file yet
+	else{	//No VMU isn't present or no savefile yet
 		//If we don't already have a savefile, choose a VMU
-		if(MS_options.save.valid_vmus){
+		if(MS_options.save_details.valid_vmus){
 			for(iter = 0; iter <= 3; iter++){
 				for(jiter = 1; jiter <= 2; jiter++){
-					if(vmu_get_bit(MS_options.save.valid_vmus, iter, jiter)){	//Use the left most VMU
-						MS_options.save.port = iter;
-						MS_options.save.slot = jiter;
+					if(vmu_get_bit(MS_options.save_details.valid_vmus, iter, jiter)){	//Use the left most VMU
+						MS_options.save_details.port = iter;
+						MS_options.save_details.slot = jiter;
 						goto Exit_loop_2;
 					}
 				}
@@ -962,20 +952,34 @@ int main(){
 		MS_options.sound_enabled = 1;
 		MS_options.operating_system = 0;
 		MS_options.language = 0;
-		MS_options.htz = 0;
+		MS_options.htz = 1;
 
-		MS_options.save.save_file.options = (MS_options.sound_enabled << 1) + (MS_options.question_enabled << 0);
+		MS_options.save_details.save_file.options = (MS_options.sound_enabled << 1) + (MS_options.question_enabled << 0);
 
 		int8_t i;
 		for(i = 0; i < 6; i++){
-			strcpy(MS_options.save.save_file.record_names[i], "Anonymous\0");
-			// strcpy(MS_options.save.save_file.record_names[i], "%%%%%%%%%%%%%%%\0");	//Longest possible name
-			MS_options.save.save_file.times[i] = 999;
+			strcpy(MS_options.save_details.save_file.record_names[i], "Anonymous\0");
+			// strcpy(MS_options.save_details.save_file.record_names[i], "%%%%%%%%%%%%%%%\0");	//Longest possible name
+			MS_options.save_details.save_file.times[i] = 999;
 		}
-		MS_options.save.save_file.pref_width = 30;
-		MS_options.save.save_file.pref_height = 16;
-		MS_options.save.save_file.pref_mines = 99;
+		MS_options.save_details.save_file.pref_width = 30;
+		MS_options.save_details.save_file.pref_height = 16;
+		MS_options.save_details.save_file.pref_mines = 99;
 	}
+
+	//Currently this is the only way to access some of the hidden features
+	//Later OS and htz will be chosen in BIOS
+	MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
+	if(st->buttons & CONT_B){		//B press
+		MS_options.operating_system = !MS_options.operating_system;
+	}
+
+	if(st->buttons & CONT_A){		//A press
+		MS_options.htz = !MS_options.htz;
+	}
+	MAPLE_FOREACH_END()
+
+	//Maybe have an initial save here to save any VMU selection and refresh rate details
 
 	#if CRAYON_SD_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
@@ -984,19 +988,16 @@ int main(){
 		}
 	#endif
 
-	//Currently this is the only way to access some of the hidden features
-	//Later OS will be chosen in BIOS and language through save file name
-	MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-	if(st->buttons & (1 << 1)){		//B press
-		MS_options.operating_system = !MS_options.operating_system;
-	}
-	MAPLE_FOREACH_END()
-
 	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
 		vid_set_mode(DM_640x480_VGA, PM_RGB565);
 	}
 	else{	//Else its RGB and we default to NTSC interlace (Make a 50/60 Hz menu later). This handles composite
-		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
+		if(MS_options.htz){
+			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
+		}
+		else{
+			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
+		}
 	}
 
 	pvr_init(&pvr_params);
@@ -1021,12 +1022,12 @@ int main(){
 	crayon_spritesheet_t Board, Icons, Controllers, Windows;
 	crayon_palette_t Board_P, Icons_P, Controllers_P, Windows_P, BIOS_P, Tahoma_P, White_Tahoma_P,
 		cursor_red, cursor_yellow, cursor_green, cursor_blue;
-	crayon_font_mono_t BIOS_font;
+	// crayon_font_mono_t BIOS_font;
 	crayon_font_prop_t Tahoma_font;
 	Board.spritesheet_texture = NULL;
 	Icons.spritesheet_texture = NULL;
 	Windows.spritesheet_texture = NULL;
-	BIOS_font.fontsheet_texture = NULL;
+	// BIOS_font.fontsheet_texture = NULL;
 	Tahoma_font.fontsheet_texture = NULL;
 
 	crayon_untextured_array_t Bg_polys, Option_polys;	//Contains some of the untextured polys that will be drawn.
@@ -1040,7 +1041,7 @@ int main(){
 	#endif
 
 	//I like to put the font's paletets at the very back of the system (But really, its probably better standard to go first)
-	crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 63, "/Minesweeper/Fonts/BIOS_font.dtex");
+	// crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 63, "/Minesweeper/Fonts/BIOS_font.dtex");
 	crayon_memory_load_prop_font_sheet(&Tahoma_font, &Tahoma_P, 62, "/Minesweeper/Fonts/Tahoma_font.dtex");
 	crayon_memory_load_spritesheet(&Board, &Board_P, 0, "/Minesweeper/Board.dtex");
 	crayon_memory_load_spritesheet(&Icons, &Icons_P, 1, "/Minesweeper/Icons.dtex");	
@@ -1420,7 +1421,7 @@ int main(){
 	graphics_frame_coordinates(MS_options.number_changers.animation, MS_options.number_changers.frame_coord_map, MS_options.number_changers.frame_coord_map + 1, 0);
 
 	MS_grid.logic_grid = NULL;
-	reset_grid(&MS_grid, &MS_options, MS_options.save.save_file.pref_width, MS_options.save.save_file.pref_height, MS_options.save.save_file.pref_mines);
+	reset_grid(&MS_grid, &MS_options, MS_options.save_details.save_file.pref_width, MS_options.save_details.save_file.pref_height, MS_options.save_details.save_file.pref_mines);
 
 	//Setup the untextured poly structs
 	setup_bg_untextured_poly(&Bg_polys, MS_options.operating_system, MS_options.sd_present);
@@ -1757,8 +1758,8 @@ int main(){
 			else{	//Multiplayer
 				MS_keyboard.record_index = MS_grid.difficulty + 2;
 			}
-			if(MS_grid.time_sec < MS_options.save.save_file.times[MS_keyboard.record_index]){
-				strcpy(MS_keyboard.type_buffer, MS_options.save.save_file.record_names[MS_keyboard.record_index]);	//The keyboard contains the previous master's name
+			if(MS_grid.time_sec < MS_options.save_details.save_file.times[MS_keyboard.record_index]){
+				strcpy(MS_keyboard.type_buffer, MS_options.save_details.save_file.record_names[MS_keyboard.record_index]);	//The keyboard contains the previous master's name
 				MS_keyboard.chars_typed = strlen(MS_keyboard.type_buffer);
 				MS_options.focus = 1;
 			}
@@ -1851,7 +1852,7 @@ int main(){
 
 		graphics_setup_palette(&White_Tahoma_P);//61
 		graphics_setup_palette(&Tahoma_P);		//62
-		graphics_setup_palette(&BIOS_P);		//63
+		// graphics_setup_palette(&BIOS_P);		//63
 
 		//Transfer more stuff from this list into either the PT or OP lists
 		pvr_list_begin(PVR_LIST_TR_POLY);
@@ -1898,17 +1899,18 @@ int main(){
 
 			//DEBUG
 			char snum[20];
-			sprintf(snum, "%d\n", MS_options.save.valid_vmus);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80, 50, 1, 1, 62, snum);		//170, 01010101
-			sprintf(snum, "%d\n", MS_options.save.valid_vmu_screens);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 12, 50, 1, 1, 62, snum);	//170
+			sprintf(snum, "%d\n", MS_options.save_details.valid_vmus);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80, 50, 1, 1, 62, snum);
+			sprintf(snum, "%d\n", MS_options.save_details.valid_vmu_screens);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 12, 50, 1, 1, 62, snum);
 			sprintf(snum, "%d\n", vmus_with_saves);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 24, 50, 1, 1, 62, snum);	//34, 00100010
-			sprintf(snum, "%d\n", MS_options.save.port);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 36, 50, 1, 1, 62, snum);	//3
-			sprintf(snum, "%d\n", MS_options.save.slot);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 48, 50, 1, 1, 62, snum);	//1
-			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 60, 50, 1, 1, 62, MS_options.save.app_id);	//
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 24, 50, 1, 1, 62, snum);
+			sprintf(snum, "%d\n", MS_options.save_details.port);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 36, 50, 1, 1, 62, snum);
+			sprintf(snum, "%d\n", MS_options.save_details.slot);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 48, 50, 1, 1, 62, snum);
+			sprintf(snum, "%d\n", MS_options.htz);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 60, 50, 1, 1, 62, snum);
 
 			for(iter = 0; iter < os.num_assets; iter++){
 				if(!strcmp(os.assets[iter]->animation->animation_name, "aboutLogo") && MS_options.focus != 5){	//We don't want to draw that unless we're on the about page
@@ -2060,7 +2062,7 @@ int main(){
 					if(iter == 3){
 						x_offset = 345;
 					}
-					sprintf(record_buffer, "%s: %d", MS_options.save.save_file.record_names[iter], MS_options.save.save_file.times[iter]);
+					sprintf(record_buffer, "%s: %d", MS_options.save_details.save_file.record_names[iter], MS_options.save_details.save_file.times[iter]);
 					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + x_offset, 144 + ((iter % 3) * 24), 31, 1, 1, Tahoma_P.palette_id, record_buffer);
 				}
 			}
@@ -2236,7 +2238,7 @@ int main(){
 	retVal += crayon_memory_free_spritesheet(&Board);
 	retVal += crayon_memory_free_spritesheet(&Icons);
 	retVal += crayon_memory_free_spritesheet(&Windows);
-	retVal += crayon_memory_free_mono_font_sheet(&BIOS_font);
+	// retVal += crayon_memory_free_mono_font_sheet(&BIOS_font);
 	retVal += crayon_memory_free_prop_font_sheet(&Tahoma_font);
 	retVal += crayon_memory_free_palette(&White_Tahoma_P);
 	retVal += crayon_memory_free_palette(&cursor_red);
@@ -2249,8 +2251,7 @@ int main(){
 	snd_sfx_unload(Sound_Win);
 	setup_free_OS_struct(&os);
 
-	vmu_free_icon(&MS_options.save);
-	// vmu_load_icon(&MS_options.save);
+	vmu_free_icon(&MS_options.save_details);
 
 	error_freeze("Free-ing result %d!\n", retVal);
 
