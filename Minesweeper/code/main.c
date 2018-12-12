@@ -907,15 +907,18 @@ int main(){
 
 	fs_romdisk_unmount("/SaveFile");
 
-	//Change this later to search for any valid slot
-	MS_options.save.valid_vmus = vmu_valid(&MS_options.save);
-	MS_options.save.valid_vmu_screens = vmu_valid_screens();
-	uint8_t vmus_with_saves = vmu_get_savefiles(&MS_options.save);	//11 and 31...but it prefers 31?
-	MS_options.save.port = -1;
-	MS_options.save.slot = -1;
+	//Setting some save_detail vars
+	strcpy(MS_options.save.desc_long, "Made with Crayon by Protofall\0");
+	strcpy(MS_options.save.desc_short, "Minesweeper\0");
+	strcpy(MS_options.save.app_id, "Proto_Minesweep\0");
+	strcpy(MS_options.save.save_name, "MINESWEEPER.s\0");
 	MS_options.save.save_file_size = sizeof(MinesweeperSaveFile_t);
 
-	uint8_t vmu_checked = 0;
+	MS_options.save.valid_vmus = vmu_get_valid_vmus(&MS_options.save);
+	MS_options.save.valid_vmu_screens = vmu_get_valid_screens();
+	uint8_t vmus_with_saves = vmu_get_savefiles(&MS_options.save);
+	MS_options.save.port = -1;
+	MS_options.save.slot = -1;
 
 	//Find the first save file (if it exists)
 	int iter;
@@ -1894,7 +1897,7 @@ int main(){
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
 			//DEBUG
-			char snum[16];
+			char snum[20];
 			sprintf(snum, "%d\n", MS_options.save.valid_vmus);
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80, 50, 1, 1, 62, snum);		//170, 01010101
 			sprintf(snum, "%d\n", MS_options.save.valid_vmu_screens);
@@ -1905,8 +1908,7 @@ int main(){
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 36, 50, 1, 1, 62, snum);	//3
 			sprintf(snum, "%d\n", MS_options.save.slot);
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 48, 50, 1, 1, 62, snum);	//1
-			sprintf(snum, "%d\n", vmu_checked);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 60, 50, 1, 1, 62, snum);	//0, This should be 1
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 60, 50, 1, 1, 62, MS_options.save.app_id);	//
 
 			for(iter = 0; iter < os.num_assets; iter++){
 				if(!strcmp(os.assets[iter]->animation->animation_name, "aboutLogo") && MS_options.focus != 5){	//We don't want to draw that unless we're on the about page
