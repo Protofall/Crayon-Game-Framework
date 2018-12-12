@@ -1,7 +1,7 @@
 #include "savefile.h"
 
 //Note this assumes the vmu chosen is valid
-uint8_t vmu_check_for_savefile(SaveFileDetails_t * save, int8_t port, int8_t slot){
+uint8_t vmu_check_for_savefile(SaveFileDetails_t * save_details, int8_t port, int8_t slot){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
@@ -30,7 +30,7 @@ uint8_t vmu_check_for_savefile(SaveFileDetails_t * save, int8_t port, int8_t slo
 	free(pkg_out);
 
 	//This uses the old broken off id and the new id
-	if(!(strcmp(pkg.app_id, save->app_id) == 0 ||
+	if(!(strcmp(pkg.app_id, save_details->app_id) == 0 ||
 		strcmp(pkg.app_id, "Proto_Minesweepe") == 0)){
 		return 0;
 	}
@@ -81,32 +81,46 @@ void vmu_set_bit(uint8_t * vmu_bitmap, int8_t port, int8_t slot){
 	return;
 }
 
-//The paths are hard coded...
-void vmu_load_icon(SaveFileDetails_t * save){
+void vmu_load_icon(SaveFileDetails_t * save_details, char * image, char * palette){
 	file_t icon_files;
 
-	icon_files = fs_open("/Save/IMAGE.BIN", O_RDONLY);
-	save->save_file_icon = (unsigned char *) malloc(fs_total(icon_files));
-	fs_read(icon_files, save->save_file_icon, fs_total(icon_files));
+	icon_files = fs_open(image, O_RDONLY);
+	save_details->save_file_icon = (unsigned char *) malloc(fs_total(icon_files));
+	fs_read(icon_files, save_details->save_file_icon, fs_total(icon_files));
 	fs_close(icon_files);
 
-	icon_files = fs_open("/Save/PALLETTE.BIN", O_RDONLY);
-	save->save_file_palette = (unsigned short *) malloc(fs_total(icon_files));
-	fs_read(icon_files, save->save_file_palette, fs_total(icon_files));
+	icon_files = fs_open(palette, O_RDONLY);
+	save_details->save_file_palette = (unsigned short *) malloc(fs_total(icon_files));
+	fs_read(icon_files, save_details->save_file_palette, fs_total(icon_files));
 	fs_close(icon_files);
 
 	return;
 }
 
-void vmu_free_icon(SaveFileDetails_t * save){
-	free(save->save_file_icon);
-	free(save->save_file_palette);
+void vmu_free_icon(SaveFileDetails_t * save_details){
+	free(save_details->save_file_icon);
+	free(save_details->save_file_palette);
 
 	return;
 }
 
-//UNFINISHED?
-uint8_t vmu_get_valid_vmus(SaveFileDetails_t * save){
+void vmu_init_savefile(SaveFileDetails_t * save_details,  uint8_t * savefile_data, size_t savefile_size,
+	char * desc_long, char * desc_short, char * app_id, char * save_name){
+	save_details->savefile_data = savefile_data;	//CURRENTLY UNUSED (Must be malloc-ed before?)
+	save_details->savefile_size = savefile_size;
+	strcpy(save_details->desc_long, desc_long);
+	strcpy(save_details->desc_short, desc_short);
+	strcpy(save_details->app_id, app_id);
+	strcpy(save_details->save_name, save_name);
+
+	save_details->port = -1;
+	save_details->slot = -1;
+	save_details->valid_vmus = 0;
+	save_details->valid_vmu_screens = 0;
+	return;
+}
+
+uint8_t vmu_get_valid_vmus(SaveFileDetails_t * save_details){
 	maple_device_t *vmu;
 	uint8_t valid_vmus = 0;	//a1a2b1b2c1c2d1d2
 
@@ -118,10 +132,10 @@ uint8_t vmu_get_valid_vmus(SaveFileDetails_t * save){
 			}
 
 			//Check if a save file DNE
-			if(!vmu_check_for_savefile(save, i, j)){
+			if(!vmu_check_for_savefile(save_details, i, j)){
 				//Not enough free space for a savefile
 				vmu = maple_enum_dev(i, j);
-				if(vmufs_free_blocks(vmu) < vmu_get_save_block_count(save->save_file_size)){
+				if(vmufs_free_blocks(vmu) < vmu_get_save_block_count(save_details->savefile_size)){
 					continue;
 				}
 			}
@@ -134,7 +148,7 @@ uint8_t vmu_get_valid_vmus(SaveFileDetails_t * save){
 	return valid_vmus;
 }
 
-uint8_t vmu_get_savefiles(SaveFileDetails_t * save){
+uint8_t vmu_get_savefiles(SaveFileDetails_t * save_details){
 	uint8_t valid_saves = 0;	//a1a2b1b2c1c2d1d2
 
 	int i, j;
@@ -144,7 +158,7 @@ uint8_t vmu_get_savefiles(SaveFileDetails_t * save){
 				continue;
 			}
 
-			if(vmu_check_for_savefile(save, i, j)){
+			if(vmu_check_for_savefile(save_details, i, j)){
 				vmu_set_bit(&valid_saves, i, j);
 			}
 		}
@@ -171,7 +185,7 @@ uint8_t vmu_get_valid_screens(){
 	return valid_screens;
 }
 
-uint8_t vmu_load_uncompressed(SaveFileDetails_t * save){
+uint8_t vmu_load_uncompressed(SaveFileDetails_t * save_details){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
@@ -180,13 +194,13 @@ uint8_t vmu_load_uncompressed(SaveFileDetails_t * save){
 
 	//If you call everying in the right order, this is redundant
 	//But just incase you didn't, here it is
-	if(!vmu_check_for_device(save->port, save->slot, MAPLE_FUNC_MEMCARD)){
+	if(!vmu_check_for_device(save_details->port, save_details->slot, MAPLE_FUNC_MEMCARD)){
 		return 0;
 	}
 
 	//Only 20 chara allowed at max (21 if you include '\0')
-	sprintf(savename, "/vmu/%c%d/", save->port + 97, save->slot);	//port gets converted to a, b, c or d. unit is unit
-	strcat(savename, save->save_name);
+	sprintf(savename, "/vmu/%c%d/", save_details->port + 97, save_details->slot);	//port gets converted to a, b, c or d. unit is unit
+	strcat(savename, save_details->save_name);
 
 	//If the VMU isn't plugged in, this will fail anyways
 	if(!(fp = fopen(savename, "rb"))){
@@ -205,14 +219,19 @@ uint8_t vmu_load_uncompressed(SaveFileDetails_t * save){
 	vmu_pkg_parse(pkg_out, &pkg);
 
 	//Read the pkg data into my struct
-	memcpy(&save->save_file, pkg.data, save->save_file_size);
+	memcpy(&save_details->save_file, pkg.data, save_details->savefile_size);
 
 	free(pkg_out);
 
 	return 1;
 }
 
-int vmu_save_uncompressed(SaveFileDetails_t * save){
+int vmu_save_uncompressed(SaveFileDetails_t * save_details){
+	//No valid VMUs, no-go
+	if(!save_details->valid_vmus){
+		return -5;
+	}
+
 	vmu_pkg_t pkg;
 	uint8 *pkg_out, *data;
 	int pkg_size;
@@ -224,33 +243,33 @@ int vmu_save_uncompressed(SaveFileDetails_t * save){
 
 	//If you call everying in the right order, this is redundant
 	//But just incase you didn't, here it is
-	if(!vmu_check_for_device(save->port, save->slot, MAPLE_FUNC_MEMCARD)){
+	if(!vmu_check_for_device(save_details->port, save_details->slot, MAPLE_FUNC_MEMCARD)){
 		return -4;
 	}
 
-	vmu = maple_enum_dev(save->port, save->slot);
+	vmu = maple_enum_dev(save_details->port, save_details->slot);
 
 	//Only 20 chara allowed at max (21 if you include '\0')
-	sprintf(savename, "/vmu/%c%d/", save->port + 97, save->slot);	//port gets converted to a, b, c or d. unit is unit
-	strcat(savename, save->save_name);
+	sprintf(savename, "/vmu/%c%d/", save_details->port + 97, save_details->slot);	//port gets converted to a, b, c or d. unit is unit
+	strcat(savename, save_details->save_name);
 
-	int filesize = save->save_file_size;
+	int filesize = save_details->savefile_size;
 	data = (uint8_t *) malloc(filesize);
 	if(data == NULL){
 		free(data);
 		return -3;
 	}
-	memcpy(data, &save->save_file, save->save_file_size);	//Last param is num of bytes and sizeof returns in bytes
+	memcpy(data, &save_details->save_file, save_details->savefile_size);	//Last param is num of bytes and sizeof returns in bytes
 
-	sprintf(pkg.desc_long, save->desc_long);
-	strcpy(pkg.desc_short, save->desc_short);
-	strcpy(pkg.app_id, save->app_id);
+	sprintf(pkg.desc_long, save_details->desc_long);
+	strcpy(pkg.desc_short, save_details->desc_short);
+	strcpy(pkg.app_id, save_details->app_id);
 	pkg.icon_cnt = 1;
 	pkg.icon_anim_speed = 0;
-	memcpy(pkg.icon_pal, save->save_file_palette, 32);
-	pkg.icon_data = save->save_file_icon;
+	memcpy(pkg.icon_pal, save_details->save_file_palette, 32);
+	pkg.icon_data = save_details->save_file_icon;
 	pkg.eyecatch_type = VMUPKG_EC_NONE;
-	pkg.data_len = save->save_file_size;
+	pkg.data_len = save_details->savefile_size;
 	pkg.data = data;
 
 	vmu_pkg_build(&pkg, &pkg_out, &pkg_size);
