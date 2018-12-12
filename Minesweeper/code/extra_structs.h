@@ -79,8 +79,8 @@ typedef struct MinesweeperOptions{
 	uint16_t tabs_x[5];
 	uint8_t tabs_width[5];
 
-	SaveFileDetails_t save_details;
-	MinesweeperSaveFile_t save_file;	//CURRENTLY UNUSED (Need to stop using the save in the save details function)
+	SaveFileDetails_t savefile_details;
+	MinesweeperSaveFile_t savefile;	//CURRENTLY UNUSED (Need to stop using the save in the save details function)
 
 } MinesweeperOptions_t;
 
