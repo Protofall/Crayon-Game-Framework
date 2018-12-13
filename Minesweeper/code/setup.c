@@ -456,3 +456,14 @@ void setup_keys(MinesweeperKeyboard_t * keyboard){
 	keyboard->lower_keys = "qwertyuiop<asdfghjkl^zxcvbnm,.^";
 	return;
 }
+
+void setup_update_old_saves(SaveFileDetails_t * new_savefile_details){
+	SaveFileDetails_t old_savefile_details;
+	//It used the incorrect length app_id
+	vmu_init_savefile(&old_savefile_details, new_savefile_details->savefile_data, sizeof(MinesweeperSaveFile_t),
+	1, 0, "Made with Crayon by Protofall\0", "Minesweeper\0", "Proto_Minesweeper\0", "MINESWEEPER.s\0");
+
+	//Check for saves with old name
+
+	//If present then it will update them to the new format
+}

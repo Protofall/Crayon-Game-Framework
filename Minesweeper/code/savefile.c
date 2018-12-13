@@ -30,8 +30,9 @@ uint8_t vmu_check_for_savefile(SaveFileDetails_t * savefile_details, int8_t port
 	free(pkg_out);
 
 	//This uses the old broken off id and the new id
-	if(!(strcmp(pkg.app_id, savefile_details->app_id) == 0 ||
-		strcmp(pkg.app_id, "Proto_Minesweepe") == 0)){
+	if(strcmp(pkg.app_id, savefile_details->app_id)){
+	// if(!(strcmp(pkg.app_id, savefile_details->app_id) == 0 ||
+	// 	strcmp(pkg.app_id, "Proto_Minesweepe") == 0)){
 		return 0;
 	}
 	return 1;
@@ -61,13 +62,12 @@ uint8_t vmu_check_for_device(int8_t port, int8_t slot, uint32_t function){
 
 //Note Crayon doesn't bother supporting eye catchers. Also hard coded for 1 icon
 	//I used the "vmu_pkg_build" function's source as a guide for this
-uint16_t vmu_get_save_block_count(size_t savefile_size){
-	int pkg_size, icon_cnt, data_len;
-	icon_cnt = 1;
-	data_len = savefile_size;
+uint16_t vmu_get_save_block_count(SaveFileDetails_t * savefile_details){
+	int pkg_size, data_len;
+	data_len = savefile_details->savefile_size;
 
 	//Get the total number of bytes. Keep in mind we need to think about the icon/s
-	pkg_size = sizeof(vmu_hdr_t) + 512 * icon_cnt + data_len;
+	pkg_size = sizeof(vmu_hdr_t) + (512 * savefile_details->anim_count) + data_len;
 
 	return pkg_size >> 9;	//2^9 is 512 so this gets us the number of blocks
 }
@@ -105,9 +105,13 @@ void vmu_free_icon(SaveFileDetails_t * savefile_details){
 }
 
 void vmu_init_savefile(SaveFileDetails_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
-	char * desc_long, char * desc_short, char * app_id, char * save_name){
+	uint8_t anim_count, uint16_t anim_speed, char * desc_long, char * desc_short, char * app_id, char * save_name){
 	savefile_details->savefile_data = savefile_data;
 	savefile_details->savefile_size = savefile_size;
+	savefile_details->anim_count = anim_count;
+	savefile_details->anim_speed = anim_speed;
+
+
 	strcpy(savefile_details->desc_long, desc_long);
 	strcpy(savefile_details->desc_short, desc_short);
 	strcpy(savefile_details->app_id, app_id);
@@ -135,7 +139,7 @@ uint8_t vmu_get_valid_vmus(SaveFileDetails_t * savefile_details){
 			if(!vmu_check_for_savefile(savefile_details, i, j)){
 				//Not enough free space for a savefile
 				vmu = maple_enum_dev(i, j);
-				if(vmufs_free_blocks(vmu) < vmu_get_save_block_count(savefile_details->savefile_size)){
+				if(vmufs_free_blocks(vmu) < vmu_get_save_block_count(savefile_details)){
 					continue;
 				}
 			}
@@ -264,8 +268,8 @@ int vmu_save_uncompressed(SaveFileDetails_t * savefile_details){
 	sprintf(pkg.desc_long, savefile_details->desc_long);
 	strcpy(pkg.desc_short, savefile_details->desc_short);
 	strcpy(pkg.app_id, savefile_details->app_id);
-	pkg.icon_cnt = 1;
-	pkg.icon_anim_speed = 0;
+	pkg.icon_cnt = savefile_details->anim_count;
+	pkg.icon_anim_speed = savefile_details->anim_speed;
 	memcpy(pkg.icon_pal, savefile_details->savefile_palette, 32);
 	pkg.icon_data = savefile_details->savefile_icon;
 	pkg.eyecatch_type = VMUPKG_EC_NONE;
