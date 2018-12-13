@@ -31,14 +31,11 @@ uint8_t vmu_check_for_savefile(SaveFileDetails_t * savefile_details, int8_t port
 
 	//This uses the old broken off id and the new id
 	if(strcmp(pkg.app_id, savefile_details->app_id)){
-	// if(!(strcmp(pkg.app_id, savefile_details->app_id) == 0 ||
-	// 	strcmp(pkg.app_id, "Proto_Minesweepe") == 0)){
 		return 0;
 	}
 	return 1;
 }
 
-//MAPLE_FUNC_MEMCARD
 uint8_t vmu_check_for_device(int8_t port, int8_t slot, uint32_t function){
 	maple_device_t *vmu;
 

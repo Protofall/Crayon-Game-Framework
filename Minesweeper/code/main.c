@@ -907,14 +907,16 @@ int main(){
 	1, 0, "Made with Crayon by Protofall\0", "Minesweeper\0", "Proto_Minesweep\0", "MINESWEEPER.s\0");
 
 	//Pre 1.2.0 savefiles has an incorrect app_id, this function updates older save files
-	// uint8_t old_saves = setup_update_old_saves(&MS_options.savefile_details);
+	uint8_t old_saves = setup_update_old_saves(&MS_options.savefile_details);
+	// vmu_pkg_t pkg;
+	// TEST(&pkg, 0, 1);
 
 	MS_options.savefile_details.valid_vmus = vmu_get_valid_vmus(&MS_options.savefile_details);
 	MS_options.savefile_details.valid_vmu_screens = vmu_get_valid_screens();
 	uint8_t vmus_with_saves = vmu_get_savefiles(&MS_options.savefile_details);
 
 	//Pre 1.2.0 savefiles has an incorrect app_id, this function updates older save files
-	uint8_t old_saves = setup_update_old_saves(&MS_options.savefile_details);
+	// uint8_t old_saves = setup_update_old_saves(&MS_options.savefile_details);
 
 	//Find the first savefile (if it exists)
 	int iter;
@@ -1919,6 +1921,7 @@ int main(){
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
 			sprintf(snum, "Htz: %d\n", MS_options.htz);
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 72, 50, 1, 1, 62, pkg.app_id);
 
 			for(iter = 0; iter < os.num_assets; iter++){
 				if(!strcmp(os.assets[iter]->animation->animation_name, "aboutLogo") && MS_options.focus != 5){	//We don't want to draw that unless we're on the about page
