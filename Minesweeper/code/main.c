@@ -906,9 +906,15 @@ int main(){
 	vmu_init_savefile(&MS_options.savefile_details, (uint8_t *)&MS_options.savefile, sizeof(MinesweeperSaveFile_t),
 	1, 0, "Made with Crayon by Protofall\0", "Minesweeper\0", "Proto_Minesweep\0", "MINESWEEPER.s\0");
 
+	//Pre 1.2.0 savefiles has an incorrect app_id, this function updates older save files
+	// uint8_t old_saves = setup_update_old_saves(&MS_options.savefile_details);
+
 	MS_options.savefile_details.valid_vmus = vmu_get_valid_vmus(&MS_options.savefile_details);
 	MS_options.savefile_details.valid_vmu_screens = vmu_get_valid_screens();
 	uint8_t vmus_with_saves = vmu_get_savefiles(&MS_options.savefile_details);
+
+	//Pre 1.2.0 savefiles has an incorrect app_id, this function updates older save files
+	uint8_t old_saves = setup_update_old_saves(&MS_options.savefile_details);
 
 	//Find the first savefile (if it exists)
 	int iter;
@@ -1900,19 +1906,19 @@ int main(){
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
 			//DEBUG
-			char snum[20];
-			sprintf(snum, "%d\n", MS_options.savefile_details.valid_vmus);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80, 50, 1, 1, 62, snum);
-			sprintf(snum, "%d\n", MS_options.savefile_details.valid_vmu_screens);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 12, 50, 1, 1, 62, snum);
-			sprintf(snum, "%d\n", vmus_with_saves);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 24, 50, 1, 1, 62, snum);
-			sprintf(snum, "%d\n", MS_options.savefile_details.port);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 36, 50, 1, 1, 62, snum);
-			sprintf(snum, "%d\n", MS_options.savefile_details.slot);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 48, 50, 1, 1, 62, snum);
-			sprintf(snum, "%d\n", MS_options.htz);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 80, 80 + 60, 50, 1, 1, 62, snum);
+			char snum[32];
+			sprintf(snum, "Valid: VMUs %d\n", MS_options.savefile_details.valid_vmus);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
+			sprintf(snum, "Screens: %d\n", MS_options.savefile_details.valid_vmu_screens);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 12, 50, 1, 1, 62, snum);
+			sprintf(snum, "New saves: %d\n", vmus_with_saves);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 24, 50, 1, 1, 62, snum);
+			sprintf(snum, "Old saves: %d\n", old_saves);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 36, 50, 1, 1, 62, snum);
+			sprintf(snum, "P: %d, S: %d\n", MS_options.savefile_details.port, MS_options.savefile_details.slot);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
+			sprintf(snum, "Htz: %d\n", MS_options.htz);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
 
 			for(iter = 0; iter < os.num_assets; iter++){
 				if(!strcmp(os.assets[iter]->animation->animation_name, "aboutLogo") && MS_options.focus != 5){	//We don't want to draw that unless we're on the about page
