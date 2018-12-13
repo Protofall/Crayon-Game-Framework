@@ -21,4 +21,6 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_tex
 
 void setup_keys(MinesweeperKeyboard_t * keyboard);
 
+void setup_update_old_saves(SaveFileDetails_t * new_savefile_details);
+
 #endif

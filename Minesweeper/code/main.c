@@ -219,9 +219,9 @@ void reset_grid(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_
 	grid->y = y;
 	grid->num_mines = mine_count;
 
-	options->savefile_details.save_file.pref_height = y;
-	options->savefile_details.save_file.pref_width = x;
-	options->savefile_details.save_file.pref_mines = mine_count;
+	options->savefile.pref_height = y;
+	options->savefile.pref_width = x;
+	options->savefile.pref_mines = mine_count;
 
 	//Used for checking and setting high scores
 	if(x == 9 && y == 9 && mine_count == 10){	//Beginner
@@ -592,15 +592,15 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 					}
 
 					//Save this record
-					options->savefile_details.save_file.times[keyboard->record_index] = time;
-					strcpy(options->savefile_details.save_file.record_names[keyboard->record_index], keyboard->type_buffer);
+					options->savefile.times[keyboard->record_index] = time;
+					strcpy(options->savefile.record_names[keyboard->record_index], keyboard->type_buffer);
 
 					//Reset the buffer for the next score
 					keyboard->type_buffer[0] = '\0';
 					keyboard->chars_typed = 0;
 
 					//It makes sense to save the record immediately
-					options->savefile_details.save_file.options = options->question_enabled + (options->sound_enabled << 1)
+					options->savefile.options = options->question_enabled + (options->sound_enabled << 1)
 						+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
 					vmu_save_uncompressed(&options->savefile_details);
 
@@ -759,7 +759,7 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[6] + 75) && (cursor_pos[1] <= options->buttons.positions[7] + 23)
 					&& cursor_pos[0] >= options->buttons.positions[6] && cursor_pos[1] >= options->buttons.positions[7]){	//Save to VMU
-				options->savefile_details.save_file.options = options->question_enabled + (options->sound_enabled << 1)
+				options->savefile.options = options->question_enabled + (options->sound_enabled << 1)
 					+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
 				vmu_save_uncompressed(&options->savefile_details);
 			}
@@ -903,10 +903,8 @@ int main(){
 	fs_romdisk_unmount("/SaveFile");
 
 	//Setting the default save_detail vars
-	vmu_init_savefile(&MS_options.savefile_details, (uint8_t *)&MS_options.savefile_details.save_file, sizeof(MinesweeperSaveFile_t),
-	"Made with Crayon by Protofall\0", "Minesweeper\0", "Proto_Minesweep\0", "MINESWEEPER.s\0");
-	// vmu_init_savefile(&MS_options.savefile_details, (uint8_t *)&MS_options.savefile, sizeof(MinesweeperSaveFile_t),
-	// "Made with Crayon by Protofall\0", "Minesweeper\0", "Proto_Minesweep\0", "MINESWEEPER.s\0");
+	vmu_init_savefile(&MS_options.savefile_details, (uint8_t *)&MS_options.savefile, sizeof(MinesweeperSaveFile_t),
+	1, 0, "Made with Crayon by Protofall\0", "Minesweeper\0", "Proto_Minesweep\0", "MINESWEEPER.s\0");
 
 	MS_options.savefile_details.valid_vmus = vmu_get_valid_vmus(&MS_options.savefile_details);
 	MS_options.savefile_details.valid_vmu_screens = vmu_get_valid_screens();
@@ -929,11 +927,11 @@ int main(){
 	//If a save already exists
 	vmu_load_uncompressed(&MS_options.savefile_details);
 	if(MS_options.savefile_details.valid_vmus && MS_options.savefile_details.port != -1 && MS_options.savefile_details.slot != -1){
-		MS_options.question_enabled = !!(MS_options.savefile_details.save_file.options & (1 << 0));
-		MS_options.sound_enabled = !!(MS_options.savefile_details.save_file.options & (1 << 1));
-		MS_options.operating_system = !!(MS_options.savefile_details.save_file.options & (1 << 2));
-		MS_options.language = !!(MS_options.savefile_details.save_file.options & (1 << 3));
-		MS_options.htz = !!(MS_options.savefile_details.save_file.options & (1 << 4));
+		MS_options.question_enabled = !!(MS_options.savefile.options & (1 << 0));
+		MS_options.sound_enabled = !!(MS_options.savefile.options & (1 << 1));
+		MS_options.operating_system = !!(MS_options.savefile.options & (1 << 2));
+		MS_options.language = !!(MS_options.savefile.options & (1 << 3));
+		MS_options.htz = !!(MS_options.savefile.options & (1 << 4));
 	}
 	else{	//No VMU isn't present or no savefile yet
 		//If we don't already have a savefile, choose a VMU
@@ -956,17 +954,17 @@ int main(){
 		MS_options.language = 0;
 		MS_options.htz = 1;
 
-		MS_options.savefile_details.save_file.options = (MS_options.sound_enabled << 1) + (MS_options.question_enabled << 0);
+		MS_options.savefile.options = (MS_options.sound_enabled << 1) + (MS_options.question_enabled << 0);
 
 		int8_t i;
 		for(i = 0; i < 6; i++){
-			strcpy(MS_options.savefile_details.save_file.record_names[i], "Anonymous\0");
-			// strcpy(MS_options.savefile_details.save_file.record_names[i], "%%%%%%%%%%%%%%%\0");	//Longest possible name
-			MS_options.savefile_details.save_file.times[i] = 999;
+			strcpy(MS_options.savefile.record_names[i], "Anonymous\0");
+			// strcpy(MS_options.savefile.record_names[i], "%%%%%%%%%%%%%%%\0");	//Longest possible name
+			MS_options.savefile.times[i] = 999;
 		}
-		MS_options.savefile_details.save_file.pref_width = 30;
-		MS_options.savefile_details.save_file.pref_height = 16;
-		MS_options.savefile_details.save_file.pref_mines = 99;
+		MS_options.savefile.pref_width = 30;
+		MS_options.savefile.pref_height = 16;
+		MS_options.savefile.pref_mines = 99;
 	}
 
 	//Currently this is the only way to access some of the hidden features
@@ -1424,8 +1422,8 @@ int main(){
 	graphics_frame_coordinates(MS_options.number_changers.animation, MS_options.number_changers.frame_coord_map, MS_options.number_changers.frame_coord_map + 1, 0);
 
 	MS_grid.logic_grid = NULL;
-	reset_grid(&MS_grid, &MS_options, MS_options.savefile_details.save_file.pref_width, MS_options.savefile_details.save_file.pref_height,
-		MS_options.savefile_details.save_file.pref_mines);
+	reset_grid(&MS_grid, &MS_options, MS_options.savefile.pref_width, MS_options.savefile.pref_height,
+		MS_options.savefile.pref_mines);
 
 	//Setup the untextured poly structs
 	setup_bg_untextured_poly(&Bg_polys, MS_options.operating_system, MS_options.sd_present);
@@ -1762,8 +1760,8 @@ int main(){
 			else{	//Multiplayer
 				MS_keyboard.record_index = MS_grid.difficulty + 2;
 			}
-			if(MS_grid.time_sec < MS_options.savefile_details.save_file.times[MS_keyboard.record_index]){
-				strcpy(MS_keyboard.type_buffer, MS_options.savefile_details.save_file.record_names[MS_keyboard.record_index]);	//The keyboard contains the previous master's name
+			if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index]){
+				strcpy(MS_keyboard.type_buffer, MS_options.savefile.record_names[MS_keyboard.record_index]);	//The keyboard contains the previous master's name
 				MS_keyboard.chars_typed = strlen(MS_keyboard.type_buffer);
 				MS_options.focus = 1;
 			}
@@ -2066,7 +2064,7 @@ int main(){
 					if(iter == 3){
 						x_offset = 345;
 					}
-					sprintf(record_buffer, "%s: %d", MS_options.savefile_details.save_file.record_names[iter], MS_options.savefile_details.save_file.times[iter]);
+					sprintf(record_buffer, "%s: %d", MS_options.savefile.record_names[iter], MS_options.savefile.times[iter]);
 					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + x_offset, 144 + ((iter % 3) * 24), 31, 1, 1, Tahoma_P.palette_id, record_buffer);
 				}
 			}
