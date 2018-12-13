@@ -457,6 +457,37 @@ void setup_keys(MinesweeperKeyboard_t * keyboard){
 	return;
 }
 
+//Returns a pkg struct
+// void TEST(vmu_pkg_t * pkg, uint8_t port, uint8_t slot){
+// 	uint8 *pkg_out;
+// 	int pkg_size;
+// 	FILE *fp;
+// 	char savename[32];
+
+// 	sprintf(savename, "/vmu/%c%d/", port + 97, slot);
+// 	strcat(savename, "MINESWEEPER.s");
+
+// 	//File DNE
+// 	if(!(fp = fopen(savename, "rb"))){
+// 		return;
+// 	}
+
+// 	fseek(fp, 0, SEEK_SET);
+// 	fseek(fp, 0, SEEK_END);
+// 	pkg_size = ftell(fp);
+// 	fseek(fp, 0, SEEK_SET);
+
+// 	pkg_out = (uint8 *)malloc(pkg_size);
+// 	fread(pkg_out, pkg_size, 1, fp);
+// 	fclose(fp);
+
+// 	vmu_pkg_parse(pkg_out, pkg);
+
+// 	free(pkg_out);
+
+// 	return;
+// }
+
 uint8_t setup_check_for_old_savefile(SaveFileDetails_t * old_savefile_details, uint8_t port, uint8_t slot){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
@@ -499,33 +530,14 @@ uint8_t setup_check_for_old_savefile(SaveFileDetails_t * old_savefile_details, u
 	//However if I read a1, a2, b1 and b2 first then they work. Also calling the function later worked too.
 	//It seems like KOS is still initialising when I call it :/ Thats kinda dodgy
 uint8_t setup_update_old_saves(SaveFileDetails_t * new_savefile_details){
-
-	// // return ret;	
-	// // return strcmp(pkg.app_id, "Minesweepe");	//Returns 3
-	// return strcmp(pkg.app_id, "Proto_Minesweepe\0");	//Port 0, slot 1. Returns 3? Why?
-
-	// return vmu_check_for_savefile(new_savefile_details, 2, 1);	//1 If save is present, but it returns zero???
-
-	// return vmu_get_savefiles(new_savefile_details);
-
-
-
-
-
-
-
-
-
-
-
 	SaveFileDetails_t old_savefile_details;
 
 	//It used the incorrect length app_id
-	vmu_init_savefile(&old_savefile_details, new_savefile_details->savefile_data, sizeof(MinesweeperSaveFile_t),
+	vmu_init_savefile(&old_savefile_details, new_savefile_details->savefile_data, new_savefile_details->savefile_size,
 	1, 0, "Made with Crayon by Protofall\0", "Minesweepe\0", "Proto_Minesweepe\0", "MINESWEEPER.s\0");
 
-	// void vmu_init_savefile(SaveFileDetails_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
-	// uint8_t anim_count, uint16_t anim_speed, char * desc_long, char * desc_short, char * app_id, char * save_name);
+	old_savefile_details.valid_vmus = vmu_get_valid_vmus(&old_savefile_details);	//*might* need to do this for the save to work? Doubt it though
+	// new_savefile_details->valid_vmus = vmu_get_valid_vmus(&old_savefile_details);	//*might* need to do this for the save to work? Doubt it though
 
 	// uint8_t vmus_with_saves = vmu_get_savefiles(&old_savefile_details);
 	// return vmus_with_saves;
@@ -545,7 +557,44 @@ uint8_t setup_update_old_saves(SaveFileDetails_t * new_savefile_details){
 		}
 	}
 
-	return valid_saves;
+	strcpy(old_savefile_details.app_id, "Proto_Minesweep\0");
 
 	//If present then it will update them to the new format
+	for(i = 0; i <= 3; i++){
+		for(j = 1; j <= 2; j++){
+			if(vmu_get_bit(valid_saves, i, j)){
+				old_savefile_details.port = i;
+				old_savefile_details.slot = j;
+
+				if(!vmu_check_for_device(old_savefile_details.port, old_savefile_details.slot, MAPLE_FUNC_MEMCARD)){
+					return 208;
+				}
+				if(!vmu_load_uncompressed(&old_savefile_details)){
+					return 200 + (i * 10) + j;
+				}
+				// int res = vmu_save_uncompressed(&old_savefile_details);
+				int res = vmu_save_uncompressed(&old_savefile_details);
+				if(res < 0){
+					return 220 + (res * -1);
+				}
+			}
+		}
+	}
+
+	//For debugging
+	// strcpy(old_savefile_details.app_id, "Proto_Minesweeper\0");
+	valid_saves = 0;
+	// for(i = 0; i <= 3; i++){
+	// 	for(j = 1; j <= 2; j++){
+	// 		if(!vmu_check_for_device(i, j, MAPLE_FUNC_MEMCARD)){
+	// 			continue;
+	// 		}
+
+	// 		if(setup_check_for_old_savefile(&old_savefile_details, i, j)){
+	// 			vmu_set_bit(&valid_saves, i, j);
+	// 		}
+	// 	}
+	// }
+
+	return valid_saves;	//How is it still 170??? That makes no sense
 }
