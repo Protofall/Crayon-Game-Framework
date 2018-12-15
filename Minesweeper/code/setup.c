@@ -457,7 +457,7 @@ void setup_keys(MinesweeperKeyboard_t * keyboard){
 	return;
 }
 
-uint8_t setup_check_for_old_savefile(savefile_details_t * old_savefile_details, uint8_t port, uint8_t slot){
+uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_details, uint8_t port, uint8_t slot){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
@@ -498,8 +498,8 @@ uint8_t setup_check_for_old_savefile(savefile_details_t * old_savefile_details, 
 //Note, in testing I noticed I couldn't test VMUs c1 and d1 (Maybe the 2nd slots too)
 	//However if I read a1, a2, b1 and b2 first then they work. Also calling the function later worked too.
 	//It seems like KOS is still initialising when I call it :/ Thats kinda dodgy
-uint8_t setup_update_old_saves(savefile_details_t * new_savefile_details){
-	savefile_details_t old_savefile_details;
+uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details){
+	crayon_savefile_details_t old_savefile_details;
 
 	//It used the incorrect length app_id
 	crayon_savefile_init_savefile_details(&old_savefile_details, new_savefile_details->savefile_data,

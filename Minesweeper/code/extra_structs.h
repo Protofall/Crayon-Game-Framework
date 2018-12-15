@@ -92,7 +92,7 @@ typedef struct MinesweeperOptions{
 	uint16_t tabs_x[5];
 	uint8_t tabs_width[5];
 
-	savefile_details_t savefile_details;
+	crayon_savefile_details_t savefile_details;
 	minesweeper_savefile_t savefile;
 
 } MinesweeperOptions_t;
