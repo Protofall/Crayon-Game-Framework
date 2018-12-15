@@ -462,8 +462,9 @@ void b_press(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint16_t 
 	return;
 }
 
-//Must be called within a pvr_list_begin(), used for displaying the counter for flags and timer
-void digit_display(crayon_spritesheet_t * ss, crayon_animation_t * anim, int num, uint16_t x, uint16_t y, uint8_t z){
+//Used for displaying the counter for flags and timer
+	//Display is 0 for the mine count or 1 for the timer
+void digit_set(crayon_textured_array_t * ren_list, int num, uint8_t display){
 	if(num < -99){
 		num = -99;
 	}
@@ -471,20 +472,18 @@ void digit_display(crayon_spritesheet_t * ss, crayon_animation_t * anim, int num
 		num = 999;
 	}
 
-	char disp_num[3];
-	sprintf(disp_num, "%03d", num);
+	uint8_t * draw_key = ren_list->frame_coord_keys + (display * 3);	//Gives us the pointer to the right display
 
-	int i;
-	uint16_t frame_x;
-	uint16_t frame_y;
+	char num_char[3];
+	sprintf(num_char, "%03d", num);	//Using this since its easier to convert to string than try and read from the int...
+	uint8_t i;
 	for(i = 0; i < 3; i++){
-		if(disp_num[i] == '-'){
-			graphics_frame_coordinates(anim, &frame_x, &frame_y, 10);
+		if(num_char[i] == '-'){
+			draw_key[i] = 10;
 		}
 		else{
-			graphics_frame_coordinates(anim, &frame_x, &frame_y, (int)disp_num[i] - 48);
+			draw_key[i] = (int)num_char[i] - 48;
 		}
-		graphics_draw_sprite(ss, anim, x + (i * 13), y, z, 1, 1, frame_x, frame_y, 0);
 	}
 
 	return;
@@ -989,6 +988,8 @@ int main(){
 	}
 	MAPLE_FOREACH_END()
 
+	float htz_adjustment = 1;	//Default, 60Hz, 60/60Hz
+
 	//Maybe have an initial save here to save any VMU selection and refresh rate details
 
 	#if CRAYON_SD_MODE == 1
@@ -1007,6 +1008,9 @@ int main(){
 		}
 		else{
 			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
+			if(MS_options.htz == 0){
+				htz_adjustment = 1.2;	//60/50Hz
+			}
 		}
 	}
 
@@ -1302,6 +1306,37 @@ int main(){
 	cont_swirl.frame_coord_keys[0] = 0;
 	graphics_frame_coordinates(cont_swirl.animation, cont_swirl.frame_coord_map + 0, cont_swirl.frame_coord_map + 1, region);
 
+	crayon_textured_array_t digit_display;
+	crayon_memory_set_sprite_array(&digit_display, 6, 11, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[1], &Board_P);
+	digit_display.scales[0] = 1;
+	digit_display.scales[1] = 1;
+	digit_display.flips[0] = 0;
+	digit_display.rotations[0] = 0;
+	digit_display.colours[0] = 0;
+	digit_display.positions[0] = 20;
+	digit_display.positions[1] = 65;
+	digit_display.positions[2] = digit_display.positions[0] + digit_display.animation->animation_frame_width;
+	digit_display.positions[3] = digit_display.positions[1];
+	digit_display.positions[4] = digit_display.positions[2] + digit_display.animation->animation_frame_width;
+	digit_display.positions[5] = digit_display.positions[1];
+	digit_display.positions[6] = 581;
+	digit_display.positions[7] = digit_display.positions[1];
+	digit_display.positions[8] = digit_display.positions[6] + digit_display.animation->animation_frame_width;
+	digit_display.positions[9] = digit_display.positions[1];
+	digit_display.positions[10] = digit_display.positions[8] + digit_display.animation->animation_frame_width;
+	digit_display.positions[11] = digit_display.positions[1];
+	digit_display.draw_z[0] = 17;
+	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 0, digit_display.frame_coord_map + 1, 0);
+	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 2, digit_display.frame_coord_map + 3, 1);
+	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 4, digit_display.frame_coord_map + 5, 2);
+	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 6, digit_display.frame_coord_map + 7, 3);
+	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 8, digit_display.frame_coord_map + 9, 4);
+	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 10, digit_display.frame_coord_map + 11, 5);
+	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 12, digit_display.frame_coord_map + 13, 6);
+	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 14, digit_display.frame_coord_map + 15, 7);
+	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 16, digit_display.frame_coord_map + 17, 8);
+	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 18, digit_display.frame_coord_map + 19, 9);
+	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 20, digit_display.frame_coord_map + 21, 10);
 
 	crayon_textured_array_t face;
 	crayon_memory_set_sprite_array(&face, 1, 5, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[0], &Board_P);
@@ -1575,25 +1610,25 @@ int main(){
 			}
 
 			if(st->buttons & CONT_DPAD_UP){
-				cursor_position[(2 * __dev->port) + 1] -= 2 * movement_speed;
+				cursor_position[(2 * __dev->port) + 1] -= 2 * movement_speed * htz_adjustment;
 				if(cursor_position[(2 * __dev->port) + 1] < 0){
 					cursor_position[(2 * __dev->port) + 1] = 0;
 				}
 			}
 			if(st->buttons & CONT_DPAD_DOWN){
-				cursor_position[(2 * __dev->port) + 1] += 2 * movement_speed;
+				cursor_position[(2 * __dev->port) + 1] += 2 * movement_speed * htz_adjustment;
 				if(cursor_position[(2 * __dev->port) + 1] > 480){
 					cursor_position[(2 * __dev->port) + 1] = 480;
 				}
 			}
 			if(st->buttons & CONT_DPAD_LEFT){
-				cursor_position[2 * __dev->port] -= 2 * movement_speed;
+				cursor_position[2 * __dev->port] -= 2 * movement_speed * htz_adjustment;
 				if(cursor_position[2 * __dev->port] < 0){
 					cursor_position[2 * __dev->port] = 0;
 				}
 			}
 			if(st->buttons & CONT_DPAD_RIGHT){
-				cursor_position[2 * __dev->port] += 2 * movement_speed;
+				cursor_position[2 * __dev->port] += 2 * movement_speed * htz_adjustment;
 				if(cursor_position[2 * __dev->port] > 640){
 					cursor_position[2 * __dev->port] = 640;
 				}
@@ -1601,14 +1636,14 @@ int main(){
 		}
 		else{	//Thumbstick
 			if(thumb_active){	//The thumbstick is outside of the 40% radius
-				cursor_position[2 * __dev->port] += 2 * thumb_x;
+				cursor_position[2 * __dev->port] += 2 * thumb_x * htz_adjustment;
 				if(cursor_position[2 * __dev->port] < 0){
 					cursor_position[2 * __dev->port] = 0;
 				}
 				else if(cursor_position[2 * __dev->port] > 640){
 					cursor_position[2 * __dev->port] = 640;
 				}
-				cursor_position[(2 * __dev->port) + 1] += 2 * thumb_y;
+				cursor_position[(2 * __dev->port) + 1] += 2 * thumb_y * htz_adjustment;
 				if(cursor_position[(2 * __dev->port) + 1] < 0){
 					cursor_position[(2 * __dev->port) + 1] = 0;
 				}
@@ -1617,6 +1652,12 @@ int main(){
 				}
 			}
 		}
+
+		//Using thumbstick on emulator:
+		//50Hz	5.68 secs, around 284 frames
+		//60Hz	5.72 seconds, around 343 frames
+
+		//343/284 ~= 1.204 ~= 60/50. This is good
 
 		face_logic(&MS_grid, &face, cursor_position + (2 * __dev->port), !!(st->buttons & (CONT_A)), !!(st->buttons & (CONT_X)));
 
@@ -1825,6 +1866,10 @@ int main(){
 			MS_grid.time_sec = temp_sec;
 		}
 
+		//Update the two digit displays (Flags and timer)
+		digit_set(&digit_display, MS_grid.num_flags, 0);
+		digit_set(&digit_display, MS_grid.time_sec, 1);
+
 		time(&os_clock);	//I think this is how I populate it with the current time
 		time_struct = localtime(&os_clock);
 
@@ -1869,10 +1914,6 @@ int main(){
 
 		//Transfer more stuff from this list into either the PT or OP lists
 		pvr_list_begin(PVR_LIST_TR_POLY);
-
-			//Draw the flag count and timer (Modify function to draw them as opaque or just redo this part)
-			digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.num_flags, 20, 65, 17);
-			digit_display(&Board, &Board.spritesheet_animation_array[1], MS_grid.time_sec, 581, 65, 17);
 
 			//Draw the indented tiles ontop of the grid and the cursors themselves
 			uint8_t menus_selected = 0;
@@ -1925,6 +1966,7 @@ int main(){
 			sprintf(snum, "Htz: %d\n", MS_options.htz);
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
 
+			//Draw windows assets
 			for(iter = 0; iter < os.num_assets; iter++){
 				if(!strcmp(os.assets[iter]->animation->animation_name, "aboutLogo") && MS_options.focus != 5){	//We don't want to draw that unless we're on the about page
 					continue;
@@ -2182,6 +2224,9 @@ int main(){
 				custom_draw_line(334, 77, 342, 77, 33);		//Face 5
 			}
 
+			//Draw the flag count and timer digit displays
+			crayon_graphics_draw_sprites(&digit_display, PVR_LIST_OP_POLY);
+
 			//Draw the region icon
 			crayon_graphics_draw_sprites(&os.region, PVR_LIST_OP_POLY);
 
@@ -2239,6 +2284,7 @@ int main(){
 	int retVal = 0;
 	retVal += crayon_memory_free_sprite_array(&MS_grid.draw_grid, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&indented_tiles, 0, 0);
+	retVal += crayon_memory_free_sprite_array(&digit_display, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&face, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&devices, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&legend_dot, 0, 0);

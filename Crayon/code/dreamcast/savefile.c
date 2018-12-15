@@ -1,7 +1,7 @@
 #include "savefile.h"
 
 //Note this assumes the vmu chosen is valid
-uint8_t crayon_savefile_check_for_save(savefile_details_t * savefile_details, int8_t port, int8_t slot){
+uint8_t crayon_savefile_check_for_save(crayon_savefile_details_t * savefile_details, int8_t port, int8_t slot){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
@@ -59,7 +59,7 @@ uint8_t crayon_savefile_check_for_device(int8_t port, int8_t slot, uint32_t func
 
 //Note Crayon doesn't bother supporting eye catchers. Also hard coded for 1 icon
 	//I used the "vmu_pkg_build" function's source as a guide for this
-uint16_t crayon_savefile_get_save_block_count(savefile_details_t * savefile_details){
+uint16_t crayon_savefile_get_save_block_count(crayon_savefile_details_t * savefile_details){
 	int pkg_size, data_len;
 	data_len = savefile_details->savefile_size;
 
@@ -78,7 +78,7 @@ void crayon_savefile_set_vmu_bitmap(uint8_t * vmu_bitmap, int8_t port, int8_t sl
 	return;
 }
 
-void crayon_savefile_load_icon(savefile_details_t * savefile_details, char * image, char * palette){
+void crayon_savefile_load_icon(crayon_savefile_details_t * savefile_details, char * image, char * palette){
 	file_t icon_files;
 
 	icon_files = fs_open(image, O_RDONLY);
@@ -94,14 +94,14 @@ void crayon_savefile_load_icon(savefile_details_t * savefile_details, char * ima
 	return;
 }
 
-void crayon_savefile_free_icon(savefile_details_t * savefile_details){
+void crayon_savefile_free_icon(crayon_savefile_details_t * savefile_details){
 	free(savefile_details->savefile_icon);
 	free(savefile_details->savefile_palette);
 
 	return;
 }
 
-void crayon_savefile_init_savefile_details(savefile_details_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
+void crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
 	uint8_t anim_count, uint16_t anim_speed, char * desc_long, char * desc_short, char * app_id, char * save_name){
 	savefile_details->savefile_data = savefile_data;
 	savefile_details->savefile_size = savefile_size;
@@ -121,7 +121,7 @@ void crayon_savefile_init_savefile_details(savefile_details_t * savefile_details
 	return;
 }
 
-uint8_t crayon_savefile_get_valid_vmus(savefile_details_t * savefile_details){
+uint8_t crayon_savefile_get_valid_vmus(crayon_savefile_details_t * savefile_details){
 	maple_device_t *vmu;
 	uint8_t valid_vmus = 0;	//a1a2b1b2c1c2d1d2
 
@@ -149,7 +149,7 @@ uint8_t crayon_savefile_get_valid_vmus(savefile_details_t * savefile_details){
 	return valid_vmus;
 }
 
-uint8_t crayon_savefile_get_valid_saves(savefile_details_t * savefile_details){
+uint8_t crayon_savefile_get_valid_saves(crayon_savefile_details_t * savefile_details){
 	uint8_t valid_saves = 0;	//a1a2b1b2c1c2d1d2
 
 	int i, j;
@@ -186,7 +186,7 @@ uint8_t crayon_savefile_get_valid_screens(){
 	return valid_screens;
 }
 
-uint8_t crayon_savefile_load_uncompressed_save(savefile_details_t * savefile_details){
+uint8_t crayon_savefile_load_uncompressed_save(crayon_savefile_details_t * savefile_details){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
@@ -227,7 +227,7 @@ uint8_t crayon_savefile_load_uncompressed_save(savefile_details_t * savefile_det
 	return 1;
 }
 
-int crayon_savefile_save_uncompressed_save(savefile_details_t * savefile_details){
+int crayon_savefile_save_uncompressed_save(crayon_savefile_details_t * savefile_details){
 	//No valid VMUs, no-go
 	if(!savefile_details->valid_vmus){
 		return -5;
