@@ -602,7 +602,7 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 					//It makes sense to save the record immediately
 					options->savefile.options = options->question_enabled + (options->sound_enabled << 1)
 						+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
-					vmu_save_uncompressed(&options->savefile_details);
+					crayon_savefile_save_uncompressed_save(&options->savefile_details);
 
 					//Resume focus 0 (Normal game play)
 					options->focus = 0;	//Change to 2 later when I make that screen
@@ -761,7 +761,7 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 					&& cursor_pos[0] >= options->buttons.positions[6] && cursor_pos[1] >= options->buttons.positions[7]){	//Save to VMU
 				options->savefile.options = options->question_enabled + (options->sound_enabled << 1)
 					+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
-				vmu_save_uncompressed(&options->savefile_details);
+				crayon_savefile_save_uncompressed_save(&options->savefile_details);
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[8] + 75) && (cursor_pos[1] <= options->buttons.positions[9] + 23)
 					&& cursor_pos[0] >= options->buttons.positions[8] && cursor_pos[1] >= options->buttons.positions[9]){	//Apply
@@ -898,32 +898,28 @@ int main(){
 		crayon_memory_mount_romdisk("/cd/SaveFile.img", "/Save");
 	#endif
 
-	vmu_load_icon(&MS_options.savefile_details, "/Save/IMAGE.BIN", "/Save/PALLETTE.BIN");
+	crayon_savefile_load_icon(&MS_options.savefile_details, "/Save/IMAGE.BIN", "/Save/PALLETTE.BIN");
 
 	fs_romdisk_unmount("/SaveFile");
 
 	//Setting the default save_detail vars
-	vmu_init_savefile(&MS_options.savefile_details, (uint8_t *)&MS_options.savefile, sizeof(MinesweeperSaveFile_t),
-	1, 0, "Made with Crayon by Protofall\0", "Minesweeper\0", "Proto_Minesweep\0", "MINESWEEPER.s\0");
+	crayon_savefile_init_savefile_details(&MS_options.savefile_details, (uint8_t *)&MS_options.savefile,
+		sizeof(minesweeper_savefile_t), 1, 0, "Made with Crayon by Protofall\0", "Minesweeper\0",
+		"Proto_Minesweep\0", "MINESWEEPER.s\0");
 
 	//Pre 1.2.0 savefiles has an incorrect app_id, this function updates older save files
 	uint8_t old_saves = setup_update_old_saves(&MS_options.savefile_details);
-	// vmu_pkg_t pkg;
-	// TEST(&pkg, 0, 1);
 
-	MS_options.savefile_details.valid_vmus = vmu_get_valid_vmus(&MS_options.savefile_details);
-	MS_options.savefile_details.valid_vmu_screens = vmu_get_valid_screens();
-	uint8_t vmus_with_saves = vmu_get_savefiles(&MS_options.savefile_details);
-
-	//Pre 1.2.0 savefiles has an incorrect app_id, this function updates older save files
-	// uint8_t old_saves = setup_update_old_saves(&MS_options.savefile_details);
+	MS_options.savefile_details.valid_vmus = crayon_savefile_get_valid_vmus(&MS_options.savefile_details);
+	MS_options.savefile_details.valid_saves = crayon_savefile_get_valid_saves(&MS_options.savefile_details);
+	MS_options.savefile_details.valid_vmu_screens = crayon_savefile_get_valid_screens();
 
 	//Find the first savefile (if it exists)
 	int iter;
 	int jiter;
 	for(iter = 0; iter <= 3; iter++){
 		for(jiter = 1; jiter <= 2; jiter++){
-			if(vmu_get_bit(vmus_with_saves, iter, jiter)){	//Use the left most VMU
+			if(crayon_savefile_get_vmu_bitmap(MS_options.savefile_details.valid_saves, iter, jiter)){	//Use the left most VMU
 				MS_options.savefile_details.port = iter;
 				MS_options.savefile_details.slot = jiter;
 				goto Exit_loop_1;
@@ -933,7 +929,7 @@ int main(){
 	Exit_loop_1:
 
 	//If a save already exists
-	vmu_load_uncompressed(&MS_options.savefile_details);
+	crayon_savefile_load_uncompressed_save(&MS_options.savefile_details);
 	if(MS_options.savefile_details.valid_vmus && MS_options.savefile_details.port != -1 && MS_options.savefile_details.slot != -1){
 		MS_options.question_enabled = !!(MS_options.savefile.options & (1 << 0));
 		MS_options.sound_enabled = !!(MS_options.savefile.options & (1 << 1));
@@ -946,7 +942,7 @@ int main(){
 		if(MS_options.savefile_details.valid_vmus){
 			for(iter = 0; iter <= 3; iter++){
 				for(jiter = 1; jiter <= 2; jiter++){
-					if(vmu_get_bit(MS_options.savefile_details.valid_vmus, iter, jiter)){	//Use the left most VMU
+					if(crayon_savefile_get_vmu_bitmap(MS_options.savefile_details.valid_vmus, iter, jiter)){	//Use the left most VMU
 						MS_options.savefile_details.port = iter;
 						MS_options.savefile_details.slot = jiter;
 						goto Exit_loop_2;
@@ -962,7 +958,8 @@ int main(){
 		MS_options.language = 0;
 		MS_options.htz = 1;
 
-		MS_options.savefile.options = (MS_options.sound_enabled << 1) + (MS_options.question_enabled << 0);
+		MS_options.savefile.options = MS_options.question_enabled + (MS_options.sound_enabled << 1)
+				+ (MS_options.operating_system << 2) + (MS_options.language << 3) + (MS_options.htz << 4);
 
 		int8_t i;
 		for(i = 0; i < 6; i++){
@@ -973,6 +970,11 @@ int main(){
 		MS_options.savefile.pref_width = 30;
 		MS_options.savefile.pref_height = 16;
 		MS_options.savefile.pref_mines = 99;
+
+		//Make a new savefile if one isn't present
+			//If we have a valid vmu, port and slot won't be minus 1
+			//But if we don't they will be minus 1 and the save won't be made
+		crayon_savefile_save_uncompressed_save(&MS_options.savefile_details);
 	}
 
 	//Currently this is the only way to access some of the hidden features
@@ -1768,7 +1770,8 @@ int main(){
 			else{	//Multiplayer
 				MS_keyboard.record_index = MS_grid.difficulty + 2;
 			}
-			if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index]){
+			//If this is a new record and we have a savefile
+			if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index] && MS_options.savefile_details.valid_saves){
 				strcpy(MS_keyboard.type_buffer, MS_options.savefile.record_names[MS_keyboard.record_index]);	//The keyboard contains the previous master's name
 				MS_keyboard.chars_typed = strlen(MS_keyboard.type_buffer);
 				MS_options.focus = 1;
@@ -1913,7 +1916,7 @@ int main(){
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
 			sprintf(snum, "Screens: %d\n", MS_options.savefile_details.valid_vmu_screens);
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 12, 50, 1, 1, 62, snum);
-			sprintf(snum, "New saves: %d\n", vmus_with_saves);
+			sprintf(snum, "New saves: %d\n", MS_options.savefile_details.valid_saves);
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 24, 50, 1, 1, 62, snum);
 			sprintf(snum, "Old saves: %d\n", old_saves);
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 36, 50, 1, 1, 62, snum);
@@ -1921,7 +1924,6 @@ int main(){
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
 			sprintf(snum, "Htz: %d\n", MS_options.htz);
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
-			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 72, 50, 1, 1, 62, pkg.app_id);
 
 			for(iter = 0; iter < os.num_assets; iter++){
 				if(!strcmp(os.assets[iter]->animation->animation_name, "aboutLogo") && MS_options.focus != 5){	//We don't want to draw that unless we're on the about page
@@ -2262,7 +2264,7 @@ int main(){
 	snd_sfx_unload(Sound_Win);
 	setup_free_OS_struct(&os);
 
-	vmu_free_icon(&MS_options.savefile_details);
+	crayon_savefile_free_icon(&MS_options.savefile_details);
 
 	error_freeze("Free-ing result %d!\n", retVal);
 

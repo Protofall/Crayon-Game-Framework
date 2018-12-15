@@ -2,7 +2,7 @@
 #define MS_EXTRA_STRUCTS_H
 
 #include "../../Crayon/code/dreamcast/texture_structs.h"
-#include "savefile.h"
+#include "../../Crayon/code/dreamcast/savefile.h"
 
 //This file exist just to make the main file a little bit more clean
 
@@ -53,7 +53,7 @@ typedef struct MinesweeperGrid{
 } MinesweeperGrid_t;
 
 //+ save icon should be 2 blocks long
-typedef struct MinesweeperSaveFile{
+typedef struct minesweeper_savefile{
 	// uint8_t BS_Mode;	//Bulletsweeper mode. 0 for never won, 1 for Beat with 1 player, 2 for beat with 2 players, etc.
 	uint8_t options;	//XXXX LOSQ (Language, OS, Sound, Questions)
 	uint16_t times[6];	//First 3 are Single player, last 3 are multiplayer
@@ -63,7 +63,7 @@ typedef struct MinesweeperSaveFile{
 	uint8_t pref_height;
 	uint8_t pref_width;
 	uint8_t pref_mines;
-} MinesweeperSaveFile_t;
+} minesweeper_savefile_t;
 
 //Contains game options and focus (Windows tab)
 typedef struct MinesweeperOptions{
@@ -92,8 +92,8 @@ typedef struct MinesweeperOptions{
 	uint16_t tabs_x[5];
 	uint8_t tabs_width[5];
 
-	SaveFileDetails_t savefile_details;
-	MinesweeperSaveFile_t savefile;	//CURRENTLY UNUSED (Need to stop using the save in the save details function)
+	savefile_details_t savefile_details;
+	minesweeper_savefile_t savefile;
 
 } MinesweeperOptions_t;
 
