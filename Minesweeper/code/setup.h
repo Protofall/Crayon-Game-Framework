@@ -21,11 +21,7 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_tex
 
 void setup_keys(MinesweeperKeyboard_t * keyboard);
 
-uint8_t setup_check_for_old_savefile(SaveFileDetails_t * old_savefile_details, uint8_t port, uint8_t slot);
-uint8_t setup_update_old_saves(SaveFileDetails_t * new_savefile_details);
-
-
-
-// void TEST(vmu_pkg_t * pkg, uint8_t port, uint8_t slot);
+uint8_t setup_check_for_old_savefile(savefile_details_t * old_savefile_details, uint8_t port, uint8_t slot);
+uint8_t setup_update_old_saves(savefile_details_t * new_savefile_details);
 
 #endif

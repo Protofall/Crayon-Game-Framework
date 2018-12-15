@@ -1,7 +1,7 @@
 #include "savefile.h"
 
 //Note this assumes the vmu chosen is valid
-uint8_t vmu_check_for_savefile(SaveFileDetails_t * savefile_details, int8_t port, int8_t slot){
+uint8_t crayon_savefile_check_for_save(savefile_details_t * savefile_details, int8_t port, int8_t slot){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
@@ -36,7 +36,7 @@ uint8_t vmu_check_for_savefile(SaveFileDetails_t * savefile_details, int8_t port
 	return 1;
 }
 
-uint8_t vmu_check_for_device(int8_t port, int8_t slot, uint32_t function){
+uint8_t crayon_savefile_check_for_device(int8_t port, int8_t slot, uint32_t function){
 	maple_device_t *vmu;
 
 	//Invalid controller/port
@@ -59,7 +59,7 @@ uint8_t vmu_check_for_device(int8_t port, int8_t slot, uint32_t function){
 
 //Note Crayon doesn't bother supporting eye catchers. Also hard coded for 1 icon
 	//I used the "vmu_pkg_build" function's source as a guide for this
-uint16_t vmu_get_save_block_count(SaveFileDetails_t * savefile_details){
+uint16_t crayon_savefile_get_save_block_count(savefile_details_t * savefile_details){
 	int pkg_size, data_len;
 	data_len = savefile_details->savefile_size;
 
@@ -69,16 +69,16 @@ uint16_t vmu_get_save_block_count(SaveFileDetails_t * savefile_details){
 	return pkg_size >> 9;	//2^9 is 512 so this gets us the number of blocks
 }
 
-uint8_t vmu_get_bit(uint8_t vmu_bitmap, int8_t port, int8_t slot){
+uint8_t crayon_savefile_get_vmu_bitmap(uint8_t vmu_bitmap, int8_t port, int8_t slot){
 	return !!(vmu_bitmap & (1 << ((2 - slot) + 6 - (2 * port))));
 }
 
-void vmu_set_bit(uint8_t * vmu_bitmap, int8_t port, int8_t slot){
+void crayon_savefile_set_vmu_bitmap(uint8_t * vmu_bitmap, int8_t port, int8_t slot){
 	*vmu_bitmap |= (1 << ((2 - slot) + 6 - (2 * port)));
 	return;
 }
 
-void vmu_load_icon(SaveFileDetails_t * savefile_details, char * image, char * palette){
+void crayon_savefile_load_icon(savefile_details_t * savefile_details, char * image, char * palette){
 	file_t icon_files;
 
 	icon_files = fs_open(image, O_RDONLY);
@@ -94,14 +94,14 @@ void vmu_load_icon(SaveFileDetails_t * savefile_details, char * image, char * pa
 	return;
 }
 
-void vmu_free_icon(SaveFileDetails_t * savefile_details){
+void crayon_savefile_free_icon(savefile_details_t * savefile_details){
 	free(savefile_details->savefile_icon);
 	free(savefile_details->savefile_palette);
 
 	return;
 }
 
-void vmu_init_savefile(SaveFileDetails_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
+void crayon_savefile_init_savefile_details(savefile_details_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
 	uint8_t anim_count, uint16_t anim_speed, char * desc_long, char * desc_short, char * app_id, char * save_name){
 	savefile_details->savefile_data = savefile_data;
 	savefile_details->savefile_size = savefile_size;
@@ -121,46 +121,46 @@ void vmu_init_savefile(SaveFileDetails_t * savefile_details,  uint8_t * savefile
 	return;
 }
 
-uint8_t vmu_get_valid_vmus(SaveFileDetails_t * savefile_details){
+uint8_t crayon_savefile_get_valid_vmus(savefile_details_t * savefile_details){
 	maple_device_t *vmu;
 	uint8_t valid_vmus = 0;	//a1a2b1b2c1c2d1d2
 
 	int i, j;
 	for(i = 0; i <= 3; i++){
 		for(j = 1; j <= 2; j++){
-			if(!vmu_check_for_device(i, j, MAPLE_FUNC_MEMCARD)){
+			if(!crayon_savefile_check_for_device(i, j, MAPLE_FUNC_MEMCARD)){
 				continue;
 			}
 
 			//Check if a save file DNE
-			if(!vmu_check_for_savefile(savefile_details, i, j)){
+			if(!crayon_savefile_check_for_save(savefile_details, i, j)){
 				//Not enough free space for a savefile
 				vmu = maple_enum_dev(i, j);
-				if(vmufs_free_blocks(vmu) < vmu_get_save_block_count(savefile_details)){
+				if(vmufs_free_blocks(vmu) < crayon_savefile_get_save_block_count(savefile_details)){
 					continue;
 				}
 			}
 
 			//If we get to here, this VMU is valid
-			vmu_set_bit(&valid_vmus, i, j);	//Sets wrong bit
+			crayon_savefile_set_vmu_bitmap(&valid_vmus, i, j);	//Sets wrong bit
 		}
 	}
 
 	return valid_vmus;
 }
 
-uint8_t vmu_get_savefiles(SaveFileDetails_t * savefile_details){
+uint8_t crayon_savefile_get_valid_saves(savefile_details_t * savefile_details){
 	uint8_t valid_saves = 0;	//a1a2b1b2c1c2d1d2
 
 	int i, j;
 	for(i = 0; i <= 3; i++){
 		for(j = 1; j <= 2; j++){
-			if(!vmu_check_for_device(i, j, MAPLE_FUNC_MEMCARD)){
+			if(!crayon_savefile_check_for_device(i, j, MAPLE_FUNC_MEMCARD)){
 				continue;
 			}
 
-			if(vmu_check_for_savefile(savefile_details, i, j)){
-				vmu_set_bit(&valid_saves, i, j);
+			if(crayon_savefile_check_for_save(savefile_details, i, j)){
+				crayon_savefile_set_vmu_bitmap(&valid_saves, i, j);
 			}
 		}
 	}
@@ -168,25 +168,25 @@ uint8_t vmu_get_savefiles(SaveFileDetails_t * savefile_details){
 	return valid_saves;
 }
 
-uint8_t vmu_get_valid_screens(){
+uint8_t crayon_savefile_get_valid_screens(){
 	uint8_t valid_screens = 0;	//a1a2b1b2c1c2d1d2
 
 	int i, j;
 	for(i = 0; i <= 3; i++){
 		for(j = 1; j <= 2; j++){
-			if(!vmu_check_for_device(i, j, MAPLE_FUNC_LCD)){
+			if(!crayon_savefile_check_for_device(i, j, MAPLE_FUNC_LCD)){
 				continue;
 			}
 
 			//If we got here, we have a screen
-			vmu_set_bit(&valid_screens, i, j);
+			crayon_savefile_set_vmu_bitmap(&valid_screens, i, j);
 		}
 	}
 
 	return valid_screens;
 }
 
-uint8_t vmu_load_uncompressed(SaveFileDetails_t * savefile_details){
+uint8_t crayon_savefile_load_uncompressed_save(savefile_details_t * savefile_details){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
@@ -195,7 +195,7 @@ uint8_t vmu_load_uncompressed(SaveFileDetails_t * savefile_details){
 
 	//If you call everying in the right order, this is redundant
 	//But just incase you didn't, here it is
-	if(!vmu_check_for_device(savefile_details->port, savefile_details->slot, MAPLE_FUNC_MEMCARD)){
+	if(!crayon_savefile_check_for_device(savefile_details->port, savefile_details->slot, MAPLE_FUNC_MEMCARD)){
 		return 0;
 	}
 
@@ -227,10 +227,16 @@ uint8_t vmu_load_uncompressed(SaveFileDetails_t * savefile_details){
 	return 1;
 }
 
-int vmu_save_uncompressed(SaveFileDetails_t * savefile_details){
+int crayon_savefile_save_uncompressed_save(savefile_details_t * savefile_details){
 	//No valid VMUs, no-go
 	if(!savefile_details->valid_vmus){
 		return -5;
+	}
+
+	//If you call everying in the right order, this is redundant
+	//But just incase you didn't, here it is
+	if(!crayon_savefile_check_for_device(savefile_details->port, savefile_details->slot, MAPLE_FUNC_MEMCARD)){
+		return -4;
 	}
 
 	vmu_pkg_t pkg;
@@ -241,12 +247,6 @@ int vmu_save_uncompressed(SaveFileDetails_t * savefile_details){
 	maple_device_t *vmu;
 	int rv = 0, blocks_freed = 0;
 	file_t f;
-
-	//If you call everying in the right order, this is redundant
-	//But just incase you didn't, here it is
-	if(!vmu_check_for_device(savefile_details->port, savefile_details->slot, MAPLE_FUNC_MEMCARD)){
-		return -4;
-	}
 
 	vmu = maple_enum_dev(savefile_details->port, savefile_details->slot);
 
