@@ -913,6 +913,8 @@ int main(){
 	MS_options.savefile_details.valid_saves = crayon_savefile_get_valid_saves(&MS_options.savefile_details);
 	MS_options.savefile_details.valid_vmu_screens = crayon_savefile_get_valid_screens();
 
+	uint8_t first_time = !MS_options.savefile_details.valid_saves;
+
 	//Find the first savefile (if it exists)
 	int iter;
 	int jiter;
@@ -990,31 +992,47 @@ int main(){
 
 	float htz_adjustment = 1;	//Default, 60Hz, 60/60Hz
 
-	//Maybe have an initial save here to save any VMU selection and refresh rate details
-
-	#if CRAYON_SD_MODE == 1
-		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
-		if(sdRes == 0){
-			MS_options.sd_present = 1;
-		}
-	#endif
+	//The dreamcast logo to be displayed on the windows taskbar
+	uint8_t region = flashrom_get_region();
+	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1
+		region = 0;	//Invalid region
+	}
 
 	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
 		vid_set_mode(DM_640x480_VGA, PM_RGB565);
 	}
-	else{	//Else its RGB and we default to NTSC interlace (Make a 50/60 Hz menu later). This handles composite
-		if(MS_options.htz){
-			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
+	else{	//Else its RGB. This handles composite, S-video, SCART, etc
+		if(first_time && 0){	//REMEMBER TO CHANGE THIS IN THE BIOS UPDATE (Currently disabled due to already doing the options before)
+			if(region != FLASHROM_REGION_EUROPE){
+				vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
+			}
+			else{
+				vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
+				if(MS_options.htz == 0){
+					htz_adjustment = 1.2;	//60/50Hz
+				}
+			}
 		}
 		else{
-			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
-			if(MS_options.htz == 0){
-				htz_adjustment = 1.2;	//60/50Hz
+			if(MS_options.htz){
+				vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
+			}
+			else{
+				vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
+				if(MS_options.htz == 0){
+					htz_adjustment = 1.2;	//60/50Hz
+				}
 			}
 		}
 	}
 
 	pvr_init(&pvr_params);
+
+	//Have Hz select menu here, followed by a vid_set_mode call (if need be)
+
+	//Call the "BIOS_bootup_sequence" function. Select OS there
+
+	//Call Windows_load function showing either the XP or 2000 bootup screen
 
 	srand(time(0));	//Set the seed for rand()
 	time_t os_clock;	//Stores the current time
@@ -1050,14 +1068,21 @@ int main(){
 	snd_stream_init();	//Needed otherwise snd_sfx calls crash
 
 	#if CRAYON_SD_MODE == 1
+		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
+		if(sdRes == 0){
+			MS_options.sd_present = 1;
+		}
+	#endif
+
+	#if CRAYON_SD_MODE == 1
 		crayon_memory_mount_romdisk("/sd/Minesweeper.img", "/Minesweeper");
 	#else
 		crayon_memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	#endif
 
 	//I like to put the font's paletets at the very back of the system (But really, its probably better standard to go first)
-	// crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 63, "/Minesweeper/Fonts/BIOS_font.dtex");
-	crayon_memory_load_prop_font_sheet(&Tahoma_font, &Tahoma_P, 62, "/Minesweeper/Fonts/Tahoma_font.dtex");
+	// crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 63, "/BIOS/BIOS_font.dtex");
+	crayon_memory_load_prop_font_sheet(&Tahoma_font, &Tahoma_P, 62, "/Minesweeper/Tahoma_font.dtex");
 	crayon_memory_load_spritesheet(&Board, &Board_P, 0, "/Minesweeper/Board.dtex");
 	crayon_memory_load_spritesheet(&Icons, &Icons_P, 1, "/Minesweeper/Icons.dtex");	
 	crayon_memory_load_spritesheet(&Controllers, &Controllers_P, 2, "/Minesweeper/Controllers.dtex");
@@ -1094,12 +1119,6 @@ int main(){
 
 	//Make the OS struct and populate it
 	MinesweeperOS_t os;
-
-	//The dreamcast logo to be displayed on the windows taskbar
-	uint8_t region = flashrom_get_region();
-	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1 despite having a region
-		region = 0;
-	}
 
 	//Populate OS struct
 	setup_OS_assets(&os, &Windows, &Windows_P, MS_options.operating_system, MS_options.language, MS_options.sd_present);
