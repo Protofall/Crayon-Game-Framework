@@ -1,7 +1,7 @@
 //Crayon libraries
-#include "../../Crayon/code/dreamcast/memory.h"
-#include "../../Crayon/code/dreamcast/debug.h"
-#include "../../Crayon/code/dreamcast/graphics.h"
+#include <crayon/memory.h>
+#include <crayon/debug.h>
+#include <crayon/graphics.h>
 
 // #include <dc/maple.h>
 // #include <dc/maple/controller.h> //For the "Press start to exit" thing
