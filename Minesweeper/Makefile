@@ -19,8 +19,8 @@ clean: crayon-clean
 
 help: crayon-pp-help
 
-# -noRM is the default
-check: crayon-pp
+check:
+	make crayon-pp CRAYON_PP_FLAGS=-noRM
 
 buildRun: crayon-run
 
