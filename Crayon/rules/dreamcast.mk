@@ -31,12 +31,19 @@ OFILES   := $(CRAYON_PROJ_SRC_C:%.c=$(BUILD)/%.o)
 crayon-cdi: $(PROJECT).cdi
 
 #------------------------------------------------------------------------------
+# crayon-sd: Generate ./cdfs, the contents of which may be copied to the root
+#   of an SD card and launched using a Dreamcast SD Adapter
+.PHONY: crayon-rm-cdfs crayon-sd
+crayon-sd: crayon-pp $(BUILD)/$(PROJECT).bin
+	mv $(BUILD)/$(PROJECT).bin cdfs
+
+#------------------------------------------------------------------------------
 # crayon-pp: Preprocess ./assets and store products in ./cdfs
 ### TODO: Make this behaviour more configurable
 .PHONY: crayon-pp
 crayon-pp:
 	@mkdir -p cdfs
-	$(CRAYON_BASE)/preprocess.sh -noRM $(CRAYON_PP_FLAGS)
+	$(CRAYON_BASE)/preprocess.sh $(CRAYON_PP_FLAGS)
 
 #------------------------------------------------------------------------------
 # crayon-pp-help: Show help for the asset preprocessor
@@ -50,6 +57,12 @@ crayon-pp-help:
 crayon-clean:
 	rm -f $(PROJECT).cdi
 	rm -rf $(BUILD) cdfs
+
+#------------------------------------------------------------------------------
+# crayon-rm-cdfs: Remove the CD filesystem output directory
+.PHONY: crayon-rm-cdfs
+crayon-rm-cdfs:
+	rm -rf cdfs
 
 #------------------------------------------------------------------------------
 # crayon-run: Build and run the project in redream
@@ -69,7 +82,7 @@ crayon-rebuild-crayon:
 # Targets
 #------------------------------------------------------------------------------
 
-$(PROJECT).cdi: crayon-pp cdfs/1st_read.bin
+$(PROJECT).cdi: crayon-rm-cdfs crayon-pp cdfs/1st_read.bin
 	mkisofs -G $(IP_BIN) -C 0,11702 -J -l -r -o $(BUILD)/$(PROJECT).iso cdfs
 	cdi4dc $(BUILD)/$(PROJECT).iso $@
 
