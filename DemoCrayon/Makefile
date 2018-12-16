@@ -3,75 +3,32 @@
 #------------------------------------------------------------------------------
 $(if $(CRAYON_BASE),,$(error Cannot locate Crayon. Please set CRAYON_BASE to\
   Crayon's root directory, either in your environment, or in a command line\
-  argument to make (eg. `make CRAYON_BASE=path/to/Crayon`).))
+  argument to make (eg. `make CRAYON_BASE=path/to/Crayon`)))
 
-PROJ_NAME := $(notdir $(shell pwd))
-CFLAGS    := $(KOS_CFLAGS)
-LDFLAGS   := $(KOS_LDFLAGS) -L$(CRAYON_BASE)/lib/dreamcast
-LIBS      := -lcrayon -lkosext2fs -lz -lm $(KOS_LIBS)
-IP_BIN    := $(CRAYON_BASE)/IP.BIN
-PPFLAGS   := # Crayon asset preprocessor options
+CRAYON_PROJ_NAME   := $(notdir $(shell pwd))
+CRAYON_PROJ_LIBS   := -lkosext2fs -lz
+CRAYON_PROJ_SRC_C  := $(shell find code -type f -name "*.c")
+CRAYON_BUILD_DIR   := build
 
-# Directories
-SRC       := code
-BUILD     := build
+### TODO: Write a cleaner set of shortcut rules in this example makefile.
+###     The following rules emulate the previous version of this makefile.
 
-# Sources
-CFILES    := $(shell find $(SRC) -type f -name "*.c")
+all: crayon-cdi
 
-# Intermediate outputs
-OFILES    := $(CFILES:%.c=$(BUILD)/%.o)
-SCRAMBLED := cdfs/1st_read.bin
+clean: crayon-clean
 
-#------------------------------------------------------------------------------
-# Targets
-#------------------------------------------------------------------------------
+help: crayon-pp-help
 
-.PHONY: all
-all: $(PROJ_NAME).cdi
+# -noRM is the default
+check: crayon-pp
 
-.PHONY: preprocess
-preprocess:
-	@mkdir -p cdfs
-	$(CRAYON_BASE)/preprocess.sh $(PPFLAGS)
+buildRun: crayon-run
 
-.PHONY: clean
-clean:
-	rm -f $(PROJ_NAME).cdi
-	rm -rf $(BUILD) cdfs
+crayon: crayon-rebuild-crayon
 
-# Build and run in redream
-.PHONY: run
-run: $(PROJ_NAME).cdi
-	@mkdir -p .redream
-	cd .redream; redream ../$<
+crayon_clean:
+	cd $(CRAYON_BASE); make clean PLATFORM=dreamcast
 
-# Rebuild crayon and force relink
-.PHONY: crayon
-crayon:
-	cd $(CRAYON_BASE); make PLATFORM=dreamcast
-	rm -f $(PROJ_NAME).cdi $(BUILD)/$(PROJ_NAME).*
+preprocess: crayon-pp
 
-#------------------------------------------------------------------------------
-# Build rules
-#------------------------------------------------------------------------------
-
-$(PROJ_NAME).cdi: preprocess $(SCRAMBLED)
-	mkisofs -G $(IP_BIN) -C 0,11702 -J -l -r -o $(BUILD)/$(PROJ_NAME).iso cdfs
-	cdi4dc $(BUILD)/$(PROJ_NAME).iso $@
-
-$(SCRAMBLED): $(BUILD)/$(PROJ_NAME).bin
-	@mkdir -p $(dir $@)
-	$(KOS_BASE)/utils/scramble/scramble $< $@
-
-$(BUILD)/$(PROJ_NAME).bin: $(BUILD)/$(PROJ_NAME).elf
-	@mkdir -p $(dir $@)
-	sh-elf-objcopy -R .stack -O binary $< $@
-
-$(BUILD)/$(PROJ_NAME).elf: $(OFILES)
-	@mkdir -p $(dir $@)
-	$(KOS_CC) $(CFLAGS) $(LDFLAGS) -o $@ $(KOS_START) $^ $(LIBS)
-
-$(BUILD)/%.o: %.c
-	@mkdir -p $(dir $@)
-	$(KOS_CC) $(CFLAGS) -c -o $@ $<
+include $(CRAYON_BASE)/rules/dreamcast.mk
