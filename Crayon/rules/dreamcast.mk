@@ -33,8 +33,8 @@ crayon-cdi: $(PROJECT).cdi
 #------------------------------------------------------------------------------
 # crayon-sd: Generate ./cdfs, the contents of which may be copied to the root
 #   of an SD card and launched using a Dreamcast SD Adapter
-.PHONY: crayon-rm-cdfs crayon-sd
-crayon-sd: crayon-pp $(BUILD)/$(PROJECT).bin
+.PHONY: crayon-sd
+crayon-sd: crayon-rm-cdfs crayon-pp $(BUILD)/$(PROJECT).bin
 	mv $(BUILD)/$(PROJECT).bin cdfs
 
 #------------------------------------------------------------------------------
