@@ -3,7 +3,7 @@
 #------------------------------------------------------------------------------
 $(if $(CRAYON_BASE),,$(error Cannot locate Crayon. Please set CRAYON_BASE to\
   Crayon's root directory, either in your environment, or in a command line\
-  argument to make. (eg. $$ make CRAYON_BASE=path/to/Crayon)))
+  argument to make (eg. `make CRAYON_BASE=path/to/Crayon`).))
 
 PROJ_NAME := $(notdir $(shell pwd))
 CFLAGS    := $(KOS_CFLAGS)
@@ -40,10 +40,17 @@ clean:
 	rm -f $(PROJ_NAME).cdi
 	rm -rf $(BUILD) cdfs
 
+# Build and run in redream
 .PHONY: run
 run: $(PROJ_NAME).cdi
 	@mkdir -p .redream
 	cd .redream; redream ../$<
+
+# Rebuild crayon and force relink
+.PHONY: crayon
+crayon:
+	cd $(CRAYON_BASE); make PLATFORM=dreamcast
+	rm -f $(PROJ_NAME).cdi $(BUILD)/$(PROJ_NAME).*
 
 #------------------------------------------------------------------------------
 # Build rules
