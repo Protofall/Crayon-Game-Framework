@@ -24,7 +24,6 @@
 //To get region info
 #include <dc/flashrom.h>
 
-#define CRAYON_SD_MODE 0
 #define CRAYON_DEBUG 0
 //LOWER BUTTON TOP BOUND BECAUSE OF XP MODE
 

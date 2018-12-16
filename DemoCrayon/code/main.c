@@ -6,8 +6,6 @@
 // #include <dc/maple.h>
 // #include <dc/maple/controller.h> //For the "Press start to exit" thing
 
-#define CRAYON_SD_MODE 0
-
 #if CRAYON_SD_MODE == 1
 	//For mounting the sd dir
 	#include <dc/sd.h>
