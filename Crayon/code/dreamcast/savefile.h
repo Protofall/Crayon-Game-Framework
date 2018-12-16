@@ -27,10 +27,10 @@ typedef struct crayon_savefile_details{
 	char desc_long[32];
 	char desc_short[16];
 	char app_id[16];
-	char save_name[26];		//Name is 32 chars long max I think and its prefixed with "/vmu/XX/"
+	char save_name[28];		//Name is 32 chars long max I think and its prefixed with "/vmu/XX/"
 
-	int8_t port;
-	int8_t slot;
+	int8_t savefile_port;
+	int8_t savefile_slot;
 
 	uint8_t valid_vmus;			//VMUs with enough space for a save file
 	uint8_t valid_vmu_screens;	//All VMU screens

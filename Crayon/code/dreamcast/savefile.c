@@ -114,8 +114,8 @@ void crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_
 	strcpy(savefile_details->app_id, app_id);
 	strcpy(savefile_details->save_name, save_name);
 
-	savefile_details->port = -1;
-	savefile_details->slot = -1;
+	savefile_details->savefile_port = -1;
+	savefile_details->savefile_slot = -1;
 	savefile_details->valid_vmus = 0;
 	savefile_details->valid_vmu_screens = 0;
 	return;
@@ -195,12 +195,12 @@ uint8_t crayon_savefile_load_uncompressed_save(crayon_savefile_details_t * savef
 
 	//If you call everying in the right order, this is redundant
 	//But just incase you didn't, here it is
-	if(!crayon_savefile_check_for_device(savefile_details->port, savefile_details->slot, MAPLE_FUNC_MEMCARD)){
+	if(!crayon_savefile_check_for_device(savefile_details->savefile_port, savefile_details->savefile_slot, MAPLE_FUNC_MEMCARD)){
 		return 0;
 	}
 
 	//Only 20 chara allowed at max (21 if you include '\0')
-	sprintf(savename, "/vmu/%c%d/", savefile_details->port + 97, savefile_details->slot);	//port gets converted to a, b, c or d. unit is unit
+	sprintf(savename, "/vmu/%c%d/", savefile_details->savefile_port + 97, savefile_details->savefile_slot);	//port gets converted to a, b, c or d. unit is unit
 	strcat(savename, savefile_details->save_name);
 
 	//If the VMU isn't plugged in, this will fail anyways
@@ -235,7 +235,7 @@ int crayon_savefile_save_uncompressed_save(crayon_savefile_details_t * savefile_
 
 	//If you call everying in the right order, this is redundant
 	//But just incase you didn't, here it is
-	if(!crayon_savefile_check_for_device(savefile_details->port, savefile_details->slot, MAPLE_FUNC_MEMCARD)){
+	if(!crayon_savefile_check_for_device(savefile_details->savefile_port, savefile_details->savefile_slot, MAPLE_FUNC_MEMCARD)){
 		return -4;
 	}
 
@@ -248,10 +248,10 @@ int crayon_savefile_save_uncompressed_save(crayon_savefile_details_t * savefile_
 	int rv = 0, blocks_freed = 0;
 	file_t f;
 
-	vmu = maple_enum_dev(savefile_details->port, savefile_details->slot);
+	vmu = maple_enum_dev(savefile_details->savefile_port, savefile_details->savefile_slot);
 
 	//Only 20 chara allowed at max (21 if you include '\0')
-	sprintf(savename, "/vmu/%c%d/", savefile_details->port + 97, savefile_details->slot);	//port gets converted to a, b, c or d. unit is unit
+	sprintf(savename, "/vmu/%c%d/", savefile_details->savefile_port + 97, savefile_details->savefile_slot);	//port gets converted to a, b, c or d. unit is unit
 	strcat(savename, savefile_details->save_name);
 
 	int filesize = savefile_details->savefile_size;
