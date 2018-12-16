@@ -1,8 +1,8 @@
 #ifndef MS_CUSTOM_POLYS_H
 #define MS_CUSTOM_POLYS_H
 
-#include "../../Crayon/code/dreamcast/graphics.h"
-#include "../../Crayon/code/dreamcast/debug.h"
+#include <crayon/graphics.h>
+#include <crayon/debug.h>
 
 #include <stdlib.h>
 

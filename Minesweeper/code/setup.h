@@ -1,8 +1,8 @@
 #ifndef MS_SETUP_H
 #define MS_SETUP_H
 
-#include "../../Crayon/code/dreamcast/graphics.h"
-#include "../../Crayon/code/dreamcast/memory.h"
+#include <crayon/graphics.h>
+#include <crayon/memory.h>
 
 #include "extra_structs.h"
 
