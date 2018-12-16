@@ -1,19 +1,20 @@
-#Use the -f param if you REALLY want to add one of these files
+# `git add -f` if you REALLY want to add one of these files
 
-# Compiled source #
-###################
+# Outputs
+*/lib
+*/build
+*/cdfs
 *.exe
 *.elf
 *.o
 *.cdi
 *.bin
-
-# Packages #
-############
 *.iso
 
-# OS generated files #
-######################
+# Redream config
+.redream
+
+# OS generated files
 .DS_Store
 .DS_Store?
 ._*
@@ -21,14 +22,3 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Redream config files #
-########################
-vmu*.bin
-redream.cfg
-flash.bin
-
-
-# CDFS #
-########
-*/cdfs/*
