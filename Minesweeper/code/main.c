@@ -1,5 +1,5 @@
 //Crayon libraries
-#include "../../Crayon/code/dreamcast/memory.h"
+#include <crayon/memory.h>
 
 #include "extra_structs.h"
 #include "setup.h"
