@@ -15,6 +15,10 @@ CRAYON_BUILD_DIR   := build
 
 all: crayon-cdi
 
+dc-cdi: crayon-cdi
+
+dc-sd: crayon-sd
+
 clean: crayon-clean
 
 help: crayon-pp-help
