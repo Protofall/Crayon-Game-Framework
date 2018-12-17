@@ -29,8 +29,8 @@ typedef struct crayon_savefile_details{
 	char app_id[16];
 	char save_name[26];		//Name is 32 chars long max I think and its prefixed with "/vmu/XX/"
 
-	int8_t port;
-	int8_t slot;
+	int8_t savefile_port;
+	int8_t savefile_slot;
 
 	uint8_t valid_vmus;			//VMUs with enough space for a save file
 	uint8_t valid_vmu_screens;	//All VMU screens
@@ -41,7 +41,7 @@ typedef struct crayon_savefile_details{
 //-------------------------Internal use------------------------------
 
 
-uint8_t crayon_savefile_check_for_save(crayon_savefile_details_t * savefile_details, int8_t port, int8_t slot);	//0 if save DNE. 1 if it does
+uint8_t crayon_savefile_check_for_save(crayon_savefile_details_t * savefile_details, int8_t savefile_port, int8_t savefile_slot);	//0 if save DNE. 1 if it does
 uint8_t crayon_savefile_check_for_device(int8_t port, int8_t slot, uint32_t function);	//1 if device is valid
 uint16_t crayon_savefile_get_save_block_count(crayon_savefile_details_t * savefile_details);	//Returns the number of blocks your save file will need (Uncompressed)
 
@@ -49,8 +49,8 @@ uint16_t crayon_savefile_get_save_block_count(crayon_savefile_details_t * savefi
 //-------------------------Both internal and external----------------
 
 
-uint8_t crayon_savefile_get_vmu_bitmap(uint8_t vmu_bitmap, int8_t port, int8_t slot);	//Returns boolean
-void crayon_savefile_set_vmu_bitmap(uint8_t * vmu_bitmap, int8_t port, int8_t slot);	//Updates vmu_bitmap
+uint8_t crayon_savefile_get_vmu_bitmap(uint8_t vmu_bitmap, int8_t savefile_port, int8_t savefile_slot);	//Returns boolean
+void crayon_savefile_set_vmu_bitmap(uint8_t * vmu_bitmap, int8_t savefile_port, int8_t savefile_slot);	//Updates vmu_bitmap
 
 
 //-------------------------Called externally-------------------------

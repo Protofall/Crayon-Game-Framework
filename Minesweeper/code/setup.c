@@ -457,14 +457,14 @@ void setup_keys(MinesweeperKeyboard_t * keyboard){
 	return;
 }
 
-uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_details, uint8_t port, uint8_t slot){
+uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_details, uint8_t savefile_port, uint8_t savefile_slot){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
 	FILE *fp;
 	char savename[32];
 
-	sprintf(savename, "/vmu/%c%d/", port + 97, slot);
+	sprintf(savename, "/vmu/%c%d/", savefile_port + 97, savefile_slot);
 	strcat(savename, "MINESWEEPER.s");
 
 	//File DNE
@@ -529,10 +529,10 @@ uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details)
 	for(i = 0; i <= 3; i++){
 		for(j = 1; j <= 2; j++){
 			if(crayon_savefile_get_vmu_bitmap(valid_saves, i, j)){
-				old_savefile_details.port = i;
-				old_savefile_details.slot = j;
+				old_savefile_details.savefile_port = i;
+				old_savefile_details.savefile_slot = j;
 
-				if(!crayon_savefile_check_for_device(old_savefile_details.port, old_savefile_details.slot, MAPLE_FUNC_MEMCARD)){
+				if(!crayon_savefile_check_for_device(old_savefile_details.savefile_port, old_savefile_details.savefile_slot, MAPLE_FUNC_MEMCARD)){
 					continue;
 				}
 				if(!crayon_savefile_load_uncompressed_save(&old_savefile_details)){

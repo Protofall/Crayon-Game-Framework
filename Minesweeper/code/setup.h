@@ -21,7 +21,7 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_tex
 
 void setup_keys(MinesweeperKeyboard_t * keyboard);
 
-uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_details, uint8_t port, uint8_t slot);
+uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_details, uint8_t savefile_port, uint8_t savefile_slot);
 uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details);
 
 #endif

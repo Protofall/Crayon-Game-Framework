@@ -920,8 +920,8 @@ int main(){
 	for(iter = 0; iter <= 3; iter++){
 		for(jiter = 1; jiter <= 2; jiter++){
 			if(crayon_savefile_get_vmu_bitmap(MS_options.savefile_details.valid_saves, iter, jiter)){	//Use the left most VMU
-				MS_options.savefile_details.port = iter;
-				MS_options.savefile_details.slot = jiter;
+				MS_options.savefile_details.savefile_port = iter;
+				MS_options.savefile_details.savefile_slot = jiter;
 				goto Exit_loop_1;
 			}
 		}
@@ -930,7 +930,9 @@ int main(){
 
 	//If a save already exists
 	crayon_savefile_load_uncompressed_save(&MS_options.savefile_details);
-	if(MS_options.savefile_details.valid_vmus && MS_options.savefile_details.port != -1 && MS_options.savefile_details.slot != -1){
+	if(MS_options.savefile_details.valid_vmus && MS_options.savefile_details.savefile_port != -1 &&
+		MS_options.savefile_details.savefile_slot != -1){
+		
 		MS_options.question_enabled = !!(MS_options.savefile.options & (1 << 0));
 		MS_options.sound_enabled = !!(MS_options.savefile.options & (1 << 1));
 		MS_options.operating_system = !!(MS_options.savefile.options & (1 << 2));
@@ -943,8 +945,8 @@ int main(){
 			for(iter = 0; iter <= 3; iter++){
 				for(jiter = 1; jiter <= 2; jiter++){
 					if(crayon_savefile_get_vmu_bitmap(MS_options.savefile_details.valid_vmus, iter, jiter)){	//Use the left most VMU
-						MS_options.savefile_details.port = iter;
-						MS_options.savefile_details.slot = jiter;
+						MS_options.savefile_details.savefile_port = iter;
+						MS_options.savefile_details.savefile_slot = jiter;
 						goto Exit_loop_2;
 					}
 				}
@@ -1979,7 +1981,7 @@ int main(){
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 24, 50, 1, 1, 62, snum);
 			sprintf(snum, "Old saves: %d\n", old_saves);
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 36, 50, 1, 1, 62, snum);
-			sprintf(snum, "P: %d, S: %d\n", MS_options.savefile_details.port, MS_options.savefile_details.slot);
+			sprintf(snum, "P: %d, S: %d\n", MS_options.savefile_details.savefile_port, MS_options.savefile_details.savefile_slot);
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
 			sprintf(snum, "Htz: %d\n", MS_options.htz);
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);

@@ -1,14 +1,14 @@
 #include "savefile.h"
 
 //Note this assumes the vmu chosen is valid
-uint8_t crayon_savefile_check_for_save(crayon_savefile_details_t * savefile_details, int8_t port, int8_t slot){
+uint8_t crayon_savefile_check_for_save(crayon_savefile_details_t * savefile_details, int8_t savefile_port, int8_t savefile_slot){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
 	FILE *fp;
 	char savename[32];
 
-	sprintf(savename, "/vmu/%c%d/", port + 97, slot);
+	sprintf(savename, "/vmu/%c%d/", savefile_port + 97, savefile_slot);
 	strcat(savename, "MINESWEEPER.s");
 
 	//File DNE
@@ -69,12 +69,12 @@ uint16_t crayon_savefile_get_save_block_count(crayon_savefile_details_t * savefi
 	return pkg_size >> 9;	//2^9 is 512 so this gets us the number of blocks
 }
 
-uint8_t crayon_savefile_get_vmu_bitmap(uint8_t vmu_bitmap, int8_t port, int8_t slot){
-	return !!(vmu_bitmap & (1 << ((2 - slot) + 6 - (2 * port))));
+uint8_t crayon_savefile_get_vmu_bitmap(uint8_t vmu_bitmap, int8_t savefile_port, int8_t savefile_slot){
+	return !!(vmu_bitmap & (1 << ((2 - savefile_slot) + 6 - (2 * savefile_port))));
 }
 
-void crayon_savefile_set_vmu_bitmap(uint8_t * vmu_bitmap, int8_t port, int8_t slot){
-	*vmu_bitmap |= (1 << ((2 - slot) + 6 - (2 * port)));
+void crayon_savefile_set_vmu_bitmap(uint8_t * vmu_bitmap, int8_t savefile_port, int8_t savefile_slot){
+	*vmu_bitmap |= (1 << ((2 - savefile_slot) + 6 - (2 * savefile_port)));
 	return;
 }
 
@@ -114,8 +114,8 @@ void crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_
 	strcpy(savefile_details->app_id, app_id);
 	strcpy(savefile_details->save_name, save_name);
 
-	savefile_details->port = -1;
-	savefile_details->slot = -1;
+	savefile_details->savefile_port = -1;
+	savefile_details->savefile_slot = -1;
 	savefile_details->valid_vmus = 0;
 	savefile_details->valid_vmu_screens = 0;
 	return;
@@ -195,12 +195,12 @@ uint8_t crayon_savefile_load_uncompressed_save(crayon_savefile_details_t * savef
 
 	//If you call everying in the right order, this is redundant
 	//But just incase you didn't, here it is
-	if(!crayon_savefile_check_for_device(savefile_details->port, savefile_details->slot, MAPLE_FUNC_MEMCARD)){
+	if(!crayon_savefile_check_for_device(savefile_details->savefile_port, savefile_details->savefile_slot, MAPLE_FUNC_MEMCARD)){
 		return 0;
 	}
 
 	//Only 20 chara allowed at max (21 if you include '\0')
-	sprintf(savename, "/vmu/%c%d/", savefile_details->port + 97, savefile_details->slot);	//port gets converted to a, b, c or d. unit is unit
+	sprintf(savename, "/vmu/%c%d/", savefile_details->savefile_port + 97, savefile_details->savefile_slot);	//port gets converted to a, b, c or d. unit is unit
 	strcat(savename, savefile_details->save_name);
 
 	//If the VMU isn't plugged in, this will fail anyways
@@ -235,7 +235,7 @@ int crayon_savefile_save_uncompressed_save(crayon_savefile_details_t * savefile_
 
 	//If you call everying in the right order, this is redundant
 	//But just incase you didn't, here it is
-	if(!crayon_savefile_check_for_device(savefile_details->port, savefile_details->slot, MAPLE_FUNC_MEMCARD)){
+	if(!crayon_savefile_check_for_device(savefile_details->savefile_port, savefile_details->savefile_slot, MAPLE_FUNC_MEMCARD)){
 		return -4;
 	}
 
@@ -248,10 +248,10 @@ int crayon_savefile_save_uncompressed_save(crayon_savefile_details_t * savefile_
 	int rv = 0, blocks_freed = 0;
 	file_t f;
 
-	vmu = maple_enum_dev(savefile_details->port, savefile_details->slot);
+	vmu = maple_enum_dev(savefile_details->savefile_port, savefile_details->savefile_slot);
 
 	//Only 20 chara allowed at max (21 if you include '\0')
-	sprintf(savename, "/vmu/%c%d/", savefile_details->port + 97, savefile_details->slot);	//port gets converted to a, b, c or d. unit is unit
+	sprintf(savename, "/vmu/%c%d/", savefile_details->savefile_port + 97, savefile_details->savefile_slot);	//port gets converted to a, b, c or d. unit is unit
 	strcat(savename, savefile_details->save_name);
 
 	int filesize = savefile_details->savefile_size;
