@@ -469,7 +469,7 @@ uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_de
 
 	//File DNE
 	if(!(fp = fopen(savename, "rb"))){
-		return 0;
+		return 1;
 	}
 
 	fseek(fp, 0, SEEK_SET);
@@ -489,10 +489,10 @@ uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_de
 	uint8_t i;
 	for(i = 0; i < 16; i++){
 		if(old_savefile_details->app_id[i] != pkg.app_id[i]){	//The names differ, They aren't the same
-			return 0;
+			return 2;
 		}
 	}
-	return 1;
+	return 0;
 }
 
 //Note, in testing I noticed I couldn't test VMUs c1 and d1 (Maybe the 2nd slots too)
@@ -501,41 +501,52 @@ uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_de
 uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details){
 	crayon_savefile_details_t old_savefile_details;
 
+	//Point to the savefile icon for when we re-save it
+	old_savefile_details.savefile_icon = new_savefile_details->savefile_icon;
+	old_savefile_details.savefile_palette = new_savefile_details->savefile_palette;
+
 	//It used the incorrect length app_id
 	crayon_savefile_init_savefile_details(&old_savefile_details, new_savefile_details->savefile_data,
 		new_savefile_details->savefile_size, 1, 0, "Made with Crayon by Protofall\0", "Minesweepe\0",
 		"Proto_Minesweepe\0", "MINESWEEPER.s\0");
 
-	old_savefile_details.valid_vmus = crayon_savefile_get_valid_vmus(&old_savefile_details);	//Need to do this for the save to work
+	//Does this work? It makes a call to "crayon_savefile_check_for_save" which shouldn't work...
+	// old_savefile_details.valid_vmus = crayon_savefile_get_valid_vmus(&old_savefile_details);	//Need to do this for the save to work
 
 	//Check for saves with old name
-	uint8_t valid_saves = 0;	//a1a2b1b2c1c2d1d2
+	uint8_t old_valid_saves = 0;	//a1a2b1b2c1c2d1d2
 	int i, j;
 	for(i = 0; i <= 3; i++){
 		for(j = 1; j <= 2; j++){
-			if(!crayon_savefile_check_for_device(i, j, MAPLE_FUNC_MEMCARD)){
+			if(crayon_savefile_check_for_device(i, j, MAPLE_FUNC_MEMCARD)){
 				continue;
 			}
 
 			if(setup_check_for_old_savefile(&old_savefile_details, i, j)){
-				crayon_savefile_set_vmu_bitmap(&valid_saves, i, j);
+				continue;
 			}
+
+			crayon_savefile_set_vmu_bit(&old_valid_saves, i, j);
 		}
 	}
 
-	strcpy(old_savefile_details.app_id, "Proto_Minesweep\0");
+	old_savefile_details.valid_vmus = old_valid_saves;	//Can't rely on the init version due to app_id being too long. This will get the job done when saving
+	strcpy(old_savefile_details.app_id, "Proto_Minesweep\0");	//Change over to new app_id
 
 	//If present then it will update them to the new format
 	for(i = 0; i <= 3; i++){
 		for(j = 1; j <= 2; j++){
-			if(crayon_savefile_get_vmu_bitmap(valid_saves, i, j)){
+			//Check if this device contains an old-format savefile
+			if(crayon_savefile_get_vmu_bit(old_valid_saves, i, j)){
 				old_savefile_details.savefile_port = i;
 				old_savefile_details.savefile_slot = j;
 
-				if(!crayon_savefile_check_for_device(old_savefile_details.savefile_port, old_savefile_details.savefile_slot, MAPLE_FUNC_MEMCARD)){
-					continue;
-				}
-				if(!crayon_savefile_load_uncompressed_save(&old_savefile_details)){
+				//This one is done in the load function
+				// if(crayon_savefile_check_for_device(old_savefile_details.savefile_port, old_savefile_details.savefile_slot, MAPLE_FUNC_MEMCARD)){
+					// continue;
+				// }
+
+				if(crayon_savefile_load_uncompressed_save(&old_savefile_details)){
 					continue;
 				}
 				crayon_savefile_save_uncompressed_save(&old_savefile_details);
@@ -543,8 +554,8 @@ uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details)
 		}
 	}
 
-	//For debugging
-	valid_saves = 0;
+	new_savefile_details->valid_vmus = crayon_savefile_get_valid_vmus(new_savefile_details);	//Might be fine, but its safer to update
+	new_savefile_details->valid_saves = crayon_savefile_get_valid_saves(new_savefile_details);	//Update the list
 
-	return valid_saves;
+	return old_valid_saves;
 }
