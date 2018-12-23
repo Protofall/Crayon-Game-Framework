@@ -165,7 +165,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 }
 
 void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, crayon_palette_t *pal, uint8_t sys, uint8_t lang, uint8_t sd){
-	os->num_assets = ss->spritesheet_animation_count - 5;	//Minus 5 because of removed assets
+	os->num_assets = ss->spritesheet_animation_count - 6;	//Minus 6 because of removed assets
 	os->assets = (crayon_textured_array_t **) malloc(os->num_assets * sizeof(crayon_textured_array_t *));	//Allocate space for all OS draw struct pointers
 
 	//Allocate space for all draw structs
@@ -178,6 +178,7 @@ void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, crayon_palet
 			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "numberChanger") ||
 			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "checker") ||
 			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "miniButton") ||
+			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "mediumButton") ||
 			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "button")){
 			id_count++;
 		}
@@ -452,8 +453,11 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_tex
 //Made this a function just to reduce the line number in main
 void setup_keys(MinesweeperKeyboard_t * keyboard){
 
-	keyboard->upper_keys = "QWERTYUIOP<ASDFGHJKL^ZXCVBNM!?^";
-	keyboard->lower_keys = "qwertyuiop<asdfghjkl^zxcvbnm,.^";
+	// keyboard->upper_keys = "QWERTYUIOP<ASDFGHJKL^ZXCVBNM!?^";
+	// keyboard->lower_keys = "qwertyuiop<asdfghjkl^zxcvbnm,.^";
+	keyboard->upper_keys = "QWERTYUIOPASDFGHJKLZXCVBNM";
+	keyboard->lower_keys = "qwertyuiopasdfghjklzxcvbnm";
+	keyboard->special_keys = "0123456789@#$%&-+()*\"':;_/~`|^={}\\[]<>";
 	return;
 }
 

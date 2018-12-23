@@ -102,11 +102,14 @@ typedef struct MinesweeperKeyboard{
 	char type_buffer[16];
 	int8_t chars_typed;
 	uint16_t type_box_x, type_box_y;
-	crayon_textured_array_t mini_buttons, key_big_buttons;
+	crayon_textured_array_t mini_buttons, medium_buttons, big_buttons;
 	int8_t caps;
+	int8_t special;	//true/false. Has priority over caps
+	uint16_t name_length;	//Used for the flashing text cursor
 
 	const char * upper_keys;
 	const char * lower_keys;
+	const char * special_keys;
 
 	int8_t record_index;
 } MinesweeperKeyboard_t;

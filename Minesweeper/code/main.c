@@ -580,9 +580,9 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 			}
 
 			if(!mini_button_pressed){
-				if((cursor_pos[0] >= keyboard->key_big_buttons.positions[0]) && (cursor_pos[1] >= keyboard->key_big_buttons.positions[1])
-					&& cursor_pos[0] <= keyboard->key_big_buttons.positions[0] + keyboard->key_big_buttons.animation->animation_frame_width &&
-					cursor_pos[1] <= keyboard->key_big_buttons.positions[1] + keyboard->key_big_buttons.animation->animation_frame_height){	//Enter pressed
+				if((cursor_pos[0] >= keyboard->big_buttons.positions[0]) && (cursor_pos[1] >= keyboard->big_buttons.positions[1])
+					&& cursor_pos[0] <= keyboard->big_buttons.positions[0] + keyboard->big_buttons.animation->animation_frame_width &&
+					cursor_pos[1] <= keyboard->big_buttons.positions[1] + keyboard->big_buttons.animation->animation_frame_height){	//Enter pressed
 
 					//Record names must have at least one char
 					if(keyboard->chars_typed <= 0){
@@ -605,9 +605,9 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 					//Resume focus 0 (Normal game play)
 					options->focus = 0;	//Change to 2 later when I make that screen
 				}
-				else if((cursor_pos[0] >= keyboard->key_big_buttons.positions[2]) && (cursor_pos[1] >= keyboard->key_big_buttons.positions[3])
-					&& cursor_pos[0] <= keyboard->key_big_buttons.positions[2] + keyboard->key_big_buttons.animation->animation_frame_width &&
-					cursor_pos[1] <= keyboard->key_big_buttons.positions[3] + keyboard->key_big_buttons.animation->animation_frame_height){	//Space pressed
+				else if((cursor_pos[0] >= keyboard->big_buttons.positions[2]) && (cursor_pos[1] >= keyboard->big_buttons.positions[3])
+					&& cursor_pos[0] <= keyboard->big_buttons.positions[2] + keyboard->big_buttons.animation->animation_frame_width &&
+					cursor_pos[1] <= keyboard->big_buttons.positions[3] + keyboard->big_buttons.animation->animation_frame_height){	//Space pressed
 					if(keyboard->chars_typed < 15){
 						keyboard->type_buffer[keyboard->chars_typed + 1] = '\0';
 						keyboard->type_buffer[keyboard->chars_typed] = ' ';
@@ -1210,11 +1210,15 @@ int main(){
 	//Get the info for num_changer
 	uint8_t num_changer_id = 4;
 	uint8_t button_id = 4;
+	uint8_t mediumButton_id = 4;
 	uint8_t miniButton_id = 4;
 	uint8_t checker_id = 4;
 	for(iter = 0; iter < Windows.spritesheet_animation_count; iter++){
 		if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "button")){
 			button_id = iter;
+		}
+		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "mediumButton")){
+			mediumButton_id = iter;
 		}
 		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "miniButton")){
 			miniButton_id = iter;
@@ -1377,9 +1381,14 @@ int main(){
 	MS_keyboard.type_buffer[0] = '\0';
 	MS_keyboard.chars_typed = 0;
 	MS_keyboard.caps = 1;
+	MS_keyboard.special = 0;
+	MS_keyboard.name_length = 0;
 
-	//26 letters, 2 shifts, and ", !" and ". ?" buttons
-	crayon_memory_set_sprite_array(&MS_keyboard.mini_buttons, 31, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[miniButton_id], &Windows_P);
+	uint8_t keyboard_start_x = 161;
+	uint16_t keyboard_start_y = 250;
+
+	//26 letters, 16 for the extra chars
+	crayon_memory_set_sprite_array(&MS_keyboard.mini_buttons, 26 + 16, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[miniButton_id], &Windows_P);
 	MS_keyboard.mini_buttons.scales[0] = 1;
 	MS_keyboard.mini_buttons.scales[1] = 1;
 	MS_keyboard.mini_buttons.flips[0] = 0;
@@ -1388,44 +1397,108 @@ int main(){
 	MS_keyboard.mini_buttons.draw_z[0] = 30;
 	MS_keyboard.mini_buttons.frame_coord_keys[0] = 0;
 	graphics_frame_coordinates(MS_keyboard.mini_buttons.animation, MS_keyboard.mini_buttons.frame_coord_map, MS_keyboard.mini_buttons.frame_coord_map + 1, 0);
+	// MS_keyboard.mini_buttons.num_sprites = 26;	//Only display the first 26 chars for no spec mode
+
+	//Medium
+	crayon_memory_set_sprite_array(&MS_keyboard.medium_buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[mediumButton_id], &Windows_P);
+	MS_keyboard.medium_buttons.scales[0] = 1;
+	MS_keyboard.medium_buttons.scales[1] = 1;
+	MS_keyboard.medium_buttons.flips[0] = 0;
+	MS_keyboard.medium_buttons.rotations[0] = 0;
+	MS_keyboard.medium_buttons.colours[0] = 0;
+	MS_keyboard.medium_buttons.draw_z[0] = 30;
+	MS_keyboard.medium_buttons.frame_coord_keys[0] = 0;
+
+	MS_keyboard.medium_buttons.positions[6] = 0;
+	MS_keyboard.medium_buttons.positions[7] = 0;
+	MS_keyboard.medium_buttons.positions[8] = 0;
+	MS_keyboard.medium_buttons.positions[9] = 0;
+
+	graphics_frame_coordinates(MS_keyboard.medium_buttons.animation, MS_keyboard.medium_buttons.frame_coord_map, MS_keyboard.medium_buttons.frame_coord_map + 1, 0);
+
+	//Space and Enter
+	crayon_memory_set_sprite_array(&MS_keyboard.big_buttons, 2, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[button_id], &Windows_P);
+	MS_keyboard.big_buttons.scales[0] = 1;
+	MS_keyboard.big_buttons.scales[1] = 1;
+	MS_keyboard.big_buttons.flips[0] = 0;
+	MS_keyboard.big_buttons.rotations[0] = 0;
+	MS_keyboard.big_buttons.colours[0] = 0;
+	MS_keyboard.big_buttons.draw_z[0] = 30;
+	MS_keyboard.big_buttons.frame_coord_keys[0] = 0;
+	MS_keyboard.big_buttons.positions[2] = keyboard_start_x + 121;	//Space
+	// MS_keyboard.big_buttons.positions[3] = keyboard_start_y + 81;
+	MS_keyboard.big_buttons.positions[3] = keyboard_start_y + 81 + 100;
+	graphics_frame_coordinates(MS_keyboard.big_buttons.animation, MS_keyboard.big_buttons.frame_coord_map, MS_keyboard.big_buttons.frame_coord_map + 1, 0);
 
 	setup_keys(&MS_keyboard);
 
-	uint8_t keyboard_start_x = 161;
-	uint16_t keyboard_start_y = 250;
 	MS_keyboard.type_box_x = keyboard_start_x - 8 + 71;
 	MS_keyboard.type_box_y = keyboard_start_y - 88 + 56;
+	uint8_t mini_button_width = Windows.spritesheet_animation_array[miniButton_id].animation_frame_width;
+	uint8_t medium_button_width = Windows.spritesheet_animation_array[mediumButton_id].animation_frame_width;
 	//Bix box is 334 wide. half is 167. 11 times 10 is 110. + 10 (Each side) is 120. 167 - 60 = 107
 
-	for(iter = 0; iter < 31; iter++){
-		if(iter < 11){
-			MS_keyboard.mini_buttons.positions[2 * iter] = keyboard_start_x + (iter * 27) + 12;
-			MS_keyboard.mini_buttons.positions[(2 * iter) + 1] = keyboard_start_y;
+	uint16_t kb_row = 0;
+	uint16_t kb_row_id = 0;
+	uint8_t kb_medium_id = 0;
+	uint8_t kb_big_id = 0;
+
+	uint16_t key_x_distance = keyboard_start_x;
+	for(iter = 0; iter < 26 + 16; iter++){
+		if(iter == 10){	//Back
+			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
+			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = keyboard_start_y + (kb_row * (30 - 3));
+			kb_medium_id++;
+
+			kb_row++;
+			kb_row_id = 0;
+			key_x_distance = keyboard_start_x;
 		}
-		else if(iter < 20){
-			MS_keyboard.mini_buttons.positions[2 * iter] = keyboard_start_x + ((iter - 11) * 27);
-			MS_keyboard.mini_buttons.positions[(2 * iter) + 1] = keyboard_start_y + 30 - 3;
+		else if(iter == 19){	//Enter and Shift1
+			MS_keyboard.big_buttons.positions[2 * kb_big_id] = key_x_distance;
+			MS_keyboard.big_buttons.positions[(2 * kb_big_id) + 1] = keyboard_start_y + (kb_row * (30 - 3));
+			kb_big_id++;
+
+			kb_row++;
+			kb_row_id = 0;
+			key_x_distance = keyboard_start_x;
+
+			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
+			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = keyboard_start_y + (kb_row * (30 - 3));
+			kb_medium_id++;
+			key_x_distance += medium_button_width + 7;
 		}
-		else{
-			MS_keyboard.mini_buttons.positions[2 * iter] = keyboard_start_x + ((iter - 20) * 27) + 12;
-			MS_keyboard.mini_buttons.positions[(2 * iter) + 1] = keyboard_start_y + 60 - 6;	
+		else if(iter == 26){	//Shift2
+			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
+			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = keyboard_start_y + (kb_row * (30 - 3));
+			kb_medium_id++;
+
+			kb_row++;
+			kb_row_id = 0;
+			key_x_distance = keyboard_start_x;
+		}
+		else if(iter == 38){	//Spec1
+			kb_row++;
+			kb_row_id = 0;
+			key_x_distance = keyboard_start_x;
+
+			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
+			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = keyboard_start_y + (kb_row * (30 - 3));
+			kb_medium_id++;
+			key_x_distance += medium_button_width + 7;
+		}
+
+		MS_keyboard.mini_buttons.positions[2 * iter] = key_x_distance;
+		MS_keyboard.mini_buttons.positions[(2 * iter) + 1] = keyboard_start_y + (kb_row * (30 - 3));
+		key_x_distance += mini_button_width + 7;
+		kb_row_id++;
+
+		if(iter == 41){	//Spec2
+			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
+			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = keyboard_start_y + (kb_row * (30 - 3));
+			kb_medium_id++;
 		}
 	}
-
-	//Space and Enter
-	crayon_memory_set_sprite_array(&MS_keyboard.key_big_buttons, 2, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[button_id], &Windows_P);
-	MS_keyboard.key_big_buttons.scales[0] = 1;
-	MS_keyboard.key_big_buttons.scales[1] = 1;
-	MS_keyboard.key_big_buttons.flips[0] = 0;
-	MS_keyboard.key_big_buttons.rotations[0] = 0;
-	MS_keyboard.key_big_buttons.colours[0] = 0;
-	MS_keyboard.key_big_buttons.draw_z[0] = 30;
-	MS_keyboard.key_big_buttons.frame_coord_keys[0] = 0;
-	MS_keyboard.key_big_buttons.positions[0] = keyboard_start_x + 243;	//Enter
-	MS_keyboard.key_big_buttons.positions[1] = keyboard_start_y + 27;
-	MS_keyboard.key_big_buttons.positions[2] = keyboard_start_x + 121;	//Space
-	MS_keyboard.key_big_buttons.positions[3] = keyboard_start_y + 81;
-	graphics_frame_coordinates(MS_keyboard.key_big_buttons.animation, MS_keyboard.key_big_buttons.frame_coord_map, MS_keyboard.key_big_buttons.frame_coord_map + 1, 0);
 
 	//Options draw structs
 	crayon_memory_set_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[button_id], &Windows_P);
@@ -1830,7 +1903,8 @@ int main(){
 				MS_keyboard.record_index = MS_grid.difficulty + 2;
 			}
 			//If this is a new record and we have a savefile
-			if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index] && MS_options.savefile_details.valid_saves){
+			if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index]){	//DEBUG
+			// if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index] && MS_options.savefile_details.valid_saves){
 				strcpy(MS_keyboard.type_buffer, MS_options.savefile.record_names[MS_keyboard.record_index]);	//The keyboard contains the previous master's name
 				MS_keyboard.chars_typed = strlen(MS_keyboard.type_buffer);
 				MS_options.focus = 1;
@@ -1890,26 +1964,6 @@ int main(){
 
 		time(&os_clock);	//I think this is how I populate it with the current time
 		time_struct = localtime(&os_clock);
-
-		#if CRAYON_DEBUG == 1
-			pvr_get_stats(&pvr_stats);	//Get the framerate
-			last_30_FPS[FPS_array_iter] = pvr_stats.frame_rate;
-			FPS_array_iter++;
-			FPS_array_iter %= 30;
-			fps_ave = 0;
-			fps_min = last_30_FPS[0];
-			fps_max = 0;
-			for(iter = 0; iter < 30; iter++){
-				fps_ave += last_30_FPS[iter];
-				if(last_30_FPS[iter] > fps_max){
-					fps_max = last_30_FPS[iter];
-				}
-				if(last_30_FPS[iter] < fps_min){
-					fps_min = last_30_FPS[iter];
-				}
-			}
-			fps_ave /= 30;
-		#endif
 
 		pvr_wait_ready();
 		pvr_scene_begin();
@@ -2043,13 +2097,6 @@ int main(){
 			//XP uses another palette (White text version)
 			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, os.clock_x, os.clock_y, 20, 1, 1, os.clock_palette->palette_id, time_buffer);
 
-			//DEBUG, REMOVE LATER
-			#if CRAYON_DEBUG == 1
-				char fps_buffer[100];
-				sprintf(fps_buffer, "FPS ave: %d, min: %d, max: %d", fps_ave, fps_min, fps_max);
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_TR_POLY, 235, 435, 20, 1, 1, 62, fps_buffer);
-			#endif
-
 			if(MS_options.focus == 1){
 
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, keyboard_start_x + 89, keyboard_start_y - 80, 31, 1, 1, Tahoma_P.palette_id, "You have the fastest time for\0");
@@ -2096,8 +2143,8 @@ int main(){
 					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[(2 * iter)] + 6, MS_keyboard.mini_buttons.positions[(2 * iter) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, key_buffer);
 				}
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.key_big_buttons.positions[0] + 24, MS_keyboard.key_big_buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Enter\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.key_big_buttons.positions[2] + 24, MS_keyboard.key_big_buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.big_buttons.positions[0] + 24, MS_keyboard.big_buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Enter\0");
+				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.big_buttons.positions[2] + 24, MS_keyboard.big_buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
 
 				//The text the user types
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 6, MS_keyboard.type_box_y + 5, 31, 1, 1, Tahoma_P.palette_id, MS_keyboard.type_buffer);
@@ -2207,7 +2254,8 @@ int main(){
 				crayon_graphics_draw_sprites(&indented_tiles, PVR_LIST_OP_POLY);
 				if(MS_options.focus == 1){
 					crayon_graphics_draw_sprites(&MS_keyboard.mini_buttons, PVR_LIST_OP_POLY);	//Draw the high score keyboard
-					crayon_graphics_draw_sprites(&MS_keyboard.key_big_buttons, PVR_LIST_OP_POLY);	//Draw the high score keyboard
+					crayon_graphics_draw_sprites(&MS_keyboard.medium_buttons, PVR_LIST_OP_POLY);//Draw the high score keyboard
+					crayon_graphics_draw_sprites(&MS_keyboard.big_buttons, PVR_LIST_OP_POLY);	//Draw the high score keyboard
 					if(MS_options.operating_system){
 						custom_poly_XP_boarder(keyboard_start_x - 8, keyboard_start_y - 88, 19, 318 + 16, 105 + 96);
 						graphics_draw_untextured_poly(MS_keyboard.type_box_x, MS_keyboard.type_box_y, 25, 120 + 56, 20, 0xFF7F9DB9, 1);	//Blue outline
@@ -2308,7 +2356,8 @@ int main(){
 	retVal += crayon_memory_free_sprite_array(&legend_dot, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&cont_swirl, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_keyboard.mini_buttons, 0, 0);
-	retVal += crayon_memory_free_sprite_array(&MS_keyboard.key_big_buttons, 0, 0);
+	retVal += crayon_memory_free_sprite_array(&MS_keyboard.medium_buttons, 0, 0);
+	retVal += crayon_memory_free_sprite_array(&MS_keyboard.big_buttons, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.checkers, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.buttons, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.number_changers, 0, 0);
