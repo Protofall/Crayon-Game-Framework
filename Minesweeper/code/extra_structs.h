@@ -99,6 +99,11 @@ typedef struct MinesweeperOptions{
 
 //Contains the data related to the keyboard where you enter a high score
 typedef struct MinesweeperKeyboard{
+	uint16_t keyboard_start_x;
+	uint16_t keyboard_start_y;
+	uint16_t keyboard_width_x;
+	uint16_t keyboard_width_y;
+
 	char type_buffer[16];
 	int8_t chars_typed;
 	uint16_t type_box_x, type_box_y;
