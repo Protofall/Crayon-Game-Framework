@@ -571,8 +571,8 @@ void keyboard_special_toggle(MinesweeperKeyboard_t * keyboard){
 		//Change the last two medium button's positions
 		keyboard->medium_buttons.positions[(2 * 3) + 1] = keyboard->keyboard_start_y + (4 * (30 - 3));
 		keyboard->medium_buttons.positions[(2 * 4) + 1] = keyboard->keyboard_start_y + (4 * (30 - 3));
-		keyboard->big_buttons.positions[3] = keyboard->keyboard_start_y + (5 * (30 - 3));	//Space's Y
-		keyboard->keyboard_height = 105 + 96 + 54;
+		keyboard->big_buttons.positions[3] = keyboard->keyboard_start_y + (4 * (30 - 3));	//Space's Y
+		keyboard->keyboard_height = 105 + 96 + 27;
 	}
 	else{	//In letter mode
 		keyboard->mini_buttons.num_sprites = 26;	//Only display the first 26 chars for no spec mode
@@ -1459,7 +1459,7 @@ int main(){
 	uint8_t kb_medium_id = 0;
 	uint8_t kb_big_id = 0;
 
-	uint16_t key_x_distance = MS_keyboard.keyboard_start_x;
+	uint16_t key_x_distance = MS_keyboard.keyboard_start_x + 2;	//Line 1's offset
 	for(iter = 0; iter < 26 + 16; iter++){
 		if(iter == 10){	//Back
 			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
@@ -1468,40 +1468,44 @@ int main(){
 
 			kb_row++;
 			kb_row_id = 0;
-			key_x_distance = MS_keyboard.keyboard_start_x;
+			key_x_distance = MS_keyboard.keyboard_start_x + 4;	//Line 2's offset
 		}
-		else if(iter == 19){	//Enter and Shift1
+		else if(iter == 19){	//Enter and Caps1
 			MS_keyboard.big_buttons.positions[2 * kb_big_id] = key_x_distance;
 			MS_keyboard.big_buttons.positions[(2 * kb_big_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
 			kb_big_id++;
 
 			kb_row++;
 			kb_row_id = 0;
-			key_x_distance = MS_keyboard.keyboard_start_x;
+			key_x_distance = MS_keyboard.keyboard_start_x + 19;	//Line 3's offset
 
 			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
 			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
 			kb_medium_id++;
 			key_x_distance += medium_button_width + 7;
 		}
-		else if(iter == 26){	//Shift2
+		else if(iter == 26){	//Caps2
 			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
 			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
 			kb_medium_id++;
 
 			kb_row++;
 			kb_row_id = 0;
-			key_x_distance = MS_keyboard.keyboard_start_x;
+			key_x_distance = MS_keyboard.keyboard_start_x;	//Line 4's offset
 		}
 		else if(iter == 38){	//Spec1
 			kb_row++;
 			kb_row_id = 0;
-			key_x_distance = MS_keyboard.keyboard_start_x;
+			key_x_distance = MS_keyboard.keyboard_start_x + 23;	//Line 5's offset
 
 			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
 			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
 			kb_medium_id++;
 			key_x_distance += medium_button_width + 7;
+		}
+		else if(iter == 40){
+			MS_keyboard.big_buttons.positions[2] = key_x_distance;	//Space's X
+			key_x_distance += Windows.spritesheet_animation_array[bigButton_id].animation_frame_width + 7;	//Make room for the space
 		}
 
 		MS_keyboard.mini_buttons.positions[2 * iter] = key_x_distance;
@@ -1516,16 +1520,8 @@ int main(){
 		}
 	}
 
-	MS_keyboard.big_buttons.positions[2] = MS_keyboard.keyboard_start_x + 121;	//Space's X
-	MS_keyboard.big_buttons.positions[3] = MS_keyboard.keyboard_start_y + (5 * (30 - 3));	//Space's Y
-
 	//Letters mode, adjust
 	keyboard_special_toggle(&MS_keyboard);
-	// MS_keyboard.mini_buttons.num_sprites = 26;	//Only display the first 26 chars for no spec mode
-	// MS_keyboard.medium_buttons.positions[(2 * 3) + 1] = keyboard->keyboard_start_y + (3 * (30 - 3));
-	// MS_keyboard.medium_buttons.positions[(2 * 4) + 1] = keyboard->keyboard_start_y + (3 * (30 - 3));
-	// MS_keyboard.big_buttons.positions[3] = MS_keyboard.keyboard_start_y + (3 * (30 - 3));	//Space's Y
-	// MS_keyboard.keyboard_height = 105 + 96;
 
 	//Options draw structs
 	crayon_memory_set_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[bigButton_id], &Windows_P);
@@ -1923,8 +1919,8 @@ int main(){
 				MS_keyboard.record_index = MS_grid.difficulty + 2;
 			}
 			//If this is a new record and we have a savefile
-			if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index]){	//DEBUG, switch to this for lxdream testing
-			// if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index] && MS_options.savefile_details.valid_saves){
+			// if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index]){	//DEBUG, switch to this for lxdream testing
+			if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index] && MS_options.savefile_details.valid_saves){
 				strcpy(MS_keyboard.type_buffer, MS_options.savefile.record_names[MS_keyboard.record_index]);	//The keyboard contains the previous master's name
 				MS_keyboard.chars_typed = strlen(MS_keyboard.type_buffer);
 				MS_keyboard.name_length = crayon_graphics_string_get_length_prop(&Tahoma_font, MS_keyboard.type_buffer, 0);

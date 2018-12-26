@@ -463,7 +463,7 @@ void setup_keys(MinesweeperKeyboard_t * keyboard, crayon_font_prop_t * fontsheet
 	keyboard->keyboard_start_x = 144;
 	keyboard->keyboard_start_y = 250;
 	keyboard->keyboard_width = 318 + 16 + 35;
-	keyboard->keyboard_height = 105 + 96 + 54;	//Toggle by 54
+	keyboard->keyboard_height = 105 + 96 + 27;	//Toggle by 27
 
 	keyboard->type_box_x = keyboard->keyboard_start_x - 8 + 71 + 25;
 	keyboard->type_box_y = keyboard->keyboard_start_y - 88 + 56;
