@@ -5,6 +5,7 @@
 #include "render_structs.h"  //For the crayon_textured_array struct
 
 #include <stdlib.h>
+#include <string.h>	//For length of string
 #include <math.h>
 
 //Sets a palette for a spritesheet
@@ -52,6 +53,11 @@ extern uint8_t graphics_draw_text_mono(const crayon_font_mono_t *fm, uint8_t pol
 //Draw string using propertional font (string must be null-terminated)
 extern uint8_t graphics_draw_text_prop(const crayon_font_prop_t *fp, uint8_t poly_list_mode, float draw_x,
 	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string);
+
+//This gets the drawn-length of a string using a certain font
+//If newlines is true then it will only return the longest line
+extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char * string, uint8_t newlines);	//UNTESTED
+extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char * string, uint8_t newlines);
 
 
 #endif

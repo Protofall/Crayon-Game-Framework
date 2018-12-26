@@ -451,7 +451,7 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_tex
 }
 
 //Made this a function just to reduce the line number in main
-void setup_keys(MinesweeperKeyboard_t * keyboard){
+void setup_keys(MinesweeperKeyboard_t * keyboard, crayon_font_prop_t * fontsheet){
 
 	//Some defaults for the keyboard struct
 	keyboard->type_buffer[0] = '\0';
@@ -469,9 +469,12 @@ void setup_keys(MinesweeperKeyboard_t * keyboard){
 	keyboard->type_box_y = keyboard->keyboard_start_y - 88 + 56;
 	//Bix box is 334 wide. half is 167. 11 times 10 is 110. + 10 (Each side) is 120. 167 - 60 = 107
 
+	keyboard->fontsheet = fontsheet;
+
 	keyboard->upper_keys = "QWERTYUIOPASDFGHJKLZXCVBNM";
 	keyboard->lower_keys = "qwertyuiopasdfghjklzxcvbnm";
-	keyboard->special_keys = "0123456789@#$%&-+()*\"':;_/~`|^={}\\[]<>";	//This isn't 42 chars...Wat
+	keyboard->special_keys = "0123456789@#$%&-+()*\"':;_/~`|^={}\\[]<>.,?!";
+
 	return;
 }
 

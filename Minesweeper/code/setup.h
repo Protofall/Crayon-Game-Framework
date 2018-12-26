@@ -19,7 +19,7 @@ void setup_free_OS_struct(MinesweeperOS_t *os);
 void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t sd);
 void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_textured_array_t * num_changers, uint8_t os);
 
-void setup_keys(MinesweeperKeyboard_t * keyboard);
+void setup_keys(MinesweeperKeyboard_t * keyboard, crayon_font_prop_t * fontsheet);
 
 uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_details, uint8_t savefile_port, uint8_t savefile_slot);
 uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details);

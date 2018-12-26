@@ -345,11 +345,11 @@ extern uint8_t graphics_draw_text_mono(const struct crayon_font_mono *fm, uint8_
 	int i = 0;
 	float prop_width = (float)fm->char_width / fm->fontsheet_dim;
 	float prop_height = (float)fm->char_height / fm->fontsheet_dim;
-	while(1){	//First char seems to be drawn higher than others
+	while(1){
 		if(string[i] == '\0'){
 			break;
 		}
-		if(string[i] == '\n'){	//This should be able to do a new line (Doesn't seem to work right)
+		if(string[i] == '\n'){	//This should be able to do a new line
 			x0 = draw_x;
 			x1 = draw_x + fm->char_width * scale_x;
 			y0 = y1;
@@ -418,11 +418,11 @@ extern uint8_t graphics_draw_text_prop(const struct crayon_font_prop *fp, uint8_
 	pvr_prim(&header, sizeof(header));
 
 	int i = 0;
-	while(1){	//First char seems to be drawn higher than others
+	while(1){
 		if(string[i] == '\0'){
 			break;
 		}
-		if(string[i] == '\n'){	//This should be able to do a new line (Doesn't seem to work right)
+		if(string[i] == '\n'){	//This should be able to do a new line
 			x0 = draw_x;
 			x1 = draw_x;
 			y0 = y1;
@@ -463,4 +463,69 @@ extern uint8_t graphics_draw_text_prop(const struct crayon_font_prop *fp, uint8_
 	}
 
 	return 0;
+}
+
+extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char * string, uint8_t newlines){
+	if(!newlines){
+		return strlen(string) * fm->char_width;	//Since all chars are the same width, we can just do this
+	}
+
+	uint16_t current_length = 0;
+	uint16_t best_length = 0;
+	int i = 0;
+	while(1){
+		if(string[i] == '\0'){
+			if(current_length > best_length){
+				best_length = current_length;
+			}
+			i++;
+			break;
+		}
+		if(string[i] == '\n'){	//This should be able to do a new line (Doesn't seem to work right)
+			if(current_length > best_length){
+				best_length = current_length;
+			}
+			current_length = 0;
+			i++;
+			continue;
+		}
+
+		current_length += fm->char_width;
+		i++;
+	}
+
+	return best_length;
+}
+
+extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char * string, uint8_t newlines){
+	uint16_t current_length = 0;
+	uint16_t best_length = 0;
+
+	int i = 0;
+	while(1){
+		if(string[i] == '\0'){
+			if(current_length > best_length){
+				best_length = current_length;
+			}
+			current_length = 0;
+			break;
+		}
+		if(string[i] == '\n'){
+			if(newlines){
+				if(current_length > best_length){
+					best_length = current_length;
+				}
+				current_length = 0;
+			}
+			i++;
+			continue;
+		}
+
+		uint8_t distance_from_space = string[i] - ' ';
+		current_length += fp->char_width[distance_from_space];
+
+		i++;
+	}
+
+	return best_length;
 }

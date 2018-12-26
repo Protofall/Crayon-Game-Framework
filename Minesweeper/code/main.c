@@ -678,6 +678,8 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 				}
 			}
 
+			keyboard->name_length = crayon_graphics_string_get_length_prop(keyboard->fontsheet, keyboard->type_buffer, 0);
+
 			return 0;
 		}
 	}
@@ -994,7 +996,6 @@ int main(){
 		int8_t i;
 		for(i = 0; i < 6; i++){
 			strcpy(MS_options.savefile.record_names[i], "Anonymous\0");
-			// strcpy(MS_options.savefile.record_names[i], "%%%%%%%%%%%%%%%\0");	//Longest possible name
 			MS_options.savefile.times[i] = 999;
 		}
 		MS_options.savefile.pref_width = 30;
@@ -1409,7 +1410,7 @@ int main(){
 	graphics_frame_coordinates(face.animation, face.frame_coord_map + 6, face.frame_coord_map + 7, 3);
 	graphics_frame_coordinates(face.animation, face.frame_coord_map + 8, face.frame_coord_map + 9, 4);
 
-	setup_keys(&MS_keyboard);
+	setup_keys(&MS_keyboard, &Tahoma_font);
 
 	//26 letters, 16 for the extra chars
 	crayon_memory_set_sprite_array(&MS_keyboard.mini_buttons, 26 + 16, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[miniButton_id], &Windows_P);
@@ -1630,14 +1631,7 @@ int main(){
 	crayon_memory_swap_colour(&cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
 	crayon_memory_swap_colour(&cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
 
-	#if CRAYON_DEBUG == 1
-	//Stuff for debugging/performance testing
-		pvr_stats_t pvr_stats;
-		uint8_t last_30_FPS[30] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-		uint8_t FPS_array_iter = 0;
-		int fps_ave, fps_min, fps_max;
-	#endif
-
+	pvr_stats_t pvr_stats;
 	while(1){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
@@ -1929,10 +1923,11 @@ int main(){
 				MS_keyboard.record_index = MS_grid.difficulty + 2;
 			}
 			//If this is a new record and we have a savefile
-			if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index]){	//DEBUG
+			if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index]){	//DEBUG, switch to this for lxdream testing
 			// if(MS_grid.time_sec < MS_options.savefile.times[MS_keyboard.record_index] && MS_options.savefile_details.valid_saves){
 				strcpy(MS_keyboard.type_buffer, MS_options.savefile.record_names[MS_keyboard.record_index]);	//The keyboard contains the previous master's name
 				MS_keyboard.chars_typed = strlen(MS_keyboard.type_buffer);
+				MS_keyboard.name_length = crayon_graphics_string_get_length_prop(&Tahoma_font, MS_keyboard.type_buffer, 0);
 				MS_options.focus = 1;
 			}
 		}
@@ -1990,6 +1985,8 @@ int main(){
 
 		time(&os_clock);	//I think this is how I populate it with the current time
 		time_struct = localtime(&os_clock);
+
+		pvr_get_stats(&pvr_stats);
 
 		pvr_wait_ready();
 		pvr_scene_begin();
@@ -2146,28 +2143,6 @@ int main(){
 				}
 				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 30, MS_keyboard.keyboard_start_y - 56, 31, 1, 1, Tahoma_P.palette_id, "Please enter your name.\0");
 
-				// char key_buffer[3];
-				// for(iter = 0; iter < MS_keyboard.mini_buttons.num_sprites; iter++){
-				// 	if(MS_keyboard.caps){
-				// 		key_buffer[0] = MS_keyboard.upper_keys[iter];
-				// 	}
-				// 	else{
-				// 		key_buffer[0] = MS_keyboard.lower_keys[iter];
-				// 	}
-
-				// 	if(MS_keyboard.upper_keys[iter] == '<'){
-				// 		key_buffer[1] = '-';
-				// 		key_buffer[2] = '\0';
-				// 	}
-				// 	else{
-				// 		key_buffer[1] = '\0';
-				// 	}
-
-				// 	if(MS_keyboard.upper_keys[iter] == '^'){
-				// 		graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[(2 * iter)] + 6, MS_keyboard.mini_buttons.positions[(2 * iter) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, "_");
-				// 	}
-				// 	graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[(2 * iter)] + 6, MS_keyboard.mini_buttons.positions[(2 * iter) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, key_buffer);
-				// }
 				char key_buffer[2];
 				key_buffer[1] = '\0';
 				for(iter = 0; iter < MS_keyboard.mini_buttons.num_sprites; iter++){
@@ -2181,17 +2156,6 @@ int main(){
 						key_buffer[0] = MS_keyboard.lower_keys[iter];
 					}
 
-					// if(MS_keyboard.upper_keys[iter] == '<'){
-					// 	key_buffer[1] = '-';
-					// 	key_buffer[2] = '\0';
-					// }
-					// else{
-					// 	key_buffer[1] = '\0';
-					// }
-
-					// if(MS_keyboard.upper_keys[iter] == '^'){
-					// 	graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[(2 * iter)] + 6, MS_keyboard.mini_buttons.positions[(2 * iter) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, "_");
-					// }
 					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[(2 * iter)] + 6, MS_keyboard.mini_buttons.positions[(2 * iter) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, key_buffer);
 				}
 
@@ -2310,7 +2274,11 @@ int main(){
 			if(MS_options.focus <= 1){
 				crayon_graphics_draw_sprites(&MS_grid.draw_grid, PVR_LIST_OP_POLY);
 				crayon_graphics_draw_sprites(&indented_tiles, PVR_LIST_OP_POLY);
+
 				if(MS_options.focus == 1){
+					if(pvr_stats.frame_count % (uint8_t)(60 / htz_adjustment) < (uint8_t)(30 / htz_adjustment)){	//Flashes on and off every half second
+						graphics_draw_untextured_poly(MS_keyboard.type_box_x + 6 + MS_keyboard.name_length, MS_keyboard.type_box_y + 5, 31, 1, 12, 0xFF000000, 1);	//Flashing Black line
+					}
 					crayon_graphics_draw_sprites(&MS_keyboard.mini_buttons, PVR_LIST_OP_POLY);	//Draw the high score keyboard
 					crayon_graphics_draw_sprites(&MS_keyboard.medium_buttons, PVR_LIST_OP_POLY);//Draw the high score keyboard
 					crayon_graphics_draw_sprites(&MS_keyboard.big_buttons, PVR_LIST_OP_POLY);	//Draw the high score keyboard

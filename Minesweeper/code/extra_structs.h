@@ -111,6 +111,7 @@ typedef struct MinesweeperKeyboard{
 	int8_t caps;
 	int8_t special;	//true/false. Has priority over caps
 	uint16_t name_length;	//Used for the flashing text cursor
+	crayon_font_prop_t * fontsheet;	//Used for the flashing line
 
 	const char * upper_keys;
 	const char * lower_keys;
