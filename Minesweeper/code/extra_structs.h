@@ -101,8 +101,8 @@ typedef struct MinesweeperOptions{
 typedef struct MinesweeperKeyboard{
 	uint16_t keyboard_start_x;
 	uint16_t keyboard_start_y;
-	uint16_t keyboard_width_x;
-	uint16_t keyboard_width_y;
+	uint16_t keyboard_width;
+	uint16_t keyboard_height;
 
 	char type_buffer[16];
 	int8_t chars_typed;
