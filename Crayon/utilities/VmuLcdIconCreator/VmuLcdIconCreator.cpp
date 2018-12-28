@@ -14,7 +14,7 @@ void getARGB(uint8_t * argb, uint32_t extracted){
 	return;
 }
 
-int pngToVmuLcdIcon(std::string source, std::string dest, bool invert){
+int makeVmuLcdIcon(std::string source, std::string dest, bool invert){
 	int x, y, n;
 	stbi_set_flip_vertically_on_load(invert);	//Since the VMU is upside down in the controller,
 											//this flips the image upside down so it appears correctly
@@ -77,7 +77,6 @@ int pngToVmuLcdIcon(std::string source, std::string dest, bool invert){
 }
 
 int main(int argC, char *argV[]){
-
 	//Check input for options
 	bool flag_invert;
 	bool flag_help;
@@ -94,9 +93,9 @@ int main(int argC, char *argV[]){
 	}
 
 	printf("\nPlease note this is only confirmed to work with RGB888 and ARGB8888 textures\n");
-	printf("Any other format and the resulting image mostlikely won't work right\n");
+	printf("Any other format and the resulting image might not work right\n");
 
-	pngToVmuLcdIcon(argV[1], argV[2], flag_invert);
+	makeVmuLcdIcon(argV[1], argV[2], flag_invert);
 	
 	return 0;
 }

@@ -549,11 +549,12 @@ extern uint8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint){
 	void *buffer;
 	ssize_t size = fs_load(filename, &buffer); // Loads the file "filename" into RAM
 
-	if(size != -1){
-		fs_romdisk_mount(mountpoint, buffer, 1); // Now mount that file as a romdisk, buffer will be freed when romdisk is unmounted
-		return 0;
+	if(size == -1){
+		return 1;
 	}
-	return 1;
+	
+	fs_romdisk_mount(mountpoint, buffer, 1); // Now mount that file as a romdisk, buffer will be freed when romdisk is unmounted
+	return 0;
 }
 
 extern uint8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint){

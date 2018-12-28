@@ -923,7 +923,17 @@ int main(){
 	MS_options.sd_present = 0;
 	MS_options.focus = 0;
 
-	//Load the VMU icon data (The icon appears distorted in SD mode though...I don't see why)
+	#if CRAYON_SD_MODE == 1
+		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
+		if(sdRes == 0){
+			MS_options.sd_present = 1;
+		}
+		else{
+			return 0;
+		}
+	#endif
+
+	//Load the VMU icon data
 	#if CRAYON_SD_MODE == 1
 		crayon_memory_mount_romdisk("/sd/SaveFile.img", "/Save");
 	#else
@@ -931,6 +941,9 @@ int main(){
 	#endif
 
 	crayon_savefile_load_icon(&MS_options.savefile_details, "/Save/IMAGE.BIN", "/Save/PALLETTE.BIN");
+
+	uint8_t * vmu_lcd_icon = NULL;
+	setup_vmu_icon_load(vmu_lcd_icon);
 
 	fs_romdisk_unmount("/SaveFile");
 
@@ -941,6 +954,13 @@ int main(){
 
 	//Pre 1.2.0 savefiles has an incorrect app_id, this function updates older save files
 	uint8_t old_saves = setup_update_old_saves(&MS_options.savefile_details);
+
+	//Apply the icon
+	setup_vmu_icon_apply(vmu_lcd_icon, MS_options.savefile_details.valid_vmu_screens);
+	
+	// setup_vmu_icon(MS_options.savefile_details.valid_vmu_screens);
+
+	// fs_romdisk_unmount("/SaveFile");
 
 	uint8_t first_time = !MS_options.savefile_details.valid_saves;
 
@@ -1100,18 +1120,16 @@ int main(){
 	snd_stream_init();	//Needed otherwise snd_sfx calls crash
 
 	#if CRAYON_SD_MODE == 1
-		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
-		if(sdRes == 0){
-			MS_options.sd_present = 1;
-		}
-	#endif
-
-	#if CRAYON_SD_MODE == 1
 		crayon_memory_mount_romdisk("/sd/Minesweeper.img", "/Minesweeper");
 	#else
 		crayon_memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	#endif
 
+	// setup_vmu_icon(MS_options.savefile_details.valid_vmu_screens);
+
+	//Sets the VMU LCD icon (Apparently this is automatic if your savefile is an ICONDATA.VMS)
+	// setup_vmu_icon(MS_options.savefile_details.valid_vmu_screens);
+	
 	//I like to put the font's paletets at the very back of the system (But really, its probably better standard to go first)
 	// crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 63, "/BIOS/BIOS_font.dtex");
 	crayon_memory_load_prop_font_sheet(&Tahoma_font, &Tahoma_P, 62, "/Minesweeper/Tahoma_font.dtex");

@@ -580,3 +580,35 @@ uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details)
 
 	return old_valid_saves;
 }
+
+void setup_vmu_icon_load(uint8_t * vmu_lcd_icon){
+	vmu_lcd_icon = (uint8_t *) malloc(6 * 32);	//6 * 32 because we have 48/32 1bpp so we need that / 8 bytes
+	FILE * lcd_icon = fopen("/Save/LCD.bin", "rb");
+	fseek(lcd_icon, 0, SEEK_END); // seek to end of file
+	int size = ftell(lcd_icon); // get current file pointer
+	fseek(lcd_icon, 0, SEEK_SET); // seek back to beginning of file
+	fread(vmu_lcd_icon, size, 1, lcd_icon);
+	fclose(lcd_icon);
+
+	return;
+}
+
+void setup_vmu_icon_apply(uint8_t * vmu_lcd_icon, uint8_t valid_vmu_screens){
+	crayon_vmu_display_icon(valid_vmu_screens, vmu_lcd_icon);
+	free(vmu_lcd_icon);
+
+	return;
+}
+
+
+// void setup_vmu_icon(uint8_t valid_vmu_screens){
+// 	uint8_t * vmu_lcd_icon = (uint8_t *) malloc(6 * 32);	//6 * 32 because we have 48/32 1bpp so we need that / 8 bytes
+// 	file_t lcd_icon = fs_open("/Minesweeper/LCD.bin", O_RDONLY);
+// 	// file_t lcd_icon = fs_open("/Save/LCD.bin", O_RDONLY);
+// 	fs_read(lcd_icon, vmu_lcd_icon, fs_total(lcd_icon));
+// 	fs_close(lcd_icon);
+// 	crayon_vmu_display_icon(valid_vmu_screens, vmu_lcd_icon);
+// 	free(vmu_lcd_icon);
+
+// 	return;
+// }
