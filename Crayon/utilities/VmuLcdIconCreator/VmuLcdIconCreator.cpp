@@ -14,21 +14,29 @@ void getARGB(uint8_t * argb, uint32_t extracted){
 	return;
 }
 
-int pngToVmuLcdIcon(std::string source, std::string dest){
+int pngToVmuLcdIcon(std::string source, std::string dest, bool invert){
 	int x, y, n;
-	stbi_set_flip_vertically_on_load(true);	//Since the VMU is upside down in the controller,
+	stbi_set_flip_vertically_on_load(invert);	//Since the VMU is upside down in the controller,
 											//this flips the image upside down so it appears correctly
 
 	unsigned char *data = stbi_load(source.c_str(), &x, &y, &n, 0);	//x is width, y is height, n is number of channels
 																	//Last param is zero for default ARGB8888
 
+	if(data == 0){
+		fprintf(stderr, "\nCouldn't load the requested file\n");
+		return 1;
+	}
 	if(n != 3 && n != 4){	//Not argb or rgb
-		fprintf(stderr, "Image pixels are not A/RGB. Texture may not have loaded correctly. (%d channels)\n", n);
+		fprintf(stderr, "\nImage pixels are not A/RGB. Texture may not have loaded correctly. (%d channels)\n", n);
 		return 1;
 	}
 
 	FILE *write_ptr;
 	write_ptr = fopen(dest.c_str(),"wb");  // w for write, b for binary
+	if(write_ptr == NULL){
+		fprintf(stderr, "\nFile %s cannot be opened\n", dest.c_str());
+		return 1;
+	}
 	unsigned char *traversal = data;
 	uint32_t extracted;
 	uint8_t buffer[6];	//We need to output in Little-endian so we have to store 6 bytes per row and then write to the file
@@ -70,15 +78,25 @@ int pngToVmuLcdIcon(std::string source, std::string dest){
 
 int main(int argC, char *argV[]){
 
-	if(argC != 3){
-		printf("Wrong number of params, please pass in file names for\nA png source and a binary output\n");
+	//Check input for options
+	bool flag_invert;
+	bool flag_help;
+	for(int i = 1; i < argC; i++){
+		!strcmp(argV[i], "--invert") ? flag_invert = true : flag_invert = false;
+		!strcmp(argV[i], "--help") ? flag_help = true : flag_help = false;
+	}
+
+	if(flag_help || (argC != 3 && argC != 4)){
+		printf("\nUsage:\n./VmuLcdIconCreator [Source_file_path] [Dest_file_path] [options]\n\nList of potential options:\n");
+		printf("--invert	Flips y/height axis. Note VMU is upside down in a DC controller\n");
+		printf("--help		Display this message\n");
 		return 1;
 	}
 
-	printf("Please note this is only confirmed to work with RGB888 and ARGB8888 textures\n");
-	printf("Any other format and the resulting image mostlikely won't work right\n")
+	printf("\nPlease note this is only confirmed to work with RGB888 and ARGB8888 textures\n");
+	printf("Any other format and the resulting image mostlikely won't work right\n");
 
-	pngToVmuLcdIcon(argV[1], argV[2]);
+	pngToVmuLcdIcon(argV[1], argV[2], flag_invert);
 	
 	return 0;
 }

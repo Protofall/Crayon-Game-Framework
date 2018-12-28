@@ -25,4 +25,4 @@ clean:
 	rm -f *.bin
 
 example:
-	./$(PROG) "icon_VMU_LCD.png" "LCD.bin"
+	./$(PROG) "icon_VMU_LCD.png" "LCD.bin" "--invert"
