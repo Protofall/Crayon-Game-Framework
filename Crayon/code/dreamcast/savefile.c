@@ -80,48 +80,35 @@ void crayon_savefile_set_vmu_bit(uint8_t * vmu_bitmap, int8_t savefile_port, int
 }
 
 void crayon_savefile_load_icon(crayon_savefile_details_t * savefile_details, char * image, char * palette){
-	file_t icon_files;
+	FILE * icon_files;
+	int size;
 
-	icon_files = fs_open(image, O_RDONLY);
-	savefile_details->savefile_icon = (unsigned char *) malloc(fs_total(icon_files));
-	fs_read(icon_files, savefile_details->savefile_icon, fs_total(icon_files));
-	fs_close(icon_files);
+	icon_files = fopen(image, "rb");
 
-	icon_files = fs_open(palette, O_RDONLY);
-	savefile_details->savefile_palette = (unsigned short *) malloc(fs_total(icon_files));
-	fs_read(icon_files, savefile_details->savefile_palette, fs_total(icon_files));
-	fs_close(icon_files);
+	//Get the size of the file
+	fseek(icon_files, 0, SEEK_END);
+	size = ftell(icon_files);
+	fseek(icon_files, 0, SEEK_SET);
+
+	savefile_details->savefile_icon = (unsigned char *) malloc(size);
+	fread(savefile_details->savefile_icon, size, 1, icon_files);
+	fclose(icon_files);
+
+
+	//--------------------------------
+
+
+	icon_files = fopen(palette, "rb");
+
+	fseek(icon_files, 0, SEEK_END);
+	size = ftell(icon_files);
+	fseek(icon_files, 0, SEEK_SET);
+
+	savefile_details->savefile_palette = (unsigned short *) malloc(size);
+	fread(savefile_details->savefile_palette, size, 1, icon_files);
+	fclose(icon_files);
+
 	return;
-
-	// FILE * icon_files;
-	// int size;
-
-	// icon_files = fopen(image, "rb");
-	// savefile_details->savefile_icon = (unsigned char *) malloc(fs_total(icon_files));
-
-	// //Get the size of the file
-	// fseek(icon_files, 0, SEEK_END);
-	// size = ftell(icon_files);
-	// fseek(icon_files, 0, SEEK_SET);
-
-	// fread(savefile_details->savefile_icon, size, 1, icon_files);
-	// fclose(icon_files);
-
-
-	// //--------------------------------
-
-
-	// icon_files = fopen(palette, "rb");
-	// savefile_details->savefile_palette = (unsigned char *) malloc(fs_total(icon_files));
-
-	// fseek(icon_files, 0, SEEK_END);
-	// size = ftell(icon_files);
-	// fseek(icon_files, 0, SEEK_SET);
-
-	// fread(savefile_details->savefile_palette, size, 1, icon_files);
-	// fclose(icon_files);
-
-	// return;
 }
 
 void crayon_savefile_free_icon(crayon_savefile_details_t * savefile_details){
