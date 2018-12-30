@@ -581,14 +581,17 @@ uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details)
 	return old_valid_saves;
 }
 
-void setup_vmu_icon_load(uint8_t * vmu_lcd_icon){
+void setup_vmu_icon_load(uint8_t * vmu_lcd_icon, char * icon_path){
 	vmu_lcd_icon = (uint8_t *) malloc(6 * 32);	//6 * 32 because we have 48/32 1bpp so we need that / 8 bytes
-	FILE * lcd_icon = fopen("/Save/LCD.bin", "rb");
-	fseek(lcd_icon, 0, SEEK_END); // seek to end of file
-	int size = ftell(lcd_icon); // get current file pointer
-	fseek(lcd_icon, 0, SEEK_SET); // seek back to beginning of file
-	fread(vmu_lcd_icon, size, 1, lcd_icon);
-	fclose(lcd_icon);
+	FILE * file_lcd_icon = fopen(icon_path, "rb");
+
+	// fseek(file_lcd_icon, 0, SEEK_END); // seek to end of file
+	// int size = ftell(file_lcd_icon); // get current file pointer
+	// fseek(file_lcd_icon, 0, SEEK_SET); // seek back to beginning of file
+	// fread(vmu_lcd_icon, size, 1, file_lcd_icon);
+
+	fread(vmu_lcd_icon, 192, 1, file_lcd_icon);	//If the icon is right, it *must* byt 192 bytes
+	fclose(file_lcd_icon);
 
 	return;
 }

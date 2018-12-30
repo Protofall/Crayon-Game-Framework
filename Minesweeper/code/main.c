@@ -943,7 +943,7 @@ int main(){
 	crayon_savefile_load_icon(&MS_options.savefile_details, "/Save/IMAGE.BIN", "/Save/PALLETTE.BIN");
 
 	uint8_t * vmu_lcd_icon = NULL;
-	setup_vmu_icon_load(vmu_lcd_icon);
+	setup_vmu_icon_load(vmu_lcd_icon, "/Save/LCD.bin");
 
 	fs_romdisk_unmount("/SaveFile");
 

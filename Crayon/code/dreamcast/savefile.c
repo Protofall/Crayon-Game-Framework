@@ -80,33 +80,35 @@ void crayon_savefile_set_vmu_bit(uint8_t * vmu_bitmap, int8_t savefile_port, int
 }
 
 void crayon_savefile_load_icon(crayon_savefile_details_t * savefile_details, char * image, char * palette){
-	FILE * icon_files;
-	int size;
+	FILE * icon_data_file;
+	int size_data;
 
-	icon_files = fopen(image, "rb");
+	icon_data_file = fopen(image, "rb");
 
 	//Get the size of the file
-	fseek(icon_files, 0, SEEK_END);
-	size = ftell(icon_files);
-	fseek(icon_files, 0, SEEK_SET);
+	fseek(icon_data_file, 0, SEEK_END);
+	size_data = ftell(icon_data_file);
+	fseek(icon_data_file, 0, SEEK_SET);
 
-	savefile_details->savefile_icon = (unsigned char *) malloc(size);
-	fread(savefile_details->savefile_icon, size, 1, icon_files);
-	fclose(icon_files);
+	savefile_details->savefile_icon = (unsigned char *) malloc(size_data);
+	fread(savefile_details->savefile_icon, size_data, 1, icon_data_file);
+	fclose(icon_data_file);
 
 
 	//--------------------------------
 
+	FILE * icon_palette_file;
+	int size_palette;
 
-	icon_files = fopen(palette, "rb");
+	icon_palette_file = fopen(palette, "rb");
 
-	fseek(icon_files, 0, SEEK_END);
-	size = ftell(icon_files);
-	fseek(icon_files, 0, SEEK_SET);
+	fseek(icon_palette_file, 0, SEEK_END);
+	size_palette = ftell(icon_palette_file);
+	fseek(icon_palette_file, 0, SEEK_SET);
 
-	savefile_details->savefile_palette = (unsigned short *) malloc(size);
-	fread(savefile_details->savefile_palette, size, 1, icon_files);
-	fclose(icon_files);
+	savefile_details->savefile_palette = (unsigned short *) malloc(size_palette);
+	fread(savefile_details->savefile_palette, size_palette, 1, icon_palette_file);
+	fclose(icon_palette_file);
 
 	return;
 }
