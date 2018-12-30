@@ -27,6 +27,4 @@ uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details)
 void setup_vmu_icon_load(uint8_t * vmu_lcd_icon);
 void setup_vmu_icon_apply(uint8_t * vmu_lcd_icon, uint8_t valid_vmu_screens);
 
-// void setup_vmu_icon(uint8_t valid_vmu_screens);
-
 #endif

@@ -230,7 +230,7 @@ void crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_
 	return;
 }
 
-uint8_t crayon_savefile_load_uncompressed_save(crayon_savefile_details_t * savefile_details){
+uint8_t crayon_savefile_load(crayon_savefile_details_t * savefile_details){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
@@ -272,7 +272,7 @@ uint8_t crayon_savefile_load_uncompressed_save(crayon_savefile_details_t * savef
 	return 0;
 }
 
-uint16_t crayon_savefile_save_uncompressed_save(crayon_savefile_details_t * savefile_details){
+uint16_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	//The requested VMU is not a valid memory card
 	if(!crayon_savefile_get_vmu_bit(savefile_details->valid_vmus, savefile_details->savefile_port, savefile_details->savefile_slot)){
 		return 1;
@@ -354,7 +354,6 @@ uint16_t crayon_savefile_save_uncompressed_save(crayon_savefile_details_t * save
 	return rv;
 }
 
-//UNTESTED
 //Why is valid screens a part of Savefile details, but this function isn't?
 void crayon_vmu_display_icon(uint8_t vmu_bitmap, void * icon){
 	maple_device_t *vmu;

@@ -661,7 +661,7 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 						//It makes sense to save the record immediately
 						options->savefile.options = options->question_enabled + (options->sound_enabled << 1)
 							+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
-						crayon_savefile_save_uncompressed_save(&options->savefile_details);
+						crayon_savefile_save(&options->savefile_details);
 
 						//Resume focus 0 (Normal game play)
 						options->focus = 0;	//Change to 2 later when I make that screen
@@ -793,7 +793,7 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 					&& cursor_pos[0] >= options->buttons.positions[6] && cursor_pos[1] >= options->buttons.positions[7]){	//Save to VMU
 				options->savefile.options = options->question_enabled + (options->sound_enabled << 1)
 					+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
-				crayon_savefile_save_uncompressed_save(&options->savefile_details);
+				crayon_savefile_save(&options->savefile_details);
 			}
 			else if((cursor_pos[0] <= options->buttons.positions[8] + 75) && (cursor_pos[1] <= options->buttons.positions[9] + 23)
 					&& cursor_pos[0] >= options->buttons.positions[8] && cursor_pos[1] >= options->buttons.positions[9]){	//Apply
@@ -952,16 +952,13 @@ int main(){
 		sizeof(minesweeper_savefile_t), 1, 0, "Made with Crayon by Protofall\0", "Minesweeper\0",
 		"Proto_Minesweep\0", "MINESWEEPER.s\0");
 
+	//Apply the VMU LCD icon (Apparently this is automatic if your savefile is an ICONDATA.VMS)
+	//Also frees vmu_lcd_icon
+	setup_vmu_icon_apply(vmu_lcd_icon, MS_options.savefile_details.valid_vmu_screens);
+
 	//Pre 1.2.0 savefiles has an incorrect app_id, this function updates older save files
 	uint8_t old_saves = setup_update_old_saves(&MS_options.savefile_details);
-
-	//Apply the icon
-	setup_vmu_icon_apply(vmu_lcd_icon, MS_options.savefile_details.valid_vmu_screens);
 	
-	// setup_vmu_icon(MS_options.savefile_details.valid_vmu_screens);
-
-	// fs_romdisk_unmount("/SaveFile");
-
 	uint8_t first_time = !MS_options.savefile_details.valid_saves;
 
 	//Find the first savefile (if it exists)
@@ -979,7 +976,7 @@ int main(){
 	Exit_loop_1:
 
 	//If a save already exists
-	crayon_savefile_load_uncompressed_save(&MS_options.savefile_details);
+	crayon_savefile_load(&MS_options.savefile_details);
 	if(MS_options.savefile_details.valid_vmus && MS_options.savefile_details.savefile_port != -1 &&
 		MS_options.savefile_details.savefile_slot != -1){
 		
@@ -1025,7 +1022,7 @@ int main(){
 		//Make a new savefile if one isn't present
 			//If we have a valid vmu, port and slot won't be minus 1
 			//But if we don't they will be minus 1 and the save won't be made
-		crayon_savefile_save_uncompressed_save(&MS_options.savefile_details);
+		crayon_savefile_save(&MS_options.savefile_details);
 	}
 
 	//Currently this is the only way to access some of the hidden features
@@ -1125,11 +1122,6 @@ int main(){
 		crayon_memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
 	#endif
 
-	// setup_vmu_icon(MS_options.savefile_details.valid_vmu_screens);
-
-	//Sets the VMU LCD icon (Apparently this is automatic if your savefile is an ICONDATA.VMS)
-	// setup_vmu_icon(MS_options.savefile_details.valid_vmu_screens);
-	
 	//I like to put the font's paletets at the very back of the system (But really, its probably better standard to go first)
 	// crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 63, "/BIOS/BIOS_font.dtex");
 	crayon_memory_load_prop_font_sheet(&Tahoma_font, &Tahoma_P, 62, "/Minesweeper/Tahoma_font.dtex");
@@ -2061,19 +2053,19 @@ int main(){
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
 			//DEBUG
-			char snum[32];
-			sprintf(snum, "Valid: VMUs %d\n", MS_options.savefile_details.valid_vmus);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
-			sprintf(snum, "Screens: %d\n", MS_options.savefile_details.valid_vmu_screens);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 12, 50, 1, 1, 62, snum);
-			sprintf(snum, "New saves: %d\n", MS_options.savefile_details.valid_saves);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 24, 50, 1, 1, 62, snum);
-			sprintf(snum, "Old saves: %d\n", old_saves);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 36, 50, 1, 1, 62, snum);
-			sprintf(snum, "P: %d, S: %d\n", MS_options.savefile_details.savefile_port, MS_options.savefile_details.savefile_slot);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
-			sprintf(snum, "Htz: %d, VGA: %d\n", MS_options.htz, vga_debug);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
+			// char snum[32];
+			// sprintf(snum, "Valid: VMUs %d\n", MS_options.savefile_details.valid_vmus);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
+			// sprintf(snum, "Screens: %d\n", MS_options.savefile_details.valid_vmu_screens);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 12, 50, 1, 1, 62, snum);
+			// sprintf(snum, "New saves: %d\n", MS_options.savefile_details.valid_saves);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 24, 50, 1, 1, 62, snum);
+			// sprintf(snum, "Old saves: %d\n", old_saves);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 36, 50, 1, 1, 62, snum);
+			// sprintf(snum, "P: %d, S: %d\n", MS_options.savefile_details.savefile_port, MS_options.savefile_details.savefile_slot);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
+			// sprintf(snum, "Htz: %d, VGA: %d\n", MS_options.htz, vga_debug);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
 
 			//Draw windows assets
 			for(iter = 0; iter < os.num_assets; iter++){
