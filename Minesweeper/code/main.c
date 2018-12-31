@@ -912,6 +912,8 @@ pvr_init_params_t pvr_params = {
 		0
 };
 
+#define LOAD_CODE_DEBUG 1
+
 int main(){
 	MinesweeperGrid_t MS_grid;	//Contains a bunch of variables related to the grid
 	MinesweeperOptions_t MS_options;	//Contains a bunch of vars related to options
@@ -922,6 +924,8 @@ int main(){
 	MS_grid.game_live = 0;
 	MS_options.sd_present = 0;
 	MS_options.focus = 0;
+
+	//These might be useful to set? But nothing changes if I use them or not...
 
 	#if CRAYON_SD_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
@@ -942,8 +946,21 @@ int main(){
 
 	crayon_savefile_load_icon(&MS_options.savefile_details, "/Save/IMAGE.BIN", "/Save/PALLETTE.BIN");
 
+	//setup_vmu_icon_load() is bugged, for now we'll just use a copy of its contents
 	uint8_t * vmu_lcd_icon = NULL;
-	setup_vmu_icon_load(vmu_lcd_icon, "/Save/LCD.bin");
+	#if LOAD_CODE_DEBUG == 0
+		int16_t load_res = setup_vmu_icon_load(vmu_lcd_icon, "/Save/LCD.bin");
+	#else
+		int16_t load_res = 0;
+		vmu_lcd_icon = (uint8_t *) malloc(6 * 32);	//6 * 32 because we have 48/32 1bpp so we need that / 8 bytes
+		FILE * file_lcd_icon = fopen("/Save/LCD.bin", "rb");
+		if(!file_lcd_icon){load_res = -1;}
+		load_res = fread(vmu_lcd_icon, 192, 1, file_lcd_icon);	//If the icon is right, it *must* byt 192 bytes
+		fclose(file_lcd_icon);
+	#endif
+
+	//This should be zero, but it isn't...
+	int debug_first_row = vmu_lcd_icon[0] + vmu_lcd_icon[1] + vmu_lcd_icon[2] + vmu_lcd_icon[3] + vmu_lcd_icon[4] + vmu_lcd_icon[5];
 
 	fs_romdisk_unmount("/SaveFile");
 
@@ -986,7 +1003,7 @@ int main(){
 		MS_options.language = !!(MS_options.savefile.options & (1 << 3));
 		MS_options.htz = !!(MS_options.savefile.options & (1 << 4));
 	}
-	else{	//No VMU isn't present or no savefile yet
+	else{	//No valid VMU isn't present or no savefile yet
 		//If we don't already have a savefile, choose a VMU
 		if(MS_options.savefile_details.valid_vmus){
 			for(iter = 0; iter <= 3; iter++){
@@ -1019,10 +1036,13 @@ int main(){
 		MS_options.savefile.pref_height = 16;
 		MS_options.savefile.pref_mines = 99;
 
-		//Make a new savefile if one isn't present
-			//If we have a valid vmu, port and slot won't be minus 1
-			//But if we don't they will be minus 1 and the save won't be made
-		crayon_savefile_save(&MS_options.savefile_details);
+		if(MS_options.savefile_details.valid_vmus){
+			//Make a new savefile if one isn't present
+				//If we have a valid vmu, port and slot won't be minus 1
+				//But if we don't they will be minus 1 and the save won't be made
+			crayon_savefile_save(&MS_options.savefile_details);
+			MS_options.savefile_details.valid_saves = crayon_savefile_get_valid_saves(&MS_options.savefile_details);
+		}
 	}
 
 	//Currently this is the only way to access some of the hidden features
@@ -2054,18 +2074,24 @@ int main(){
 
 			//DEBUG
 			// char snum[32];
-			// sprintf(snum, "Valid: VMUs %d\n", MS_options.savefile_details.valid_vmus);
-			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
-			// sprintf(snum, "Screens: %d\n", MS_options.savefile_details.valid_vmu_screens);
+			// sprintf(snum, "First row sum: %hhu\n", debug_first_row);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);	//Not zero...
+			// sprintf(snum, "Load res: %d\n", load_res);
 			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 12, 50, 1, 1, 62, snum);
-			// sprintf(snum, "New saves: %d\n", MS_options.savefile_details.valid_saves);
-			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 24, 50, 1, 1, 62, snum);
-			// sprintf(snum, "Old saves: %d\n", old_saves);
-			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 36, 50, 1, 1, 62, snum);
-			// sprintf(snum, "P: %d, S: %d\n", MS_options.savefile_details.savefile_port, MS_options.savefile_details.savefile_slot);
-			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
-			// sprintf(snum, "Htz: %d, VGA: %d\n", MS_options.htz, vga_debug);
-			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
+
+			char snum[32];
+			sprintf(snum, "Valid VMUs: %d\n", MS_options.savefile_details.valid_vmus);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
+			sprintf(snum, "Screens: %d\n", MS_options.savefile_details.valid_vmu_screens);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 12, 50, 1, 1, 62, snum);
+			sprintf(snum, "New saves: %d\n", MS_options.savefile_details.valid_saves);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 24, 50, 1, 1, 62, snum);
+			sprintf(snum, "Old saves: %d\n", old_saves);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 36, 50, 1, 1, 62, snum);
+			sprintf(snum, "P: %d, S: %d\n", MS_options.savefile_details.savefile_port, MS_options.savefile_details.savefile_slot);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
+			sprintf(snum, "Htz: %d, VGA: %d\n", MS_options.htz, vga_debug);
+			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
 
 			//Draw windows assets
 			for(iter = 0; iter < os.num_assets; iter++){

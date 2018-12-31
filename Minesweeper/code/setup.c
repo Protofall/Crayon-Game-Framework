@@ -551,49 +551,50 @@ uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details)
 		}
 	}
 
-	old_savefile_details.valid_vmus = old_valid_saves;	//Can't rely on the init version due to app_id being too long. This will get the job done when saving
-	strcpy(old_savefile_details.app_id, "Proto_Minesweep\0");	//Change over to new app_id
+	//If we have old saves
+	if(old_valid_saves){
+		old_savefile_details.valid_vmus = old_valid_saves;	//Can't rely on the init version due to app_id being too long. This will get the job done when saving
+		strcpy(old_savefile_details.app_id, "Proto_Minesweep\0");	//Change over to new app_id
 
-	//If present then it will update them to the new format
-	for(i = 0; i <= 3; i++){
-		for(j = 1; j <= 2; j++){
-			//Check if this device contains an old-format savefile
-			if(crayon_savefile_get_vmu_bit(old_valid_saves, i, j)){
-				old_savefile_details.savefile_port = i;
-				old_savefile_details.savefile_slot = j;
+		//If present then it will update them to the new format
+		for(i = 0; i <= 3; i++){
+			for(j = 1; j <= 2; j++){
+				//Check if this device contains an old-format savefile
+				if(crayon_savefile_get_vmu_bit(old_valid_saves, i, j)){
+					old_savefile_details.savefile_port = i;
+					old_savefile_details.savefile_slot = j;
 
-				//This one is done in the load function
-				// if(crayon_savefile_check_for_device(old_savefile_details.savefile_port, old_savefile_details.savefile_slot, MAPLE_FUNC_MEMCARD)){
-					// continue;
-				// }
-
-				if(crayon_savefile_load(&old_savefile_details)){
-					continue;
+					//Note: This doesn't check the app_id (Which is good here)
+					if(crayon_savefile_load(&old_savefile_details)){
+						continue;
+					}
+					crayon_savefile_save(&old_savefile_details);
 				}
-				crayon_savefile_save(&old_savefile_details);
 			}
 		}
-	}
 
-	new_savefile_details->valid_vmus = crayon_savefile_get_valid_vmus(new_savefile_details);	//Might be fine, but its safer to update
-	new_savefile_details->valid_saves = crayon_savefile_get_valid_saves(new_savefile_details);	//Update the list
+		new_savefile_details->valid_vmus = crayon_savefile_get_valid_vmus(new_savefile_details);	//Might be fine, but its safer to update
+		new_savefile_details->valid_saves = crayon_savefile_get_valid_saves(new_savefile_details);	//Update the list
+	}
 
 	return old_valid_saves;
 }
 
-void setup_vmu_icon_load(uint8_t * vmu_lcd_icon, char * icon_path){
+//Some issue here
+int16_t setup_vmu_icon_load(uint8_t * vmu_lcd_icon, char * icon_path){
 	vmu_lcd_icon = (uint8_t *) malloc(6 * 32);	//6 * 32 because we have 48/32 1bpp so we need that / 8 bytes
 	FILE * file_lcd_icon = fopen(icon_path, "rb");
+	if(!file_lcd_icon){return -1;}
 
 	// fseek(file_lcd_icon, 0, SEEK_END); // seek to end of file
 	// int size = ftell(file_lcd_icon); // get current file pointer
 	// fseek(file_lcd_icon, 0, SEEK_SET); // seek back to beginning of file
 	// fread(vmu_lcd_icon, size, 1, file_lcd_icon);
 
-	fread(vmu_lcd_icon, 192, 1, file_lcd_icon);	//If the icon is right, it *must* byt 192 bytes
+	size_t res = fread(vmu_lcd_icon, 192, 1, file_lcd_icon);	//If the icon is right, it *must* byt 192 bytes
 	fclose(file_lcd_icon);
 
-	return;
+	return res;
 }
 
 void setup_vmu_icon_apply(uint8_t * vmu_lcd_icon, uint8_t valid_vmu_screens){
