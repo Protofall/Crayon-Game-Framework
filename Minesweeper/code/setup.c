@@ -196,9 +196,9 @@ void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, crayon_palet
 		os->assets[i]->rotations[0] = 0;
 		os->assets[i]->colours[0] = 0;
 		setup_pos_lookup_table(os, sys, i, sd);
-		graphics_frame_coordinates(os->assets[i]->animation, os->assets[i]->frame_coord_map + 0, os->assets[i]->frame_coord_map + 1, 0);
+		crayon_graphics_frame_coordinates(os->assets[i]->animation, os->assets[i]->frame_coord_map + 0, os->assets[i]->frame_coord_map + 1, 0);
 		if(os->assets[i]->animation->animation_frames > 1){
-			graphics_frame_coordinates(os->assets[i]->animation, os->assets[i]->frame_coord_map + 2, os->assets[i]->frame_coord_map + 3, 1);
+			crayon_graphics_frame_coordinates(os->assets[i]->animation, os->assets[i]->frame_coord_map + 2, os->assets[i]->frame_coord_map + 3, 1);
 		}
 		if(lang && os->assets[i]->animation->animation_frames > 1){
 			os->assets[i]->frame_coord_keys[0] = 1;
@@ -227,7 +227,7 @@ void setup_OS_assets_icons(MinesweeperOS_t *os, crayon_spritesheet_t *Icons, cra
 	for(i = 0; i < Icons->spritesheet_animation_count; i++){
 		if(!strcmp(Icons->spritesheet_animation_array[i].animation_name, "sd")){
 			crayon_memory_set_sprite_array(&os->sd, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->spritesheet_animation_array[i], Icons_P);
-			graphics_frame_coordinates(os->sd.animation, os->sd.frame_coord_map, os->sd.frame_coord_map + 1, 0);
+			crayon_graphics_frame_coordinates(os->sd.animation, os->sd.frame_coord_map, os->sd.frame_coord_map + 1, 0);
 			os->sd.draw_z[0] = 21;
 			os->sd.scales[0] = 1;
 			os->sd.scales[1] = 1;
@@ -246,7 +246,7 @@ void setup_OS_assets_icons(MinesweeperOS_t *os, crayon_spritesheet_t *Icons, cra
 		}
 		if(!strcmp(Icons->spritesheet_animation_array[i].animation_name, "regionIcons")){
 			crayon_memory_set_sprite_array(&os->region, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->spritesheet_animation_array[i], Icons_P);
-			graphics_frame_coordinates(os->region.animation, os->region.frame_coord_map, os->region.frame_coord_map + 1, region);
+			crayon_graphics_frame_coordinates(os->region.animation, os->region.frame_coord_map, os->region.frame_coord_map + 1, region);
 			os->region.draw_z[0] = 21;
 			os->region.scales[0] = 1;
 			os->region.scales[1] = 1;
@@ -580,18 +580,12 @@ uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details)
 	return old_valid_saves;
 }
 
-//Some issue here
-int16_t setup_vmu_icon_load(uint8_t * vmu_lcd_icon, char * icon_path){
-	vmu_lcd_icon = (uint8_t *) malloc(6 * 32);	//6 * 32 because we have 48/32 1bpp so we need that / 8 bytes
+//We use a double pointer because we want to modify the pointer itself with malloc
+int16_t setup_vmu_icon_load(uint8_t ** vmu_lcd_icon, char * icon_path){
+	*vmu_lcd_icon = (uint8_t *) malloc(6 * 32);	//6 * 32 because we have 48/32 1bpp so we need that / 8 bytes
 	FILE * file_lcd_icon = fopen(icon_path, "rb");
 	if(!file_lcd_icon){return -1;}
-
-	// fseek(file_lcd_icon, 0, SEEK_END); // seek to end of file
-	// int size = ftell(file_lcd_icon); // get current file pointer
-	// fseek(file_lcd_icon, 0, SEEK_SET); // seek back to beginning of file
-	// fread(vmu_lcd_icon, size, 1, file_lcd_icon);
-
-	size_t res = fread(vmu_lcd_icon, 192, 1, file_lcd_icon);	//If the icon is right, it *must* byt 192 bytes
+	size_t res = fread(*vmu_lcd_icon, 192, 1, file_lcd_icon);	//If the icon is right, it *must* byt 192 bytes
 	fclose(file_lcd_icon);
 
 	return res;

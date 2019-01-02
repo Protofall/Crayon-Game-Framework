@@ -9,10 +9,10 @@
 #include <math.h>
 
 //Sets a palette for a spritesheet
-extern int graphics_setup_palette(const crayon_palette_t *cp);
+extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
 
 //Give an animation struct, frame, coordinates and frame and it will populate the coordinates
-extern void graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x,
+extern void crayon_graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x,
 	uint16_t *frame_y, uint8_t frame);
 
 
@@ -20,18 +20,18 @@ extern void graphics_frame_coordinates(const struct crayon_animation *anim, uint
 
 
 //Queue a colour/alpha poly to be rendered. I recomment the array version, but for simple implementation this is good
-extern void graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z,
-	uint16_t dim_x, uint16_t dim_y, uint32_t colour, uint8_t opaque);
+extern void crayon_graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z,
+	uint16_t dim_x, uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode);
 
 //Draw all coloured polys in the struct's list
-extern void graphics_draw_untextured_array(crayon_untextured_array_t *poly_array);
+extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *poly_array);
 
 
 //------------------Drawing Spritesheets------------------//
 
 
 //Queue a texture to be rendered (If RGB565 or ARGB4444 then paletteNumber is never read)
-extern uint8_t graphics_draw_sprite(const struct crayon_spritesheet *ss,
+extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 	const struct crayon_animation *anim, float draw_x, float draw_y, float draw_z,
 	float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
 	uint8_t paletteNumber);
@@ -47,11 +47,11 @@ extern uint8_t crayon_graphics_draw_polys(crayon_textured_array_t *sprite_array,
 
 
 //Draw string using mono font (string must be null-terminated)
-extern uint8_t graphics_draw_text_mono(const crayon_font_mono_t *fm, uint8_t poly_list_mode, float draw_x,
+extern uint8_t crayon_graphics_draw_text_mono(const crayon_font_mono_t *fm, uint8_t poly_list_mode, float draw_x,
 	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string);
 
 //Draw string using propertional font (string must be null-terminated)
-extern uint8_t graphics_draw_text_prop(const crayon_font_prop_t *fp, uint8_t poly_list_mode, float draw_x,
+extern uint8_t crayon_graphics_draw_text_prop(const crayon_font_prop_t *fp, uint8_t poly_list_mode, float draw_x,
 	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string);
 
 //This gets the drawn-length of a string using a certain font

@@ -153,15 +153,15 @@ void custom_poly_2000_topbar(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x, 
 void custom_poly_2000_boarder(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x, int16_t dim_y){
 
 	//Centre colour
-	graphics_draw_untextured_poly(x + 2, y + 2, z + 4, dim_x - 4, dim_y - 4, (255 << 24) + (212 << 16) + (208 << 8) + 200, 1);
+	crayon_graphics_draw_untextured_poly(x + 2, y + 2, z + 4, dim_x - 4, dim_y - 4, (255 << 24) + (212 << 16) + (208 << 8) + 200, 1);
 
 	//White + dark grey
-	graphics_draw_untextured_poly(x + 1, y + 1, z + 3, dim_x - 3, dim_y - 3, (255 << 24) + (255 << 16) + (255 << 8) + 255, 1);
-	graphics_draw_untextured_poly(x + 1, y + 1, z + 2, dim_x - 2, dim_y - 2, (255 << 24) + (128 << 16) + (128 << 8) + 128, 1);
+	crayon_graphics_draw_untextured_poly(x + 1, y + 1, z + 3, dim_x - 3, dim_y - 3, (255 << 24) + (255 << 16) + (255 << 8) + 255, 1);
+	crayon_graphics_draw_untextured_poly(x + 1, y + 1, z + 2, dim_x - 2, dim_y - 2, (255 << 24) + (128 << 16) + (128 << 8) + 128, 1);
 
 	//The light grey and black first boarder
-	graphics_draw_untextured_poly(x, y, z + 1, dim_x - 1, dim_y - 1, (255 << 24) + (212 << 16) + (208 << 8) + 200, 1);
-	graphics_draw_untextured_poly(x, y, z, dim_x, dim_y, (255 << 24), 1);
+	crayon_graphics_draw_untextured_poly(x, y, z + 1, dim_x - 1, dim_y - 1, (255 << 24) + (212 << 16) + (208 << 8) + 200, 1);
+	crayon_graphics_draw_untextured_poly(x, y, z, dim_x, dim_y, (255 << 24), 1);
 
 	return;
 }
@@ -169,30 +169,30 @@ void custom_poly_2000_boarder(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x,
 void custom_poly_2000_text_boarder(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x, int16_t dim_y){
 	
 	//Centre colour
-	graphics_draw_untextured_poly(x + 2, y + 2, z + 4, dim_x - 4, dim_y - 4, (255 << 24) + (255 << 16) + (255 << 8) + 255, 1);
+	crayon_graphics_draw_untextured_poly(x + 2, y + 2, z + 4, dim_x - 4, dim_y - 4, (255 << 24) + (255 << 16) + (255 << 8) + 255, 1);
 
 	//black + light grey
-	graphics_draw_untextured_poly(x + 1, y + 1, z + 3, dim_x - 3, dim_y - 3, (255 << 24), 1);
-	graphics_draw_untextured_poly(x + 1, y + 1, z + 2, dim_x - 2, dim_y - 2, (255 << 24) + (212 << 16) + (208 << 8) + 200, 1);
+	crayon_graphics_draw_untextured_poly(x + 1, y + 1, z + 3, dim_x - 3, dim_y - 3, (255 << 24), 1);
+	crayon_graphics_draw_untextured_poly(x + 1, y + 1, z + 2, dim_x - 2, dim_y - 2, (255 << 24) + (212 << 16) + (208 << 8) + 200, 1);
 
 	//The dark grey and white first boarder
-	graphics_draw_untextured_poly(x, y, z + 1, dim_x - 1, dim_y - 1, (255 << 24) + (128 << 16) + (128 << 8) + 128, 1);
-	graphics_draw_untextured_poly(x, y, z, dim_x, dim_y, (255 << 24) + (255 << 16) + (255 << 8) + 255, 1);
+	crayon_graphics_draw_untextured_poly(x, y, z + 1, dim_x - 1, dim_y - 1, (255 << 24) + (128 << 16) + (128 << 8) + 128, 1);
+	crayon_graphics_draw_untextured_poly(x, y, z, dim_x, dim_y, (255 << 24) + (255 << 16) + (255 << 8) + 255, 1);
 	return;
 }
 
 void custom_poly_XP_boarder(uint16_t x, uint16_t y, uint8_t z, uint16_t dim_x, int16_t dim_y){
 
 	//Centre colour
-	graphics_draw_untextured_poly(x + 2, y + 2, z + 4, dim_x - 4, dim_y - 4, (255 << 24) + (236 << 16) + (233 << 8) + 216, 1);
+	crayon_graphics_draw_untextured_poly(x + 2, y + 2, z + 4, dim_x - 4, dim_y - 4, (255 << 24) + (236 << 16) + (233 << 8) + 216, 1);
 
 	//White + yellowy grey
-	graphics_draw_untextured_poly(x + 1, y + 1, z + 3, dim_x - 3, dim_y - 3, (255 << 24) + (255 << 16) + (255 << 8) + 255, 1);
-	graphics_draw_untextured_poly(x + 1, y + 1, z + 2, dim_x - 2, dim_y - 2, (255 << 24) + (172 << 16) + (168 << 8) + 153, 1);
+	crayon_graphics_draw_untextured_poly(x + 1, y + 1, z + 3, dim_x - 3, dim_y - 3, (255 << 24) + (255 << 16) + (255 << 8) + 255, 1);
+	crayon_graphics_draw_untextured_poly(x + 1, y + 1, z + 2, dim_x - 2, dim_y - 2, (255 << 24) + (172 << 16) + (168 << 8) + 153, 1);
 
 	//The light yellow and murky grey first boarder
-	graphics_draw_untextured_poly(x, y, z + 1, dim_x - 1, dim_y - 1, (255 << 24) + (241 << 16) + (239 << 8) + 226, 1);
-	graphics_draw_untextured_poly(x, y, z, dim_x, dim_y, (255 << 24) + (113 << 16) + (111 << 8) + 100, 1);
+	crayon_graphics_draw_untextured_poly(x, y, z + 1, dim_x - 1, dim_y - 1, (255 << 24) + (241 << 16) + (239 << 8) + 226, 1);
+	crayon_graphics_draw_untextured_poly(x, y, z, dim_x, dim_y, (255 << 24) + (113 << 16) + (111 << 8) + 100, 1);
 
 	return;
 }

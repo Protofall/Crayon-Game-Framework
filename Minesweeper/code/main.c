@@ -877,7 +877,7 @@ void language_swap(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, Min
 		//Swap out grid frame coords
 		uint8_t i;
 		for(i = 0; i < grid->draw_grid.unique_frames; i++){
-			graphics_frame_coordinates(grid->draw_grid.animation, grid->draw_grid.frame_coord_map + (2 * i), grid->draw_grid.frame_coord_map + (2 * i) + 1, i);
+			crayon_graphics_frame_coordinates(grid->draw_grid.animation, grid->draw_grid.frame_coord_map + (2 * i), grid->draw_grid.frame_coord_map + (2 * i) + 1, i);
 		}
 		//Use alternative frame coords for OS assets
 		for(i = 0; i < os->num_assets; i++){
@@ -912,8 +912,6 @@ pvr_init_params_t pvr_params = {
 		0
 };
 
-#define LOAD_CODE_DEBUG 1
-
 int main(){
 	MinesweeperGrid_t MS_grid;	//Contains a bunch of variables related to the grid
 	MinesweeperOptions_t MS_options;	//Contains a bunch of vars related to options
@@ -946,21 +944,8 @@ int main(){
 
 	crayon_savefile_load_icon(&MS_options.savefile_details, "/Save/IMAGE.BIN", "/Save/PALLETTE.BIN");
 
-	//setup_vmu_icon_load() is bugged, for now we'll just use a copy of its contents
 	uint8_t * vmu_lcd_icon = NULL;
-	#if LOAD_CODE_DEBUG == 0
-		int16_t load_res = setup_vmu_icon_load(vmu_lcd_icon, "/Save/LCD.bin");
-	#else
-		int16_t load_res = 0;
-		vmu_lcd_icon = (uint8_t *) malloc(6 * 32);	//6 * 32 because we have 48/32 1bpp so we need that / 8 bytes
-		FILE * file_lcd_icon = fopen("/Save/LCD.bin", "rb");
-		if(!file_lcd_icon){load_res = -1;}
-		load_res = fread(vmu_lcd_icon, 192, 1, file_lcd_icon);	//If the icon is right, it *must* byt 192 bytes
-		fclose(file_lcd_icon);
-	#endif
-
-	//This should be zero, but it isn't...
-	int debug_first_row = vmu_lcd_icon[0] + vmu_lcd_icon[1] + vmu_lcd_icon[2] + vmu_lcd_icon[3] + vmu_lcd_icon[4] + vmu_lcd_icon[5];
+	setup_vmu_icon_load(&vmu_lcd_icon, "/Save/LCD.bin");
 
 	fs_romdisk_unmount("/SaveFile");
 
@@ -974,7 +959,7 @@ int main(){
 	setup_vmu_icon_apply(vmu_lcd_icon, MS_options.savefile_details.valid_vmu_screens);
 
 	//Pre 1.2.0 savefiles has an incorrect app_id, this function updates older save files
-	uint8_t old_saves = setup_update_old_saves(&MS_options.savefile_details);
+	setup_update_old_saves(&MS_options.savefile_details);
 	
 	uint8_t first_time = !MS_options.savefile_details.valid_saves;
 
@@ -1065,10 +1050,10 @@ int main(){
 		region = 0;	//Invalid region
 	}
 
-	uint8_t vga_debug = 0;
+	// uint8_t vga_debug = 0;
 	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
 		vid_set_mode(DM_640x480_VGA, PM_RGB565);
-		vga_debug = 1;
+		// vga_debug = 1;
 	}
 	else{	//Else its RGB. This handles composite, S-video, SCART, etc
 		if(first_time && 0){	//REMEMBER TO CHANGE THIS IN THE BIOS UPDATE (Currently disabled due to already doing the options before)
@@ -1255,8 +1240,8 @@ int main(){
 	indented_tiles.flips[0] = 0;
 	indented_tiles.rotations[0] = 0;
 	indented_tiles.colours[0] = 0;
-	graphics_frame_coordinates(indented_tiles.animation, indented_tiles.frame_coord_map + 0, indented_tiles.frame_coord_map + 1, 6);	//Indent question
-	graphics_frame_coordinates(indented_tiles.animation, indented_tiles.frame_coord_map + 2, indented_tiles.frame_coord_map + 3, 7);	//Indent blank
+	crayon_graphics_frame_coordinates(indented_tiles.animation, indented_tiles.frame_coord_map + 0, indented_tiles.frame_coord_map + 1, 6);	//Indent question
+	crayon_graphics_frame_coordinates(indented_tiles.animation, indented_tiles.frame_coord_map + 2, indented_tiles.frame_coord_map + 3, 7);	//Indent blank
 
 	//Setting defaults for the grid (These won't ever change again)
 	MS_grid.draw_grid.draw_z[0] = 17;
@@ -1266,7 +1251,7 @@ int main(){
 	MS_grid.draw_grid.rotations[0] = 0;
 	MS_grid.draw_grid.colours[0] = 0;
 	for(iter = 0; iter < MS_grid.draw_grid.unique_frames; iter++){
-		graphics_frame_coordinates(MS_grid.draw_grid.animation, MS_grid.draw_grid.frame_coord_map + (2 * iter),
+		crayon_graphics_frame_coordinates(MS_grid.draw_grid.animation, MS_grid.draw_grid.frame_coord_map + (2 * iter),
 			MS_grid.draw_grid.frame_coord_map + (2 * iter) + 1, iter);
 	}
 
@@ -1309,8 +1294,8 @@ int main(){
 	devices.draw_z[0] = 31;
 	devices.frame_coord_keys[0] = 0;
 	devices.frame_coord_keys[1] = 1;
-	graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 0, devices.frame_coord_map + 1, 0);
-	graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 2, devices.frame_coord_map + 3, 1);
+	crayon_graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 0, devices.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 2, devices.frame_coord_map + 3, 1);
 
 	//Dot for legend numbers (5 for gamepad and 3 for mouse legend, 1 for face, 11 in the legend)
 	crayon_textured_array_t legend_dot;
@@ -1375,7 +1360,7 @@ int main(){
 
 	legend_dot.draw_z[0] = 33;
 	legend_dot.frame_coord_keys[0] = 0;
-	graphics_frame_coordinates(legend_dot.animation, legend_dot.frame_coord_map + 0, legend_dot.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(legend_dot.animation, legend_dot.frame_coord_map + 0, legend_dot.frame_coord_map + 1, 0);
 
 	//Controller swirl
 	crayon_textured_array_t cont_swirl;
@@ -1389,7 +1374,7 @@ int main(){
 	cont_swirl.positions[1] = devices.positions[1] + 10;
 	cont_swirl.draw_z[0] = 32;
 	cont_swirl.frame_coord_keys[0] = 0;
-	graphics_frame_coordinates(cont_swirl.animation, cont_swirl.frame_coord_map + 0, cont_swirl.frame_coord_map + 1, region);
+	crayon_graphics_frame_coordinates(cont_swirl.animation, cont_swirl.frame_coord_map + 0, cont_swirl.frame_coord_map + 1, region);
 
 	crayon_textured_array_t digit_display;
 	crayon_memory_set_sprite_array(&digit_display, 6, 11, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[1], &Board_P);
@@ -1411,17 +1396,17 @@ int main(){
 	digit_display.positions[10] = digit_display.positions[8] + digit_display.animation->animation_frame_width;
 	digit_display.positions[11] = digit_display.positions[1];
 	digit_display.draw_z[0] = 17;
-	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 0, digit_display.frame_coord_map + 1, 0);
-	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 2, digit_display.frame_coord_map + 3, 1);
-	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 4, digit_display.frame_coord_map + 5, 2);
-	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 6, digit_display.frame_coord_map + 7, 3);
-	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 8, digit_display.frame_coord_map + 9, 4);
-	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 10, digit_display.frame_coord_map + 11, 5);
-	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 12, digit_display.frame_coord_map + 13, 6);
-	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 14, digit_display.frame_coord_map + 15, 7);
-	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 16, digit_display.frame_coord_map + 17, 8);
-	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 18, digit_display.frame_coord_map + 19, 9);
-	graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 20, digit_display.frame_coord_map + 21, 10);
+	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 0, digit_display.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 2, digit_display.frame_coord_map + 3, 1);
+	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 4, digit_display.frame_coord_map + 5, 2);
+	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 6, digit_display.frame_coord_map + 7, 3);
+	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 8, digit_display.frame_coord_map + 9, 4);
+	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 10, digit_display.frame_coord_map + 11, 5);
+	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 12, digit_display.frame_coord_map + 13, 6);
+	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 14, digit_display.frame_coord_map + 15, 7);
+	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 16, digit_display.frame_coord_map + 17, 8);
+	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 18, digit_display.frame_coord_map + 19, 9);
+	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 20, digit_display.frame_coord_map + 21, 10);
 
 	crayon_textured_array_t face;
 	crayon_memory_set_sprite_array(&face, 1, 5, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[0], &Board_P);
@@ -1434,11 +1419,11 @@ int main(){
 	face.positions[1] = 64;
 	face.draw_z[0] = 16;
 	face.frame_coord_keys[0] = 0;	//Neutral face
-	graphics_frame_coordinates(face.animation, face.frame_coord_map + 0, face.frame_coord_map + 1, 0);
-	graphics_frame_coordinates(face.animation, face.frame_coord_map + 2, face.frame_coord_map + 3, 1);
-	graphics_frame_coordinates(face.animation, face.frame_coord_map + 4, face.frame_coord_map + 5, 2);
-	graphics_frame_coordinates(face.animation, face.frame_coord_map + 6, face.frame_coord_map + 7, 3);
-	graphics_frame_coordinates(face.animation, face.frame_coord_map + 8, face.frame_coord_map + 9, 4);
+	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 0, face.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 2, face.frame_coord_map + 3, 1);
+	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 4, face.frame_coord_map + 5, 2);
+	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 6, face.frame_coord_map + 7, 3);
+	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 8, face.frame_coord_map + 9, 4);
 
 	setup_keys(&MS_keyboard, &Tahoma_font);
 
@@ -1451,7 +1436,7 @@ int main(){
 	MS_keyboard.mini_buttons.colours[0] = 0;
 	MS_keyboard.mini_buttons.draw_z[0] = 30;
 	MS_keyboard.mini_buttons.frame_coord_keys[0] = 0;
-	graphics_frame_coordinates(MS_keyboard.mini_buttons.animation, MS_keyboard.mini_buttons.frame_coord_map, MS_keyboard.mini_buttons.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(MS_keyboard.mini_buttons.animation, MS_keyboard.mini_buttons.frame_coord_map, MS_keyboard.mini_buttons.frame_coord_map + 1, 0);
 
 	//Medium
 	crayon_memory_set_sprite_array(&MS_keyboard.medium_buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[mediumButton_id], &Windows_P);
@@ -1468,7 +1453,7 @@ int main(){
 	MS_keyboard.medium_buttons.positions[8] = 0;
 	MS_keyboard.medium_buttons.positions[9] = 0;
 
-	graphics_frame_coordinates(MS_keyboard.medium_buttons.animation, MS_keyboard.medium_buttons.frame_coord_map, MS_keyboard.medium_buttons.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(MS_keyboard.medium_buttons.animation, MS_keyboard.medium_buttons.frame_coord_map, MS_keyboard.medium_buttons.frame_coord_map + 1, 0);
 
 	//Space and Enter
 	crayon_memory_set_sprite_array(&MS_keyboard.big_buttons, 2, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[bigButton_id], &Windows_P);
@@ -1479,7 +1464,7 @@ int main(){
 	MS_keyboard.big_buttons.colours[0] = 0;
 	MS_keyboard.big_buttons.draw_z[0] = 30;
 	MS_keyboard.big_buttons.frame_coord_keys[0] = 0;
-	graphics_frame_coordinates(MS_keyboard.big_buttons.animation, MS_keyboard.big_buttons.frame_coord_map, MS_keyboard.big_buttons.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(MS_keyboard.big_buttons.animation, MS_keyboard.big_buttons.frame_coord_map, MS_keyboard.big_buttons.frame_coord_map + 1, 0);
 
 	uint8_t mini_button_width = Windows.spritesheet_animation_array[miniButton_id].animation_frame_width;
 	uint8_t medium_button_width = Windows.spritesheet_animation_array[mediumButton_id].animation_frame_width;
@@ -1576,7 +1561,7 @@ int main(){
 	MS_options.buttons.positions[8] = MS_options.buttons.positions[6];			//Update Grid
 	MS_options.buttons.positions[9] = MS_options.buttons.positions[7] + 30;
 	MS_options.buttons.frame_coord_keys[0] = 0;
-	graphics_frame_coordinates(MS_options.buttons.animation, MS_options.buttons.frame_coord_map, MS_options.buttons.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(MS_options.buttons.animation, MS_options.buttons.frame_coord_map, MS_options.buttons.frame_coord_map + 1, 0);
 
 	//Checkers
 	MS_options.checkers.draw_z[0] = 30;
@@ -1591,8 +1576,8 @@ int main(){
 	MS_options.checkers.positions[3] = MS_options.checkers.positions[1] + 40;
 	MS_options.checkers.frame_coord_keys[0] = MS_options.sound_enabled;
 	MS_options.checkers.frame_coord_keys[1] = MS_options.question_enabled;
-	graphics_frame_coordinates(MS_options.checkers.animation, MS_options.checkers.frame_coord_map, MS_options.checkers.frame_coord_map + 1, 0);
-	graphics_frame_coordinates(MS_options.checkers.animation, MS_options.checkers.frame_coord_map + 2, MS_options.checkers.frame_coord_map + 3, 1);
+	crayon_graphics_frame_coordinates(MS_options.checkers.animation, MS_options.checkers.frame_coord_map, MS_options.checkers.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(MS_options.checkers.animation, MS_options.checkers.frame_coord_map + 2, MS_options.checkers.frame_coord_map + 3, 1);
 
 	//Number_changers
 	MS_options.number_changers.draw_z[0] = 30;
@@ -1608,7 +1593,7 @@ int main(){
 	MS_options.number_changers.positions[4] = MS_options.number_changers.positions[0];	//Mines
 	MS_options.number_changers.positions[5] = MS_options.number_changers.positions[1] + 100;
 	MS_options.number_changers.frame_coord_keys[0] = 0;
-	graphics_frame_coordinates(MS_options.number_changers.animation, MS_options.number_changers.frame_coord_map, MS_options.number_changers.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(MS_options.number_changers.animation, MS_options.number_changers.frame_coord_map, MS_options.number_changers.frame_coord_map + 1, 0);
 
 	MS_grid.logic_grid = NULL;
 	reset_grid(&MS_grid, &MS_options, MS_options.savefile.pref_width, MS_options.savefile.pref_height,
@@ -2018,20 +2003,20 @@ int main(){
 		pvr_scene_begin();
 
 		//Setup the main palette
-		graphics_setup_palette(&Board_P);		//0
-		graphics_setup_palette(&Icons_P);		//1
-		graphics_setup_palette(&Controllers_P);	//2
+		crayon_graphics_setup_palette(&Board_P);		//0
+		crayon_graphics_setup_palette(&Icons_P);		//1
+		crayon_graphics_setup_palette(&Controllers_P);	//2
 		if(!MS_options.operating_system){	//Since it uses palettes and XP doesn't, we do this
-			graphics_setup_palette(&Windows_P);	//1. But since Windows uses 8bpp, this doesn't overlap with "Icons" and "Controllers"
+			crayon_graphics_setup_palette(&Windows_P);	//1. But since Windows uses 8bpp, this doesn't overlap with "Icons" and "Controllers"
 		}
-		graphics_setup_palette(&cursor_red);	//8
-		graphics_setup_palette(&cursor_yellow);	//9
-		graphics_setup_palette(&cursor_green);	//10
-		graphics_setup_palette(&cursor_blue);	//11
+		crayon_graphics_setup_palette(&cursor_red);	//8
+		crayon_graphics_setup_palette(&cursor_yellow);	//9
+		crayon_graphics_setup_palette(&cursor_green);	//10
+		crayon_graphics_setup_palette(&cursor_blue);	//11
 
-		graphics_setup_palette(&White_Tahoma_P);//61
-		graphics_setup_palette(&Tahoma_P);		//62
-		// graphics_setup_palette(&BIOS_P);		//63
+		crayon_graphics_setup_palette(&White_Tahoma_P);//61
+		crayon_graphics_setup_palette(&Tahoma_P);		//62
+		// crayon_graphics_setup_palette(&BIOS_P);		//63
 
 		//Transfer more stuff from this list into either the PT or OP lists
 		pvr_list_begin(PVR_LIST_TR_POLY);
@@ -2046,7 +2031,7 @@ int main(){
 					if(player_active == (1 << 0) || player_active == (1 << 1) || player_active == (1 << 2) || player_active == (1 << 3)){
 						cursor_palette = 1;
 					}
-					graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[0], (int) cursor_position[2 * iter],
+					crayon_graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[0], (int) cursor_position[2 * iter],
 						(int) cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, cursor_palette);
 
 					//Add code for checking if cursor is hovering over a button
@@ -2058,12 +2043,12 @@ int main(){
 			for(iter = 0; iter < 5; iter++){
 				if(menus_selected & (1 << iter)){
 					if(MS_options.operating_system){	//Highlight is more opaque so its more noticable
-						graphics_draw_untextured_poly(MS_options.tabs_x[iter] - 4, os.tabs_y - 3, 19,
-							(MS_options.tabs_width[iter] + 8), 16, 0x80FFFFFF, 0);	//Font is layer 20
+						crayon_graphics_draw_untextured_poly(MS_options.tabs_x[iter] - 4, os.tabs_y - 3, 19,
+							(MS_options.tabs_width[iter] + 8), 16, 0x80FFFFFF, PVR_LIST_TR_POLY);	//Font is layer 20
 					}
 					else{
-						graphics_draw_untextured_poly(MS_options.tabs_x[iter] - 4, os.tabs_y - 3, 19,
-							(MS_options.tabs_width[iter] + 8), 16, 0x40FFFFFF, 0);	//Font is layer 20
+						crayon_graphics_draw_untextured_poly(MS_options.tabs_x[iter] - 4, os.tabs_y - 3, 19,
+							(MS_options.tabs_width[iter] + 8), 16, 0x40FFFFFF, PVR_LIST_TR_POLY);	//Font is layer 20
 					}
 				}
 			}
@@ -2074,24 +2059,8 @@ int main(){
 
 			//DEBUG
 			// char snum[32];
-			// sprintf(snum, "First row sum: %hhu\n", debug_first_row);
-			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);	//Not zero...
-			// sprintf(snum, "Load res: %d\n", load_res);
-			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 12, 50, 1, 1, 62, snum);
-
-			char snum[32];
-			sprintf(snum, "Valid VMUs: %d\n", MS_options.savefile_details.valid_vmus);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
-			sprintf(snum, "Screens: %d\n", MS_options.savefile_details.valid_vmu_screens);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 12, 50, 1, 1, 62, snum);
-			sprintf(snum, "New saves: %d\n", MS_options.savefile_details.valid_saves);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 24, 50, 1, 1, 62, snum);
-			sprintf(snum, "Old saves: %d\n", old_saves);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 36, 50, 1, 1, 62, snum);
-			sprintf(snum, "P: %d, S: %d\n", MS_options.savefile_details.savefile_port, MS_options.savefile_details.savefile_slot);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
-			sprintf(snum, "Htz: %d, VGA: %d\n", MS_options.htz, vga_debug);
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
+			// sprintf(snum, "Htz: %d, VGA: %d\n", MS_options.htz, vga_debug);
+			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
 
 			//Draw windows assets
 			for(iter = 0; iter < os.num_assets; iter++){
@@ -2106,11 +2075,11 @@ int main(){
 				crayon_graphics_draw_sprites(&os.sd, PVR_LIST_PT_POLY);
 			}
 
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[0], os.tabs_y, 20, 1, 1, 62, "Game\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[1], os.tabs_y, 20, 1, 1, 62, "Options\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[2], os.tabs_y, 20, 1, 1, 62, "Best Times\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[3], os.tabs_y, 20, 1, 1, 62, "Controls\0");
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[4], os.tabs_y, 20, 1, 1, 62, "About\0");
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[0], os.tabs_y, 20, 1, 1, 62, "Game\0");
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[1], os.tabs_y, 20, 1, 1, 62, "Options\0");
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[2], os.tabs_y, 20, 1, 1, 62, "Best Times\0");
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[3], os.tabs_y, 20, 1, 1, 62, "Controls\0");
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.tabs_x[4], os.tabs_y, 20, 1, 1, 62, "About\0");
 
 			//Updating the time in the bottom right
 			if(hour != time_struct->tm_hour || minute != time_struct->tm_min){
@@ -2150,30 +2119,30 @@ int main(){
 			}
 
 			//XP uses another palette (White text version)
-			graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, os.clock_x, os.clock_y, 20, 1, 1, os.clock_palette->palette_id, time_buffer);
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, os.clock_x, os.clock_y, 20, 1, 1, os.clock_palette->palette_id, time_buffer);
 
 			if(MS_options.focus == 1){
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 18, MS_keyboard.keyboard_start_y - 80, 31, 1, 1, Tahoma_P.palette_id, "You have the fastest time for\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 18, MS_keyboard.keyboard_start_y - 80, 31, 1, 1, Tahoma_P.palette_id, "You have the fastest time for\0");
 				if(MS_keyboard.record_index == 0){
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 23, MS_keyboard.keyboard_start_y - 68, 31, 1, 1, Tahoma_P.palette_id, "Single Player Beginner level\0");
+					crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 23, MS_keyboard.keyboard_start_y - 68, 31, 1, 1, Tahoma_P.palette_id, "Single Player Beginner level\0");
 				}
 				else if(MS_keyboard.record_index == 1){
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 13, MS_keyboard.keyboard_start_y - 68, 31, 1, 1, Tahoma_P.palette_id, "Single Player Intermediate level\0");
+					crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 13, MS_keyboard.keyboard_start_y - 68, 31, 1, 1, Tahoma_P.palette_id, "Single Player Intermediate level\0");
 				}
 				else if(MS_keyboard.record_index == 2){
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 28, MS_keyboard.keyboard_start_y - 68, 31, 1, 1, Tahoma_P.palette_id, "Single Player Expert level\0");
+					crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 28, MS_keyboard.keyboard_start_y - 68, 31, 1, 1, Tahoma_P.palette_id, "Single Player Expert level\0");
 				}
 				else if(MS_keyboard.record_index == 3){
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 28, MS_keyboard.keyboard_start_y - 68, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer Beginner level\0");
+					crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 28, MS_keyboard.keyboard_start_y - 68, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer Beginner level\0");
 				}
 				else if(MS_keyboard.record_index == 4){
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 18, MS_keyboard.keyboard_start_y - 68, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer Intermediate level\0");
+					crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 18, MS_keyboard.keyboard_start_y - 68, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer Intermediate level\0");
 				}
 				else if(MS_keyboard.record_index == 5){
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 33, MS_keyboard.keyboard_start_y - 68, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer Expert level\0");
+					crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 33, MS_keyboard.keyboard_start_y - 68, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer Expert level\0");
 				}
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 30, MS_keyboard.keyboard_start_y - 56, 31, 1, 1, Tahoma_P.palette_id, "Please enter your name.\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 30, MS_keyboard.keyboard_start_y - 56, 31, 1, 1, Tahoma_P.palette_id, "Please enter your name.\0");
 
 				char key_buffer[2];
 				key_buffer[1] = '\0';
@@ -2188,46 +2157,46 @@ int main(){
 						key_buffer[0] = MS_keyboard.lower_keys[iter];
 					}
 
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[(2 * iter)] + 6, MS_keyboard.mini_buttons.positions[(2 * iter) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, key_buffer);
+					crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[(2 * iter)] + 6, MS_keyboard.mini_buttons.positions[(2 * iter) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, key_buffer);
 				}
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.big_buttons.positions[0] + 24, MS_keyboard.big_buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Enter\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.big_buttons.positions[2] + 23, MS_keyboard.big_buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.big_buttons.positions[0] + 24, MS_keyboard.big_buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Enter\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.big_buttons.positions[2] + 23, MS_keyboard.big_buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[0] + 13, MS_keyboard.medium_buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Back\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[2] + 12, MS_keyboard.medium_buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Caps\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[4] + 12, MS_keyboard.medium_buttons.positions[5] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Caps\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[6] + 8, MS_keyboard.medium_buttons.positions[7] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Special\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[8] + 8, MS_keyboard.medium_buttons.positions[9] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Special\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[0] + 13, MS_keyboard.medium_buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Back\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[2] + 12, MS_keyboard.medium_buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Caps\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[4] + 12, MS_keyboard.medium_buttons.positions[5] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Caps\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[6] + 8, MS_keyboard.medium_buttons.positions[7] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Special\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[8] + 8, MS_keyboard.medium_buttons.positions[9] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Special\0");
 
 				//The text the user types
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 6, MS_keyboard.type_box_y + 5, 31, 1, 1, Tahoma_P.palette_id, MS_keyboard.type_buffer);
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 6, MS_keyboard.type_box_y + 5, 31, 1, 1, Tahoma_P.palette_id, MS_keyboard.type_buffer);
 			}
 			else if(MS_options.focus == 2){
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[0] - 56, MS_options.checkers.positions[1] + 1, 31, 1, 1, Tahoma_P.palette_id, "Sound\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[2] - 56, MS_options.checkers.positions[3] + 1, 31, 1, 1, Tahoma_P.palette_id, "Marks (?)\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[0] - 56, MS_options.checkers.positions[1] + 1, 31, 1, 1, Tahoma_P.palette_id, "Sound\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[2] - 56, MS_options.checkers.positions[3] + 1, 31, 1, 1, Tahoma_P.palette_id, "Marks (?)\0");
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 15, MS_options.buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[2] + 7, MS_options.buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Intermediate\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[4] + 22, MS_options.buttons.positions[5] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[6] + 7, MS_options.buttons.positions[7] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Save to VMU\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[8] + 9, MS_options.buttons.positions[9] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Update Grid\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 15, MS_options.buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[2] + 7, MS_options.buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Intermediate\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[4] + 22, MS_options.buttons.positions[5] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[6] + 7, MS_options.buttons.positions[7] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Save to VMU\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[8] + 9, MS_options.buttons.positions[9] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Update Grid\0");
 
 				//Draw the numbers for x, y and num_mines displays
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[0] - 70, MS_options.number_changers.positions[1] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Height:\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[0] - 21, MS_options.number_changers.positions[1] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.y_buffer);
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[2] - 70, MS_options.number_changers.positions[3] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Width:\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[2] - 21, MS_options.number_changers.positions[3] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.x_buffer);
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[4] - 70, MS_options.number_changers.positions[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Mines:\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[4] - 21, MS_options.number_changers.positions[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.m_buffer);
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[0] - 70, MS_options.number_changers.positions[1] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Height:\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[0] - 21, MS_options.number_changers.positions[1] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.y_buffer);
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[2] - 70, MS_options.number_changers.positions[3] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Width:\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[2] - 21, MS_options.number_changers.positions[3] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.x_buffer);
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[4] - 70, MS_options.number_changers.positions[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Mines:\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[4] - 21, MS_options.number_changers.positions[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.m_buffer);
 			}
 			else if(MS_options.focus == 3){
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144 + 24, 31, 1, 1, Tahoma_P.palette_id, "Intermediate\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144 + 48, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + 125, 144 - 24, 31, 1, 1, Tahoma_P.palette_id, "Single Player\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + 345, 144 - 24, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144 + 24, 31, 1, 1, Tahoma_P.palette_id, "Intermediate\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20, 144 + 48, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + 125, 144 - 24, 31, 1, 1, Tahoma_P.palette_id, "Single Player\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + 345, 144 - 24, 31, 1, 1, Tahoma_P.palette_id, "Multiplayer\0");
 
 				//Display the high scores
 				char record_buffer[21];
@@ -2237,7 +2206,7 @@ int main(){
 						x_offset = 345;
 					}
 					sprintf(record_buffer, "%s: %d", MS_options.savefile.record_names[iter], MS_options.savefile.times[iter]);
-					graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + x_offset, 144 + ((iter % 3) * 24), 31, 1, 1, Tahoma_P.palette_id, record_buffer);
+					crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 20 + x_offset, 144 + ((iter % 3) * 24), 31, 1, 1, Tahoma_P.palette_id, record_buffer);
 				}
 			}
 			else if(MS_options.focus == 4){
@@ -2247,54 +2216,54 @@ int main(){
 
 				//Draw legend dot stuff
 				crayon_graphics_draw_sprites(&legend_dot, PVR_LIST_PT_POLY);
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[0] + 5, legend_dot.positions[1] + 3, 34, 1, 1, 61, "6\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[2] + 5, legend_dot.positions[3] + 3, 34, 1, 1, 61, "7\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[4] + 5, legend_dot.positions[5] + 3, 34, 1, 1, 61, "8\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[6] + 5, legend_dot.positions[7] + 3, 34, 1, 1, 61, "4\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[8] + 5, legend_dot.positions[9] + 3, 34, 1, 1, 61, "2\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[10] + 5, legend_dot.positions[11] + 3, 34, 1, 1, 61, "1\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[12] + 5, legend_dot.positions[13] + 3, 34, 1, 1, 61, "3\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[14] + 5, legend_dot.positions[15] + 3, 34, 1, 1, 61, "5\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[16] + 5, legend_dot.positions[17] + 3, 34, 1, 1, 61, "9\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[0] + 5, legend_dot.positions[1] + 3, 34, 1, 1, 61, "6\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[2] + 5, legend_dot.positions[3] + 3, 34, 1, 1, 61, "7\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[4] + 5, legend_dot.positions[5] + 3, 34, 1, 1, 61, "8\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[6] + 5, legend_dot.positions[7] + 3, 34, 1, 1, 61, "4\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[8] + 5, legend_dot.positions[9] + 3, 34, 1, 1, 61, "2\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[10] + 5, legend_dot.positions[11] + 3, 34, 1, 1, 61, "1\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[12] + 5, legend_dot.positions[13] + 3, 34, 1, 1, 61, "3\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[14] + 5, legend_dot.positions[15] + 3, 34, 1, 1, 61, "5\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[16] + 5, legend_dot.positions[17] + 3, 34, 1, 1, 61, "9\0");
 
 				//Legend part
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[18] + 5, legend_dot.positions[19] + 3, 34, 1, 1, 61, "1\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] - 6, legend_dot.positions[21] + 3, 34, 1, 1, 62, ",\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 5, legend_dot.positions[21] + 3, 34, 1, 1, 61, "6\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 18, legend_dot.positions[21] + 3, 34, 1, 1, 62, "Reveal a tile\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[22] + 5, legend_dot.positions[23] + 3, 34, 1, 1, 61, "2\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] - 6, legend_dot.positions[25] + 3, 34, 1, 1, 62, ",\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 5, legend_dot.positions[25] + 3, 34, 1, 1, 61, "7\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 18, legend_dot.positions[25] + 3, 34, 1, 1, 62, "Mark a tile\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[26] + 5, legend_dot.positions[27] + 3, 34, 1, 1, 61, "3\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[28] - 6, legend_dot.positions[29] + 3, 34, 1, 1, 62, ",\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[28] + 5, legend_dot.positions[29] + 3, 34, 1, 1, 61, "8\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[28] + 17, legend_dot.positions[29] + 3, 34, 1, 1, 62, ", (       +       )\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[30] + 5, legend_dot.positions[31] + 3, 34, 1, 1, 61, "6\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[32] + 5, legend_dot.positions[33] + 3, 34, 1, 1, 61, "7\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[32] + 24, legend_dot.positions[33] + 3, 34, 1, 1, 62, "Reveal neighbouring tiles\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[34] + 5, legend_dot.positions[35] + 3, 34, 1, 1, 61, "4\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[34] + 18, legend_dot.positions[35] + 3, 34, 1, 1, 62, "Swap between thumbstick and D-pad controls\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[36] + 5, legend_dot.positions[37] + 3, 34, 1, 1, 61, "5\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[38] - 6, legend_dot.positions[39] + 3, 34, 1, 1, 62, ",\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[38] + 5, legend_dot.positions[39] + 3, 34, 1, 1, 61, "9\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[38] + 18, legend_dot.positions[39] + 3, 34, 1, 1, 62, "Shortcut to reset the grid\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[18] + 5, legend_dot.positions[19] + 3, 34, 1, 1, 61, "1\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] - 6, legend_dot.positions[21] + 3, 34, 1, 1, 62, ",\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 5, legend_dot.positions[21] + 3, 34, 1, 1, 61, "6\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 18, legend_dot.positions[21] + 3, 34, 1, 1, 62, "Reveal a tile\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[22] + 5, legend_dot.positions[23] + 3, 34, 1, 1, 61, "2\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] - 6, legend_dot.positions[25] + 3, 34, 1, 1, 62, ",\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 5, legend_dot.positions[25] + 3, 34, 1, 1, 61, "7\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 18, legend_dot.positions[25] + 3, 34, 1, 1, 62, "Mark a tile\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[26] + 5, legend_dot.positions[27] + 3, 34, 1, 1, 61, "3\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[28] - 6, legend_dot.positions[29] + 3, 34, 1, 1, 62, ",\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[28] + 5, legend_dot.positions[29] + 3, 34, 1, 1, 61, "8\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[28] + 17, legend_dot.positions[29] + 3, 34, 1, 1, 62, ", (       +       )\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[30] + 5, legend_dot.positions[31] + 3, 34, 1, 1, 61, "6\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[32] + 5, legend_dot.positions[33] + 3, 34, 1, 1, 61, "7\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[32] + 24, legend_dot.positions[33] + 3, 34, 1, 1, 62, "Reveal neighbouring tiles\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[34] + 5, legend_dot.positions[35] + 3, 34, 1, 1, 61, "4\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[34] + 18, legend_dot.positions[35] + 3, 34, 1, 1, 62, "Swap between thumbstick and D-pad controls\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[36] + 5, legend_dot.positions[37] + 3, 34, 1, 1, 61, "5\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[38] - 6, legend_dot.positions[39] + 3, 34, 1, 1, 62, ",\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[38] + 5, legend_dot.positions[39] + 3, 34, 1, 1, 61, "9\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[38] + 18, legend_dot.positions[39] + 3, 34, 1, 1, 62, "Shortcut to reset the grid\0");
 
 			}
 			else if(MS_options.focus == 5){
 
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.2.0 (Build 3011: Service Pack 5)\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 160 + 60, 25, 1, 1, 62, "used texconv textures and powered by my Crayon library. I don't own\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 165 + 72, 25, 1, 1, 62, "the rights to Minesweeper nor do I claim to so don't sue me, k?\0");
-				// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 185 + 84, 25, 1, 1, 62, "Katana logo made by Airofoil\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 185 + 84, 25, 1, 1, 62, "Dreamcast controller and mouse pixel art was made by JamoHTP\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 205 + 96, 25, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 210 + 108, 25, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
-				graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 215 + 120, 25, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.2.0 (Build 3011: Service Pack 5)\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 160 + 60, 25, 1, 1, 62, "used texconv textures and powered by my Crayon library. I don't own\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 165 + 72, 25, 1, 1, 62, "the rights to Minesweeper nor do I claim to so don't sue me, k?\0");
+				// crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 185 + 84, 25, 1, 1, 62, "Katana logo made by Airofoil\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 185 + 84, 25, 1, 1, 62, "Dreamcast controller and mouse pixel art was made by JamoHTP\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 205 + 96, 25, 1, 1, 62, "A huge thanks to the Dreamcast developers for helping me get started\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 210 + 108, 25, 1, 1, 62, "and answering any questions I had and a huge thanks to the Dreamcast\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 215 + 120, 25, 1, 1, 62, "media for bringing the homebrew scene to my attention.\0");
 			}
 
 		pvr_list_finish();
@@ -2309,7 +2278,7 @@ int main(){
 
 				if(MS_options.focus == 1){
 					if(pvr_stats.frame_count % (uint8_t)(60 / htz_adjustment) < (uint8_t)(30 / htz_adjustment)){	//Flashes on and off every half second
-						graphics_draw_untextured_poly(MS_keyboard.type_box_x + 6 + MS_keyboard.name_length, MS_keyboard.type_box_y + 5, 31, 1, 12, 0xFF000000, 1);	//Flashing Black line
+						crayon_graphics_draw_untextured_poly(MS_keyboard.type_box_x + 6 + MS_keyboard.name_length, MS_keyboard.type_box_y + 5, 31, 1, 12, 0xFF000000, PVR_LIST_OP_POLY);	//Flashing Black line
 					}
 					crayon_graphics_draw_sprites(&MS_keyboard.mini_buttons, PVR_LIST_OP_POLY);	//Draw the high score keyboard
 					crayon_graphics_draw_sprites(&MS_keyboard.medium_buttons, PVR_LIST_OP_POLY);//Draw the high score keyboard
@@ -2319,8 +2288,8 @@ int main(){
 						custom_poly_XP_boarder(MS_keyboard.keyboard_start_x - 8, MS_keyboard.keyboard_start_y - 88, 19, MS_keyboard.keyboard_width, MS_keyboard.keyboard_height);
 
 						//Textbox boarder
-						graphics_draw_untextured_poly(MS_keyboard.type_box_x, MS_keyboard.type_box_y, 25, 120 + 56, 20, 0xFF7F9DB9, 1);	//Blue outline
-						graphics_draw_untextured_poly(MS_keyboard.type_box_x + 1, MS_keyboard.type_box_y + 1, 26, 118 + 56, 18, 0xFFFFFFFF, 1);	//White box
+						crayon_graphics_draw_untextured_poly(MS_keyboard.type_box_x, MS_keyboard.type_box_y, 25, 120 + 56, 20, 0xFF7F9DB9, PVR_LIST_OP_POLY);	//Blue outline
+						crayon_graphics_draw_untextured_poly(MS_keyboard.type_box_x + 1, MS_keyboard.type_box_y + 1, 26, 118 + 56, 18, 0xFFFFFFFF, PVR_LIST_OP_POLY);	//White box
 
 					}
 					else{
@@ -2369,16 +2338,16 @@ int main(){
 			}
 			else{
 				if(MS_options.focus >= 2){	//The yellowy background + dividing line
-					graphics_draw_untextured_poly(6, 98, 10, 631, 1, 0xFFA0A0A0, 1);
+					crayon_graphics_draw_untextured_poly(6, 98, 10, 631, 1, 0xFFA0A0A0, PVR_LIST_OP_POLY);
 					if(MS_options.operating_system){
-						graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFECE9D8, 1);
+						crayon_graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFECE9D8, PVR_LIST_OP_POLY);
 					}
 					else{
-						graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFD4D0C8, 1);
+						crayon_graphics_draw_untextured_poly(6, 99, 10, 631, 350, 0xFFD4D0C8, PVR_LIST_OP_POLY);
 					}
 				}
 				if(MS_options.focus == 2){
-					graphics_draw_untextured_array(&Option_polys);	//The boxes the numbers go in
+					crayon_graphics_draw_untextured_array(&Option_polys);	//The boxes the numbers go in
 				}
 			}
 
@@ -2392,7 +2361,7 @@ int main(){
 			custom_poly_boarder(2, 14, 59, 16, 615, 33, 4286611584u, 4294967295u);
 
 			//Draw the MS background stuff
-			graphics_draw_untextured_array(&Bg_polys);
+			crayon_graphics_draw_untextured_array(&Bg_polys);
 
 			if(!MS_options.operating_system){
 				custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000

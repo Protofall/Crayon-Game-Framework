@@ -127,7 +127,7 @@ int main(){
 	Dwarf_Draw.rotations[0] = 0;
 	Dwarf_Draw.colours[0] = 0;
 	Dwarf_Draw.frame_coord_keys[0] = 0;
-	graphics_frame_coordinates(Dwarf_Draw.animation, Dwarf_Draw.frame_coord_map + 0, Dwarf_Draw.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(Dwarf_Draw.animation, Dwarf_Draw.frame_coord_map + 0, Dwarf_Draw.frame_coord_map + 1, 0);
 
 	crayon_memory_set_sprite_array(&Enlarge_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Enlarge, &Enlarge.spritesheet_animation_array[0], NULL);
 	Enlarge_Draw.positions[0] = 150;
@@ -139,7 +139,7 @@ int main(){
 	Enlarge_Draw.rotations[0] = 0;
 	Enlarge_Draw.colours[0] = 0;
 	Enlarge_Draw.frame_coord_keys[0] = 0;
-	graphics_frame_coordinates(Enlarge_Draw.animation, Enlarge_Draw.frame_coord_map + 0, Enlarge_Draw.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(Enlarge_Draw.animation, Enlarge_Draw.frame_coord_map + 0, Enlarge_Draw.frame_coord_map + 1, 0);
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
@@ -147,14 +147,14 @@ int main(){
 		pvr_wait_ready();
 		pvr_scene_begin();
 
-		graphics_setup_palette(&BIOS_P);
-		graphics_setup_palette(&Tahoma_P);
+		crayon_graphics_setup_palette(&BIOS_P);
+		crayon_graphics_setup_palette(&Tahoma_P);
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
 			crayon_graphics_draw_sprites(&Dwarf_Draw, PVR_LIST_PT_POLY);
-			graphics_draw_text_prop(&Tahoma, PVR_LIST_PT_POLY, 50, 150, 30, 1, 1, Tahoma_P.palette_id, "Tahoma\0");
-			graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, 50, 170, 30, 1, 1, BIOS_P.palette_id, "BIOS\0");
+			crayon_graphics_draw_text_prop(&Tahoma, PVR_LIST_PT_POLY, 50, 150, 30, 1, 1, Tahoma_P.palette_id, "Tahoma\0");
+			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, 50, 170, 30, 1, 1, BIOS_P.palette_id, "BIOS\0");
 
 		pvr_list_finish();
 

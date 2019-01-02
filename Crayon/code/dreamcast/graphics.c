@@ -1,7 +1,7 @@
 #include "graphics.h"
 
 //There are 4 palettes for 8BPP and 64 palettes for 4BPP
-extern int graphics_setup_palette(const crayon_palette_t *cp){
+extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
 	if(cp->palette_id < 0 || cp->bpp < 0 || cp->bpp * cp->palette_id >= 1024){	//Invalid format/palette not properly set
 		return 1;
 	}
@@ -25,7 +25,7 @@ extern int graphics_setup_palette(const crayon_palette_t *cp){
 	return 0;
 }
 
-extern void graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x, uint16_t *frame_y, uint8_t frame){
+extern void crayon_graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x, uint16_t *frame_y, uint8_t frame){
 	int framesPerRow = anim->animation_sheet_width/anim->animation_frame_width;
 	int colNum = frame%framesPerRow; //Gets the column (Zero indexed)
 	int rowNum = frame/framesPerRow;  //Gets the row (Zero indexed)
@@ -36,18 +36,15 @@ extern void graphics_frame_coordinates(const struct crayon_animation *anim, uint
 	return;
 }
 
-extern void graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z, uint16_t dim_x,
-  uint16_t dim_y, uint32_t colour, uint8_t opaque){
+//uint8_t poly_list_mode
+
+extern void crayon_graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z, uint16_t dim_x,
+  uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert;
 
-	if(opaque){
-		pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
-	}
-	else{
-		pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
-	}
+	pvr_poly_cxt_col(&cxt, poly_list_mode);
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
@@ -81,7 +78,7 @@ extern void graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint
 
 //Not currently handling rotations, I'll do that at a later date
 //NOTE: order might be different for different emulators :(
-extern void graphics_draw_untextured_array(crayon_untextured_array_t *poly_array){
+extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *poly_array){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert;
@@ -131,7 +128,7 @@ extern void graphics_draw_untextured_array(crayon_untextured_array_t *poly_array
 }
 
 
-extern uint8_t graphics_draw_sprite(const struct crayon_spritesheet *ss,
+extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 	const struct crayon_animation *anim, float draw_x, float draw_y, float draw_z,
 	float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
 	uint8_t paletteNumber){
@@ -311,7 +308,7 @@ extern uint8_t crayon_graphics_draw_polys(crayon_textured_array_t *sprite_array,
 	return 0;
 }
 
-extern uint8_t graphics_draw_text_mono(const struct crayon_font_mono *fm, uint8_t poly_list_mode, float draw_x,
+extern uint8_t crayon_graphics_draw_text_mono(const struct crayon_font_mono *fm, uint8_t poly_list_mode, float draw_x,
 	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string){
 
 	float x0 = draw_x;
@@ -384,7 +381,7 @@ extern uint8_t graphics_draw_text_mono(const struct crayon_font_mono *fm, uint8_
 	return 0;
 }
 
-extern uint8_t graphics_draw_text_prop(const struct crayon_font_prop *fp, uint8_t poly_list_mode, float draw_x,
+extern uint8_t crayon_graphics_draw_text_prop(const struct crayon_font_prop *fp, uint8_t poly_list_mode, float draw_x,
 	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string){
 
 	float x0 = draw_x;
