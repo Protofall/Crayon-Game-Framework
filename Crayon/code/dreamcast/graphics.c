@@ -36,8 +36,6 @@ extern void crayon_graphics_frame_coordinates(const struct crayon_animation *ani
 	return;
 }
 
-//uint8_t poly_list_mode
-
 extern void crayon_graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z, uint16_t dim_x,
   uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;

@@ -452,7 +452,6 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_tex
 
 //Made this a function just to reduce the line number in main
 void setup_keys(MinesweeperKeyboard_t * keyboard, crayon_font_prop_t * fontsheet){
-
 	//Some defaults for the keyboard struct
 	keyboard->type_buffer[0] = '\0';
 	keyboard->chars_typed = 0;
@@ -478,7 +477,23 @@ void setup_keys(MinesweeperKeyboard_t * keyboard, crayon_font_prop_t * fontsheet
 	return;
 }
 
-uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_details, uint8_t savefile_port, uint8_t savefile_slot){
+void setup_pre_1_3_0_savefile_conversion(minesweeper_savefile_t * new_savefile, pre_1_3_0_minesweeper_savefile_t * pre_1_3_0_savefile){
+	new_savefile->options = pre_1_3_0_savefile->options;
+	uint8_t i;
+	for(i = 0; i < 6; i++){
+		new_savefile->times[i] = pre_1_3_0_savefile->times[i];
+		strcpy(new_savefile->record_names[i], pre_1_3_0_savefile->record_names[i]);
+	}
+	new_savefile->pref_height = pre_1_3_0_savefile->pref_height;
+	new_savefile->pref_width = pre_1_3_0_savefile->pref_width;
+	new_savefile->pref_mines = pre_1_3_0_savefile->pref_mines;
+
+	new_savefile->bulletsweeper_beaten = 0;
+
+	return;
+}
+
+uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * pre_1_2_0_savefile_details, uint8_t savefile_port, uint8_t savefile_slot){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
@@ -509,7 +524,7 @@ uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_de
 	//I have to make my own checker since it used all 16 chars without a null terminator
 	uint8_t i;
 	for(i = 0; i < 16; i++){
-		if(old_savefile_details->app_id[i] != pkg.app_id[i]){	//The names differ, They aren't the same
+		if(pre_1_2_0_savefile_details->app_id[i] != pkg.app_id[i]){	//The names differ, They aren't the same
 			return 2;
 		}
 	}
@@ -520,22 +535,26 @@ uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_de
 	//However if I read a1, a2, b1 and b2 first then they work. Also calling the function later worked too.
 	//It seems like KOS is still initialising when I call it :/ Thats kinda dodgy
 uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details){
-	crayon_savefile_details_t old_savefile_details;
+	crayon_savefile_details_t pre_1_2_0_savefile_details;
+	crayon_savefile_details_t pre_1_3_0_savefile_details;
+	pre_1_3_0_minesweeper_savefile_t pre_1_3_0_savefile;
 
 	//Point to the savefile icon for when we re-save it
-	old_savefile_details.savefile_icon = new_savefile_details->savefile_icon;
-	old_savefile_details.savefile_palette = new_savefile_details->savefile_palette;
+	pre_1_2_0_savefile_details.savefile_icon = new_savefile_details->savefile_icon;
+	pre_1_2_0_savefile_details.savefile_palette = new_savefile_details->savefile_palette;
 
-	//It used the incorrect length app_id
-	crayon_savefile_init_savefile_details(&old_savefile_details, new_savefile_details->savefile_data,
-		new_savefile_details->savefile_size, 1, 0, "Made with Crayon by Protofall\0", "Minesweepe\0",
+	//Pre 1.2.0, it used the incorrect length app_id. Savefile format is still the same as pre 1.3.0
+	crayon_savefile_init_savefile_details(&pre_1_2_0_savefile_details, (uint8_t *)&pre_1_3_0_savefile,
+		sizeof(pre_1_3_0_minesweeper_savefile_t), 1, 0, "Made with Crayon by Protofall\0", "Minesweepe\0",
 		"Proto_Minesweepe\0", "MINESWEEPER.s\0");
 
-	//Does this work? It makes a call to "crayon_savefile_check_for_save" which shouldn't work...
-	// old_savefile_details.valid_vmus = crayon_savefile_get_valid_vmus(&old_savefile_details);	//Need to do this for the save to work
+	//This is pre 1.3.0, it had an insufficient pref_mines var size
+	crayon_savefile_init_savefile_details(&pre_1_3_0_savefile_details, (uint8_t *)&pre_1_3_0_savefile,
+		sizeof(pre_1_3_0_minesweeper_savefile_t), 1, 0, "Made with Crayon by Protofall\0", "Minesweepe\0",
+		"Proto_Minesweep\0", "MINESWEEPER.s\0");
 
-	//Check for saves with old name
-	uint8_t old_valid_saves = 0;	//a1a2b1b2c1c2d1d2
+	//Check for saves with old name (Pre 1.2.0)
+	uint8_t pre_1_2_0_valid_saves = 0;	//a1a2b1b2c1c2d1d2
 	int i, j;
 	for(i = 0; i <= 3; i++){
 		for(j = 1; j <= 2; j++){
@@ -543,41 +562,96 @@ uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details)
 				continue;
 			}
 
-			if(setup_check_for_old_savefile(&old_savefile_details, i, j)){
+			if(setup_check_for_old_savefile(&pre_1_2_0_savefile_details, i, j)){
 				continue;
 			}
 
-			crayon_savefile_set_vmu_bit(&old_valid_saves, i, j);
+			crayon_savefile_set_vmu_bit(&pre_1_2_0_valid_saves, i, j);
 		}
 	}
 
-	//If we have old saves
-	if(old_valid_saves){
-		old_savefile_details.valid_vmus = old_valid_saves;	//Can't rely on the init version due to app_id being too long. This will get the job done when saving
-		strcpy(old_savefile_details.app_id, "Proto_Minesweep\0");	//Change over to new app_id
+	//Pre 1.3.0
+	uint8_t pre_1_3_0_valid_saves = 0;	//a1a2b1b2c1c2d1d2
+	for(i = 0; i <= 3; i++){
+		for(j = 1; j <= 2; j++){
+			if(crayon_savefile_check_for_device(i, j, MAPLE_FUNC_MEMCARD)){
+				continue;
+			}
+
+			if(crayon_savefile_check_for_save(&pre_1_3_0_savefile_details, i, j)){
+				continue;
+			}
+
+			crayon_savefile_set_vmu_bit(&pre_1_3_0_valid_saves, i, j);
+		}
+	}
+
+	//If we have pre_1_2_0 saves
+	if(pre_1_2_0_valid_saves){
+		//Can't rely on the init version due to app_id being too long. This will get the job done when loading
+		pre_1_2_0_savefile_details.valid_vmus = pre_1_2_0_valid_saves;
+		new_savefile_details->valid_vmus = pre_1_2_0_valid_saves;
 
 		//If present then it will update them to the new format
 		for(i = 0; i <= 3; i++){
 			for(j = 1; j <= 2; j++){
 				//Check if this device contains an old-format savefile
-				if(crayon_savefile_get_vmu_bit(old_valid_saves, i, j)){
-					old_savefile_details.savefile_port = i;
-					old_savefile_details.savefile_slot = j;
+				if(crayon_savefile_get_vmu_bit(pre_1_2_0_valid_saves, i, j)){
+					pre_1_2_0_savefile_details.savefile_port = i;
+					pre_1_2_0_savefile_details.savefile_slot = j;
+					new_savefile_details->savefile_port = i;
+					new_savefile_details->savefile_slot = j;
 
 					//Note: This doesn't check the app_id (Which is good here)
-					if(crayon_savefile_load(&old_savefile_details)){
+					if(crayon_savefile_load(&pre_1_2_0_savefile_details)){
 						continue;
 					}
-					crayon_savefile_save(&old_savefile_details);
+
+					//Convert from one details struct to another
+					setup_pre_1_3_0_savefile_conversion((minesweeper_savefile_t *)new_savefile_details->savefile_data, &pre_1_3_0_savefile);
+
+					crayon_savefile_save(new_savefile_details);
 				}
 			}
 		}
+	}
+	//If we have some 1.2.0 savefiles
+	if(pre_1_3_0_valid_saves){
+		//Can't rely on the init version due to app_id being too long. This will get the job done when loading
+		pre_1_3_0_savefile_details.valid_vmus = pre_1_3_0_valid_saves;
+		new_savefile_details->valid_vmus = pre_1_3_0_valid_saves;
 
-		new_savefile_details->valid_vmus = crayon_savefile_get_valid_vmus(new_savefile_details);	//Might be fine, but its safer to update
+		//If present then it will update them to the new format
+		for(i = 0; i <= 3; i++){
+			for(j = 1; j <= 2; j++){
+				//Check if this device contains an old-format savefile
+				if(crayon_savefile_get_vmu_bit(pre_1_3_0_valid_saves, i, j)){
+					pre_1_3_0_savefile_details.savefile_port = i;
+					pre_1_3_0_savefile_details.savefile_slot = j;
+					new_savefile_details->savefile_port = i;
+					new_savefile_details->savefile_slot = j;
+
+					//Note: This doesn't check the app_id (Which is good here)
+					if(crayon_savefile_load(&pre_1_3_0_savefile_details)){
+						continue;
+					}
+
+					//Convert from one details struct to another
+					setup_pre_1_3_0_savefile_conversion((minesweeper_savefile_t *)new_savefile_details->savefile_data, &pre_1_3_0_savefile);
+
+					crayon_savefile_save(new_savefile_details);
+				}
+			}
+		}
+	}
+
+	//Update the savefile details
+	if(pre_1_2_0_valid_saves || pre_1_3_0_valid_saves){
+		new_savefile_details->valid_vmus = crayon_savefile_get_valid_vmus(new_savefile_details);
 		new_savefile_details->valid_saves = crayon_savefile_get_valid_saves(new_savefile_details);	//Update the list
 	}
 
-	return old_valid_saves;
+	return pre_1_2_0_valid_saves | pre_1_3_0_valid_saves;
 }
 
 //We use a double pointer because we want to modify the pointer itself with malloc
@@ -596,4 +670,53 @@ void setup_vmu_icon_apply(uint8_t * vmu_lcd_icon, uint8_t valid_vmu_screens){
 	free(vmu_lcd_icon);
 
 	return;
+}
+
+//Its possible you could have a hacked (Or corrupted) savefile. This will fix those vars
+uint8_t setup_sanitise_savefile(minesweeper_savefile_t * savefile){
+	uint8_t hacker = 0;
+
+	uint8_t i, j;
+	for(i = 0; i < 6; i++){
+		if(savefile->times[i] > 999){
+			savefile->times[i] = 999;
+			hacker = 1;
+		}
+		for(j = 0; j < 16; j++){
+			if(savefile->record_names[i][j] != 0){	//End of input, we don't care whats after this
+				break;
+			}
+			if(savefile->record_names[i][j] < ' ' || savefile->record_names[i][j] > '~'){	//Outside the fontsheet
+				savefile->record_names[i][j] = ' ';
+				hacker = 1;
+			}
+		}
+	}
+
+	if(savefile->pref_height < 9){
+		savefile->pref_height = 9;
+		hacker = 1;
+	}
+	if(savefile->pref_height > 21){
+		savefile->pref_height = 21;
+		hacker = 1;
+	}
+	if(savefile->pref_width < 9){
+		savefile->pref_width = 9;
+		hacker = 1;
+	}
+	if(savefile->pref_width > 38){
+		savefile->pref_width = 38;
+		hacker = 1;
+	}
+	if(savefile->pref_mines < 10){
+		savefile->pref_mines = 10;
+		hacker = 1;
+	}
+	if(savefile->pref_mines > (savefile->pref_width - 1) * (savefile->pref_height - 1)){
+		savefile->pref_mines = (savefile->pref_width - 1) * (savefile->pref_height - 1);
+		hacker = 1;
+	}
+
+	return hacker;
 }

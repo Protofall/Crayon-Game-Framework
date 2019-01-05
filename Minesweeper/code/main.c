@@ -661,6 +661,7 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 						//It makes sense to save the record immediately
 						options->savefile.options = options->question_enabled + (options->sound_enabled << 1)
 							+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
+
 						crayon_savefile_save(&options->savefile_details);
 
 						//Resume focus 0 (Normal game play)
@@ -952,14 +953,15 @@ int main(){
 	//Setting the default save_detail vars
 	crayon_savefile_init_savefile_details(&MS_options.savefile_details, (uint8_t *)&MS_options.savefile,
 		sizeof(minesweeper_savefile_t), 1, 0, "Made with Crayon by Protofall\0", "Minesweeper\0",
-		"Proto_Minesweep\0", "MINESWEEPER.s\0");
+		"Proto_MS_1_3_0\0", "MINESWEEPER.s\0");
 
 	//Apply the VMU LCD icon (Apparently this is automatic if your savefile is an ICONDATA.VMS)
 	//Also frees vmu_lcd_icon
 	setup_vmu_icon_apply(vmu_lcd_icon, MS_options.savefile_details.valid_vmu_screens);
 
 	//Pre 1.2.0 savefiles has an incorrect app_id, this function updates older save files
-	setup_update_old_saves(&MS_options.savefile_details);
+	//Pre 1.3.0 savefiles stored the pref_mines in a uint8_t...
+	uint8_t old_saves = setup_update_old_saves(&MS_options.savefile_details);
 	
 	uint8_t first_time = !MS_options.savefile_details.valid_saves;
 
@@ -977,8 +979,14 @@ int main(){
 	}
 	Exit_loop_1:
 
-	//If a save already exists
+	//Load savefile and sanitise the input
 	crayon_savefile_load(&MS_options.savefile_details);
+	uint8_t hacker = 0;
+	if(MS_options.savefile_details.valid_saves){
+		hacker = setup_sanitise_savefile(&MS_options.savefile);
+	}
+
+	//If a save already exists
 	if(MS_options.savefile_details.valid_vmus && MS_options.savefile_details.savefile_port != -1 &&
 		MS_options.savefile_details.savefile_slot != -1){
 		
@@ -1050,10 +1058,10 @@ int main(){
 		region = 0;	//Invalid region
 	}
 
-	// uint8_t vga_debug = 0;
+	uint8_t vga_debug = 0;
 	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
 		vid_set_mode(DM_640x480_VGA, PM_RGB565);
-		// vga_debug = 1;
+		vga_debug = 1;
 	}
 	else{	//Else its RGB. This handles composite, S-video, SCART, etc
 		if(first_time && 0){	//REMEMBER TO CHANGE THIS IN THE BIOS UPDATE (Currently disabled due to already doing the options before)
@@ -2058,9 +2066,21 @@ int main(){
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
 			//DEBUG
-			// char snum[32];
-			// sprintf(snum, "Htz: %d, VGA: %d\n", MS_options.htz, vga_debug);
-			// graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
+			char snum[32];
+			sprintf(snum, "Valid: VMUs %d\n", MS_options.savefile_details.valid_vmus);
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
+			sprintf(snum, "Screens: %d\n", MS_options.savefile_details.valid_vmu_screens);
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 12, 50, 1, 1, 62, snum);
+			sprintf(snum, "New saves: %d\n", MS_options.savefile_details.valid_saves);
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 24, 50, 1, 1, 62, snum);
+			sprintf(snum, "Old saves: %d\n", old_saves);
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 36, 50, 1, 1, 62, snum);
+			sprintf(snum, "P: %d, S: %d\n", MS_options.savefile_details.savefile_port, MS_options.savefile_details.savefile_slot);
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
+			sprintf(snum, "Htz: %d, VGA: %d\n", MS_options.htz, vga_debug);
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
+			sprintf(snum, "Hacked save: %d\n", hacker);
+			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 72, 50, 1, 1, 62, snum);
 
 			//Draw windows assets
 			for(iter = 0; iter < os.num_assets; iter++){
@@ -2253,7 +2273,7 @@ int main(){
 			else if(MS_options.focus == 5){
 
 				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.2.0 (Build 3011: Service Pack 5)\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.3.0 (Build 3011: Service Pack 5)\0");
 				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
 				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
 				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");

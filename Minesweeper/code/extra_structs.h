@@ -54,7 +54,20 @@ typedef struct MinesweeperGrid{
 
 //+ save icon should be 2 blocks long
 typedef struct minesweeper_savefile{
-	// uint8_t BS_Mode;	//Bulletsweeper mode. 0 for never won, 1 for Beat with 1 player, 2 for beat with 2 players, etc.
+	uint8_t options;	//XXXH LOSQ (Refresh rate (Hz), Language, OS, Sound, Questions)
+	uint16_t times[6];	//First 3 are Single player, last 3 are multiplayer
+	char record_names[6][16];	//6 names, 11 chars long (Last char is \0 so really 10)
+
+	//Prefered grid settings
+	uint8_t pref_height;
+	uint8_t pref_width;
+	uint16_t pref_mines;
+
+	uint8_t bulletsweeper_beaten;	//Bulletsweeper mode. 0 for never won, 1 for Beat with 1 player, 2 for beat with 2 players, etc.
+} minesweeper_savefile_t;
+
+//This is the original savefile format, I forgot that pref_mines needs to be a uint16_t so I had to update the format later on (Also 2 blocks long)
+typedef struct pre_1_3_0_minesweeper_savefile{
 	uint8_t options;	//XXXH LOSQ (Refresh rate (Hz), Language, OS, Sound, Questions)
 	uint16_t times[6];	//First 3 are Single player, last 3 are multiplayer
 	char record_names[6][16];	//6 names, 11 chars long (Last char is \0 so really 10)
@@ -63,7 +76,7 @@ typedef struct minesweeper_savefile{
 	uint8_t pref_height;
 	uint8_t pref_width;
 	uint8_t pref_mines;
-} minesweeper_savefile_t;
+} pre_1_3_0_minesweeper_savefile_t;
 
 //Contains game options and focus (Windows tab)
 typedef struct MinesweeperOptions{

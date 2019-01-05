@@ -31,3 +31,11 @@ int clickedCursorPos[8]
 
 int heldB[4]
 + Used to help with B button presses since MAPLE is designed for HOLD actions, not PRESS actions
+
+Each tile is 16x16 texels
+Total of 9 unique colours (Alot of colours are shared) (Not including icon, window, cursor, etc)
+Total of 16 different tiles
+
+{blank, blank pressed, unpressed/flagged mine, left clicked mine, wrongly flagged spot, flag, question mark, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+Record is saved depending on how many players are active

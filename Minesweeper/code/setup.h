@@ -21,10 +21,13 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_tex
 
 void setup_keys(MinesweeperKeyboard_t * keyboard, crayon_font_prop_t * fontsheet);
 
-uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * old_savefile_details, uint8_t savefile_port, uint8_t savefile_slot);
+void setup_pre_1_3_0_savefile_conversion(minesweeper_savefile_t * new_savefile, pre_1_3_0_minesweeper_savefile_t * pre_1_3_0_savefile);
+uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * pre_1_2_0_savefile_details, uint8_t savefile_port, uint8_t savefile_slot);
 uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details);
 
 int16_t setup_vmu_icon_load(uint8_t ** vmu_lcd_icon, char * icon_path);
 void setup_vmu_icon_apply(uint8_t * vmu_lcd_icon, uint8_t valid_vmu_screens);
+
+uint8_t setup_sanitise_savefile(minesweeper_savefile_t * savefile);
 
 #endif
