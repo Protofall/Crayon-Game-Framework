@@ -457,7 +457,7 @@ extern void crayon_memory_set_sprite_array(crayon_textured_array_t *sprite_array
 	sprite_array->draw_z = (uint8_t *) malloc((multi_draw_z ? num_sprites: 1) * sizeof(uint8_t));
 	sprite_array->frame_coord_keys = (uint8_t *) malloc((multi_frames ? num_sprites: 1) * sizeof(uint8_t));
 	sprite_array->frame_coord_map = (uint16_t *) malloc(unique_frames * 2 * sizeof(uint16_t));
-	sprite_array->scales = (uint8_t *) malloc((multi_scales ? num_sprites: 1) * 2 * sizeof(uint8_t));
+	sprite_array->scales = (float *) malloc((multi_scales ? num_sprites: 1) * 2 * sizeof(float));
 	sprite_array->flips = (uint8_t *) malloc((multi_flips ? num_sprites: 1) * sizeof(uint8_t));
 	sprite_array->rotations = (float *) malloc((multi_rotations ? num_sprites: 1) * sizeof(float));
 	sprite_array->colours = (uint32_t *) malloc((multi_colours ? num_sprites: 1) * sizeof(uint32_t));

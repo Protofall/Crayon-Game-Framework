@@ -37,7 +37,7 @@ extern void crayon_graphics_frame_coordinates(const struct crayon_animation *ani
 }
 
 extern uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_chars){
-	uint8_t i = 0;
+	uint16_t i = 0;
 	while(string[i] != '\0'){
 		if(string[i] == '\n'){
 			i++;

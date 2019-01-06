@@ -124,12 +124,20 @@ int main(){
 		return 1;
 	}
 
-	crayon_memory_set_sprite_array(&Dwarf_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Dwarf, &Dwarf.spritesheet_animation_array[0], NULL);
+	crayon_memory_set_sprite_array(&Dwarf_Draw, 3, 1, 0, 0, 1, 0, 0, 0, 0, &Dwarf, &Dwarf.spritesheet_animation_array[0], NULL);
 	Dwarf_Draw.positions[0] = 50;
-	Dwarf_Draw.positions[1] = 50;
+	Dwarf_Draw.positions[1] = 20;
+	Dwarf_Draw.positions[2] = Dwarf_Draw.positions[0];
+	Dwarf_Draw.positions[3] = Dwarf_Draw.positions[1] + (Dwarf_Draw.animation[0].animation_frame_height / 2);
+	Dwarf_Draw.positions[4] = Dwarf_Draw.positions[0];
+	Dwarf_Draw.positions[5] = Dwarf_Draw.positions[3] + Dwarf_Draw.animation[0].animation_frame_height;
 	Dwarf_Draw.draw_z[0] = 18;
-	Dwarf_Draw.scales[0] = 1;	//Looks off on lxdream with higher scale
-	Dwarf_Draw.scales[1] = 1;
+	Dwarf_Draw.scales[0] = 0.5;
+	Dwarf_Draw.scales[1] = 0.5;
+	Dwarf_Draw.scales[2] = 1;
+	Dwarf_Draw.scales[3] = 1;
+	Dwarf_Draw.scales[4] = 2;	//Looks off on lxdream with higher scale
+	Dwarf_Draw.scales[5] = 2;
 	Dwarf_Draw.flips[0] = 0;
 	Dwarf_Draw.rotations[0] = 0;
 	Dwarf_Draw.colours[0] = 0;
@@ -137,8 +145,8 @@ int main(){
 	crayon_graphics_frame_coordinates(Dwarf_Draw.animation, Dwarf_Draw.frame_coord_map + 0, Dwarf_Draw.frame_coord_map + 1, 0);
 
 	crayon_memory_set_sprite_array(&Enlarge_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Enlarge, &Enlarge.spritesheet_animation_array[0], NULL);
-	Enlarge_Draw.positions[0] = 150;
-	Enlarge_Draw.positions[1] = 50;
+	Enlarge_Draw.positions[0] = Dwarf_Draw.positions[0] + (2 * Dwarf_Draw.animation[0].animation_frame_width) + 20;
+	Enlarge_Draw.positions[1] = 20;
 	Enlarge_Draw.draw_z[0] = 17;
 	Enlarge_Draw.scales[0] = 8;
 	Enlarge_Draw.scales[1] = 8;
@@ -160,8 +168,8 @@ int main(){
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
 			crayon_graphics_draw_sprites(&Dwarf_Draw, PVR_LIST_PT_POLY);
-			crayon_graphics_draw_text_prop(&Tahoma, PVR_LIST_PT_POLY, 50, 150, 30, 1, 1, Tahoma_P.palette_id, "Tahoma\0");
-			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, 50, 170, 30, 1, 1, BIOS_P.palette_id, "BIOS\0");
+			crayon_graphics_draw_text_prop(&Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id, "Tahoma\0");
+			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, 120, 40, 30, 1, 1, BIOS_P.palette_id, "BIOS\0");
 
 		pvr_list_finish();
 
