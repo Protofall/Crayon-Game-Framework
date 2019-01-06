@@ -282,13 +282,13 @@ void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t
 	if(!os){
 		Bg->num_polys += 4;	//Windows 2000 has a few extra polys
 	}
-	Bg->positions = (uint16_t *) malloc(2 * Bg->num_polys * sizeof(uint16_t));
+	Bg->positions = (float *) malloc(2 * Bg->num_polys * sizeof(float));
 	Bg->draw_z = (uint8_t *) malloc(Bg->num_polys * sizeof(uint8_t));
 	Bg->colours = (uint32_t *) malloc(Bg->num_polys * sizeof(uint32_t));
 	Bg->draw_dims = (uint16_t *) malloc(2 * Bg->num_polys * sizeof(uint16_t));
 	Bg->rotations = (float *) malloc(sizeof(float));
 	Bg->rotations[0] = 0;
-	Bg->options = (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4);	//Z, C, D and O enabled
+	Bg->options = (1 << 1) + (1 << 2) + (1 << 3);	//Z, C and D enabled
 
 	//Grey box
 	Bg->positions[0] = 6;
@@ -374,13 +374,13 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_tex
 	else{
 		Options->num_polys = 6;	//XP mode (XP not drawing all of the polys?)
 	}
-	Options->positions = (uint16_t *) malloc(2 * Options->num_polys * sizeof(uint16_t));
+	Options->positions = (float *) malloc(2 * Options->num_polys * sizeof(float));
 	Options->draw_z = (uint8_t *) malloc(Options->num_polys * sizeof(uint8_t));
 	Options->colours = (uint32_t *) malloc(Options->num_polys * sizeof(uint32_t));
 	Options->draw_dims = (uint16_t *) malloc(2 * Options->num_polys * sizeof(uint16_t));
 	Options->rotations = (float *) malloc(sizeof(float));
 	Options->rotations[0] = 0;
-	Options->options = (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4);	//Z, C, D and O enabled
+	Options->options = (1 << 1) + (1 << 2) + (1 << 3);	//Z, C and D enabled
 
 	uint16_t x, y[3];
 	x = num_changers->positions[0] - 25; y[0] = num_changers->positions[1] - (2 * os);

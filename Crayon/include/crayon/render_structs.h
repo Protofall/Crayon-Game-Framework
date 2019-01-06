@@ -45,14 +45,13 @@ typedef struct crayon_textured_array{
 
 //Used for rendering many untextured polys
 typedef struct crayon_untextured_array{
-	uint16_t *positions;		//Group of 2 per poly (top left coord)
+	float *positions;		//Group of 2 per poly (top left coord)
 	uint8_t *draw_z;			//The layer to help deal with overlapping sprites/polys
 	uint32_t *colours;			//Dictates the rgb and alpha of a polygon
 	uint16_t *draw_dims;		//The x and y dims of each poly
 	float *rotations;			//Poly uses angles to rotate on Z axis
 	uint16_t num_polys;
-	uint8_t options;			//---O ZCDR. If Z,C,D,R is 1, then we use all elements in their lists. If 0 then we only use the first element.
-								//For O. If 1 its opaque, else its transparent (If your polys are fully opaque, set this to 1 (Its more efficient))
+	uint8_t options;			//---- ZCDR. If Z,C,D,R is 1, then we use all elements in their lists. If 0 then we only use the first element.
 } crayon_untextured_array_t;
 
 #endif

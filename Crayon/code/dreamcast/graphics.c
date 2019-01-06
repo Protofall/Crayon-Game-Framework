@@ -36,22 +36,6 @@ extern void crayon_graphics_frame_coordinates(const struct crayon_animation *ani
 	return;
 }
 
-extern uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_chars){
-	uint16_t i = 0;
-	while(string[i] != '\0'){
-		if(string[i] == '\n'){
-			i++;
-			continue;
-		}
-		if(string[i] < ' ' || string[i] > ' ' + num_chars - 1){	//Outside the fontsheet's charset
-			return 1;
-		}
-		i++;
-	}
-
-	return 0;
-}
-
 extern void crayon_graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z, uint16_t dim_x,
   uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;
@@ -92,17 +76,12 @@ extern void crayon_graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_
 
 //Not currently handling rotations, I'll do that at a later date
 //NOTE: order might be different for different emulators :(
-extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *poly_array){
+extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *poly_array, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert;
 
-	if(poly_array->options & (1 << 4)){	//If its opaque
-		pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
-	}
-	else{
-		pvr_poly_cxt_col(&cxt, PVR_LIST_TR_POLY);
-	}
+	pvr_poly_cxt_col(&cxt, poly_list_mode);
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
@@ -470,6 +449,22 @@ extern uint8_t crayon_graphics_draw_text_prop(const struct crayon_font_prop *fp,
 		pvr_prim(&vert, sizeof(vert));
 
 		x0 = x1;
+		i++;
+	}
+
+	return 0;
+}
+
+extern uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_chars){
+	uint16_t i = 0;
+	while(string[i] != '\0'){
+		if(string[i] == '\n'){
+			i++;
+			continue;
+		}
+		if(string[i] < ' ' || string[i] > ' ' + num_chars - 1){	//Outside the fontsheet's charset
+			return 1;
+		}
 		i++;
 	}
 

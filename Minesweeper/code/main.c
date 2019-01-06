@@ -2367,7 +2367,7 @@ int main(){
 					}
 				}
 				if(MS_options.focus == 2){
-					crayon_graphics_draw_untextured_array(&Option_polys);	//The boxes the numbers go in
+					crayon_graphics_draw_untextured_array(&Option_polys, PVR_LIST_OP_POLY);	//The boxes the numbers go in
 				}
 			}
 
@@ -2381,7 +2381,7 @@ int main(){
 			custom_poly_boarder(2, 14, 59, 16, 615, 33, 4286611584u, 4294967295u);
 
 			//Draw the MS background stuff
-			crayon_graphics_draw_untextured_array(&Bg_polys);
+			crayon_graphics_draw_untextured_array(&Bg_polys, PVR_LIST_OP_POLY);
 
 			if(!MS_options.operating_system){
 				custom_poly_2000_topbar(3, 3, 15, 634, 18);	//Colour bar for Windows 2000

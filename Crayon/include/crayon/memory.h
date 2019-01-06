@@ -51,6 +51,10 @@ extern void crayon_memory_set_sprite_array(crayon_textured_array_t *sprite_array
 	uint8_t multi_rotations, uint8_t multi_colours, uint8_t filter, crayon_spritesheet_t *ss, crayon_animation_t *anim,
 	crayon_palette_t *pal);
 
+//UNTESTED (MS manually does the same things this function does)
+extern void crayon_memory_set_untextered_array(crayon_untextured_array_t *poly_array, uint16_t num_polys, uint8_t multi_draw_z,
+	uint8_t multi_colours, uint8_t multi_draw_dims, uint8_t multi_rotations);
+
 
 //------------------Modifying memory----------------//
 

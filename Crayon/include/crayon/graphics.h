@@ -15,10 +15,6 @@ extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
 extern void crayon_graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x,
 	uint16_t *frame_y, uint8_t frame);
 
-//Checks to see if a string has any illegal characters in it
-	//This means characters like tabs are considerred illegal
-extern uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_chars);
-
 
 //------------------Drawing Untextured polys------------------//
 
@@ -28,7 +24,7 @@ extern void crayon_graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_
 	uint16_t dim_x, uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode);
 
 //Draw all coloured polys in the struct's list
-extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *poly_array);
+extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *poly_array, uint8_t poly_list_mode);
 
 
 //------------------Drawing Spritesheets------------------//
@@ -47,6 +43,7 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 //The version with polygons (Use this if your spritesheet is bigger than 256 by 256)
 extern uint8_t crayon_graphics_draw_polys(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode);	//UNIMPLEMENTED
 
+
 //------------------Drawing Fonts------------------//
 
 
@@ -57,6 +54,14 @@ extern uint8_t crayon_graphics_draw_text_mono(const crayon_font_mono_t *fm, uint
 //Draw string using propertional font (string must be null-terminated)
 extern uint8_t crayon_graphics_draw_text_prop(const crayon_font_prop_t *fp, uint8_t poly_list_mode, float draw_x,
 	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string);
+
+
+//------------------String info------------------//
+
+
+//Checks to see if a string has any illegal characters in it
+	//This means characters like tabs are considerred illegal
+extern uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_chars);
 
 //This gets the drawn-length of a string using a certain font
 //If newlines is true then it will only return the longest line

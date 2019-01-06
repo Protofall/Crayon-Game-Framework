@@ -449,7 +449,7 @@ extern void crayon_memory_set_sprite_array(crayon_textured_array_t *sprite_array
 	sprite_array->animation = anim;
 	sprite_array->num_sprites = num_sprites;
 	sprite_array->unique_frames = unique_frames;
-	sprite_array->options = 0 + (multi_colours << 5) + (multi_rotations << 4) + (multi_flips << 3) +
+	sprite_array->options = (multi_colours << 5) + (multi_rotations << 4) + (multi_flips << 3) +
 		(multi_scales << 2) + (multi_frames << 1) + (multi_draw_z << 0);
 	sprite_array->filter = filter;
 
@@ -463,6 +463,21 @@ extern void crayon_memory_set_sprite_array(crayon_textured_array_t *sprite_array
 	sprite_array->colours = (uint32_t *) malloc((multi_colours ? num_sprites: 1) * sizeof(uint32_t));
 
 	sprite_array->palette = pal;
+
+	return;
+}
+
+extern void crayon_memory_set_untextered_array(crayon_untextured_array_t *poly_array, uint16_t num_polys, uint8_t multi_draw_z,
+	uint8_t multi_colours, uint8_t multi_draw_dims, uint8_t multi_rotations){
+	poly_array->num_polys = num_polys;
+	poly_array->options =  (multi_draw_z << 0) + (multi_colours << 2) + (multi_draw_dims << 1) +
+		(multi_rotations << 0);
+
+	poly_array->positions = (float *) malloc(num_polys * 2 * sizeof(float));
+	poly_array->draw_z = (uint8_t *) malloc((multi_draw_z ? num_polys: 1) * sizeof(uint8_t));
+	poly_array->draw_dims = (uint16_t *) malloc((multi_draw_dims ? 2 * num_polys: 2) * sizeof(uint16_t));
+	poly_array->rotations = (float *) malloc((multi_rotations ? num_polys: 1) * sizeof(float));
+	poly_array->colours = (uint32_t *) malloc((multi_colours ? num_polys: 1) * sizeof(uint32_t));
 
 	return;
 }
