@@ -15,6 +15,10 @@ extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
 extern void crayon_graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x,
 	uint16_t *frame_y, uint8_t frame);
 
+//Checks to see if a string has any illegal characters in it
+	//This means characters like tabs are considerred illegal
+extern uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_chars);
+
 
 //------------------Drawing Untextured polys------------------//
 

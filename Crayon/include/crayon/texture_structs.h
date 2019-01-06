@@ -61,7 +61,7 @@ typedef struct crayon_font_prop{
 							//then bump this up to a uint16_t and modify the load
 							//code in memory_free_prop_font_sheet()
 	uint8_t num_rows;
-	uint8_t num_chars;
+	uint16_t num_chars;
 } crayon_font_prop_t;
 
 //All chars have the same width and height
@@ -72,8 +72,10 @@ typedef struct crayon_font_mono{
 	int texture_format;		//The raw dtex type value
 	uint8_t char_width;
 	uint8_t char_height;
+
 	uint8_t num_columns;
 	uint8_t num_rows;
+	uint16_t num_chars;	//Equal to num_columns * num_rows since without more infor, we can't guess
 } crayon_font_mono_t;
 
 #endif

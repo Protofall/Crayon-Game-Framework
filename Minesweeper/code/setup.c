@@ -680,7 +680,7 @@ uint8_t setup_sanitise_savefile(minesweeper_savefile_t * savefile){
 			hacker = 1;
 		}
 		for(j = 0; j < 16; j++){
-			if(savefile->record_names[i][j] != 0){	//End of input, we don't care whats after this
+			if(savefile->record_names[i][j] != '\n'){	//End of input, we don't care whats after this
 				break;
 			}
 			if(savefile->record_names[i][j] < ' ' || savefile->record_names[i][j] > '~'){	//Outside the fontsheet

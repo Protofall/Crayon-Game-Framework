@@ -117,6 +117,13 @@ int main(){
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
+	//Basic test to show valid_string checking. Top fails, bottom works
+	// const char * string = " Weird littole 347 test strin\ng \thellow";
+	const char * string = " Weird littole 347 test strin\ng hellow~3";
+	if(crayon_graphics_valid_string(string, Tahoma.num_chars)){
+		return 1;
+	}
+
 	crayon_memory_set_sprite_array(&Dwarf_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Dwarf, &Dwarf.spritesheet_animation_array[0], NULL);
 	Dwarf_Draw.positions[0] = 50;
 	Dwarf_Draw.positions[1] = 50;

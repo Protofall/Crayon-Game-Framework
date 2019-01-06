@@ -366,6 +366,8 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	fm->num_columns = test3;
 	fm->num_rows = test4;
 
+	fm->num_chars = fm->num_columns * fm->num_rows;	//The number of chars *may* be less than this, but it won't be fatal
+
 	//Attempt to come back here and read the whole file directly into the vars
 	// if(fscanf(sheet_file, "%hhu %hhu %hhu %hhu\n", fm->char_width, fm->char_height, fm->num_columns, fm->num_rows) != 4){
 	// if(fscanf(sheet_file, "%hhu %hhu %hhu %hhu\n", &fm->char_width, &fm->char_height, &fm->num_columns, &fm->num_rows) != 4){
