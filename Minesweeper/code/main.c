@@ -2414,28 +2414,43 @@ int main(){
 	retVal += crayon_memory_free_sprite_array(&MS_options.checkers, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.buttons, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.number_changers, 0, 0);
+
 	retVal += crayon_memory_free_spritesheet(&Board);
 	retVal += crayon_memory_free_spritesheet(&Icons);
 	retVal += crayon_memory_free_spritesheet(&Windows);
+
 	// retVal += crayon_memory_free_mono_font_sheet(&BIOS_font);
 	retVal += crayon_memory_free_prop_font_sheet(&Tahoma_font);
+
+	retVal += crayon_memory_free_palette(&Board_P);
+	retVal += crayon_memory_free_palette(&Icons_P);
+	retVal += crayon_memory_free_palette(&Controllers_P);
+	if(!MS_options.operating_system){	//Palette isn't used in XP mode so no point free-ing it
+		retVal += crayon_memory_free_palette(&Windows_P);
+	}
+	// retVal += crayon_memory_free_palette(&BIOS_P);
+	retVal += crayon_memory_free_palette(&Tahoma_P);
 	retVal += crayon_memory_free_palette(&White_Tahoma_P);
 	retVal += crayon_memory_free_palette(&cursor_red);
 	retVal += crayon_memory_free_palette(&cursor_yellow);
 	retVal += crayon_memory_free_palette(&cursor_green);
 	retVal += crayon_memory_free_palette(&cursor_blue);
+
+	retVal += crayon_memory_free_untextured_array(&Bg_polys);
+	retVal += crayon_memory_free_untextured_array(&Option_polys);
+
 	snd_sfx_unload(Sound_Tick);
 	snd_sfx_unload(Sound_Death);
 	snd_sfx_unload(Sound_Death_Italian);
 	snd_sfx_unload(Sound_Win);
+
 	setup_free_OS_struct(&os);
 
 	crayon_savefile_free_icon(&MS_options.savefile_details);
 
-	error_freeze("Free-ing result %d!\n", retVal);
+	error_freeze("Free-ing result %d (Errors if != 0)\n", retVal);
 
 	return 0;
 }
 
-//Add something to be displayed on the VMU screen. But what? Just a static mine/blown up mine
 //When choosing an OS, make it boot up with a Dreamcast/Katana legacy BIOS

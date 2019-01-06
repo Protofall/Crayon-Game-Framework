@@ -65,13 +65,13 @@ extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1
 
 
 //Free up all memory from a spritesheet struct. if free_palette is true, it will also free the palette
-extern uint8_t crayon_memory_free_spritesheet(struct crayon_spritesheet *ss);
+extern uint8_t crayon_memory_free_spritesheet(crayon_spritesheet_t *ss);
 
 //Same as above, but for mono-spaced fontsheets
-extern uint8_t crayon_memory_free_prop_font_sheet(struct crayon_font_prop *fp);
+extern uint8_t crayon_memory_free_prop_font_sheet(crayon_font_prop_t *fp);
 
 //Same as above, but for proportionally-spaced fontsheets
-extern uint8_t crayon_memory_free_mono_font_sheet(struct crayon_font_mono *fm);
+extern uint8_t crayon_memory_free_mono_font_sheet(crayon_font_mono_t *fm);
 
 //Frees a palette
 extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp);
@@ -80,6 +80,8 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp);
 	//free_ss is XXXX XXPS where P is delete the palette and S is delete the just spritesheet
 	//Can't delete just a palette by passing in (1 << 1), thats intentional
 extern uint8_t crayon_memory_free_sprite_array(crayon_textured_array_t *sprite_array, uint8_t free_ss, uint8_t free_pal);
+
+extern uint8_t crayon_memory_free_untextured_array(crayon_untextured_array_t *untextured_array);
 
 
 //------------------Mounting romdisks------------------//

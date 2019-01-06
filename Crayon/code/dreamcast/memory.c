@@ -480,26 +480,27 @@ extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1
 	return found;
 }
 
-//Free Texture, anim array and palette (Maybe the anim/ss names later on?). Doesn't free the spritesheet struct itself
-extern uint8_t crayon_memory_free_spritesheet(struct crayon_spritesheet *ss){
+//Free Texture and anim array
+//Doesn't free the spritesheet struct itself
+extern uint8_t crayon_memory_free_spritesheet(crayon_spritesheet_t *ss){
 	if(ss){
-		pvr_mem_free(ss->spritesheet_texture);
-
 		uint16_t i;
 		for(i = 0; i < ss->spritesheet_animation_count; i++){
 			free(ss->spritesheet_animation_array[i].animation_name);
 		}
 		free(ss->spritesheet_animation_array);
 
-		//We don't free the ss because it could be on the stack and we can't confirm if a pointer points to the heap or stack.
-		//If it were on the heap then we would free it
+		//spritesheet_name is unused so we don't free it
+		//free(ss->spritesheet_name);
+
+		pvr_mem_free(ss->spritesheet_texture);
 
 		return 0;
 	}
 	return 1;
 }
 
-extern uint8_t crayon_memory_free_prop_font_sheet(struct crayon_font_prop *fp){
+extern uint8_t crayon_memory_free_prop_font_sheet(crayon_font_prop_t *fp){
 	if(fp){
 		free(fp->char_x_coord);
 		free(fp->char_width);
@@ -510,7 +511,7 @@ extern uint8_t crayon_memory_free_prop_font_sheet(struct crayon_font_prop *fp){
 	return 1;
 }
 
-extern uint8_t crayon_memory_free_mono_font_sheet(struct crayon_font_mono *fm){
+extern uint8_t crayon_memory_free_mono_font_sheet(crayon_font_mono_t *fm){
 	if(fm){
 		pvr_mem_free(fm->fontsheet_texture);
 		return 0;
@@ -519,28 +520,45 @@ extern uint8_t crayon_memory_free_mono_font_sheet(struct crayon_font_mono *fm){
 }
 
 extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
-	if(cp->palette != NULL){
-		free(cp->palette);
-		return 0;
+	if(cp){
+		if(cp->palette){
+			free(cp->palette);
+			return 0;
+		}
 	}
 	return 1;
 }
 
 extern uint8_t crayon_memory_free_sprite_array(crayon_textured_array_t *sprite_array, uint8_t free_ss, uint8_t free_pal){
-	uint8_t retval = 0;
-	if(free_ss << 0){
-		retval = crayon_memory_free_spritesheet(sprite_array->spritesheet);
-		if(retval){return retval;}
+	uint8_t ret_val = 0;
+	if(free_ss){
+		ret_val = crayon_memory_free_spritesheet(sprite_array->spritesheet);
+		if(ret_val){return ret_val;}
+	}
+	if(free_pal){
+		ret_val = crayon_memory_free_palette(sprite_array->palette);
+		if(ret_val){return ret_val;}
 	}
 
 	free(sprite_array->positions);
-	free(sprite_array->draw_z);
 	free(sprite_array->frame_coord_keys);
 	free(sprite_array->frame_coord_map);
+	free(sprite_array->colours);
 	free(sprite_array->scales);
 	free(sprite_array->flips);
 	free(sprite_array->rotations);
-	free(sprite_array->colours);
+	free(sprite_array->draw_z);
+
+
+	return 0;
+}
+
+extern uint8_t crayon_memory_free_untextured_array(crayon_untextured_array_t *untextured_array){
+	free(untextured_array->positions);
+	free(untextured_array->draw_z);
+	free(untextured_array->colours);
+	free(untextured_array->draw_dims);
+	free(untextured_array->rotations);
 
 	return 0;
 }

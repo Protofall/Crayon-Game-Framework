@@ -47,7 +47,7 @@ typedef struct crayon_textured_array{
 
 //Used for rendering many untextured polys
 typedef struct crayon_untextured_array{
-	uint16_t *draw_pos;			//Group of 2 per poly (top left coord)
+	uint16_t *positions;		//Group of 2 per poly (top left coord)
 	uint8_t *draw_z;			//The layer to help deal with overlapping sprites/polys
 	uint32_t *colours;			//Dictates the rgb and alpha of a polygon
 	uint16_t *draw_dims;		//The x and y dims of each poly

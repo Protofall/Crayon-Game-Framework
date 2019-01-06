@@ -274,6 +274,7 @@ void setup_free_OS_struct(MinesweeperOS_t *os){
 	free(os->assets);
 	crayon_memory_free_sprite_array(&os->sd, 0, 0);
 	crayon_memory_free_sprite_array(&os->region, 0, 0);
+	//Clock palette points to a palette that is already free-d elsewhere
 }
 
 void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t sd){
@@ -281,7 +282,7 @@ void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t
 	if(!os){
 		Bg->num_polys += 4;	//Windows 2000 has a few extra polys
 	}
-	Bg->draw_pos = (uint16_t *) malloc(2 * Bg->num_polys * sizeof(uint16_t));
+	Bg->positions = (uint16_t *) malloc(2 * Bg->num_polys * sizeof(uint16_t));
 	Bg->draw_z = (uint8_t *) malloc(Bg->num_polys * sizeof(uint8_t));
 	Bg->colours = (uint32_t *) malloc(Bg->num_polys * sizeof(uint32_t));
 	Bg->draw_dims = (uint16_t *) malloc(2 * Bg->num_polys * sizeof(uint16_t));
@@ -290,16 +291,16 @@ void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t
 	Bg->options = (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4);	//Z, C, D and O enabled
 
 	//Grey box
-	Bg->draw_pos[0] = 6;
-	Bg->draw_pos[1] = 52;
+	Bg->positions[0] = 6;
+	Bg->positions[1] = 52;
 	Bg->draw_z[0] = 9;
 	Bg->colours[0] = (255 << 24) | (192 << 16) | (192 << 8) | 192;	//4290822336 (lightGrey)
 	Bg->draw_dims[0] = 631;
 	Bg->draw_dims[1] = 397;
 
 	//White box
-	Bg->draw_pos[2] = 3;
-	Bg->draw_pos[3] = 48;
+	Bg->positions[2] = 3;
+	Bg->positions[3] = 48;
 	Bg->draw_z[1] = 8;
 	Bg->colours[1] = (255 << 24) | (255 << 16) | (255 << 8) | 255;	//4294967295 (White)
 	Bg->draw_dims[2] = 634;
@@ -307,8 +308,8 @@ void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t
 
 	//Yellowy box, only for XP
 	if(os){
-		Bg->draw_pos[4] = 3;
-		Bg->draw_pos[5] = 7;
+		Bg->positions[4] = 3;
+		Bg->positions[5] = 7;
 		Bg->draw_z[2] = 8;
 		Bg->colours[2] = (255 << 24) | (236 << 16) | (233 << 8) | 216;	//4293716440 (Yellowy)
 		Bg->draw_dims[4] = 635;
@@ -316,51 +317,51 @@ void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t
 	}
 	else{
 		//Place the polys for 2000's taskbar
-		Bg->draw_pos[4] = 0;
-		Bg->draw_pos[5] = 452;
+		Bg->positions[4] = 0;
+		Bg->positions[5] = 452;
 		Bg->draw_z[2] = 1;
 		Bg->colours[2] = (255 << 24) + (212 << 16) + (208 << 8) + 200;	//??? yellowy grey
 		Bg->draw_dims[4] = 640;
 		Bg->draw_dims[5] = 28;
 
-		Bg->draw_pos[6] = 0;
-		Bg->draw_pos[7] = 453;
+		Bg->positions[6] = 0;
+		Bg->positions[7] = 453;
 		Bg->draw_z[3] = 2;
 		Bg->colours[3] = (255 << 24) | (255 << 16) | (255 << 8) | 255;	//4294967295 (White)
 		Bg->draw_dims[6] = 640;
 		Bg->draw_dims[7] = 1;
 
 		//For the time and icons box (This changes based on "sd")
-		Bg->draw_pos[9] = 456;
+		Bg->positions[9] = 456;
 		Bg->draw_z[4] = 3;
 		Bg->colours[4] = (255 << 24) + (128 << 16) + (128 << 8) + 128;	//??? (Dark Grey)
 		Bg->draw_dims[9] = 21;
 
-		Bg->draw_pos[11] = 456;
+		Bg->positions[11] = 456;
 		Bg->draw_z[5] = 2;
 		Bg->colours[5] = (255 << 24) | (255 << 16) | (255 << 8) | 255;	//4294967295 (White)
 		Bg->draw_dims[11] = 22;
 
-		Bg->draw_pos[13] = 457;
+		Bg->positions[13] = 457;
 		Bg->draw_z[6] = 4;
 		Bg->colours[6] = (255 << 24) + (212 << 16) + (208 << 8) + 200;	//4290822336 (lightGrey)
 		Bg->draw_dims[13] = 20;
 
 		//Setting the x and dim_x values based on if we have an sd card
 		if(sd){
-			Bg->draw_pos[8] = 507;	//DGrey
+			Bg->positions[8] = 507;	//DGrey
 			Bg->draw_dims[8] = 130;
-			Bg->draw_pos[10] = 507;	//White
+			Bg->positions[10] = 507;	//White
 			Bg->draw_dims[10] = 131;
-			Bg->draw_pos[12] = 508;	//LGrey
+			Bg->positions[12] = 508;	//LGrey
 			Bg->draw_dims[12] = 129;
 		}
 		else{	//Difference of 18 pixels to the right
-			Bg->draw_pos[8] = 525;
+			Bg->positions[8] = 525;
 			Bg->draw_dims[8] = 112;
-			Bg->draw_pos[10] = 525;
+			Bg->positions[10] = 525;
 			Bg->draw_dims[10] = 113;
-			Bg->draw_pos[12] = 526;
+			Bg->positions[12] = 526;
 			Bg->draw_dims[12] = 111;
 		}
 	}
@@ -373,7 +374,7 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_tex
 	else{
 		Options->num_polys = 6;	//XP mode (XP not drawing all of the polys?)
 	}
-	Options->draw_pos = (uint16_t *) malloc(2 * Options->num_polys * sizeof(uint16_t));
+	Options->positions = (uint16_t *) malloc(2 * Options->num_polys * sizeof(uint16_t));
 	Options->draw_z = (uint8_t *) malloc(Options->num_polys * sizeof(uint8_t));
 	Options->colours = (uint32_t *) malloc(Options->num_polys * sizeof(uint32_t));
 	Options->draw_dims = (uint16_t *) malloc(2 * Options->num_polys * sizeof(uint16_t));
@@ -391,38 +392,38 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_tex
 		dim_x = 25; dim_y = 21;
 		for(i = 0; i < 3; i++){
 			//Centre/top white
-			Options->draw_pos[(10 * i) + 0] = x + 2;
-			Options->draw_pos[(10 * i) + 1] = y[i] + 2;
+			Options->positions[(10 * i) + 0] = x + 2;
+			Options->positions[(10 * i) + 1] = y[i] + 2;
 			Options->draw_z[(5 * i) + 0] = 29;
 			Options->colours[(5 * i) + 0] = 0xFFFFFFFF;	//White
 			Options->draw_dims[(10 * i) + 0] = dim_x - 4;
 			Options->draw_dims[(10 * i) + 1] = dim_y - 4;
 
 			//Middle colours
-			Options->draw_pos[(10 * i) + 2] = x + 1;
-			Options->draw_pos[(10 * i) + 3] = y[i] + 1;
+			Options->positions[(10 * i) + 2] = x + 1;
+			Options->positions[(10 * i) + 3] = y[i] + 1;
 			Options->draw_z[(5 * i) + 1] = 28;
 			Options->colours[(5 * i) + 1] = 0xFF404040;	//Dark grey
 			Options->draw_dims[(10 * i) + 2] = dim_x - 3;
 			Options->draw_dims[(10 * i) + 3] = dim_y - 3;
 
-			Options->draw_pos[(10 * i) + 4] = x + 1;
-			Options->draw_pos[(10 * i) + 5] = y[i] + 1;
+			Options->positions[(10 * i) + 4] = x + 1;
+			Options->positions[(10 * i) + 5] = y[i] + 1;
 			Options->draw_z[(5 * i) + 2] = 27;
 			Options->colours[(5 * i) + 2] = 0xFFD4D0C8;	//Light grey
 			Options->draw_dims[(10 * i) + 4] = dim_x - 2;
 			Options->draw_dims[(10 * i) + 5] = dim_y - 2;
 
 			//Back colours
-			Options->draw_pos[(10 * i) + 6] = x;
-			Options->draw_pos[(10 * i) + 7] = y[i];
+			Options->positions[(10 * i) + 6] = x;
+			Options->positions[(10 * i) + 7] = y[i];
 			Options->draw_z[(5 * i) + 3] = 26;
 			Options->colours[(5 * i) + 3] = 0xFF808080;	//Medium grey
 			Options->draw_dims[(10 * i) + 6] = dim_x - 1;
 			Options->draw_dims[(10 * i) + 7] = dim_y - 1;
 
-			Options->draw_pos[(10 * i) + 8] = x;
-			Options->draw_pos[(10 * i) + 9] = y[i];
+			Options->positions[(10 * i) + 8] = x;
+			Options->positions[(10 * i) + 9] = y[i];
 			Options->draw_z[(5 * i) + 4] = 25;
 			Options->colours[(5 * i) + 4] = 0xFFFFFFFF;	//White
 			Options->draw_dims[(10 * i) + 8] = dim_x;
@@ -433,15 +434,15 @@ void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_tex
 		uint8_t dim_x, dim_y;
 		dim_x = 25 + 17; dim_y = 20;
 		for(i = 0; i < 3; i++){
-			Options->draw_pos[(4 * i) + 0] = x + 1;
-			Options->draw_pos[(4 * i) + 1] = y[i] + 1;
+			Options->positions[(4 * i) + 0] = x + 1;
+			Options->positions[(4 * i) + 1] = y[i] + 1;
 			Options->draw_z[(2 * i) + 0] = 26;
 			Options->colours[(2 * i) + 0] = 0xFFFFFFFF;	//White
 			Options->draw_dims[(4 * i) + 0] = dim_x - 2;
 			Options->draw_dims[(4 * i) + 1] = dim_y - 2;
 
-			Options->draw_pos[(4 * i) + 2] = x;
-			Options->draw_pos[(4 * i) + 3] = y[i];
+			Options->positions[(4 * i) + 2] = x;
+			Options->positions[(4 * i) + 3] = y[i];
 			Options->draw_z[(2 * i) + 1] = 25;
 			Options->colours[(2 * i) + 1] = 0xFF7F9DB9;	//Murky Light Blue
 			Options->draw_dims[(4 * i) + 2] = dim_x;
@@ -537,11 +538,7 @@ uint8_t setup_check_for_old_savefile(crayon_savefile_details_t * pre_1_2_0_savef
 uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details){
 	crayon_savefile_details_t pre_1_2_0_savefile_details;
 	crayon_savefile_details_t pre_1_3_0_savefile_details;
-	pre_1_3_0_minesweeper_savefile_t pre_1_3_0_savefile;
-
-	//Point to the savefile icon for when we re-save it
-	pre_1_2_0_savefile_details.savefile_icon = new_savefile_details->savefile_icon;
-	pre_1_2_0_savefile_details.savefile_palette = new_savefile_details->savefile_palette;
+	pre_1_3_0_minesweeper_savefile_t pre_1_3_0_savefile;	//Storing old savefata
 
 	//Pre 1.2.0, it used the incorrect length app_id. Savefile format is still the same as pre 1.3.0
 	crayon_savefile_init_savefile_details(&pre_1_2_0_savefile_details, (uint8_t *)&pre_1_3_0_savefile,

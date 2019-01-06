@@ -101,23 +101,23 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 		vert.oargb = 0;	//Not sure what this does
 		vert.flags = PVR_CMD_VERTEX;
 
-		vert.x = poly_array->draw_pos[2 * i];
-		vert.y = poly_array->draw_pos[(2 * i) + 1];
+		vert.x = poly_array->positions[2 * i];
+		vert.y = poly_array->positions[(2 * i) + 1];
 		vert.z = poly_array->draw_z[multiple_z * i];
 		pvr_prim(&vert, sizeof(vert));
 
-		vert.x = poly_array->draw_pos[2 * i] + poly_array->draw_dims[multiple_dims * 2 * i];	//If using one dim, multiple dims reduces it to the first value
-		// vert.y = poly_array->draw_pos[(2 * i) + 1];
+		vert.x = poly_array->positions[2 * i] + poly_array->draw_dims[multiple_dims * 2 * i];	//If using one dim, multiple dims reduces it to the first value
+		// vert.y = poly_array->positions[(2 * i) + 1];
 		// vert.z = poly_array->draw_z[multiple_z * i];
 		pvr_prim(&vert, sizeof(vert));
 
-		vert.x = poly_array->draw_pos[2 * i];
-		vert.y = poly_array->draw_pos[(2 * i) + 1] + poly_array->draw_dims[(multiple_dims * 2 * i) + 1];
+		vert.x = poly_array->positions[2 * i];
+		vert.y = poly_array->positions[(2 * i) + 1] + poly_array->draw_dims[(multiple_dims * 2 * i) + 1];
 		// vert.z = poly_array->draw_z[multiple_z * i];
 		pvr_prim(&vert, sizeof(vert));
 
-		vert.x = poly_array->draw_pos[2 * i] + poly_array->draw_dims[multiple_dims * 2 * i];
-		// vert.y = poly_array->draw_pos[(2 * i) + 1] + poly_array->draw_dims[(multiple_dims * 2 * i) + 1];
+		vert.x = poly_array->positions[2 * i] + poly_array->draw_dims[multiple_dims * 2 * i];
+		// vert.y = poly_array->positions[(2 * i) + 1] + poly_array->draw_dims[(multiple_dims * 2 * i) + 1];
 		// vert.z = poly_array->draw_z[multiple_z * i];
 		vert.flags = PVR_CMD_VERTEX_EOL;
 		pvr_prim(&vert, sizeof(vert));
