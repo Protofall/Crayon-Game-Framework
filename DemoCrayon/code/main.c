@@ -124,7 +124,7 @@ int main(){
 		return 1;
 	}
 
-	crayon_memory_set_sprite_array(&Dwarf_Draw, 3, 1, 0, 0, 1, 0, 0, 0, 0, &Dwarf, &Dwarf.spritesheet_animation_array[0], NULL);
+	crayon_memory_init_sprite_array(&Dwarf_Draw, 3, 1, 0, 0, 1, 0, 0, 0, 0, &Dwarf, &Dwarf.spritesheet_animation_array[0], NULL);
 	Dwarf_Draw.positions[0] = 50;
 	Dwarf_Draw.positions[1] = 20;
 	Dwarf_Draw.positions[2] = Dwarf_Draw.positions[0];
@@ -144,7 +144,7 @@ int main(){
 	Dwarf_Draw.frame_coord_keys[0] = 0;
 	crayon_graphics_frame_coordinates(Dwarf_Draw.animation, Dwarf_Draw.frame_coord_map + 0, Dwarf_Draw.frame_coord_map + 1, 0);
 
-	crayon_memory_set_sprite_array(&Enlarge_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Enlarge, &Enlarge.spritesheet_animation_array[0], NULL);
+	crayon_memory_init_sprite_array(&Enlarge_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Enlarge, &Enlarge.spritesheet_animation_array[0], NULL);
 	Enlarge_Draw.positions[0] = Dwarf_Draw.positions[0] + (2 * Dwarf_Draw.animation[0].animation_frame_width) + 20;
 	Enlarge_Draw.positions[1] = 20;
 	Enlarge_Draw.draw_z[0] = 17;

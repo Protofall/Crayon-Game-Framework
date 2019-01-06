@@ -440,7 +440,7 @@ extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palet
 }
 
 //lol 13 params
-extern void crayon_memory_set_sprite_array(crayon_textured_array_t *sprite_array, uint16_t num_sprites,
+extern void crayon_memory_init_sprite_array(crayon_textured_array_t *sprite_array, uint16_t num_sprites,
 	uint8_t unique_frames, uint8_t multi_draw_z, uint8_t multi_frames, uint8_t multi_scales, uint8_t multi_flips,
 	uint8_t multi_rotations, uint8_t multi_colours, uint8_t filter, crayon_spritesheet_t *ss,
 	crayon_animation_t *anim, crayon_palette_t *pal){
@@ -467,7 +467,7 @@ extern void crayon_memory_set_sprite_array(crayon_textured_array_t *sprite_array
 	return;
 }
 
-extern void crayon_memory_set_untextered_array(crayon_untextured_array_t *poly_array, uint16_t num_polys, uint8_t multi_draw_z,
+extern void crayon_memory_init_untextered_array(crayon_untextured_array_t *poly_array, uint16_t num_polys, uint8_t multi_draw_z,
 	uint8_t multi_colours, uint8_t multi_draw_dims, uint8_t multi_rotations){
 	poly_array->num_polys = num_polys;
 	poly_array->options =  (multi_draw_z << 0) + (multi_colours << 2) + (multi_draw_dims << 1) +

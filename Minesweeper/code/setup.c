@@ -189,7 +189,7 @@ void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, crayon_palet
 		if(ss->spritesheet_animation_array[id_count].animation_frames > 1){
 			multi_frames = 1;
 		}
-		crayon_memory_set_sprite_array(os->assets[i], 1, 2 * multi_frames, 0, multi_frames, 0, 0, 0, 0, 0, ss, &ss->spritesheet_animation_array[id_count], pal);
+		crayon_memory_init_sprite_array(os->assets[i], 1, 2 * multi_frames, 0, multi_frames, 0, 0, 0, 0, 0, ss, &ss->spritesheet_animation_array[id_count], pal);
 		os->assets[i]->scales[0] = 1;
 		os->assets[i]->scales[1] = 1;
 		os->assets[i]->flips[0] = 0;
@@ -226,7 +226,7 @@ void setup_OS_assets_icons(MinesweeperOS_t *os, crayon_spritesheet_t *Icons, cra
 	uint8_t i;
 	for(i = 0; i < Icons->spritesheet_animation_count; i++){
 		if(!strcmp(Icons->spritesheet_animation_array[i].animation_name, "sd")){
-			crayon_memory_set_sprite_array(&os->sd, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->spritesheet_animation_array[i], Icons_P);
+			crayon_memory_init_sprite_array(&os->sd, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->spritesheet_animation_array[i], Icons_P);
 			crayon_graphics_frame_coordinates(os->sd.animation, os->sd.frame_coord_map, os->sd.frame_coord_map + 1, 0);
 			os->sd.draw_z[0] = 21;
 			os->sd.scales[0] = 1;
@@ -245,7 +245,7 @@ void setup_OS_assets_icons(MinesweeperOS_t *os, crayon_spritesheet_t *Icons, cra
 			}
 		}
 		if(!strcmp(Icons->spritesheet_animation_array[i].animation_name, "regionIcons")){
-			crayon_memory_set_sprite_array(&os->region, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->spritesheet_animation_array[i], Icons_P);
+			crayon_memory_init_sprite_array(&os->region, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->spritesheet_animation_array[i], Icons_P);
 			crayon_graphics_frame_coordinates(os->region.animation, os->region.frame_coord_map, os->region.frame_coord_map + 1, region);
 			os->region.draw_z[0] = 21;
 			os->region.scales[0] = 1;

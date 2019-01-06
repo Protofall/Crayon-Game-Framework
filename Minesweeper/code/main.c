@@ -1199,8 +1199,8 @@ int main(){
 
 	//Setting size to 1 since reset_grid will reset it soon anyways
 	//Also due to lang thing we don't know the spritesheet, animation or palette
-	// crayon_memory_set_sprite_array(&MS_grid.draw_grid, 1, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);
-	crayon_memory_set_sprite_array(&MS_grid.draw_grid, 38 * 21, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);	//Technically there's no need to make change the size after this
+	// crayon_memory_init_sprite_array(&MS_grid.draw_grid, 1, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);
+	crayon_memory_init_sprite_array(&MS_grid.draw_grid, 38 * 21, 16, 0, 1, 0, 0, 0, 0, 0, NULL, NULL, NULL);	//Technically there's no need to make change the size after this
 
 	//Setting up the language spritesheet, animation and palette pointers
 	uint8_t tile_id = 0;
@@ -1241,7 +1241,7 @@ int main(){
 
 	//Indent draw list
 	crayon_textured_array_t indented_tiles;
-	crayon_memory_set_sprite_array(&indented_tiles, 8 * 4, 2, 0, 1, 0, 0, 0, 0, 0, MS_grid.alt_ss, MS_grid.alt_anim, MS_grid.alt_pal);
+	crayon_memory_init_sprite_array(&indented_tiles, 8 * 4, 2, 0, 1, 0, 0, 0, 0, 0, MS_grid.alt_ss, MS_grid.alt_anim, MS_grid.alt_pal);
 	indented_tiles.draw_z[0] = 18;
 	indented_tiles.scales[0] = 1;
 	indented_tiles.scales[1] = 1;
@@ -1289,7 +1289,7 @@ int main(){
 
 	//Controller pixel art on the 
 	crayon_textured_array_t devices;
-	crayon_memory_set_sprite_array(&devices, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[0], &Controllers_P);
+	crayon_memory_init_sprite_array(&devices, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[0], &Controllers_P);
 	devices.scales[0] = 1;
 	devices.scales[1] = 1;
 	devices.flips[0] = 0;
@@ -1307,7 +1307,7 @@ int main(){
 
 	//Dot for legend numbers (5 for gamepad and 3 for mouse legend, 1 for face, 11 in the legend)
 	crayon_textured_array_t legend_dot;
-	crayon_memory_set_sprite_array(&legend_dot, 20, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[1], &Controllers_P);
+	crayon_memory_init_sprite_array(&legend_dot, 20, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[1], &Controllers_P);
 	legend_dot.scales[0] = 1;
 	legend_dot.scales[1] = 1;
 	legend_dot.flips[0] = 0;
@@ -1372,7 +1372,7 @@ int main(){
 
 	//Controller swirl
 	crayon_textured_array_t cont_swirl;
-	crayon_memory_set_sprite_array(&cont_swirl, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[2], &Controllers_P);
+	crayon_memory_init_sprite_array(&cont_swirl, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[2], &Controllers_P);
 	cont_swirl.scales[0] = 1;
 	cont_swirl.scales[1] = 1;
 	cont_swirl.flips[0] = 0;
@@ -1385,7 +1385,7 @@ int main(){
 	crayon_graphics_frame_coordinates(cont_swirl.animation, cont_swirl.frame_coord_map + 0, cont_swirl.frame_coord_map + 1, region);
 
 	crayon_textured_array_t digit_display;
-	crayon_memory_set_sprite_array(&digit_display, 6, 11, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[1], &Board_P);
+	crayon_memory_init_sprite_array(&digit_display, 6, 11, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[1], &Board_P);
 	digit_display.scales[0] = 1;
 	digit_display.scales[1] = 1;
 	digit_display.flips[0] = 0;
@@ -1417,7 +1417,7 @@ int main(){
 	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 20, digit_display.frame_coord_map + 21, 10);
 
 	crayon_textured_array_t face;
-	crayon_memory_set_sprite_array(&face, 1, 5, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[0], &Board_P);
+	crayon_memory_init_sprite_array(&face, 1, 5, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[0], &Board_P);
 	face.scales[0] = 1;
 	face.scales[1] = 1;
 	face.flips[0] = 0;
@@ -1436,7 +1436,7 @@ int main(){
 	setup_keys(&MS_keyboard, &Tahoma_font);
 
 	//26 letters, 16 for the extra chars
-	crayon_memory_set_sprite_array(&MS_keyboard.mini_buttons, 26 + 16, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[miniButton_id], &Windows_P);
+	crayon_memory_init_sprite_array(&MS_keyboard.mini_buttons, 26 + 16, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[miniButton_id], &Windows_P);
 	MS_keyboard.mini_buttons.scales[0] = 1;
 	MS_keyboard.mini_buttons.scales[1] = 1;
 	MS_keyboard.mini_buttons.flips[0] = 0;
@@ -1447,7 +1447,7 @@ int main(){
 	crayon_graphics_frame_coordinates(MS_keyboard.mini_buttons.animation, MS_keyboard.mini_buttons.frame_coord_map, MS_keyboard.mini_buttons.frame_coord_map + 1, 0);
 
 	//Medium
-	crayon_memory_set_sprite_array(&MS_keyboard.medium_buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[mediumButton_id], &Windows_P);
+	crayon_memory_init_sprite_array(&MS_keyboard.medium_buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[mediumButton_id], &Windows_P);
 	MS_keyboard.medium_buttons.scales[0] = 1;
 	MS_keyboard.medium_buttons.scales[1] = 1;
 	MS_keyboard.medium_buttons.flips[0] = 0;
@@ -1464,7 +1464,7 @@ int main(){
 	crayon_graphics_frame_coordinates(MS_keyboard.medium_buttons.animation, MS_keyboard.medium_buttons.frame_coord_map, MS_keyboard.medium_buttons.frame_coord_map + 1, 0);
 
 	//Space and Enter
-	crayon_memory_set_sprite_array(&MS_keyboard.big_buttons, 2, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[bigButton_id], &Windows_P);
+	crayon_memory_init_sprite_array(&MS_keyboard.big_buttons, 2, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[bigButton_id], &Windows_P);
 	MS_keyboard.big_buttons.scales[0] = 1;
 	MS_keyboard.big_buttons.scales[1] = 1;
 	MS_keyboard.big_buttons.flips[0] = 0;
@@ -1547,9 +1547,9 @@ int main(){
 	keyboard_special_toggle(&MS_keyboard);
 
 	//Options draw structs
-	crayon_memory_set_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[bigButton_id], &Windows_P);
-	crayon_memory_set_sprite_array(&MS_options.checkers, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[checker_id], &Windows_P);
-	crayon_memory_set_sprite_array(&MS_options.number_changers, 3, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[num_changer_id], &Windows_P);
+	crayon_memory_init_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[bigButton_id], &Windows_P);
+	crayon_memory_init_sprite_array(&MS_options.checkers, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[checker_id], &Windows_P);
+	crayon_memory_init_sprite_array(&MS_options.number_changers, 3, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[num_changer_id], &Windows_P);
 
 	//Buttons
 	MS_options.buttons.draw_z[0] = 30;
