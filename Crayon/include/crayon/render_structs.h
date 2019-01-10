@@ -19,7 +19,7 @@ typedef struct crayon_textured_array{
 	uint16_t *frame_coord_map;	//Each group of 2 elements is one frame of an animation
 	uint32_t *colours;			//For poly mode this dictates the rgb and alpha of a polygon
 								//(Might be usable in Sprite mode?)
-	float *scales;				//Float incase you want to shrink it, better for enlarging though
+	float *scales;				//Float incase you want to shrink or enlarge it
 
 	uint8_t *flips;				//UNUSED, will mirror the sprite (Then rotation is applied)
 

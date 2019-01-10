@@ -12,6 +12,7 @@ extern uint8_t crayon_assist_read_file(void **buffer, char *path, size_t ize_byt
 //UNTESTED
 //Reads a number from a file stream. However the number may not be negative
 	//Useful for reading numbers larger than 9 into a uint8_t var
+	//It will always discard 1 char after reading
 extern uint32_t crayon_assist_fgeti(FILE *f);
 
 #endif

@@ -93,7 +93,7 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 	int i;
 	for(i = 0; i < poly_array->num_polys; i++){
 		vert.argb = poly_array->colours[multiple_colours * i];	//If only one colour, this is forced to colour zero
-		vert.oargb = 0;	//Not sure what this does
+		vert.oargb = 0;
 		vert.flags = PVR_CMD_VERTEX;
 
 		vert.x = poly_array->positions[2 * i];
