@@ -124,7 +124,7 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 	const struct crayon_animation *anim, float draw_x, float draw_y, float draw_z,
 	float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
-	uint8_t paletteNumber){
+	uint8_t palette_number){
 
 	//Screen coords. letter0 is top left coord, letter1 is bottom right coord. Z is depth (Layer)
 	const float x0 = draw_x;  //Do these really need to be floats?
@@ -144,10 +144,10 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 																													//https://github.com/tvspelsfreak/texconv
 	int textureformat = ss->spritesheet_format;
 	if(texture_format == 5){	//4BPP
-			textureformat |= ((paletteNumber) << 21);	//Update the later to use KOS' macros
+			textureformat |= ((palette_number) << 21);	//Update the later to use KOS' macros
 	}
 	if(texture_format == 6){	//8BPP
-			textureformat |= ((paletteNumber) << 25);	//Update the later to use KOS' macros
+			textureformat |= ((palette_number) << 25);	//Update the later to use KOS' macros
 	}
 	pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, textureformat, ss->spritesheet_dims,
 		ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
@@ -173,7 +173,7 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 // 	// PVR_TXRFMT_PAL8BPP   (6 << 27)
 // 	//(6 << 27) == 110 << 27 == 11000 00000 00000 00000 00000 00000
 // 	//(5 << 27) == 110 << 27 == 10100 00000 00000 00000 00000 00000
-// 	//paletteNumber ranges from 0 to 63 or 0 to 15 depending on BPP
+// 	//palette_number ranges from 0 to 63 or 0 to 15 depending on BPP
 // 	//   (8BPP) 3  << 25 == 00011 00000 00000 00000 00000 00000
 // 	//   (4BPP) 63 << 21 == 00011 11110 00000 00000 00000 00000
 // 	//PVR_TXRFMT_PAL4BPP == 10100 00000 00000 00000 00000 00000
@@ -185,10 +185,10 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 // 	//uint8_t filter = PVR_FILTER_NONE;	//Have param to change this possibly
 // 	//int textureformat = ss->spritesheet_format;
 // 	//if(4BPP){
-// 	//		textureformat |= ((paletteNumber) << 21); 
+// 	//		textureformat |= ((palette_number) << 21); 
 // 	// }
 // 	//if(8BPP){
-// 	//		textureformat |= ((paletteNumber) << 25); 
+// 	//		textureformat |= ((palette_number) << 25); 
 // 	// }
 // 	//pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, textureformat,
 // 	//	 ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, filter);
@@ -198,6 +198,7 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode){
 
 	float u0, v0, u1, v1;
+	u0 = 0; v0 = 0; u1 = 0; v1 = 0;
 
 	pvr_sprite_cxt_t context;
 	uint8_t texture_format = (((1 << 3) - 1) & (sprite_array->spritesheet->spritesheet_format >> (28 - 1)));	//Gets the Pixel format
@@ -216,6 +217,8 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 		.flags = PVR_CMD_VERTEX_EOL
 	};
 
+	//If there's only 1 element for the option arrays, then calulate the only time here
+
 	if(!(sprite_array->options & (1 << 0))){	//All share the same z
 		vert.az = sprite_array->draw_z[0];
 		vert.bz = sprite_array->draw_z[0];
@@ -229,6 +232,19 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 		vert.auv = PVR_PACK_16BIT_UV(u0, v0);
 		vert.buv = PVR_PACK_16BIT_UV(u1, v0);
 		vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+	}
+
+	if(!(sprite_array->options & (1 << 3))){	//flips
+		if(sprite_array->flips[0] & (1 << 0)){	//We flip
+			vert.auv = PVR_PACK_16BIT_UV(u1, v0);
+			vert.buv = PVR_PACK_16BIT_UV(u0, v0);
+			vert.cuv = PVR_PACK_16BIT_UV(u0, v1);
+		}
+		else{	//We don't
+			vert.auv = PVR_PACK_16BIT_UV(u0, v0);
+			vert.buv = PVR_PACK_16BIT_UV(u1, v0);
+			vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+		}
 	}
 
 	//Assistant vars. Just making them so its easier to read and maybe less mem accesses
@@ -259,21 +275,25 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 			vert.cz = (float)sprite_array->draw_z[i];
 		}
 
+		//Why is this in an if statement again?
 		if(sprite_array->options & (1 << 1)){	//frame
 			u0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[i])] / (float)sprite_array->spritesheet->spritesheet_dims;
 			v0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[i]) + 1] / (float)sprite_array->spritesheet->spritesheet_dims;
 			u1 = u0 + sprite_array->animation->animation_frame_width / (float)sprite_array->spritesheet->spritesheet_dims;
 			v1 = v0 + sprite_array->animation->animation_frame_height / (float)sprite_array->spritesheet->spritesheet_dims;
-			vert.auv = PVR_PACK_16BIT_UV(u0, v0);
-			vert.buv = PVR_PACK_16BIT_UV(u1, v0);
-			vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
 		}
 
-		if(sprite_array->options & (1 << 3)){	//flips (Unimplemented)
-			;
-		}
-		else{
-			;
+		if(sprite_array->options & (1 << 3)){	//flips
+			if(sprite_array->flips[i] & (1 << 0)){	//We flip
+				vert.auv = PVR_PACK_16BIT_UV(u1, v0);
+				vert.buv = PVR_PACK_16BIT_UV(u0, v0);
+				vert.cuv = PVR_PACK_16BIT_UV(u0, v1);
+			}
+			else{	//We don't
+				vert.auv = PVR_PACK_16BIT_UV(u0, v0);
+				vert.buv = PVR_PACK_16BIT_UV(u1, v0);
+				vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+			}
 		}
 
 		if(sprite_array->options & (1 << 4)){	//rotations (Unimplemented)
@@ -283,12 +303,12 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 			;
 		}
 
-		if(sprite_array->options & (1 << 5)){	//colour (Unimplemented)
-			;
-		}
-		else{
-			;
-		}
+		// if(sprite_array->options & (1 << 5)){	//colour (Unimplemented)
+		// 	;
+		// }
+		// else{
+		// 	;
+		// }
 
 		pvr_prim(&vert, sizeof(vert));
 	}
@@ -302,7 +322,7 @@ extern uint8_t crayon_graphics_draw_polys(crayon_textured_array_t *sprite_array,
 }
 
 extern uint8_t crayon_graphics_draw_text_mono(const struct crayon_font_mono *fm, uint8_t poly_list_mode, float draw_x,
-	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string){
+	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t palette_number, char * string){
 
 	float x0 = draw_x;
 	float y0 = draw_y;
@@ -320,10 +340,10 @@ extern uint8_t crayon_graphics_draw_text_mono(const struct crayon_font_mono *fm,
 																												//https://github.com/tvspelsfreak/texconv
 	int textureformat = fm->texture_format;
 	if(texture_format == 5){	//4BPP
-			textureformat |= ((paletteNumber) << 21);	//Update the later to use KOS' macros
+			textureformat |= ((palette_number) << 21);	//Update the later to use KOS' macros
 	}
 	if(texture_format == 6){	//8BPP
-			textureformat |= ((paletteNumber) << 25);	//Update the later to use KOS' macros
+			textureformat |= ((palette_number) << 25);	//Update the later to use KOS' macros
 	}
 	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, fm->fontsheet_dim,
 		fm->fontsheet_dim, fm->fontsheet_texture, PVR_FILTER_NONE);
@@ -375,7 +395,7 @@ extern uint8_t crayon_graphics_draw_text_mono(const struct crayon_font_mono *fm,
 }
 
 extern uint8_t crayon_graphics_draw_text_prop(const struct crayon_font_prop *fp, uint8_t poly_list_mode, float draw_x,
-	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string){
+	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t palette_number, char * string){
 
 	float x0 = draw_x;
 	float y0 = draw_y;
@@ -395,10 +415,10 @@ extern uint8_t crayon_graphics_draw_text_prop(const struct crayon_font_prop *fp,
 																												//https://github.com/tvspelsfreak/texconv
 	int textureformat = fp->texture_format;
 	if(texture_format == 5){	//4BPP
-			textureformat |= ((paletteNumber) << 21);	//Update the later to use KOS' macros
+			textureformat |= ((palette_number) << 21);	//Update the later to use KOS' macros
 	}
 	if(texture_format == 6){	//8BPP
-			textureformat |= ((paletteNumber) << 25);	//Update the later to use KOS' macros
+			textureformat |= ((palette_number) << 25);	//Update the later to use KOS' macros
 	}
 	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, fp->fontsheet_dim,
 		fp->fontsheet_dim, fp->fontsheet_texture, PVR_FILTER_NONE);

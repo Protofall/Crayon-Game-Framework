@@ -3,9 +3,6 @@
 #include <crayon/debug.h>
 #include <crayon/graphics.h>
 
-// #include <dc/maple.h>
-// #include <dc/maple/controller.h> //For the "Press start to exit" thing
-
 #if CRAYON_SD_MODE == 1
 	//For mounting the sd dir
 	#include <dc/sd.h>
@@ -144,17 +141,52 @@ int main(){
 	Dwarf_Draw.frame_coord_keys[0] = 0;
 	crayon_graphics_frame_coordinates(Dwarf_Draw.animation, Dwarf_Draw.frame_coord_map + 0, Dwarf_Draw.frame_coord_map + 1, 0);
 
-	crayon_memory_init_sprite_array(&Enlarge_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Enlarge, &Enlarge.spritesheet_animation_array[0], NULL);
+	//8 sprites, 1 frame, multi rotations and flips
+	crayon_memory_init_sprite_array(&Enlarge_Draw, 8, 1, 0, 0, 0, 1, 1, 0, 0, &Enlarge, &Enlarge.spritesheet_animation_array[0], NULL);
 	Enlarge_Draw.positions[0] = Dwarf_Draw.positions[0] + (2 * Dwarf_Draw.animation[0].animation_frame_width) + 20;
 	Enlarge_Draw.positions[1] = 20;
+	Enlarge_Draw.positions[2] = Enlarge_Draw.positions[0];
+	Enlarge_Draw.positions[3] = Enlarge_Draw.positions[1] + (8 * Enlarge_Draw.animation[0].animation_frame_height) + 10;
+	Enlarge_Draw.positions[4] = Enlarge_Draw.positions[0];
+	Enlarge_Draw.positions[5] = Enlarge_Draw.positions[3] + (8 * Enlarge_Draw.animation[0].animation_frame_height) + 10;
+	Enlarge_Draw.positions[6] = Enlarge_Draw.positions[0];
+	Enlarge_Draw.positions[7] = Enlarge_Draw.positions[5] + (8 * Enlarge_Draw.animation[0].animation_frame_height) + 10;
+	Enlarge_Draw.positions[8] = Enlarge_Draw.positions[0] + (8 * Enlarge_Draw.animation[0].animation_frame_width) + 10;
+	Enlarge_Draw.positions[9] = Enlarge_Draw.positions[1];
+	Enlarge_Draw.positions[10] = Enlarge_Draw.positions[8];
+	Enlarge_Draw.positions[11] = Enlarge_Draw.positions[9] + (8 * Enlarge_Draw.animation[0].animation_frame_height) + 10;
+	Enlarge_Draw.positions[12] = Enlarge_Draw.positions[8];
+	Enlarge_Draw.positions[13] = Enlarge_Draw.positions[11] + (8 * Enlarge_Draw.animation[0].animation_frame_height) + 10;
+	Enlarge_Draw.positions[14] = Enlarge_Draw.positions[8];
+	Enlarge_Draw.positions[15] = Enlarge_Draw.positions[13] + (8 * Enlarge_Draw.animation[0].animation_frame_height) + 10;
 	Enlarge_Draw.draw_z[0] = 17;
 	Enlarge_Draw.scales[0] = 8;
 	Enlarge_Draw.scales[1] = 8;
 	Enlarge_Draw.flips[0] = 0;
+	Enlarge_Draw.flips[1] = 0;
+	Enlarge_Draw.flips[2] = 0;
+	Enlarge_Draw.flips[3] = 0;
+	Enlarge_Draw.flips[4] = 1;
+	Enlarge_Draw.flips[5] = 1;
+	Enlarge_Draw.flips[6] = 1;
+	Enlarge_Draw.flips[7] = 1;
 	Enlarge_Draw.rotations[0] = 0;
+	Enlarge_Draw.rotations[1] = 0;
+	Enlarge_Draw.rotations[2] = 0;
+	Enlarge_Draw.rotations[3] = 0;
+	Enlarge_Draw.rotations[4] = 0;
+	Enlarge_Draw.rotations[5] = 0;
+	Enlarge_Draw.rotations[6] = 0;
+	Enlarge_Draw.rotations[7] = 0;
 	Enlarge_Draw.colours[0] = 0;
 	Enlarge_Draw.frame_coord_keys[0] = 0;
 	crayon_graphics_frame_coordinates(Enlarge_Draw.animation, Enlarge_Draw.frame_coord_map + 0, Enlarge_Draw.frame_coord_map + 1, 0);
+	//ADD "Rotation from float to flip array converter call" HERE
+
+	//Flips
+	// if(Enlarge_Draw.options & (1 << 3)){
+	// 	while(1){;}
+	// }
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
@@ -170,6 +202,24 @@ int main(){
 			crayon_graphics_draw_sprites(&Dwarf_Draw, PVR_LIST_PT_POLY);
 			crayon_graphics_draw_text_prop(&Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id, "Tahoma\0");
 			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, 120, 40, 30, 1, 1, BIOS_P.palette_id, "BIOS\0");
+
+			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, Enlarge_Draw.positions[8] + (8 * Enlarge_Draw.animation[0].animation_frame_width) + 10,
+				Enlarge_Draw.positions[1], 30, 1, 1, BIOS_P.palette_id, "Rotation: 0 Degrees\0");
+
+			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, Enlarge_Draw.positions[8] + (8 * Enlarge_Draw.animation[0].animation_frame_width) + 10,
+				Enlarge_Draw.positions[3], 30, 1, 1, BIOS_P.palette_id, "Rotation: 90 Degrees\0");
+
+			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, Enlarge_Draw.positions[8] + (8 * Enlarge_Draw.animation[0].animation_frame_width) + 10,
+				Enlarge_Draw.positions[5], 30, 1, 1, BIOS_P.palette_id, "Rotation: 180 Degrees\0");
+
+			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, Enlarge_Draw.positions[8] + (8 * Enlarge_Draw.animation[0].animation_frame_width) + 10,
+				Enlarge_Draw.positions[7], 30, 1, 1, BIOS_P.palette_id, "Rotation: 270 Degrees\0");
+
+
+			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, Enlarge_Draw.positions[0],
+				Enlarge_Draw.positions[7] + (8 * Enlarge_Draw.animation[0].animation_frame_height) + 10, 30, 1, 1, BIOS_P.palette_id, "Normal\0");
+			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, Enlarge_Draw.positions[8],
+				Enlarge_Draw.positions[7] + (8 * Enlarge_Draw.animation[0].animation_frame_height) + 10, 30, 1, 1, BIOS_P.palette_id, "Flipped\0");
 
 		pvr_list_finish();
 

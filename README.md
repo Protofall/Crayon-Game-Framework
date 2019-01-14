@@ -25,5 +25,6 @@ The dino textures are from Google Chrome's Dino Runner Game
 ### ROMDISK_SWAPPING
 The code to load in the GZ compressed and non-compressed romdisk images came from BlackAura. The fork of img4dc was made by Kazade. The makefiles for the "JamoHTP-Protofall" versions were made by JamoHTP
 
-### VMUSaveTest(WIP)
-Contains code from this guide: http://dcemulation.org/?title=Filesystem
+### VMUSaveTest
+Contains modified code from this guide: http://dcemulation.org/?title=Filesystem
+and also BlueCrab's CrabEmu

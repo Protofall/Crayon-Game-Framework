@@ -27,18 +27,18 @@ extern void crayon_graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_
 extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *poly_array, uint8_t poly_list_mode);
 
 
-//------------------Drawing Spritesheets------------------//
+//------------------Drawing Sprites from Spritesheets------------------//
 
 
-//Queue a texture to be rendered (If RGB565 or ARGB4444 then paletteNumber is never read)
+//Queue a texture to be rendered (If RGB565 or ARGB4444 then palette_number is never read)
 extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 	const struct crayon_animation *anim, float draw_x, float draw_y, float draw_z,
 	float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
-	uint8_t paletteNumber);
+	uint8_t palette_number);
 
 //(Delete other multi sprite draw after and keep original as a learner version for noobies)
 //poly_list mode is for the tr/pt/op render list macro we want to use. Might move this param into the struct...
-extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode);	//UNFINISHED (No colour/rotation yet)
+extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode);	//UNFINISHED (No rotation or flip yet)
 
 //The version with polygons (Use this if your spritesheet is bigger than 256 by 256)
 extern uint8_t crayon_graphics_draw_polys(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode);	//UNIMPLEMENTED
@@ -49,11 +49,11 @@ extern uint8_t crayon_graphics_draw_polys(crayon_textured_array_t *sprite_array,
 
 //Draw string using mono font (string must be null-terminated)
 extern uint8_t crayon_graphics_draw_text_mono(const crayon_font_mono_t *fm, uint8_t poly_list_mode, float draw_x,
-	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string);
+	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t palette_number, char * string);
 
 //Draw string using propertional font (string must be null-terminated)
 extern uint8_t crayon_graphics_draw_text_prop(const crayon_font_prop_t *fp, uint8_t poly_list_mode, float draw_x,
-	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t paletteNumber, char * string);
+	float draw_y, float draw_z, float scale_x, float scale_y, uint8_t palette_number, char * string);
 
 
 //------------------String info------------------//

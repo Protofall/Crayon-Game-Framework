@@ -59,7 +59,7 @@ extern void crayon_memory_init_untextered_array(crayon_untextured_array_t *poly_
 //------------------Modifying memory----------------//
 
 
-//This function attempts to search for colour1 in the palette and swapps it for colour2
+//This function attempts to search for colour1 in the palette and swaps it for colour2
 //If _continue is false then it only replaces the first instance of colour1, else it replaces all instances
 //It returns 0 if colour1 wasn't found, otherwise it returns the number of "colour1"s that were swapped
 extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1, uint32_t colour2, uint8_t _continue);
@@ -81,10 +81,9 @@ extern uint8_t crayon_memory_free_mono_font_sheet(crayon_font_mono_t *fm);
 extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp);
 
 //Frees a sprite array
-	//free_ss is XXXX XXPS where P is delete the palette and S is delete the just spritesheet
-	//Can't delete just a palette by passing in (1 << 1), thats intentional
 extern uint8_t crayon_memory_free_sprite_array(crayon_textured_array_t *sprite_array, uint8_t free_ss, uint8_t free_pal);
 
+//Free an untextured poly array
 extern uint8_t crayon_memory_free_untextured_array(crayon_untextured_array_t *untextured_array);
 
 

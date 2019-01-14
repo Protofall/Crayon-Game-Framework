@@ -119,12 +119,14 @@ int main(void){
 	uint32_t prev_buttons[4] = {0};
 	colour_state = 0;
 
+	uint8_t running = 1;
+
 	//Keep drawing frames until start is pressed
-	while(1){
+	while(running){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
 		if(st->buttons & CONT_START){	//Quits if start is pressed. program ends
-			break;
+			running = 0;
 		}
 
 		//A to make it normal

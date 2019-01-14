@@ -557,25 +557,41 @@ extern uint8_t crayon_memory_free_sprite_array(crayon_textured_array_t *sprite_a
 		if(ret_val){return ret_val;}
 	}
 
-	free(sprite_array->positions);
-	free(sprite_array->frame_coord_keys);
-	free(sprite_array->frame_coord_map);
-	free(sprite_array->colours);
-	free(sprite_array->scales);
-	free(sprite_array->flips);
-	free(sprite_array->rotations);
-	free(sprite_array->draw_z);
+	//Free shouldn't do anything if you try to free a NULL ptr, but just incase...
+	if(sprite_array->positions){free(sprite_array->positions);}
+	if(sprite_array->frame_coord_keys){free(sprite_array->frame_coord_keys);}
+	if(sprite_array->frame_coord_map){free(sprite_array->frame_coord_map);}
+	if(sprite_array->colours){free(sprite_array->colours);}
+	if(sprite_array->scales){free(sprite_array->scales);}
+	if(sprite_array->flips){free(sprite_array->flips);}
+	if(sprite_array->rotations){free(sprite_array->rotations);}
+	if(sprite_array->draw_z){free(sprite_array->draw_z);}
 
+	//Set to NULL just incase user accidentally tries to free these arrays again
+	sprite_array->positions = NULL;
+	sprite_array->frame_coord_keys = NULL;
+	sprite_array->frame_coord_map = NULL;
+	sprite_array->colours = NULL;
+	sprite_array->scales = NULL;
+	sprite_array->flips = NULL;
+	sprite_array->rotations = NULL;
+	sprite_array->draw_z = NULL;
 
 	return 0;
 }
 
 extern uint8_t crayon_memory_free_untextured_array(crayon_untextured_array_t *untextured_array){
-	free(untextured_array->positions);
-	free(untextured_array->draw_z);
-	free(untextured_array->colours);
-	free(untextured_array->draw_dims);
-	free(untextured_array->rotations);
+	if(untextured_array->positions){free(untextured_array->positions);}
+	if(untextured_array->draw_z){free(untextured_array->draw_z);}
+	if(untextured_array->colours){free(untextured_array->colours);}
+	if(untextured_array->draw_dims){free(untextured_array->draw_dims);}
+	if(untextured_array->rotations){free(untextured_array->rotations);}
+
+	untextured_array->positions = NULL;
+	untextured_array->draw_z = NULL;
+	untextured_array->colours = NULL;
+	untextured_array->draw_dims = NULL;
+	untextured_array->rotations = NULL;
 
 	return 0;
 }
