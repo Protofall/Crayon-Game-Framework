@@ -43,6 +43,11 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 //The version with polygons (Use this if your spritesheet is bigger than 256 by 256)
 extern uint8_t crayon_graphics_draw_polys(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode);	//UNIMPLEMENTED
 
+//------------------Rotation Stuff------------------//
+
+
+extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
+
 
 //------------------Drawing Fonts------------------//
 

@@ -93,6 +93,7 @@ int main(){
 
 	crayon_spritesheet_t Dwarf, Enlarge;
 	crayon_textured_array_t Dwarf_Draw, Enlarge_Draw;
+	crayon_textured_array_t Dwarf_Draw_2;
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P;
@@ -136,10 +137,22 @@ int main(){
 	Dwarf_Draw.scales[4] = 2;	//Looks off on lxdream with higher scale
 	Dwarf_Draw.scales[5] = 2;
 	Dwarf_Draw.flips[0] = 0;
-	Dwarf_Draw.rotations[0] = 0;
+	Dwarf_Draw.rotations[0] = 00;
 	Dwarf_Draw.colours[0] = 0;
 	Dwarf_Draw.frame_coord_keys[0] = 0;
 	crayon_graphics_frame_coordinates(Dwarf_Draw.animation, Dwarf_Draw.frame_coord_map + 0, Dwarf_Draw.frame_coord_map + 1, 0);
+
+	crayon_memory_init_sprite_array(&Dwarf_Draw_2, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Dwarf, &Dwarf.spritesheet_animation_array[1], NULL);
+	Dwarf_Draw_2.positions[0] = 50;
+	Dwarf_Draw_2.positions[1] = 300;
+	Dwarf_Draw_2.draw_z[0] = 18;
+	Dwarf_Draw_2.scales[0] = 1;
+	Dwarf_Draw_2.scales[1] = 1;
+	Dwarf_Draw_2.flips[0] = 0;
+	Dwarf_Draw_2.rotations[0] = 90;
+	Dwarf_Draw_2.colours[0] = 0;
+	Dwarf_Draw_2.frame_coord_keys[0] = 0;
+	crayon_graphics_frame_coordinates(Dwarf_Draw_2.animation, Dwarf_Draw_2.frame_coord_map + 0, Dwarf_Draw_2.frame_coord_map + 1, 0);
 
 	//8 sprites, 1 frame, multi rotations and flips
 	crayon_memory_init_sprite_array(&Enlarge_Draw, 8, 1, 0, 0, 0, 1, 1, 0, 0, &Enlarge, &Enlarge.spritesheet_animation_array[0], NULL);
@@ -171,22 +184,17 @@ int main(){
 	Enlarge_Draw.flips[6] = 1;
 	Enlarge_Draw.flips[7] = 1;
 	Enlarge_Draw.rotations[0] = 0;
-	Enlarge_Draw.rotations[1] = 0;
-	Enlarge_Draw.rotations[2] = 0;
-	Enlarge_Draw.rotations[3] = 0;
+	Enlarge_Draw.rotations[1] = 90;
+	Enlarge_Draw.rotations[2] = 180;
+	Enlarge_Draw.rotations[3] = 270;
 	Enlarge_Draw.rotations[4] = 0;
-	Enlarge_Draw.rotations[5] = 0;
-	Enlarge_Draw.rotations[6] = 0;
-	Enlarge_Draw.rotations[7] = 0;
+	Enlarge_Draw.rotations[5] = 90;
+	Enlarge_Draw.rotations[6] = 180;
+	Enlarge_Draw.rotations[7] = 270;
 	Enlarge_Draw.colours[0] = 0;
 	Enlarge_Draw.frame_coord_keys[0] = 0;
 	crayon_graphics_frame_coordinates(Enlarge_Draw.animation, Enlarge_Draw.frame_coord_map + 0, Enlarge_Draw.frame_coord_map + 1, 0);
 	//ADD "Rotation from float to flip array converter call" HERE
-
-	//Flips
-	// if(Enlarge_Draw.options & (1 << 3)){
-	// 	while(1){;}
-	// }
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
@@ -200,6 +208,7 @@ int main(){
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
 			crayon_graphics_draw_sprites(&Dwarf_Draw, PVR_LIST_PT_POLY);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_2, PVR_LIST_PT_POLY);
 			crayon_graphics_draw_text_prop(&Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id, "Tahoma\0");
 			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, 120, 40, 30, 1, 1, BIOS_P.palette_id, "BIOS\0");
 

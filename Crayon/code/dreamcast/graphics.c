@@ -197,8 +197,9 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 //Need to come back and do rotations and maybe colour?
 extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode){
 
-	float u0, v0, u1, v1;
-	u0 = 0; v0 = 0; u1 = 0; v1 = 0;
+	//duv is used to assist in the rotations
+	float u0, v0, u1, v1, duv;
+	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	//Needed if you want to prevent a bunch of compiler warnings...
 
 	pvr_sprite_cxt_t context;
 	uint8_t texture_format = (((1 << 3) - 1) & (sprite_array->spritesheet->spritesheet_format >> (28 - 1)));	//Gets the Pixel format
@@ -217,43 +218,45 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 		.flags = PVR_CMD_VERTEX_EOL
 	};
 
-	//If there's only 1 element for the option arrays, then calulate the only time here
-
-	if(!(sprite_array->options & (1 << 0))){	//All share the same z
-		vert.az = sprite_array->draw_z[0];
-		vert.bz = sprite_array->draw_z[0];
-		vert.cz = sprite_array->draw_z[0];
-	}
-	if(!(sprite_array->options & (1 << 1))){	//All share the same frame
-		u0 = sprite_array->frame_coord_map[sprite_array->frame_coord_keys[0]] / (float)sprite_array->spritesheet->spritesheet_dims;
-		v0 = sprite_array->frame_coord_map[sprite_array->frame_coord_keys[0] + 1] / (float)sprite_array->spritesheet->spritesheet_dims;
-		u1 = u0 + sprite_array->animation->animation_frame_width / (float)sprite_array->spritesheet->spritesheet_dims;
-		v1 = v0 + sprite_array->animation->animation_frame_height / (float)sprite_array->spritesheet->spritesheet_dims;
-		vert.auv = PVR_PACK_16BIT_UV(u0, v0);
-		vert.buv = PVR_PACK_16BIT_UV(u1, v0);
-		vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
-	}
-
-	if(!(sprite_array->options & (1 << 3))){	//flips
-		if(sprite_array->flips[0] & (1 << 0)){	//We flip
-			vert.auv = PVR_PACK_16BIT_UV(u1, v0);
-			vert.buv = PVR_PACK_16BIT_UV(u0, v0);
-			vert.cuv = PVR_PACK_16BIT_UV(u0, v1);
-		}
-		else{	//We don't
-			vert.auv = PVR_PACK_16BIT_UV(u0, v0);
-			vert.buv = PVR_PACK_16BIT_UV(u1, v0);
-			vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
-		}
-	}
-
-	//Assistant vars. Just making them so its easier to read and maybe less mem accesses
+	//Easily lets us use the right index for each array
+		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
+	uint16_t *rotation_index, *flip_index, *frame_index, *z_index;
 	uint8_t multi_scales = !!(sprite_array->options & (1 << 2));
+	uint16_t i;	//The main loop's index
+	uint16_t zero = 0;
+	if(sprite_array->options & (1 << 0)){
+		z_index = &i;
+	}
+	else{
+		z_index = &zero;
+	}
+
+	if(sprite_array->options & (1 << 1)){
+		frame_index = &i;
+	}
+	else{
+		frame_index = &zero;
+	}
+
+	if(sprite_array->options & (1 << 3)){
+		flip_index = &i;
+	}
+	else{
+		flip_index = &zero;
+	}
+
+	if(sprite_array->options & (1 << 4)){
+		rotation_index = &i;
+	}
+	else{
+		rotation_index = &zero;
+	}
+
+	//Since sprite mode doesn't do colours, we don't bother with that list
 
 	pvr_sprite_hdr_t header;
 	pvr_sprite_compile(&header, &context);
 	pvr_prim(&header, sizeof(header));
-	uint16_t i;
 	for(i = 0; i < sprite_array->num_sprites; i++){
 		//We floor the values since we're doing 2D and they'll look messed up if we have position "11.5", however scales can mess this up
 		vert.ax = floor(sprite_array->positions[2 * i]);
@@ -269,46 +272,64 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 		vert.dy = floor(sprite_array->positions[(2 * i) + 1] +
 			(sprite_array->animation->animation_frame_height * sprite_array->scales[(2 * i * multi_scales) + 1]));
 
-		if(sprite_array->options & (1 << 0)){	//z
-			vert.az = (float)sprite_array->draw_z[i];
-			vert.bz = (float)sprite_array->draw_z[i];
-			vert.cz = (float)sprite_array->draw_z[i];
+		//These if statements will trigger once if we have a single element (i == 0)
+			//and every time for a multi-list
+		if(*z_index == i){	//z
+			vert.az = (float)sprite_array->draw_z[*z_index];
+			vert.bz = (float)sprite_array->draw_z[*z_index];
+			vert.cz = (float)sprite_array->draw_z[*z_index];
 		}
 
-		//Why is this in an if statement again?
-		if(sprite_array->options & (1 << 1)){	//frame
-			u0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[i])] / (float)sprite_array->spritesheet->spritesheet_dims;
-			v0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[i]) + 1] / (float)sprite_array->spritesheet->spritesheet_dims;
+		if(*frame_index == i){	//frame
+			u0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[*frame_index])] / (float)sprite_array->spritesheet->spritesheet_dims;
+			v0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[*frame_index]) + 1] / (float)sprite_array->spritesheet->spritesheet_dims;
 			u1 = u0 + sprite_array->animation->animation_frame_width / (float)sprite_array->spritesheet->spritesheet_dims;
 			v1 = v0 + sprite_array->animation->animation_frame_height / (float)sprite_array->spritesheet->spritesheet_dims;
 		}
 
-		if(sprite_array->options & (1 << 3)){	//flips
-			if(sprite_array->flips[i] & (1 << 0)){	//We flip
+		if(*flip_index == i){	//flips
+			if(sprite_array->flips[*flip_index] & (1 << 0)){
 				vert.auv = PVR_PACK_16BIT_UV(u1, v0);
 				vert.buv = PVR_PACK_16BIT_UV(u0, v0);
 				vert.cuv = PVR_PACK_16BIT_UV(u0, v1);
+				duv = PVR_PACK_16BIT_UV(u1, v1);	//Used for possible rotation calculations
 			}
-			else{	//We don't
+			else{
 				vert.auv = PVR_PACK_16BIT_UV(u0, v0);
 				vert.buv = PVR_PACK_16BIT_UV(u1, v0);
 				vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+				duv = PVR_PACK_16BIT_UV(u0, v1);
 			}
 		}
 
-		if(sprite_array->options & (1 << 4)){	//rotations (Unimplemented)
-			;
-		}
-		else{
-			;
-		}
+		if(*rotation_index == i){	//rotations (Unimplemented)
+			//No change is required for a 0 degree angle
+			if(sprite_array->rotations){
+				if(crayon_graphics_almost_equals(sprite_array->rotations[*rotation_index], 90.0, 45.0)){
+					//For 90 and 270 modes we need to modify the vert positions aswell
+						//for cases where frame width != frame height
+					vert.cuv = vert.buv;
+					vert.buv = vert.auv;
+					vert.auv = duv;
+				}
+				else if(crayon_graphics_almost_equals(sprite_array->rotations[*rotation_index], 180.0, 45.0)){
+					//For sprite mode we can't simply "rotate" the verts, instead we need to change the uv
+					vert.buv = duv;
+					duv = vert.auv;
+					vert.auv = vert.cuv;
+					vert.cuv = duv;
 
-		// if(sprite_array->options & (1 << 5)){	//colour (Unimplemented)
-		// 	;
-		// }
-		// else{
-		// 	;
-		// }
+				}
+				else if(crayon_graphics_almost_equals(sprite_array->rotations[*rotation_index], 270.0, 45.0)){
+					vert.auv = vert.buv;
+					vert.buv = vert.cuv;
+					vert.cuv = duv;
+				}
+			}
+			else{
+				//Unimplemented "rotation from flip bits" option
+			}
+		}
 
 		pvr_prim(&vert, sizeof(vert));
 	}
@@ -319,6 +340,10 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 //I'll come back to this later
 extern uint8_t crayon_graphics_draw_polys(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode){
 	return 0;
+}
+
+extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){
+	return fabs(a-b) < epsilon;
 }
 
 extern uint8_t crayon_graphics_draw_text_mono(const struct crayon_font_mono *fm, uint8_t poly_list_mode, float draw_x,
