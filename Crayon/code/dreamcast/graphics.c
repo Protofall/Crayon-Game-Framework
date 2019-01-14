@@ -199,7 +199,7 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 
 	//duv is used to assist in the rotations
 	float u0, v0, u1, v1, duv;
-	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	//Needed if you want to prevent a bunch of compiler warnings...
+	u0 = 0; v0 = 0; u1 = 0; v1 = 0, duv = 0;	//Needed if you want to prevent a bunch of compiler warnings...
 
 	pvr_sprite_cxt_t context;
 	uint8_t texture_format = (((1 << 3) - 1) & (sprite_array->spritesheet->spritesheet_format >> (28 - 1)));	//Gets the Pixel format
@@ -258,19 +258,16 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 	pvr_sprite_compile(&header, &context);
 	pvr_prim(&header, sizeof(header));
 	for(i = 0; i < sprite_array->num_sprites; i++){
-		//We floor the values since we're doing 2D and they'll look messed up if we have position "11.5", however scales can mess this up
+		//We floor the values since we're doing 2D and they'll look messed up if we have position "11.5"
+
 		vert.ax = floor(sprite_array->positions[2 * i]);
 		vert.ay = floor(sprite_array->positions[(2 * i) + 1]);
-		vert.bx = floor(sprite_array->positions[2 * i] +
-			(sprite_array->animation->animation_frame_width * sprite_array->scales[2 * i * multi_scales]));
-		vert.by = floor(sprite_array->positions[(2 * i) + 1]);
-		vert.cx = floor(sprite_array->positions[2 * i] +
-			(sprite_array->animation->animation_frame_width * sprite_array->scales[2 * i * multi_scales]));
-		vert.cy = floor(sprite_array->positions[(2 * i) + 1] +
-			(sprite_array->animation->animation_frame_height * sprite_array->scales[(2 * i * multi_scales) + 1]));
-		vert.dx = floor(sprite_array->positions[2 * i]);
-		vert.dy = floor(sprite_array->positions[(2 * i) + 1] +
-			(sprite_array->animation->animation_frame_height * sprite_array->scales[(2 * i * multi_scales) + 1]));
+		vert.bx = vert.ax + floor(sprite_array->animation->animation_frame_width * sprite_array->scales[2 * i * multi_scales]);
+		vert.by = vert.ay;
+		vert.cx = vert.bx;
+		vert.cy = vert.ay + floor(sprite_array->animation->animation_frame_height * sprite_array->scales[(2 * i * multi_scales) + 1]);
+		vert.dx = vert.ax;
+		vert.dy = vert.cy;
 
 		//These if statements will trigger once if we have a single element (i == 0)
 			//and every time for a multi-list
@@ -287,7 +284,7 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 			v1 = v0 + sprite_array->animation->animation_frame_height / (float)sprite_array->spritesheet->spritesheet_dims;
 		}
 
-		if(*flip_index == i){	//flips
+		if(*flip_index == i || *frame_index == i){	//flips
 			if(sprite_array->flips[*flip_index] & (1 << 0)){
 				vert.auv = PVR_PACK_16BIT_UV(u1, v0);
 				vert.buv = PVR_PACK_16BIT_UV(u0, v0);
@@ -308,6 +305,7 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 				if(crayon_graphics_almost_equals(sprite_array->rotations[*rotation_index], 90.0, 45.0)){
 					//For 90 and 270 modes we need to modify the vert positions aswell
 						//for cases where frame width != frame height
+
 					vert.cuv = vert.buv;
 					vert.buv = vert.auv;
 					vert.auv = duv;

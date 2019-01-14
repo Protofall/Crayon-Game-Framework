@@ -91,8 +91,8 @@ int main(){
 
 	pvr_init(&pvr_params);
 
-	crayon_spritesheet_t Dwarf, Enlarge;
-	crayon_textured_array_t Dwarf_Draw, Enlarge_Draw;
+	crayon_spritesheet_t Dwarf, Enlarge, Frames;
+	crayon_textured_array_t Dwarf_Draw, Enlarge_Draw, Frames_Draw;
 	crayon_textured_array_t Dwarf_Draw_2;
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
@@ -108,6 +108,7 @@ int main(){
 	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 1, "/files/Fonts/BIOS_font.dtex");
 	crayon_memory_load_spritesheet(&Enlarge, NULL, -1, "/files/Enlarge.dtex");
 	crayon_memory_load_spritesheet(&Dwarf, NULL, -1, "/files/Dwarf.dtex");
+	crayon_memory_load_spritesheet(&Frames, NULL, -1, "/files/Frames.dtex");
 
 	fs_romdisk_unmount("/files");
 
@@ -121,6 +122,38 @@ int main(){
 	if(crayon_graphics_valid_string(string, Tahoma.num_chars)){
 		return 1;
 	}
+
+	crayon_memory_init_sprite_array(&Frames_Draw, 4, 16, 0, 1, 0, 0, 0, 0, 0, &Frames, &Frames.spritesheet_animation_array[0], NULL);
+	Frames_Draw.positions[0] = 50;
+	Frames_Draw.positions[1] = 380;
+	Frames_Draw.positions[2] = 50 + 16;
+	Frames_Draw.positions[3] = 380;
+	Frames_Draw.positions[4] = 50;
+	Frames_Draw.positions[5] = 380 + 16;
+	Frames_Draw.positions[6] = 50 + 16;
+	Frames_Draw.positions[7] = 380 + 16;
+	Frames_Draw.draw_z[0] = 18;
+	Frames_Draw.scales[0] = 1;
+	Frames_Draw.scales[1] = 1;
+	Frames_Draw.flips[0] = 0;
+	Frames_Draw.rotations[0] = 0;
+	Frames_Draw.colours[0] = 0;
+	Frames_Draw.frame_coord_keys[0] = 1;
+	Frames_Draw.frame_coord_keys[1] = 5;
+	Frames_Draw.frame_coord_keys[2] = 8;
+	Frames_Draw.frame_coord_keys[3] = 11;
+	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 0, Frames_Draw.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 2, Frames_Draw.frame_coord_map + 3, 1);
+	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 4, Frames_Draw.frame_coord_map + 5, 2);
+	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 6, Frames_Draw.frame_coord_map + 7, 3);
+	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 8, Frames_Draw.frame_coord_map + 9, 4);
+	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 10, Frames_Draw.frame_coord_map + 11, 5);
+	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 12, Frames_Draw.frame_coord_map + 13, 6);
+	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 14, Frames_Draw.frame_coord_map + 15, 7);
+	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 16, Frames_Draw.frame_coord_map + 17, 8);
+	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 18, Frames_Draw.frame_coord_map + 19, 9);
+	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 20, Frames_Draw.frame_coord_map + 21, 10);
+	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 22, Frames_Draw.frame_coord_map + 23, 11);
 
 	crayon_memory_init_sprite_array(&Dwarf_Draw, 3, 1, 0, 0, 1, 0, 0, 0, 0, &Dwarf, &Dwarf.spritesheet_animation_array[0], NULL);
 	Dwarf_Draw.positions[0] = 50;
@@ -137,7 +170,7 @@ int main(){
 	Dwarf_Draw.scales[4] = 2;	//Looks off on lxdream with higher scale
 	Dwarf_Draw.scales[5] = 2;
 	Dwarf_Draw.flips[0] = 0;
-	Dwarf_Draw.rotations[0] = 00;
+	Dwarf_Draw.rotations[0] = 0;
 	Dwarf_Draw.colours[0] = 0;
 	Dwarf_Draw.frame_coord_keys[0] = 0;
 	crayon_graphics_frame_coordinates(Dwarf_Draw.animation, Dwarf_Draw.frame_coord_map + 0, Dwarf_Draw.frame_coord_map + 1, 0);
@@ -235,6 +268,7 @@ int main(){
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
 			crayon_graphics_draw_sprites(&Enlarge_Draw, PVR_LIST_OP_POLY);
+			crayon_graphics_draw_sprites(&Frames_Draw, PVR_LIST_OP_POLY);
 
 		pvr_list_finish();
 
@@ -246,7 +280,7 @@ int main(){
 	// int retVal = 0;
 	// retVal += memory_free_crayon_spritesheet(&Fade, 1);
 	// retVal += memory_free_crayon_spritesheet(&Enlarge, 1);
-	// retVal += memory_free_crayon_spritesheet(&Blanka, 1);
+	// retVal += memory_free_crayon_spritesheet(&Frames, 1);
 	// error_freeze("Free-ing result %d!\n", retVal);
 
 	return 0;

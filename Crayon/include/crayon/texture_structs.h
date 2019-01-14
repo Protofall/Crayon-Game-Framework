@@ -24,6 +24,7 @@ typedef struct crayon_animation{
 	//With these widths and heights, it might be possible to deduce some of them from other info, but idk
 } crayon_animation_t;
 
+//For pre-processing. An anim file is in the format "width, height, frame count"
 typedef struct crayon_spritesheet{
 	pvr_ptr_t spritesheet_texture;
 	char *spritesheet_name;	//UNUSED. Might be useful for when it comes time to un-mount a romdisk, otherwise I don't think its needed
