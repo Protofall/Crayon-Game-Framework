@@ -2039,8 +2039,8 @@ int main(){
 					if(player_active == (1 << 0) || player_active == (1 << 1) || player_active == (1 << 2) || player_active == (1 << 3)){
 						cursor_palette = 1;
 					}
-					crayon_graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[0], (int) cursor_position[2 * iter],
-						(int) cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, cursor_palette);
+					crayon_graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[0], cursor_position[2 * iter],
+						cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, cursor_palette);
 
 					//Add code for checking if cursor is hovering over a button
 					menus_selected |= button_hover(cursor_position[(2 * iter)], cursor_position[(2 * iter) + 1], &os, &MS_options);
