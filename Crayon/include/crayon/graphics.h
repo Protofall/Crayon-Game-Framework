@@ -2,7 +2,7 @@
 #define GRAPHICS_CRAYON_H
 
 #include "texture_structs.h"  //For the spritehsheet and anim structs
-#include "render_structs.h"  //For the crayon_textured_array struct
+#include "render_structs.h"  //For the crayon_sprite_array struct
 
 #include <stdlib.h>
 #include <string.h>	//For length of string
@@ -38,10 +38,11 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 	uint8_t palette_number);
 
 //poly_list mode is for the tr/pt/op render list macro we want to use.
-extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode);
+extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
 
 //The version with polygons (Use this if your spritesheet is bigger than 256 by 256)
-extern uint8_t crayon_graphics_draw_polys(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode);	//UNIMPLEMENTED
+	//For DC this uses "poly mode"
+extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);	//UNIMPLEMENTED
 
 //------------------Rotation Stuff------------------//
 

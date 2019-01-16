@@ -17,11 +17,14 @@ extern uint8_t crayon_assist_read_file(void **buffer, char *path, size_t size_by
 	return 0;
 }
 
-extern uint32_t crayon_assist_fgeti(FILE *f){
-    uint32_t n = 0;
-    uint8_t d;
-    for(d = 0; d < 10; d = fgetc(f) - '0'){
-        n = n * 10 + d;
-    }
-    return n;
+extern uint32_t crayon_assist_fgeti(FILE *f, int16_t * last_char){
+	uint32_t n = 0;
+	int16_t d;	//EOF is -1 so we can't use a uint8_t
+	for(d = 0; d < 10; d = fgetc(f) - '0'){
+		n = n * 10 + d;
+	}
+	if(last_char){
+		last_char = d;
+	}
+	return n;
 }

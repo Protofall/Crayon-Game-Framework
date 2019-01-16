@@ -46,7 +46,7 @@ extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, char
 extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id);
 
 //Set initial array sizes and options for your sprite_array
-extern void crayon_memory_init_sprite_array(crayon_textured_array_t *sprite_array, uint16_t num_sprites,
+extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t num_sprites,
 	uint8_t unique_frames, uint8_t multi_draw_z, uint8_t multi_frames, uint8_t multi_scales, uint8_t multi_flips,
 	uint8_t multi_rotations, uint8_t multi_colours, uint8_t filter, crayon_spritesheet_t *ss, crayon_animation_t *anim,
 	crayon_palette_t *pal);
@@ -81,7 +81,7 @@ extern uint8_t crayon_memory_free_mono_font_sheet(crayon_font_mono_t *fm);
 extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp);
 
 //Frees a sprite array
-extern uint8_t crayon_memory_free_sprite_array(crayon_textured_array_t *sprite_array, uint8_t free_ss, uint8_t free_pal);
+extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array, uint8_t free_ss, uint8_t free_pal);
 
 //Free an untextured poly array
 extern uint8_t crayon_memory_free_untextured_array(crayon_untextured_array_t *untextured_array);

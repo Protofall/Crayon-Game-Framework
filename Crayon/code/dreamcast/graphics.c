@@ -195,7 +195,7 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 
 
 //Need to come back and do rotations and maybe colour?
-extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
 
 	//duv is used to assist in the rotations
 	float u0, v0, u1, v1, duv;
@@ -363,7 +363,7 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_textured_array_t *sprite_arra
 }
 
 //I'll come back to this later
-extern uint8_t crayon_graphics_draw_polys(crayon_textured_array_t *sprite_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
 	return 0;
 }
 

@@ -95,7 +95,7 @@ int main(){
 	pvr_init(&pvr_params);
 
 	crayon_spritesheet_t Dwarf, Rainbow, Frames;
-	crayon_textured_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_man_Draw;
+	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_man_Draw;
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P;

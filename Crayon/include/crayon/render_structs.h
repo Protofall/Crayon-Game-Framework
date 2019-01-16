@@ -11,7 +11,7 @@ the multi-draw. It shouldn't be too much slower if any.
 
 //In revision 1 just skip colour and rotation since I still need to plan them more
 	//colours and rotations are currently unused
-typedef struct crayon_textured_array{
+typedef struct crayon_sprite_array{
 	float *positions;			//Width then Height extracted from anim/frame data,
 								//Each group of 2 is for one sub-texture
 	uint8_t *frame_coord_keys;	//Contains element ids a for group of two elements of
@@ -41,7 +41,7 @@ typedef struct crayon_textured_array{
 	crayon_spritesheet_t *spritesheet;
 	crayon_animation_t *animation;
 	crayon_palette_t *palette;	//Also ask if palettes can start at not multiples of 16 or 256
-} crayon_textured_array_t;
+} crayon_sprite_array_t;
 
 //Used for rendering many untextured polys
 typedef struct crayon_untextured_array{

@@ -463,7 +463,7 @@ void b_press(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint16_t 
 
 //Used for displaying the counter for flags and timer
 	//Display is 0 for the mine count or 1 for the timer
-void digit_set(crayon_textured_array_t * ren_list, int num, uint8_t display){
+void digit_set(crayon_sprite_array_t * ren_list, int num, uint8_t display){
 	if(num < -99){
 		num = -99;
 	}
@@ -506,7 +506,7 @@ void grid_indent_logic(MinesweeperGrid_t * grid, int ele_x, int ele_y, uint8_t i
 }
 
 //Pass in a pointer to the beginning of the queried cursor's position
-void face_logic(MinesweeperGrid_t * grid, crayon_textured_array_t * face, float *cursor_position, uint8_t A_held, uint8_t X_held){
+void face_logic(MinesweeperGrid_t * grid, crayon_sprite_array_t * face, float *cursor_position, uint8_t A_held, uint8_t X_held){
 	if(A_held || X_held){
 		if(!grid->over_mode && !face->frame_coord_keys[0]){	//Basically face_frame_id != 2, 3 or 4
 			face->frame_coord_keys[0] = 1;
@@ -689,7 +689,7 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 
 //Handles focus related things
 //cursor_pos is a pointer to the beginning of the cursor we are checking with
-uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, MinesweeperOS_t *os, crayon_textured_array_t * face,
+uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, MinesweeperOS_t *os, crayon_sprite_array_t * face,
 	float *cursor_pos, uint32_t previous_buttons, uint32_t buttons){
 	//CLEAN UP THE MAGIC NUMBERS
 	if(options->focus != 1){	//When we get a new score, we don't want to change focus easily
@@ -1240,7 +1240,7 @@ int main(){
 	}
 
 	//Indent draw list
-	crayon_textured_array_t indented_tiles;
+	crayon_sprite_array_t indented_tiles;
 	crayon_memory_init_sprite_array(&indented_tiles, 8 * 4, 2, 0, 1, 0, 0, 0, 0, 0, MS_grid.alt_ss, MS_grid.alt_anim, MS_grid.alt_pal);
 	indented_tiles.draw_z[0] = 18;
 	indented_tiles.scales[0] = 1;
@@ -1288,7 +1288,7 @@ int main(){
 	}
 
 	//Controller pixel art on the 
-	crayon_textured_array_t devices;
+	crayon_sprite_array_t devices;
 	crayon_memory_init_sprite_array(&devices, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[0], &Controllers_P);
 	devices.scales[0] = 1;
 	devices.scales[1] = 1;
@@ -1306,7 +1306,7 @@ int main(){
 	crayon_graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 2, devices.frame_coord_map + 3, 1);
 
 	//Dot for legend numbers (5 for gamepad and 3 for mouse legend, 1 for face, 11 in the legend)
-	crayon_textured_array_t legend_dot;
+	crayon_sprite_array_t legend_dot;
 	crayon_memory_init_sprite_array(&legend_dot, 20, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[1], &Controllers_P);
 	legend_dot.scales[0] = 1;
 	legend_dot.scales[1] = 1;
@@ -1371,7 +1371,7 @@ int main(){
 	crayon_graphics_frame_coordinates(legend_dot.animation, legend_dot.frame_coord_map + 0, legend_dot.frame_coord_map + 1, 0);
 
 	//Controller swirl
-	crayon_textured_array_t cont_swirl;
+	crayon_sprite_array_t cont_swirl;
 	crayon_memory_init_sprite_array(&cont_swirl, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[2], &Controllers_P);
 	cont_swirl.scales[0] = 1;
 	cont_swirl.scales[1] = 1;
@@ -1384,7 +1384,7 @@ int main(){
 	cont_swirl.frame_coord_keys[0] = 0;
 	crayon_graphics_frame_coordinates(cont_swirl.animation, cont_swirl.frame_coord_map + 0, cont_swirl.frame_coord_map + 1, region);
 
-	crayon_textured_array_t digit_display;
+	crayon_sprite_array_t digit_display;
 	crayon_memory_init_sprite_array(&digit_display, 6, 11, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[1], &Board_P);
 	digit_display.scales[0] = 1;
 	digit_display.scales[1] = 1;
@@ -1416,7 +1416,7 @@ int main(){
 	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 18, digit_display.frame_coord_map + 19, 9);
 	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 20, digit_display.frame_coord_map + 21, 10);
 
-	crayon_textured_array_t face;
+	crayon_sprite_array_t face;
 	crayon_memory_init_sprite_array(&face, 1, 5, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[0], &Board_P);
 	face.scales[0] = 1;
 	face.scales[1] = 1;

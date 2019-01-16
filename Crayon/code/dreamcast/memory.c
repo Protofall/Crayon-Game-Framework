@@ -101,11 +101,14 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	ss->spritesheet_animation_array = (crayon_animation_t *) malloc(sizeof(crayon_animation_t) * ss->spritesheet_animation_count);
 	if(!ss->spritesheet_animation_array){ERROR(15);}
 	
-	int i;
+	uint16_t i;
+	int8_t scanned;
+	char anim_name_part;
+	int32_t count;
 	for(i = 0; i < ss->spritesheet_animation_count; i++){
 		//Check the length of the name
-		char anim_name_part = '0';
-		int count = -1;
+		anim_name_part = '0';
+		count = -1;
 		while(anim_name_part != ' '){
 			anim_name_part = getc(sheet_file);
 			count++;
@@ -113,7 +116,7 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 		ss->spritesheet_animation_array[i].animation_name = (char *) malloc((count + 1) * sizeof(char));
 
 		fseek(sheet_file, -count - 1, SEEK_CUR);  //Go back so we can store the name
-		int scanned = fscanf(sheet_file, "%s %hu %hu %hu %hu %hu %hu %d\n",
+		scanned = fscanf(sheet_file, "%s %hu %hu %hu %hu %hu %hu %d\n",
 								ss->spritesheet_animation_array[i].animation_name,
 								&ss->spritesheet_animation_array[i].animation_x,
 								&ss->spritesheet_animation_array[i].animation_y,
@@ -126,7 +129,7 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 		ss->spritesheet_animation_array[i].animation_frames = uint8_holder;
 		if(scanned != 8){
 			free(ss->spritesheet_animation_array);
-			ERROR(16);
+			ERROR(16);	//Possible Mem-leak place
 		}
 	}
 
@@ -440,7 +443,7 @@ extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palet
 }
 
 //lol 13 params
-extern void crayon_memory_init_sprite_array(crayon_textured_array_t *sprite_array, uint16_t num_sprites,
+extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t num_sprites,
 	uint8_t unique_frames, uint8_t multi_draw_z, uint8_t multi_frames, uint8_t multi_scales, uint8_t multi_flips,
 	uint8_t multi_rotations, uint8_t multi_colours, uint8_t filter, crayon_spritesheet_t *ss,
 	crayon_animation_t *anim, crayon_palette_t *pal){
@@ -546,7 +549,7 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
 	return 1;
 }
 
-extern uint8_t crayon_memory_free_sprite_array(crayon_textured_array_t *sprite_array, uint8_t free_ss, uint8_t free_pal){
+extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array, uint8_t free_ss, uint8_t free_pal){
 	uint8_t ret_val = 0;
 	if(free_ss){
 		ret_val = crayon_memory_free_spritesheet(sprite_array->spritesheet);

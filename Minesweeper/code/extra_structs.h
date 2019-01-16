@@ -8,12 +8,12 @@
 
 typedef struct MinesweeperOS{
 	//OS stuff + region and sd
-	crayon_textured_array_t **assets;
+	crayon_sprite_array_t **assets;
 	uint8_t num_assets;
 	uint8_t lang_id;	//Used for detecting a press on the icon
 	uint8_t tabs_y;
-	crayon_textured_array_t sd;
-	crayon_textured_array_t region;
+	crayon_sprite_array_t sd;
+	crayon_sprite_array_t region;
 
 	uint16_t clock_x;
 	uint16_t clock_y;
@@ -24,7 +24,7 @@ typedef struct MinesweeperOS{
 //Contains the logic for a board
 typedef struct MinesweeperGrid{
 	uint8_t *logic_grid;
-	crayon_textured_array_t draw_grid;	//Contains the tile positions, frames, UVs and more
+	crayon_sprite_array_t draw_grid;	//Contains the tile positions, frames, UVs and more
 
 	//Set these 3 with the alternate board details for easy language switching
 	crayon_spritesheet_t * alt_ss;
@@ -98,9 +98,9 @@ typedef struct MinesweeperOptions{
 	uint8_t disp_mines;
 	char x_buffer[4], y_buffer[4], m_buffer[4];
 
-	crayon_textured_array_t buttons;
-	crayon_textured_array_t checkers;
-	crayon_textured_array_t number_changers;
+	crayon_sprite_array_t buttons;
+	crayon_sprite_array_t checkers;
+	crayon_sprite_array_t number_changers;
 
 	uint16_t tabs_x[5];
 	uint8_t tabs_width[5];
@@ -120,7 +120,7 @@ typedef struct MinesweeperKeyboard{
 	char type_buffer[16];
 	int8_t chars_typed;
 	uint16_t type_box_x, type_box_y;
-	crayon_textured_array_t mini_buttons, medium_buttons, big_buttons;
+	crayon_sprite_array_t mini_buttons, medium_buttons, big_buttons;
 	int8_t caps;
 	int8_t special;	//true/false. Has priority over caps
 	uint16_t name_length;	//Used for the flashing text cursor

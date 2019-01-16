@@ -166,14 +166,14 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 
 void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, crayon_palette_t *pal, uint8_t sys, uint8_t lang, uint8_t sd){
 	os->num_assets = ss->spritesheet_animation_count - 6;	//Minus 6 because of removed assets
-	os->assets = (crayon_textured_array_t **) malloc(os->num_assets * sizeof(crayon_textured_array_t *));	//Allocate space for all OS draw struct pointers
+	os->assets = (crayon_sprite_array_t **) malloc(os->num_assets * sizeof(crayon_sprite_array_t *));	//Allocate space for all OS draw struct pointers
 
 	//Allocate space for all draw structs
 	uint8_t i;
 	uint8_t id_count = 0;
 	//For all of them except the sd and region icons
 	for(i = 0; i < os->num_assets; i++){
-		os->assets[i] = (crayon_textured_array_t *) malloc(sizeof(crayon_textured_array_t));
+		os->assets[i] = (crayon_sprite_array_t *) malloc(sizeof(crayon_sprite_array_t));
 		while(!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "italianTiles") ||
 			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "numberChanger") ||
 			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "checker") ||
@@ -367,7 +367,7 @@ void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t
 	}
 }
 
-void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_textured_array_t * num_changers, uint8_t os){
+void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_sprite_array_t * num_changers, uint8_t os){
 	if(!os){
 		Options->num_polys = 15;	//Windows 2000 has a extra polys
 	}
