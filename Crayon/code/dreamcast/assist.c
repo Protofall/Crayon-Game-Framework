@@ -24,7 +24,7 @@ extern uint32_t crayon_assist_fgeti(FILE *f, int16_t * last_char){
 		n = n * 10 + d;
 	}
 	if(last_char){
-		last_char = d;
+		*last_char = d;
 	}
 	return n;
 }

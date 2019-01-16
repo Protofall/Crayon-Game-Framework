@@ -94,11 +94,11 @@ int main(){
 
 	pvr_init(&pvr_params);
 
-	crayon_spritesheet_t Dwarf, Rainbow, Frames;
-	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_man_Draw;
+	crayon_spritesheet_t Dwarf, Rainbow, Frames, Man;
+	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw;
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
-	crayon_palette_t Tahoma_P, BIOS_P;
+	crayon_palette_t Tahoma_P, BIOS_P, Red_Man_P, Green_Man_P;
 
 	#if CRAYON_SD_MODE == 1
 		crayon_memory_mount_romdisk("/sd/colourMod.img", "/files");
@@ -111,6 +111,7 @@ int main(){
 	crayon_memory_load_spritesheet(&Rainbow, NULL, -1, "/files/Rainbow.dtex");
 	crayon_memory_load_spritesheet(&Dwarf, NULL, -1, "/files/Dwarf.dtex");
 	crayon_memory_load_spritesheet(&Frames, NULL, -1, "/files/Frames.dtex");
+	crayon_memory_load_spritesheet(&Man, &Red_Man_P, 2, "/files/Man.dtex");
 
 	fs_romdisk_unmount("/files");
 
@@ -180,17 +181,34 @@ int main(){
 	crayon_graphics_frame_coordinates(Dwarf_Draw.animation, Dwarf_Draw.frame_coord_map + 0, Dwarf_Draw.frame_coord_map + 1, 0);
 
 	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotations with sprites where height != width
-	crayon_memory_init_sprite_array(&Red_man_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Dwarf, &Dwarf.spritesheet_animation_array[1], NULL);
-	Red_man_Draw.positions[0] = 50;
-	Red_man_Draw.positions[1] = 280;
-	Red_man_Draw.draw_z[0] = 18;
-	Red_man_Draw.scales[0] = 6;
-	Red_man_Draw.scales[1] = 6;
-	Red_man_Draw.flips[0] = 0;
-	Red_man_Draw.rotations[0] = 450;
-	Red_man_Draw.colours[0] = 0;
-	Red_man_Draw.frame_coord_keys[0] = 0;
-	crayon_graphics_frame_coordinates(Red_man_Draw.animation, Red_man_Draw.frame_coord_map + 0, Red_man_Draw.frame_coord_map + 1, 0);
+	crayon_memory_init_sprite_array(&Red_Man_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Man, &Man.spritesheet_animation_array[0], &Red_Man_P);
+	Red_Man_Draw.positions[0] = 50;
+	Red_Man_Draw.positions[1] = 280;
+	Red_Man_Draw.draw_z[0] = 18;
+	Red_Man_Draw.scales[0] = 6;
+	Red_Man_Draw.scales[1] = 6;
+	Red_Man_Draw.flips[0] = 0;
+	Red_Man_Draw.rotations[0] = 450;
+	Red_Man_Draw.colours[0] = 0;
+	Red_Man_Draw.frame_coord_keys[0] = 0;
+	crayon_graphics_frame_coordinates(Red_Man_Draw.animation, Red_Man_Draw.frame_coord_map + 0, Red_Man_Draw.frame_coord_map + 1, 0);
+
+	//Copy the red palette over and modify red with green
+	crayon_memory_clone_palette(&Red_Man_P, &Green_Man_P, 3);
+	crayon_memory_swap_colour(&Green_Man_P, 0xFFFF0000, 0xFF00D200, 0);
+
+	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotations with sprites where height != width
+	crayon_memory_init_sprite_array(&Green_Man_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Man, &Man.spritesheet_animation_array[0], &Green_Man_P);
+	Green_Man_Draw.positions[0] = 299;
+	Green_Man_Draw.positions[1] = 380;
+	Green_Man_Draw.draw_z[0] = 50;
+	Green_Man_Draw.scales[0] = 6;
+	Green_Man_Draw.scales[1] = 6;
+	Green_Man_Draw.flips[0] = 0;
+	Green_Man_Draw.rotations[0] = 0;
+	Green_Man_Draw.colours[0] = 0;
+	Green_Man_Draw.frame_coord_keys[0] = 0;
+	crayon_graphics_frame_coordinates(Green_Man_Draw.animation, Green_Man_Draw.frame_coord_map + 0, Green_Man_Draw.frame_coord_map + 1, 0);
 
 	//8 sprites, 1 frame, multi rotations and flips
 	crayon_memory_init_sprite_array(&Rainbow_Draw, 8, 1, 0, 0, 0, 1, 1, 0, 0, &Rainbow, &Rainbow.spritesheet_animation_array[0], NULL);
@@ -244,15 +262,17 @@ int main(){
 
 		crayon_graphics_setup_palette(&BIOS_P);
 		crayon_graphics_setup_palette(&Tahoma_P);
+		crayon_graphics_setup_palette(&Red_Man_P);
+		crayon_graphics_setup_palette(&Green_Man_P);
 
 		pvr_get_stats(&stats);
 
 		//Animation of red man falling and faces rotating
 		if(stats.frame_count % 60 <= 30){
-			Red_man_Draw.rotations[0] = 0;
+			Red_Man_Draw.rotations[0] = 0;
 		}
 		else{
-			Red_man_Draw.rotations[0] = 90;
+			Red_Man_Draw.rotations[0] = 90;
 		}
 
 		if(stats.frame_count % 60 == 0){
@@ -265,7 +285,8 @@ int main(){
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
 			crayon_graphics_draw_sprites(&Dwarf_Draw, PVR_LIST_PT_POLY);
-			crayon_graphics_draw_sprites(&Red_man_Draw, PVR_LIST_PT_POLY);
+			crayon_graphics_draw_sprites(&Red_Man_Draw, PVR_LIST_PT_POLY);
+			crayon_graphics_draw_sprites(&Green_Man_Draw, PVR_LIST_PT_POLY);
 
 			crayon_graphics_draw_text_prop(&Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id, "Tahoma\0");
 			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, 120, 40, 30, 1, 1, BIOS_P.palette_id, "BIOS\0");
@@ -296,9 +317,9 @@ int main(){
 			crayon_graphics_draw_sprites(&Frames_Draw, PVR_LIST_OP_POLY);
 
 			//Represents the boundry box for the red man when not rotated
-			crayon_graphics_draw_untextured_poly(Red_man_Draw.positions[0], Red_man_Draw.positions[1], Red_man_Draw.draw_z[0] - 1,
-				Red_man_Draw.animation->animation_frame_width * Red_man_Draw.scales[0],
-				Red_man_Draw.animation->animation_frame_height * Red_man_Draw.scales[1], 0xFF000000, PVR_LIST_OP_POLY);
+			crayon_graphics_draw_untextured_poly(Red_Man_Draw.positions[0], Red_Man_Draw.positions[1], Red_Man_Draw.draw_z[0] - 1,
+				Red_Man_Draw.animation->animation_frame_width * Red_Man_Draw.scales[0],
+				Red_Man_Draw.animation->animation_frame_height * Red_Man_Draw.scales[1], 0xFF000000, PVR_LIST_OP_POLY);
 
 		pvr_list_finish();
 
