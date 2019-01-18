@@ -65,7 +65,7 @@ uint16_t crayon_savefile_get_save_block_count(crayon_savefile_details_t * savefi
 	data_len = savefile_details->savefile_size;
 
 	//Get the total number of bytes. Keep in mind we need to think about the icon/s
-	pkg_size = sizeof(vmu_hdr_t) + (512 * savefile_details->savefile_icon_anim_count) + data_len;
+	pkg_size = sizeof(vmu_hdr_t) + (512 * savefile_details->icon_anim_count) + data_len;
 
 	return pkg_size >> 9;	//2^9 is 512 so this gets us the number of blocks
 }
@@ -90,8 +90,8 @@ void crayon_savefile_load_icon(crayon_savefile_details_t * savefile_details, cha
 	size_data = ftell(icon_data_file);
 	fseek(icon_data_file, 0, SEEK_SET);
 
-	savefile_details->savefile_icon = (unsigned char *) malloc(size_data);
-	fread(savefile_details->savefile_icon, size_data, 1, icon_data_file);
+	savefile_details->icon = (unsigned char *) malloc(size_data);
+	fread(savefile_details->icon, size_data, 1, icon_data_file);
 	fclose(icon_data_file);
 
 
@@ -106,22 +106,22 @@ void crayon_savefile_load_icon(crayon_savefile_details_t * savefile_details, cha
 	size_palette = ftell(icon_palette_file);
 	fseek(icon_palette_file, 0, SEEK_SET);
 
-	savefile_details->savefile_palette = (unsigned short *) malloc(size_palette);
-	fread(savefile_details->savefile_palette, size_palette, 1, icon_palette_file);
+	savefile_details->icon_palette = (unsigned short *) malloc(size_palette);
+	fread(savefile_details->icon_palette, size_palette, 1, icon_palette_file);
 	fclose(icon_palette_file);
 
 	return;
 }
 
 void crayon_savefile_free_icon(crayon_savefile_details_t * savefile_details){
-	free(savefile_details->savefile_icon);
-	free(savefile_details->savefile_palette);
+	free(savefile_details->icon);
+	free(savefile_details->icon_palette);
 	return;
 }
 
-uint8_t crayon_savefile_get_valid_vmus(crayon_savefile_details_t * savefile_details){
+uint8_t crayon_savefile_get_valid_memcards(crayon_savefile_details_t * savefile_details){
 	maple_device_t *vmu;
-	uint8_t valid_vmus = 0;	//a1a2b1b2c1c2d1d2
+	uint8_t valid_memcards = 0;	//a1a2b1b2c1c2d1d2
 
 	int i, j;
 	for(i = 0; i <= 3; i++){
@@ -141,11 +141,11 @@ uint8_t crayon_savefile_get_valid_vmus(crayon_savefile_details_t * savefile_deta
 			}
 
 			//If we get to here, this VMU is valid
-			crayon_savefile_set_vmu_bit(&valid_vmus, i, j);	//Sets wrong bit
+			crayon_savefile_set_vmu_bit(&valid_memcards, i, j);	//Sets wrong bit
 		}
 	}
 
-	return valid_vmus;
+	return valid_memcards;
 }
 
 uint8_t crayon_savefile_get_valid_saves(crayon_savefile_details_t * savefile_details){
@@ -211,18 +211,18 @@ uint8_t crayon_savefile_get_valid_function(uint32_t function){
 
 //Make sure to call this after making a new savefile struct otherwise you can get strange results
 void crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
-	uint8_t savefile_icon_anim_count, uint16_t savefile_icon_anim_speed, char * desc_long, char * desc_short, char * app_id, char * save_name){
+	uint8_t icon_anim_count, uint16_t icon_anim_speed, char * desc_long, char * desc_short, char * app_id, char * save_name){
 	savefile_details->savefile_data = savefile_data;
 	savefile_details->savefile_size = savefile_size;
-	savefile_details->savefile_icon_anim_count = savefile_icon_anim_count;
-	savefile_details->savefile_icon_anim_speed = savefile_icon_anim_speed;
+	savefile_details->icon_anim_count = icon_anim_count;
+	savefile_details->icon_anim_speed = icon_anim_speed;
 
 	strcpy(savefile_details->desc_long, desc_long);
 	strcpy(savefile_details->desc_short, desc_short);
 	strcpy(savefile_details->app_id, app_id);
 	strcpy(savefile_details->save_name, save_name);
 
-	savefile_details->valid_vmus = crayon_savefile_get_valid_vmus(savefile_details);
+	savefile_details->valid_memcards = crayon_savefile_get_valid_memcards(savefile_details);
 	savefile_details->valid_saves = crayon_savefile_get_valid_saves(savefile_details);
 	savefile_details->valid_vmu_screens = crayon_savefile_get_valid_screens();
 
@@ -276,7 +276,7 @@ uint8_t crayon_savefile_load(crayon_savefile_details_t * savefile_details){
 
 uint16_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	//The requested VMU is not a valid memory card
-	if(!crayon_savefile_get_vmu_bit(savefile_details->valid_vmus, savefile_details->savefile_port, savefile_details->savefile_slot)){
+	if(!crayon_savefile_get_vmu_bit(savefile_details->valid_memcards, savefile_details->savefile_port, savefile_details->savefile_slot)){
 		return 1;
 	}
 
@@ -313,10 +313,10 @@ uint16_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	sprintf(pkg.desc_long, savefile_details->desc_long);
 	strcpy(pkg.desc_short, savefile_details->desc_short);
 	strcpy(pkg.app_id, savefile_details->app_id);
-	pkg.icon_cnt = savefile_details->savefile_icon_anim_count;
-	pkg.icon_anim_speed = savefile_details->savefile_icon_anim_speed;
-	memcpy(pkg.icon_pal, savefile_details->savefile_palette, 32);
-	pkg.icon_data = savefile_details->savefile_icon;
+	pkg.icon_cnt = savefile_details->icon_anim_count;
+	pkg.icon_anim_speed = savefile_details->icon_anim_speed;
+	memcpy(pkg.icon_pal, savefile_details->icon_palette, 32);
+	pkg.icon_data = savefile_details->icon;
 	pkg.eyecatch_type = VMUPKG_EC_NONE;
 	pkg.data_len = savefile_details->savefile_size;
 	pkg.data = data;

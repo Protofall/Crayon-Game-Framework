@@ -1,6 +1,6 @@
 #include "memory.h"
 
-extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *dims, int *format, char *texture_path){
+extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *dims, uint32_t *format, char *texture_path){
 	uint8_t dtex_result = 0;
 	dtex_header_t dtex_header;
 
@@ -44,11 +44,11 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	// Load texture
 	//---------------------------------------------------------------------------
 
-	uint8_t dtex_result = crayon_memory_load_dtex(&ss->spritesheet_texture, &ss->spritesheet_dims, &ss->spritesheet_format, path);
+	uint8_t dtex_result = crayon_memory_load_dtex(&ss->texture, &ss->dimensions, &ss->texture_format, path);
 
 	if(dtex_result){ERROR(dtex_result);}
 
-	uint8_t texture_format = (((1 << 3) - 1) & (ss->spritesheet_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
+	uint8_t texture_format = (((1 << 3) - 1) & (ss->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
 
 	//Unknown/unsupported format
 	if(texture_format != 0 && texture_format != 1 && texture_format != 2 && texture_format != 5 && texture_format != 6){
@@ -96,16 +96,16 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 
 	int uint8_holder;	//Can't really read straight into uint8_t's so this is the work around :(
 	fscanf(sheet_file, "%d\n", &uint8_holder);
-	ss->spritesheet_animation_count = uint8_holder;
+	ss->animation_count = uint8_holder;
 
-	ss->spritesheet_animation_array = (crayon_animation_t *) malloc(sizeof(crayon_animation_t) * ss->spritesheet_animation_count);
-	if(!ss->spritesheet_animation_array){ERROR(15);}
+	ss->animation_array = (crayon_animation_t *) malloc(sizeof(crayon_animation_t) * ss->animation_count);
+	if(!ss->animation_array){ERROR(15);}
 	
 	uint16_t i;
 	int8_t scanned;
 	char anim_name_part;
 	int32_t count;
-	for(i = 0; i < ss->spritesheet_animation_count; i++){
+	for(i = 0; i < ss->animation_count; i++){
 		//Check the length of the name
 		anim_name_part = '0';
 		count = -1;
@@ -113,22 +113,22 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 			anim_name_part = getc(sheet_file);
 			count++;
 		}
-		ss->spritesheet_animation_array[i].animation_name = (char *) malloc((count + 1) * sizeof(char));
+		ss->animation_array[i].name = (char *) malloc((count + 1) * sizeof(char));
 
 		fseek(sheet_file, -count - 1, SEEK_CUR);  //Go back so we can store the name
 		scanned = fscanf(sheet_file, "%s %hu %hu %hu %hu %hu %hu %d\n",
-								ss->spritesheet_animation_array[i].animation_name,
-								&ss->spritesheet_animation_array[i].animation_x,
-								&ss->spritesheet_animation_array[i].animation_y,
-								&ss->spritesheet_animation_array[i].animation_sheet_width,
-								&ss->spritesheet_animation_array[i].animation_sheet_height,
-								&ss->spritesheet_animation_array[i].animation_frame_width,
-								&ss->spritesheet_animation_array[i].animation_frame_height,
+								ss->animation_array[i].name,
+								&ss->animation_array[i].x,
+								&ss->animation_array[i].y,
+								&ss->animation_array[i].sheet_width,
+								&ss->animation_array[i].sheet_height,
+								&ss->animation_array[i].frame_width,
+								&ss->animation_array[i].frame_height,
 								&uint8_holder);
 
-		ss->spritesheet_animation_array[i].animation_frames = uint8_holder;
+		ss->animation_array[i].frame_count = uint8_holder;
 		if(scanned != 8){
-			free(ss->spritesheet_animation_array);
+			free(ss->animation_array);
 			ERROR(16);	//Possible Mem-leak place
 		}
 	}
@@ -141,7 +141,7 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 
 	// If a failure occured somewhere
 	// This might cause errors if the pointer wasn't initially set to NULL
-	if(result && ss->spritesheet_texture){pvr_mem_free(ss->spritesheet_texture);}
+	if(result && ss->texture){pvr_mem_free(ss->texture);}
 
 	//If we allocated memory for the palette and error out
 	if(result && cp->palette != NULL){
@@ -162,7 +162,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	// Load texture
 	//---------------------------------------------------------------------------
 
-	uint8_t dtex_result = crayon_memory_load_dtex(&fp->fontsheet_texture, &fp->fontsheet_dim, &fp->texture_format, path);
+	uint8_t dtex_result = crayon_memory_load_dtex(&fp->texture, &fp->dimensions, &fp->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
 	uint8_t texture_format = (((1 << 3) - 1) & (fp->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
@@ -279,7 +279,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	if(sheet_file){fclose(sheet_file);}
 
 	// If a failure occured somewhere
-	if(result && fp->fontsheet_texture){pvr_mem_free(fp->fontsheet_texture);}
+	if(result && fp->texture){pvr_mem_free(fp->texture);}
 
 	//If we allocated memory for the palette and error out
 	if(result){
@@ -310,7 +310,7 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	// Load texture
 	//---------------------------------------------------------------------------
 
-	uint8_t dtex_result = crayon_memory_load_dtex(&fm->fontsheet_texture, &fm->fontsheet_dim, &fm->texture_format, path);
+	uint8_t dtex_result = crayon_memory_load_dtex(&fm->texture, &fm->dimensions, &fm->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
 	uint8_t texture_format = (((1 << 3) - 1) & (fm->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
@@ -387,7 +387,7 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	if(sheet_file){fclose(sheet_file);}
 
 	// If a failure occured somewhere
-	if(result && fm->fontsheet_texture){pvr_mem_free(fm->fontsheet_texture);}
+	if(result && fm->texture){pvr_mem_free(fm->texture);}
 
 	//If we allocated memory for the palette and error out
 	if(result && cp->palette != NULL){
@@ -505,15 +505,15 @@ extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1
 extern uint8_t crayon_memory_free_spritesheet(crayon_spritesheet_t *ss){
 	if(ss){
 		uint16_t i;
-		for(i = 0; i < ss->spritesheet_animation_count; i++){
-			free(ss->spritesheet_animation_array[i].animation_name);
+		for(i = 0; i < ss->animation_count; i++){
+			free(ss->animation_array[i].name);
 		}
-		free(ss->spritesheet_animation_array);
+		free(ss->animation_array);
 
-		//spritesheet_name is unused so we don't free it
-		//free(ss->spritesheet_name);
+		//name is unused so we don't free it
+		//free(ss->name);
 
-		pvr_mem_free(ss->spritesheet_texture);
+		pvr_mem_free(ss->texture);
 
 		return 0;
 	}
@@ -525,7 +525,7 @@ extern uint8_t crayon_memory_free_prop_font_sheet(crayon_font_prop_t *fp){
 		free(fp->char_x_coord);
 		free(fp->char_width);
 		free(fp->chars_per_row);
-		pvr_mem_free(fp->fontsheet_texture);
+		pvr_mem_free(fp->texture);
 		return 0;
 	}
 	return 1;
@@ -533,7 +533,7 @@ extern uint8_t crayon_memory_free_prop_font_sheet(crayon_font_prop_t *fp){
 
 extern uint8_t crayon_memory_free_mono_font_sheet(crayon_font_mono_t *fm){
 	if(fm){
-		pvr_mem_free(fm->fontsheet_texture);
+		pvr_mem_free(fm->texture);
 		return 0;
 	}
 	return 1;

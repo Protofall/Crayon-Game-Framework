@@ -1,12 +1,12 @@
 #include "setup.h"
 
 void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t sd){
-	if(!strcmp(os->assets[i]->animation->animation_name, "aboutLogo")){
+	if(!strcmp(os->assets[i]->animation->name, "aboutLogo")){
 		os->assets[i]->positions[0] = 100;
 		os->assets[i]->positions[1] = 120;
 		os->assets[i]->draw_z[0] = 19;
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderBottom")){
+	else if(!strcmp(os->assets[i]->animation->name, "boarderBottom")){
 		if(sys){
 			os->assets[i]->positions[0] = 3;
 			os->assets[i]->positions[1] = 447;
@@ -14,21 +14,21 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			os->assets[i]->scales[0] = 211;
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderBottomLeft")){
+	else if(!strcmp(os->assets[i]->animation->name, "boarderBottomLeft")){
 		if(sys){
 			os->assets[i]->positions[0] = 0;
 			os->assets[i]->positions[1] = 447;
 			os->assets[i]->draw_z[0] = 17;
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderBottomRight")){
+	else if(!strcmp(os->assets[i]->animation->name, "boarderBottomRight")){
 		if(sys){
 			os->assets[i]->positions[0] = 636;
 			os->assets[i]->positions[1] = 447;
 			os->assets[i]->draw_z[0] = 17;
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderLeft")){
+	else if(!strcmp(os->assets[i]->animation->name, "boarderLeft")){
 		if(sys){
 			os->assets[i]->positions[0] = 0;
 			os->assets[i]->positions[1] = 29;
@@ -36,7 +36,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			os->assets[i]->scales[1] = 209;
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "boarderRight")){
+	else if(!strcmp(os->assets[i]->animation->name, "boarderRight")){
 		if(sys){
 			os->assets[i]->positions[0] = 637;
 			os->assets[i]->positions[1] = 29;
@@ -44,7 +44,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			os->assets[i]->scales[1] = 209;
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "langIcon")){
+	else if(!strcmp(os->assets[i]->animation->name, "langIcon")){
 		if(sys){
 			os->assets[i]->positions[1] = 457;
 			os->assets[i]->draw_z[0] = 17;
@@ -66,7 +66,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			}
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "taskbarCurrentTask")){
+	else if(!strcmp(os->assets[i]->animation->name, "taskbarCurrentTask")){
 		if(sys){
 			os->assets[i]->positions[0] = 106;
 			os->assets[i]->positions[1] = 450;
@@ -78,7 +78,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			os->assets[i]->draw_z[0] = 17;
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "taskbarFiller")){
+	else if(!strcmp(os->assets[i]->animation->name, "taskbarFiller")){
 		if(sys){
 			os->assets[i]->positions[0] = 266;
 			os->assets[i]->positions[1] = 450;
@@ -86,7 +86,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			os->assets[i]->scales[0] = 94;
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "taskbarStart")){
+	else if(!strcmp(os->assets[i]->animation->name, "taskbarStart")){
 		if(sys){
 			os->assets[i]->positions[0] = 0;
 			os->assets[i]->positions[1] = 450;
@@ -98,7 +98,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			os->assets[i]->draw_z[0] = 16;
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "taskbarTimeFiller")){
+	else if(!strcmp(os->assets[i]->animation->name, "taskbarTimeFiller")){
 		if(sys){
 			os->assets[i]->positions[1] = 450;
 			os->assets[i]->draw_z[0] = 17;
@@ -111,7 +111,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			}
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "taskbarTimeLeft")){
+	else if(!strcmp(os->assets[i]->animation->name, "taskbarTimeLeft")){
 		if(sys){
 			os->assets[i]->positions[1] = 450;
 			os->assets[i]->draw_z[0] = 17;
@@ -123,14 +123,14 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			}
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "taskbarTimeRight")){
+	else if(!strcmp(os->assets[i]->animation->name, "taskbarTimeRight")){
 		if(sys){
 			os->assets[i]->positions[0] = 612;
 			os->assets[i]->positions[1] = 450;
 			os->assets[i]->draw_z[0] = 18;
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "topbarAdjusts")){
+	else if(!strcmp(os->assets[i]->animation->name, "topbarAdjusts")){
 		if(sys){
 			os->assets[i]->positions[0] = 568;
 			os->assets[i]->positions[1] = 0;
@@ -142,7 +142,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			os->assets[i]->draw_z[0] = 17;
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "topbarFiller")){
+	else if(!strcmp(os->assets[i]->animation->name, "topbarFiller")){
 		if(sys){
 			os->assets[i]->positions[0] = 105;
 			os->assets[i]->positions[1] = 0;
@@ -150,7 +150,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 			os->assets[i]->scales[0] = 155;
 		}
 	}
-	else if(!strcmp(os->assets[i]->animation->animation_name, "topbarName")){
+	else if(!strcmp(os->assets[i]->animation->name, "topbarName")){
 		if(sys){
 			os->assets[i]->positions[0] = 0;
 			os->assets[i]->positions[1] = 0;
@@ -165,7 +165,7 @@ void setup_pos_lookup_table(MinesweeperOS_t *os, uint8_t sys, uint8_t i, uint8_t
 }
 
 void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, crayon_palette_t *pal, uint8_t sys, uint8_t lang, uint8_t sd){
-	os->num_assets = ss->spritesheet_animation_count - 6;	//Minus 6 because of removed assets
+	os->num_assets = ss->animation_count - 6;	//Minus 6 because of removed assets
 	os->assets = (crayon_sprite_array_t **) malloc(os->num_assets * sizeof(crayon_sprite_array_t *));	//Allocate space for all OS draw struct pointers
 
 	//Allocate space for all draw structs
@@ -174,22 +174,22 @@ void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, crayon_palet
 	//For all of them except the sd and region icons
 	for(i = 0; i < os->num_assets; i++){
 		os->assets[i] = (crayon_sprite_array_t *) malloc(sizeof(crayon_sprite_array_t));
-		while(!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "italianTiles") ||
-			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "numberChanger") ||
-			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "checker") ||
-			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "miniButton") ||
-			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "mediumButton") ||
-			!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "button")){
+		while(!strcmp(ss->animation_array[id_count].name, "italianTiles") ||
+			!strcmp(ss->animation_array[id_count].name, "numberChanger") ||
+			!strcmp(ss->animation_array[id_count].name, "checker") ||
+			!strcmp(ss->animation_array[id_count].name, "miniButton") ||
+			!strcmp(ss->animation_array[id_count].name, "mediumButton") ||
+			!strcmp(ss->animation_array[id_count].name, "button")){
 			id_count++;
 		}
-		if(!strcmp(ss->spritesheet_animation_array[id_count].animation_name, "langIcon")){
+		if(!strcmp(ss->animation_array[id_count].name, "langIcon")){
 			os->lang_id = i;
 		}
 		uint8_t multi_frames = 0;
-		if(ss->spritesheet_animation_array[id_count].animation_frames > 1){
+		if(ss->animation_array[id_count].frame_count > 1){
 			multi_frames = 1;
 		}
-		crayon_memory_init_sprite_array(os->assets[i], 1, 2 * multi_frames, 0, multi_frames, 0, 0, 0, 0, 0, ss, &ss->spritesheet_animation_array[id_count], pal);
+		crayon_memory_init_sprite_array(os->assets[i], 1, 2 * multi_frames, 0, multi_frames, 0, 0, 0, 0, 0, ss, &ss->animation_array[id_count], pal);
 		os->assets[i]->scales[0] = 1;
 		os->assets[i]->scales[1] = 1;
 		os->assets[i]->flips[0] = 0;
@@ -197,10 +197,10 @@ void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, crayon_palet
 		os->assets[i]->colours[0] = 0;
 		setup_pos_lookup_table(os, sys, i, sd);
 		crayon_graphics_frame_coordinates(os->assets[i]->animation, os->assets[i]->frame_coord_map + 0, os->assets[i]->frame_coord_map + 1, 0);
-		if(os->assets[i]->animation->animation_frames > 1){
+		if(os->assets[i]->animation->frame_count > 1){
 			crayon_graphics_frame_coordinates(os->assets[i]->animation, os->assets[i]->frame_coord_map + 2, os->assets[i]->frame_coord_map + 3, 1);
 		}
-		if(lang && os->assets[i]->animation->animation_frames > 1){
+		if(lang && os->assets[i]->animation->frame_count > 1){
 			os->assets[i]->frame_coord_keys[0] = 1;
 		}
 		else{
@@ -224,9 +224,9 @@ void setup_OS_assets(MinesweeperOS_t *os, crayon_spritesheet_t *ss, crayon_palet
 
 void setup_OS_assets_icons(MinesweeperOS_t *os, crayon_spritesheet_t *Icons, crayon_palette_t *Icons_P, uint8_t sys, uint8_t region){
 	uint8_t i;
-	for(i = 0; i < Icons->spritesheet_animation_count; i++){
-		if(!strcmp(Icons->spritesheet_animation_array[i].animation_name, "sd")){
-			crayon_memory_init_sprite_array(&os->sd, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->spritesheet_animation_array[i], Icons_P);
+	for(i = 0; i < Icons->animation_count; i++){
+		if(!strcmp(Icons->animation_array[i].name, "sd")){
+			crayon_memory_init_sprite_array(&os->sd, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->animation_array[i], Icons_P);
 			crayon_graphics_frame_coordinates(os->sd.animation, os->sd.frame_coord_map, os->sd.frame_coord_map + 1, 0);
 			os->sd.draw_z[0] = 21;
 			os->sd.scales[0] = 1;
@@ -244,8 +244,8 @@ void setup_OS_assets_icons(MinesweeperOS_t *os, crayon_spritesheet_t *Icons, cra
 				os->sd.positions[1] = 459;
 			}
 		}
-		if(!strcmp(Icons->spritesheet_animation_array[i].animation_name, "regionIcons")){
-			crayon_memory_init_sprite_array(&os->region, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->spritesheet_animation_array[i], Icons_P);
+		if(!strcmp(Icons->animation_array[i].name, "regionIcons")){
+			crayon_memory_init_sprite_array(&os->region, 1, 1, 0, 0, 0, 0, 0, 0, 0, Icons, &Icons->animation_array[i], Icons_P);
 			crayon_graphics_frame_coordinates(os->region.animation, os->region.frame_coord_map, os->region.frame_coord_map + 1, region);
 			os->region.draw_z[0] = 21;
 			os->region.scales[0] = 1;
@@ -586,8 +586,8 @@ uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details)
 	//If we have pre_1_2_0 saves
 	if(pre_1_2_0_valid_saves){
 		//Can't rely on the init version due to app_id being too long. This will get the job done when loading
-		pre_1_2_0_savefile_details.valid_vmus = pre_1_2_0_valid_saves;
-		new_savefile_details->valid_vmus = pre_1_2_0_valid_saves;
+		pre_1_2_0_savefile_details.valid_memcards = pre_1_2_0_valid_saves;
+		new_savefile_details->valid_memcards = pre_1_2_0_valid_saves;
 
 		//If present then it will update them to the new format
 		for(i = 0; i <= 3; i++){
@@ -615,8 +615,8 @@ uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details)
 	//If we have some 1.2.0 savefiles
 	if(pre_1_3_0_valid_saves){
 		//Can't rely on the init version due to app_id being too long. This will get the job done when loading
-		pre_1_3_0_savefile_details.valid_vmus = pre_1_3_0_valid_saves;
-		new_savefile_details->valid_vmus = pre_1_3_0_valid_saves;
+		pre_1_3_0_savefile_details.valid_memcards = pre_1_3_0_valid_saves;
+		new_savefile_details->valid_memcards = pre_1_3_0_valid_saves;
 
 		//If present then it will update them to the new format
 		for(i = 0; i <= 3; i++){
@@ -644,7 +644,7 @@ uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details)
 
 	//Update the savefile details
 	if(pre_1_2_0_valid_saves || pre_1_3_0_valid_saves){
-		new_savefile_details->valid_vmus = crayon_savefile_get_valid_vmus(new_savefile_details);
+		new_savefile_details->valid_memcards = crayon_savefile_get_valid_memcards(new_savefile_details);
 		new_savefile_details->valid_saves = crayon_savefile_get_valid_saves(new_savefile_details);	//Update the list
 	}
 

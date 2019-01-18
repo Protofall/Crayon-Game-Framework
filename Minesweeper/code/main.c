@@ -593,8 +593,8 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 			uint8_t i;
 			for(i = 0; i < keyboard->mini_buttons.num_sprites; i++){
 				if((cursor_pos[0] >= keyboard->mini_buttons.positions[(2 * i)]) && (cursor_pos[1] >= keyboard->mini_buttons.positions[(2 * i) + 1])
-					&& cursor_pos[0] <= keyboard->mini_buttons.positions[(2 * i)] + keyboard->mini_buttons.animation->animation_frame_width &&
-					cursor_pos[1] <= keyboard->mini_buttons.positions[(2 * i) + 1] + keyboard->mini_buttons.animation->animation_frame_height){
+					&& cursor_pos[0] <= keyboard->mini_buttons.positions[(2 * i)] + keyboard->mini_buttons.animation->frame_width &&
+					cursor_pos[1] <= keyboard->mini_buttons.positions[(2 * i) + 1] + keyboard->mini_buttons.animation->frame_height){
 					mini_button_pressed = 1;
 					break;
 				}
@@ -619,8 +619,8 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 			else{
 				for(i = 0; i < keyboard->medium_buttons.num_sprites; i++){
 					if((cursor_pos[0] >= keyboard->medium_buttons.positions[(2 * i)]) && (cursor_pos[1] >= keyboard->medium_buttons.positions[(2 * i) + 1])
-						&& cursor_pos[0] <= keyboard->medium_buttons.positions[(2 * i)] + keyboard->medium_buttons.animation->animation_frame_width &&
-						cursor_pos[1] <= keyboard->medium_buttons.positions[(2 * i) + 1] + keyboard->medium_buttons.animation->animation_frame_height){
+						&& cursor_pos[0] <= keyboard->medium_buttons.positions[(2 * i)] + keyboard->medium_buttons.animation->frame_width &&
+						cursor_pos[1] <= keyboard->medium_buttons.positions[(2 * i) + 1] + keyboard->medium_buttons.animation->frame_height){
 						medium_button_pressed = 1;
 						break;
 					}
@@ -642,8 +642,8 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 				}
 				else{	//Check the big buttons
 					if((cursor_pos[0] >= keyboard->big_buttons.positions[0]) && (cursor_pos[1] >= keyboard->big_buttons.positions[1])
-						&& cursor_pos[0] <= keyboard->big_buttons.positions[0] + keyboard->big_buttons.animation->animation_frame_width &&
-						cursor_pos[1] <= keyboard->big_buttons.positions[1] + keyboard->big_buttons.animation->animation_frame_height){	//Enter pressed
+						&& cursor_pos[0] <= keyboard->big_buttons.positions[0] + keyboard->big_buttons.animation->frame_width &&
+						cursor_pos[1] <= keyboard->big_buttons.positions[1] + keyboard->big_buttons.animation->frame_height){	//Enter pressed
 
 						//Record names must have at least one char
 						if(keyboard->chars_typed <= 0){
@@ -668,8 +668,8 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 						options->focus = 0;	//Change to 2 later when I make that screen
 					}
 					else if((cursor_pos[0] >= keyboard->big_buttons.positions[2]) && (cursor_pos[1] >= keyboard->big_buttons.positions[3])
-						&& cursor_pos[0] <= keyboard->big_buttons.positions[2] + keyboard->big_buttons.animation->animation_frame_width &&
-						cursor_pos[1] <= keyboard->big_buttons.positions[3] + keyboard->big_buttons.animation->animation_frame_height){	//Space pressed
+						&& cursor_pos[0] <= keyboard->big_buttons.positions[2] + keyboard->big_buttons.animation->frame_width &&
+						cursor_pos[1] <= keyboard->big_buttons.positions[3] + keyboard->big_buttons.animation->frame_height){	//Space pressed
 						if(keyboard->chars_typed < 15){
 							keyboard->type_buffer[keyboard->chars_typed + 1] = '\0';
 							keyboard->type_buffer[keyboard->chars_typed] = ' ';
@@ -859,8 +859,8 @@ uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os, Mines
 	//Maybe make this a part of button_press_logic?
 void language_swap(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, MinesweeperOS_t * os, float * cursor_pos, uint8_t a_press){
 	if(cursor_pos[0] > os->assets[os->lang_id]->positions[0] && cursor_pos[1] > os->assets[os->lang_id]->positions[1] &&
-		cursor_pos[0] < os->assets[os->lang_id]->positions[0] + os->assets[os->lang_id]->animation->animation_frame_width &&
-		cursor_pos[1] < os->assets[os->lang_id]->positions[1] + os->assets[os->lang_id]->animation->animation_frame_height &&
+		cursor_pos[0] < os->assets[os->lang_id]->positions[0] + os->assets[os->lang_id]->animation->frame_width &&
+		cursor_pos[1] < os->assets[os->lang_id]->positions[1] + os->assets[os->lang_id]->animation->frame_height &&
 		a_press){
 		options->language = !options->language;
 
@@ -987,7 +987,7 @@ int main(){
 	}
 
 	//If a save already exists
-	if(MS_options.savefile_details.valid_vmus && MS_options.savefile_details.savefile_port != -1 &&
+	if(MS_options.savefile_details.valid_memcards && MS_options.savefile_details.savefile_port != -1 &&
 		MS_options.savefile_details.savefile_slot != -1){
 		
 		MS_options.question_enabled = !!(MS_options.savefile.options & (1 << 0));
@@ -998,10 +998,10 @@ int main(){
 	}
 	else{	//No valid VMU isn't present or no savefile yet
 		//If we don't already have a savefile, choose a VMU
-		if(MS_options.savefile_details.valid_vmus){
+		if(MS_options.savefile_details.valid_memcards){
 			for(iter = 0; iter <= 3; iter++){
 				for(jiter = 1; jiter <= 2; jiter++){
-					if(crayon_savefile_get_vmu_bit(MS_options.savefile_details.valid_vmus, iter, jiter)){	//Use the left most VMU
+					if(crayon_savefile_get_vmu_bit(MS_options.savefile_details.valid_memcards, iter, jiter)){	//Use the left most VMU
 						MS_options.savefile_details.savefile_port = iter;
 						MS_options.savefile_details.savefile_slot = jiter;
 						goto Exit_loop_2;
@@ -1029,7 +1029,7 @@ int main(){
 		MS_options.savefile.pref_height = 16;
 		MS_options.savefile.pref_mines = 99;
 
-		if(MS_options.savefile_details.valid_vmus){
+		if(MS_options.savefile_details.valid_memcards){
 			//Make a new savefile if one isn't present
 				//If we have a valid vmu, port and slot won't be minus 1
 				//But if we don't they will be minus 1 and the save won't be made
@@ -1119,11 +1119,11 @@ int main(){
 	// crayon_palette_t BIOS_P;
 	// crayon_font_mono_t BIOS_font;
 	crayon_font_prop_t Tahoma_font;
-	Board.spritesheet_texture = NULL;
-	Icons.spritesheet_texture = NULL;
-	Windows.spritesheet_texture = NULL;
-	// BIOS_font.fontsheet_texture = NULL;
-	Tahoma_font.fontsheet_texture = NULL;
+	Board.texture = NULL;
+	Icons.texture = NULL;
+	Windows.texture = NULL;
+	// BIOS_font.texture = NULL;
+	Tahoma_font.texture = NULL;
 
 	crayon_untextured_array_t Bg_polys, Option_polys;	//Contains some of the untextured polys that will be drawn.
 	sfxhnd_t Sound_Tick, Sound_Death, Sound_Death_Italian, Sound_Win;	//Sound effect handles. Might add more later for startup sounds or maybe put them in cdda? (Note this is a uint32_t)
@@ -1204,25 +1204,25 @@ int main(){
 
 	//Setting up the language spritesheet, animation and palette pointers
 	uint8_t tile_id = 0;
-	for(iter = 0; iter < Board.spritesheet_animation_count; iter++){
-		if(!strcmp(Board.spritesheet_animation_array[iter].animation_name, "tiles")){
+	for(iter = 0; iter < Board.animation_count; iter++){
+		if(!strcmp(Board.animation_array[iter].name, "tiles")){
 			tile_id = iter;
 			break;
 		}
 	}
 	if(!MS_options.language){	//English
 		MS_grid.draw_grid.spritesheet = &Board;
-		MS_grid.draw_grid.animation = &Board.spritesheet_animation_array[tile_id];
+		MS_grid.draw_grid.animation = &Board.animation_array[tile_id];
 		MS_grid.draw_grid.palette = &Board_P;
 	}
 	else{	//Italian
 		MS_grid.alt_ss = &Board;
-		MS_grid.alt_anim = &Board.spritesheet_animation_array[tile_id];
+		MS_grid.alt_anim = &Board.animation_array[tile_id];
 		MS_grid.alt_pal = &Board_P;
 	}
 
-	for(iter = 0; iter < Windows.spritesheet_animation_count; iter++){
-		if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "italianTiles")){
+	for(iter = 0; iter < Windows.animation_count; iter++){
+		if(!strcmp(Windows.animation_array[iter].name, "italianTiles")){
 			tile_id = iter;
 			break;
 		}
@@ -1230,12 +1230,12 @@ int main(){
 
 	if(MS_options.language){	//Italian
 		MS_grid.draw_grid.spritesheet = &Windows;
-		MS_grid.draw_grid.animation = &Windows.spritesheet_animation_array[tile_id];
+		MS_grid.draw_grid.animation = &Windows.animation_array[tile_id];
 		MS_grid.draw_grid.palette = &Windows_P;	//I think this is fine in XP mode
 	}
 	else{	//English
 		MS_grid.alt_ss = &Windows;
-		MS_grid.alt_anim = &Windows.spritesheet_animation_array[tile_id];
+		MS_grid.alt_anim = &Windows.animation_array[tile_id];
 		MS_grid.alt_pal = &Windows_P;
 	}
 
@@ -1269,27 +1269,27 @@ int main(){
 	uint8_t mediumButton_id = 4;
 	uint8_t miniButton_id = 4;
 	uint8_t checker_id = 4;
-	for(iter = 0; iter < Windows.spritesheet_animation_count; iter++){
-		if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "button")){
+	for(iter = 0; iter < Windows.animation_count; iter++){
+		if(!strcmp(Windows.animation_array[iter].name, "button")){
 			bigButton_id = iter;
 		}
-		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "mediumButton")){
+		else if(!strcmp(Windows.animation_array[iter].name, "mediumButton")){
 			mediumButton_id = iter;
 		}
-		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "miniButton")){
+		else if(!strcmp(Windows.animation_array[iter].name, "miniButton")){
 			miniButton_id = iter;
 		}
-		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "checker")){
+		else if(!strcmp(Windows.animation_array[iter].name, "checker")){
 			checker_id = iter;
 		}
-		else if(!strcmp(Windows.spritesheet_animation_array[iter].animation_name, "numberChanger")){
+		else if(!strcmp(Windows.animation_array[iter].name, "numberChanger")){
 			num_changer_id = iter;
 		}
 	}
 
 	//Controller pixel art on the 
 	crayon_sprite_array_t devices;
-	crayon_memory_init_sprite_array(&devices, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[0], &Controllers_P);
+	crayon_memory_init_sprite_array(&devices, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Controllers, &Controllers.animation_array[0], &Controllers_P);
 	devices.scales[0] = 1;
 	devices.scales[1] = 1;
 	devices.flips[0] = 0;
@@ -1307,7 +1307,7 @@ int main(){
 
 	//Dot for legend numbers (5 for gamepad and 3 for mouse legend, 1 for face, 11 in the legend)
 	crayon_sprite_array_t legend_dot;
-	crayon_memory_init_sprite_array(&legend_dot, 20, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[1], &Controllers_P);
+	crayon_memory_init_sprite_array(&legend_dot, 20, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.animation_array[1], &Controllers_P);
 	legend_dot.scales[0] = 1;
 	legend_dot.scales[1] = 1;
 	legend_dot.flips[0] = 0;
@@ -1372,7 +1372,7 @@ int main(){
 
 	//Controller swirl
 	crayon_sprite_array_t cont_swirl;
-	crayon_memory_init_sprite_array(&cont_swirl, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.spritesheet_animation_array[2], &Controllers_P);
+	crayon_memory_init_sprite_array(&cont_swirl, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.animation_array[2], &Controllers_P);
 	cont_swirl.scales[0] = 1;
 	cont_swirl.scales[1] = 1;
 	cont_swirl.flips[0] = 0;
@@ -1385,7 +1385,7 @@ int main(){
 	crayon_graphics_frame_coordinates(cont_swirl.animation, cont_swirl.frame_coord_map + 0, cont_swirl.frame_coord_map + 1, region);
 
 	crayon_sprite_array_t digit_display;
-	crayon_memory_init_sprite_array(&digit_display, 6, 11, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[1], &Board_P);
+	crayon_memory_init_sprite_array(&digit_display, 6, 11, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.animation_array[1], &Board_P);
 	digit_display.scales[0] = 1;
 	digit_display.scales[1] = 1;
 	digit_display.flips[0] = 0;
@@ -1393,15 +1393,15 @@ int main(){
 	digit_display.colours[0] = 0;
 	digit_display.positions[0] = 20;
 	digit_display.positions[1] = 65;
-	digit_display.positions[2] = digit_display.positions[0] + digit_display.animation->animation_frame_width;
+	digit_display.positions[2] = digit_display.positions[0] + digit_display.animation->frame_width;
 	digit_display.positions[3] = digit_display.positions[1];
-	digit_display.positions[4] = digit_display.positions[2] + digit_display.animation->animation_frame_width;
+	digit_display.positions[4] = digit_display.positions[2] + digit_display.animation->frame_width;
 	digit_display.positions[5] = digit_display.positions[1];
 	digit_display.positions[6] = 581;
 	digit_display.positions[7] = digit_display.positions[1];
-	digit_display.positions[8] = digit_display.positions[6] + digit_display.animation->animation_frame_width;
+	digit_display.positions[8] = digit_display.positions[6] + digit_display.animation->frame_width;
 	digit_display.positions[9] = digit_display.positions[1];
-	digit_display.positions[10] = digit_display.positions[8] + digit_display.animation->animation_frame_width;
+	digit_display.positions[10] = digit_display.positions[8] + digit_display.animation->frame_width;
 	digit_display.positions[11] = digit_display.positions[1];
 	digit_display.draw_z[0] = 17;
 	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 0, digit_display.frame_coord_map + 1, 0);
@@ -1417,7 +1417,7 @@ int main(){
 	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 20, digit_display.frame_coord_map + 21, 10);
 
 	crayon_sprite_array_t face;
-	crayon_memory_init_sprite_array(&face, 1, 5, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.spritesheet_animation_array[0], &Board_P);
+	crayon_memory_init_sprite_array(&face, 1, 5, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.animation_array[0], &Board_P);
 	face.scales[0] = 1;
 	face.scales[1] = 1;
 	face.flips[0] = 0;
@@ -1436,7 +1436,7 @@ int main(){
 	setup_keys(&MS_keyboard, &Tahoma_font);
 
 	//26 letters, 16 for the extra chars
-	crayon_memory_init_sprite_array(&MS_keyboard.mini_buttons, 26 + 16, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[miniButton_id], &Windows_P);
+	crayon_memory_init_sprite_array(&MS_keyboard.mini_buttons, 26 + 16, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.animation_array[miniButton_id], &Windows_P);
 	MS_keyboard.mini_buttons.scales[0] = 1;
 	MS_keyboard.mini_buttons.scales[1] = 1;
 	MS_keyboard.mini_buttons.flips[0] = 0;
@@ -1447,7 +1447,7 @@ int main(){
 	crayon_graphics_frame_coordinates(MS_keyboard.mini_buttons.animation, MS_keyboard.mini_buttons.frame_coord_map, MS_keyboard.mini_buttons.frame_coord_map + 1, 0);
 
 	//Medium
-	crayon_memory_init_sprite_array(&MS_keyboard.medium_buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[mediumButton_id], &Windows_P);
+	crayon_memory_init_sprite_array(&MS_keyboard.medium_buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.animation_array[mediumButton_id], &Windows_P);
 	MS_keyboard.medium_buttons.scales[0] = 1;
 	MS_keyboard.medium_buttons.scales[1] = 1;
 	MS_keyboard.medium_buttons.flips[0] = 0;
@@ -1464,7 +1464,7 @@ int main(){
 	crayon_graphics_frame_coordinates(MS_keyboard.medium_buttons.animation, MS_keyboard.medium_buttons.frame_coord_map, MS_keyboard.medium_buttons.frame_coord_map + 1, 0);
 
 	//Space and Enter
-	crayon_memory_init_sprite_array(&MS_keyboard.big_buttons, 2, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[bigButton_id], &Windows_P);
+	crayon_memory_init_sprite_array(&MS_keyboard.big_buttons, 2, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.animation_array[bigButton_id], &Windows_P);
 	MS_keyboard.big_buttons.scales[0] = 1;
 	MS_keyboard.big_buttons.scales[1] = 1;
 	MS_keyboard.big_buttons.flips[0] = 0;
@@ -1474,8 +1474,8 @@ int main(){
 	MS_keyboard.big_buttons.frame_coord_keys[0] = 0;
 	crayon_graphics_frame_coordinates(MS_keyboard.big_buttons.animation, MS_keyboard.big_buttons.frame_coord_map, MS_keyboard.big_buttons.frame_coord_map + 1, 0);
 
-	uint8_t mini_button_width = Windows.spritesheet_animation_array[miniButton_id].animation_frame_width;
-	uint8_t medium_button_width = Windows.spritesheet_animation_array[mediumButton_id].animation_frame_width;
+	uint8_t mini_button_width = Windows.animation_array[miniButton_id].frame_width;
+	uint8_t medium_button_width = Windows.animation_array[mediumButton_id].frame_width;
 
 	uint16_t kb_row = 0;
 	uint16_t kb_row_id = 0;
@@ -1528,7 +1528,7 @@ int main(){
 		}
 		else if(iter == 40){
 			MS_keyboard.big_buttons.positions[2] = key_x_distance;	//Space's X
-			key_x_distance += Windows.spritesheet_animation_array[bigButton_id].animation_frame_width + 7;	//Make room for the space
+			key_x_distance += Windows.animation_array[bigButton_id].frame_width + 7;	//Make room for the space
 		}
 
 		MS_keyboard.mini_buttons.positions[2 * iter] = key_x_distance;
@@ -1547,9 +1547,9 @@ int main(){
 	keyboard_special_toggle(&MS_keyboard);
 
 	//Options draw structs
-	crayon_memory_init_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[bigButton_id], &Windows_P);
-	crayon_memory_init_sprite_array(&MS_options.checkers, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[checker_id], &Windows_P);
-	crayon_memory_init_sprite_array(&MS_options.number_changers, 3, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.spritesheet_animation_array[num_changer_id], &Windows_P);
+	crayon_memory_init_sprite_array(&MS_options.buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.animation_array[bigButton_id], &Windows_P);
+	crayon_memory_init_sprite_array(&MS_options.checkers, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Windows, &Windows.animation_array[checker_id], &Windows_P);
+	crayon_memory_init_sprite_array(&MS_options.number_changers, 3, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.animation_array[num_changer_id], &Windows_P);
 
 	//Buttons
 	MS_options.buttons.draw_z[0] = 30;
@@ -2039,7 +2039,7 @@ int main(){
 					if(player_active == (1 << 0) || player_active == (1 << 1) || player_active == (1 << 2) || player_active == (1 << 3)){
 						cursor_palette = 1;
 					}
-					crayon_graphics_draw_sprite(&Icons, &Icons.spritesheet_animation_array[0], cursor_position[2 * iter],
+					crayon_graphics_draw_sprite(&Icons, &Icons.animation_array[0], cursor_position[2 * iter],
 						cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, cursor_palette);
 
 					//Add code for checking if cursor is hovering over a button
@@ -2067,7 +2067,7 @@ int main(){
 
 			//DEBUG
 			char snum[32];
-			sprintf(snum, "Valid: VMUs %d\n", MS_options.savefile_details.valid_vmus);
+			sprintf(snum, "Valid: VMUs %d\n", MS_options.savefile_details.valid_memcards);
 			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
 			sprintf(snum, "Screens: %d\n", MS_options.savefile_details.valid_vmu_screens);
 			crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 12, 50, 1, 1, 62, snum);
@@ -2084,7 +2084,7 @@ int main(){
 
 			//Draw windows assets
 			for(iter = 0; iter < os.num_assets; iter++){
-				if(!strcmp(os.assets[iter]->animation->animation_name, "aboutLogo") && MS_options.focus != 5){	//We don't want to draw that unless we're on the about page
+				if(!strcmp(os.assets[iter]->animation->name, "aboutLogo") && MS_options.focus != 5){	//We don't want to draw that unless we're on the about page
 					continue;
 				}
 				crayon_graphics_draw_sprites(os.assets[iter], PVR_LIST_PT_POLY);
@@ -2372,9 +2372,9 @@ int main(){
 			}
 
 			//Draw the boarders for digit display (I think I should move these calls into digit display itself)
-			custom_poly_boarder(1, 20, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
+			custom_poly_boarder(1, 20, 65, 16, Board.animation_array[1].frame_width * 3, Board.animation_array[1].frame_height,
 				4286611584u, 4294967295u);
-			custom_poly_boarder(1, 581, 65, 16, Board.spritesheet_animation_array[1].animation_frame_width * 3, Board.spritesheet_animation_array[1].animation_frame_height,
+			custom_poly_boarder(1, 581, 65, 16, Board.animation_array[1].frame_width * 3, Board.animation_array[1].frame_height,
 				4286611584u, 4294967295u);
 
 			//Draw the big indent boarder that encapsulates digit displays and face

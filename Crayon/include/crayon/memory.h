@@ -28,7 +28,7 @@ typedef struct dpal_header{
 //------------------Allocating memory------------------//
 
 //Reads a file, loads it into a dtex
-extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *dims, int *format, char *texture_path);
+extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *dims, uint32_t *format, char *texture_path);
 
 //Loads a "crayon_spritesheet" spritesheet into memory
 extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_t *cp, int8_t palette_id, char *path);

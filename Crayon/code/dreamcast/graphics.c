@@ -26,12 +26,12 @@ extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
 }
 
 extern void crayon_graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x, uint16_t *frame_y, uint8_t frame){
-	int framesPerRow = anim->animation_sheet_width/anim->animation_frame_width;
+	int framesPerRow = anim->sheet_width / anim->frame_width;
 	int colNum = frame%framesPerRow; //Gets the column (Zero indexed)
 	int rowNum = frame/framesPerRow;  //Gets the row (Zero indexed)
 
-	*frame_x = anim->animation_x + (colNum) * anim->animation_frame_width;
-	*frame_y = anim->animation_y + (rowNum) * anim->animation_frame_height;
+	*frame_x = anim->x + (colNum) * anim->frame_width;
+	*frame_y = anim->y + (rowNum) * anim->frame_height;
 
 	return;
 }
@@ -129,28 +129,28 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 	//Screen coords. letter0 is top left coord, letter1 is bottom right coord. Z is depth (Layer)
 	const float x0 = trunc(draw_x);  //Do these really need to be floats?
 	const float y0 = trunc(draw_y);
-	const float x1 = x0 + (anim->animation_frame_width) * scale_x;
-	const float y1 = y0 + (anim->animation_frame_height) * scale_y;
+	const float x1 = x0 + (anim->frame_width) * scale_x;
+	const float y1 = y0 + (anim->frame_height) * scale_y;
 	const float z = draw_z;
 
 	//Texture coords. letter0 and letter1 have same logic as before (CHECK)
-	const float u0 = frame_x / (float)ss->spritesheet_dims;
-	const float v0 = frame_y / (float)ss->spritesheet_dims;
-	const float u1 = (frame_x + anim->animation_frame_width) / (float)ss->spritesheet_dims;
-	const float v1 = (frame_y + anim->animation_frame_height) / (float)ss->spritesheet_dims;
+	const float u0 = frame_x / (float)ss->dimensions;
+	const float v0 = frame_y / (float)ss->dimensions;
+	const float u1 = (frame_x + anim->frame_width) / (float)ss->dimensions;
+	const float v1 = (frame_y + anim->frame_height) / (float)ss->dimensions;
 
 	pvr_sprite_cxt_t context;
-	uint8_t texture_format = (((1 << 3) - 1) & (ss->spritesheet_format >> (28 - 1)));	//Gets the Pixel format
+	uint8_t texture_format = (((1 << 3) - 1) & (ss->texture_format >> (28 - 1)));	//Gets the Pixel format
 																													//https://github.com/tvspelsfreak/texconv
-	int textureformat = ss->spritesheet_format;
+	int textureformat = ss->texture_format;
 	if(texture_format == 5){	//4BPP
 			textureformat |= ((palette_number) << 21);	//Update the later to use KOS' macros
 	}
 	if(texture_format == 6){	//8BPP
 			textureformat |= ((palette_number) << 25);	//Update the later to use KOS' macros
 	}
-	pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, textureformat, ss->spritesheet_dims,
-		ss->spritesheet_dims, ss->spritesheet_texture, PVR_FILTER_NONE);
+	pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, textureformat, ss->dimensions,
+		ss->dimensions, ss->texture, PVR_FILTER_NONE);
 
 	pvr_sprite_hdr_t header;
 	pvr_sprite_compile(&header, &context);
@@ -183,7 +183,7 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 
 // 	//Once the spritesheet/font format is fixed:
 // 	//uint8_t filter = PVR_FILTER_NONE;	//Have param to change this possibly
-// 	//int textureformat = ss->spritesheet_format;
+// 	//int textureformat = ss->texture_format;
 // 	//if(4BPP){
 // 	//		textureformat |= ((palette_number) << 21); 
 // 	// }
@@ -191,7 +191,7 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 // 	//		textureformat |= ((palette_number) << 25); 
 // 	// }
 // 	//pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, textureformat,
-// 	//	 ss->spritesheet_dims, ss->spritesheet_dims, ss->spritesheet_texture, filter);
+// 	//	 ss->dimensions, ss->dimensions, ss->texture, filter);
 
 
 //Need to come back and do rotations and maybe colour?
@@ -202,17 +202,17 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 	u0 = 0; v0 = 0; u1 = 0; v1 = 0, duv = 0;	//Needed if you want to prevent a bunch of compiler warnings...
 
 	pvr_sprite_cxt_t context;
-	uint8_t texture_format = (((1 << 3) - 1) & (sprite_array->spritesheet->spritesheet_format >> (28 - 1)));	//Gets the Pixel format
+	uint8_t texture_format = (((1 << 3) - 1) & (sprite_array->spritesheet->texture_format >> (28 - 1)));	//Gets the Pixel format
 																												//https://github.com/tvspelsfreak/texconv
-	int textureformat = sprite_array->spritesheet->spritesheet_format;
+	int textureformat = sprite_array->spritesheet->texture_format;
 	if(texture_format == 5){	//4BPP
 			textureformat |= ((sprite_array->palette->palette_id) << 21);	//Update the later to use KOS' macros
 	}
 	if(texture_format == 6){	//8BPP
 			textureformat |= ((sprite_array->palette->palette_id) << 25);	//Update the later to use KOS' macros
 	}
-	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, sprite_array->spritesheet->spritesheet_dims,
-		sprite_array->spritesheet->spritesheet_dims, sprite_array->spritesheet->spritesheet_texture, sprite_array->filter);
+	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, sprite_array->spritesheet->dimensions,
+		sprite_array->spritesheet->dimensions, sprite_array->spritesheet->texture, sprite_array->filter);
 
 	pvr_sprite_txr_t vert = {
 		.flags = PVR_CMD_VERTEX_EOL
@@ -269,10 +269,10 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 		}
 
 		if(*frame_index == i){	//frame
-			u0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[*frame_index])] / (float)sprite_array->spritesheet->spritesheet_dims;
-			v0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[*frame_index]) + 1] / (float)sprite_array->spritesheet->spritesheet_dims;
-			u1 = u0 + sprite_array->animation->animation_frame_width / (float)sprite_array->spritesheet->spritesheet_dims;
-			v1 = v0 + sprite_array->animation->animation_frame_height / (float)sprite_array->spritesheet->spritesheet_dims;
+			u0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[*frame_index])] / (float)sprite_array->spritesheet->dimensions;
+			v0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[*frame_index]) + 1] / (float)sprite_array->spritesheet->dimensions;
+			u1 = u0 + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->dimensions;
+			v1 = v0 + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->dimensions;
 		}
 
 		if(*flip_index == i || *frame_index == i){	//UV
@@ -329,10 +329,10 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 
 		vert.ax = trunc(sprite_array->positions[2 * i]);
 		vert.ay = trunc(sprite_array->positions[(2 * i) + 1]);
-		vert.bx = vert.ax + trunc(sprite_array->animation->animation_frame_width * sprite_array->scales[2 * i * multi_scales]);
+		vert.bx = vert.ax + trunc(sprite_array->animation->frame_width * sprite_array->scales[2 * i * multi_scales]);
 		vert.by = vert.ay;
 		vert.cx = vert.bx;
-		vert.cy = vert.ay + trunc(sprite_array->animation->animation_frame_height * sprite_array->scales[(2 * i * multi_scales) + 1]);
+		vert.cy = vert.ay + trunc(sprite_array->animation->frame_height * sprite_array->scales[(2 * i * multi_scales) + 1]);
 		vert.dx = vert.ax;
 		vert.dy = vert.cy;
 
@@ -344,14 +344,14 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 
 			//Both vars are uint16_t and lengths can't be negative or more than 1024 (Largest texture size for DC)
 				//Therfore storing the result in a int16_t is perfectly fine
-			int16_t diff = sprite_array->animation->animation_frame_width - sprite_array->animation->animation_frame_height;
+			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
 			vert.ax = trunc(sprite_array->positions[2 * i]) + ((sprite_array->scales[(2 * i * multi_scales) + 1] * diff) / 2);
 			vert.ay = trunc(sprite_array->positions[(2 * i) + 1]) - ((sprite_array->scales[(2 * i * multi_scales)] * diff) / 2);
-			vert.bx = vert.ax + trunc(sprite_array->animation->animation_frame_height * sprite_array->scales[(2 * i * multi_scales) + 1]);
+			vert.bx = vert.ax + trunc(sprite_array->animation->frame_height * sprite_array->scales[(2 * i * multi_scales) + 1]);
 			vert.by = vert.ay;
 			vert.cx = vert.bx;
-			vert.cy = vert.ay + trunc(sprite_array->animation->animation_frame_width * sprite_array->scales[(2 * i * multi_scales)]);
+			vert.cy = vert.ay + trunc(sprite_array->animation->frame_width * sprite_array->scales[(2 * i * multi_scales)]);
 			vert.dx = vert.ax;
 			vert.dy = vert.cy;
 		}
@@ -395,16 +395,16 @@ extern uint8_t crayon_graphics_draw_text_mono(const struct crayon_font_mono *fm,
 	if(texture_format == 6){	//8BPP
 			textureformat |= ((palette_number) << 25);	//Update the later to use KOS' macros
 	}
-	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, fm->fontsheet_dim,
-		fm->fontsheet_dim, fm->fontsheet_texture, PVR_FILTER_NONE);
+	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, fm->dimensions,
+		fm->dimensions, fm->texture, PVR_FILTER_NONE);
 
 	pvr_sprite_hdr_t header;
 	pvr_sprite_compile(&header, &context);
 	pvr_prim(&header, sizeof(header));
 
 	int i = 0;
-	float prop_width = (float)fm->char_width / fm->fontsheet_dim;
-	float prop_height = (float)fm->char_height / fm->fontsheet_dim;
+	float prop_width = (float)fm->char_width / fm->dimensions;
+	float prop_height = (float)fm->char_height / fm->dimensions;
 	while(1){
 		if(string[i] == '\0'){
 			break;
@@ -454,7 +454,7 @@ extern uint8_t crayon_graphics_draw_text_prop(const struct crayon_font_prop *fp,
 	float y1 = y0 + fp->char_height * scale_y;
 	float v0 = 0;
 	float v1 = 0;
-	float percent_height = (float)fp->char_height / fp->fontsheet_dim;
+	float percent_height = (float)fp->char_height / fp->dimensions;
 
 	// float percent_width;
 	float u0, u1;
@@ -470,8 +470,8 @@ extern uint8_t crayon_graphics_draw_text_prop(const struct crayon_font_prop *fp,
 	if(texture_format == 6){	//8BPP
 			textureformat |= ((palette_number) << 25);	//Update the later to use KOS' macros
 	}
-	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, fp->fontsheet_dim,
-		fp->fontsheet_dim, fp->fontsheet_texture, PVR_FILTER_NONE);
+	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, fp->dimensions,
+		fp->dimensions, fp->texture, PVR_FILTER_NONE);
 
 	pvr_sprite_hdr_t header;
 	pvr_sprite_compile(&header, &context);
@@ -494,8 +494,8 @@ extern uint8_t crayon_graphics_draw_text_prop(const struct crayon_font_prop *fp,
 
 		x1 += fp->char_width[distance_from_space] * scale_x;	//get the width of the display char
 
-		u0 = (float)fp->char_x_coord[distance_from_space] / fp->fontsheet_dim;
-		u1 = u0 + ((float)fp->char_width[distance_from_space] / fp->fontsheet_dim);
+		u0 = (float)fp->char_x_coord[distance_from_space] / fp->dimensions;
+		u1 = u0 + ((float)fp->char_width[distance_from_space] / fp->dimensions);
 
 		//Can this section be optimised? Maybe replace it with binary search?
 		int j;
