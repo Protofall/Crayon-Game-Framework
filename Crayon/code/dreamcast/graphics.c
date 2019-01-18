@@ -196,9 +196,8 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 
 //Need to come back and do rotations and maybe colour?
 extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
-
-	//duv is used to assist in the rotations
-	float u0, v0, u1, v1, duv;
+	float u0, v0, u1, v1;
+	uint32_t duv;	//duv is used to assist in the rotations
 	u0 = 0; v0 = 0; u1 = 0; v1 = 0, duv = 0;	//Needed if you want to prevent a bunch of compiler warnings...
 
 	pvr_sprite_cxt_t context;
@@ -225,7 +224,6 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 	uint16_t i;	//The main loop's index
 	uint16_t zero = 0;
 	float rotation_under_360;
-	// int16_t diff;
 	if(sprite_array->options & (1 << 0)){
 		z_index = &i;
 	}
@@ -253,8 +251,6 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 	else{
 		rotation_index = &zero;
 	}
-
-	//Since sprite mode doesn't do colours, we don't bother with that list
 
 	pvr_sprite_hdr_t header;
 	pvr_sprite_compile(&header, &context);
