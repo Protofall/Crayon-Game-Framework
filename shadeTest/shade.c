@@ -2,8 +2,10 @@
 #include <png/png.h>	//For the png_to_texture function
 
 // Texture
-pvr_ptr_t pic, nerstr, controls;	//To store the image from pic.png, nerstr.png and controls.png
-uint8_t colour_state;	//Colours the colour of the light hitting "Nerstr"
+pvr_ptr_t pic, nerstr, controls;		//To store the image from pic.png, nerstr.png and controls.png
+
+uint8_t colour_state;
+float alpha = 0.5f;
 
 // Init pic
 void pic_init(){
@@ -27,27 +29,31 @@ void draw_texture(pvr_ptr_t name, uint16_t x, uint16_t y, int dim, uint8_t list,
 
 	pvr_poly_cxt_txr(&cxt, list, textureformat, dim, dim, name, filtering);
 	pvr_poly_compile(&hdr, &cxt);
+	hdr.cmd |= 4;	//Enable oargb
 	pvr_prim(&hdr, sizeof(hdr));
 
-	//Only nerstr is in this list so this will work fine
+	//Only nerstr is in the OP list so this will work fine
 	if(list == PVR_LIST_TR_POLY){
 		if(colour_state == 0){
-			vert.argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);
+			float invalpha = (1.0f - alpha);
+			vert.argb = PVR_PACK_COLOR(1.0f, invalpha, invalpha, invalpha);
+			vert.oargb = PVR_PACK_COLOR(1, (0.6f * alpha), (0.6f * alpha), (1.0f * alpha));	//Fade to blue
+			// vert.oargb = PVR_PACK_COLOR(1, 0.0f, 0.0f, 0.0f);	//Fade to black
 		}
 		else if(colour_state == 1){
-			vert.argb = PVR_PACK_COLOR(0.5f, 1.0f, 1.0f, 1.0f);
+			vert.argb = 0xffffffff;
+			vert.oargb = PVR_PACK_COLOR(1, (0.6f * alpha), (0.6f * alpha), (1.0f * alpha));	//Add blue
 		}
 		else if(colour_state == 2){
-			vert.argb = PVR_PACK_COLOR(1.0f, 0.0f, 0.0f, 1.0f);
+			vert.argb = 0xffffffff;
+			vert.oargb = PVR_PACK_COLOR(1, alpha, alpha, alpha);	//Fade to white (By adding white)
 		}
-		else if(colour_state == 3){
-			vert.argb = PVR_PACK_COLOR(1.0f, 0.7f, 0.0f, 0.0f);
-		}
+		
 	}
 	else{
 		vert.argb = PVR_PACK_COLOR(1.0f, 1.0f, 1.0f, 1.0f);
+		vert.oargb = 0;
 	}
-	vert.oargb = 0;	//Used for specular light
 	vert.flags = PVR_CMD_VERTEX;    //I think this is used to define the start of a new polygon
 
 	//These define the verticies of the triangles "strips" (One triangle uses verticies of other triangle)
@@ -87,12 +93,12 @@ void draw_frame(void){
 	pvr_scene_begin();
 
 	pvr_list_begin(PVR_LIST_OP_POLY);
-		draw_texture(pic, 0, 0, 256, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565, PVR_FILTER_NONE);
-		draw_texture(controls, 260, 30, 256, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565, PVR_FILTER_NONE);
+	draw_texture(pic, 0, 0, 256, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565, PVR_FILTER_NONE);
+	draw_texture(controls, 260, 30, 256, PVR_LIST_OP_POLY, PVR_TXRFMT_RGB565, PVR_FILTER_NONE);
 	pvr_list_finish();
 
 	pvr_list_begin(PVR_LIST_TR_POLY);
-		draw_texture(nerstr, 50, 50, 128, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB4444, PVR_FILTER_NONE);
+	draw_texture(nerstr, 50, 50, 128, PVR_LIST_TR_POLY, PVR_TXRFMT_ARGB4444, PVR_FILTER_NONE);
 	pvr_list_finish();
 
 	pvr_scene_finish();
@@ -119,44 +125,52 @@ int main(void){
 	uint32_t prev_buttons[4] = {0};
 	colour_state = 0;
 
-	uint8_t running = 1;
-
 	//Keep drawing frames until start is pressed
-	while(running){
+	while(1){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
-		if(st->buttons & CONT_START){	//Quits if start is pressed. program ends
-			running = 0;
+		if(st->buttons & CONT_START){	//Quits if start is pressed. Screen goes black
+				// MAPLE_FOREACH_BEGIN is a hidden loop, a "break" here is not enough to exit the while(1),
+				// it will just exit the FOREACH and skip reading some of the controllers. So jump out of
+				// the entire loop with a goto.
+				
+				// But for this simple demo, clean up really isn't required, a return would be fine as well.
+			goto exitmainloop;
 		}
 
-		//A to make it normal
 		if((st->buttons & CONT_A) && !(prev_buttons[__dev->port] & CONT_A)){
 			colour_state = 0;
 		}
-
-		//B to make it partially transparent
 		else if((st->buttons & CONT_B) && !(prev_buttons[__dev->port] & CONT_B)){
 			colour_state = 1;
 		}
-
-		//X to make it fully blue
 		else if((st->buttons & CONT_X) && !(prev_buttons[__dev->port] & CONT_X)){
 			colour_state = 2;
 		}
-
-		//Y to make it mostly red
-		else if((st->buttons & CONT_Y) && !(prev_buttons[__dev->port] & CONT_Y)){
-			colour_state = 3;
+		
+		if(st->buttons & CONT_DPAD_UP){
+			alpha += 0.02;
+		}
+		if(st->buttons & CONT_DPAD_DOWN){
+			alpha -= 0.02;
 		}
 
 		prev_buttons[__dev->port] = st->buttons;
 
 		MAPLE_FOREACH_END()
+		
+		if(alpha < 0.0f){
+			alpha = 0.0f;
+		}
+		else if(alpha > 1.0f){
+			alpha = 1.0f;
+		}
 
 		draw_frame();
 	}
+exitmainloop:
 
-	cleanup();	//Free all usage of VRAM and do the pvr_shutdown procedure
+	cleanup();	//Free all usage of RAM and do the pvr_shutdown procedure
 
 	return 0;
 }
