@@ -1,5 +1,0 @@
-So loading in a 2048 by 2048 RGB565 texture into VRAM takes up 8MB (2 bytes per pixel * 2048 pixels * 2048 pixels = 8MB). Now I'm not sure if it even works since the VRAM might not exactly be 8MB (And I heard KOS might be taking up about 4MB of VRAM for itself :/ ), but obviously you would never want to do this in a propper program.
-
-Then I tried loading in the dino sprite I took out from the big sprite sheet and tried to render it, but since its not a nice 2^n by 2^n dimensions it instead displays a glitchy mess (I guess the png load function just refuses to do anything if its the wrong dimensions?)
-
-I made a copy of it thats 64 x 64 with the original sprite in the top left corner and that renders properly. Also the dino is a nice size so thats good :D
