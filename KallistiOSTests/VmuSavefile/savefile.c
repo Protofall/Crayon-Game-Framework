@@ -57,7 +57,7 @@ int save_uncompressed(uint8_t port, uint8_t unit){
 		free(data);
 		return -1;
 	}
-	memcpy(data, &save, sizeof(SaveFile_t) / 8);	//Last param is number of bytes, not bits
+	memcpy(data, &save, sizeof(SaveFile_t));	//Last param is number of bytes, not bits
 
 	sprintf(pkg.desc_long, "Uncompressed save file!");
 	strcpy(pkg.desc_short, "Uncompressed");
@@ -136,7 +136,7 @@ int load_uncompressed(uint8_t port, uint8_t unit){
 	vmu_pkg_parse(pkg_out, &pkg);
 
 	//Read the pkg data into my struct
-	memcpy(&save, pkg.data, sizeof(SaveFile_t) / 8);	//Last param is number of bytes, not bits
+	memcpy(&save, pkg.data, sizeof(SaveFile_t));	//Last param is number of bytes, not bits
 
 	free(pkg_out);
 

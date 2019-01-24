@@ -4,7 +4,7 @@ all: rm-cdi $(name).cdi
 
 include $(KOS_BASE)/Makefile.rules
 
-OBJS = $(name).o graphics.o memory.o savefile.o
+OBJS = $(name).o savefile.o
 
 KOS_LOCAL_CFLAGS = -I$(KOS_BASE)/addons/zlib
 	
