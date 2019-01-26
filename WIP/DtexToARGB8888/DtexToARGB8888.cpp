@@ -18,201 +18,213 @@ typedef struct dpal_header{
 	uint32_t color_count; //number of 32-bit ARGB palette entries
 } dpal_header_t;
 
-// unsigned int bits_getr( int x, int p, int n){
-	// return( x >> (p + 1 - n)) & ~(~0 << n );
-// }
+//These three functions grab a file pointer to a texture of that format and convert and place it in the bugger
+uint8_t argb1555_to_argb8888(FILE * texture_file, dtex_header_t * dtex_header, uint32_t * bugger){
+	uint16_t argb1555;
+	bool error = 0;
+	for(int i = 0; i < dtex_header->width * dtex_header->height; i++){
+		if(fread(&argb1555, sizeof(uint16_t), 1, texture_file) != 1){return 1;}
+		// bugger[i] = (((argb1555 & (1 << 15)) * 255) << 24);	//Alpha
+		bugger[i] = (bit_extracted(argb1555, 1, 15) * ((1 << 8) - 1) / ((1 << 1) - 1)) << 24;	//Alpha
+		bugger[i] += (bit_extracted(argb1555, 5, 10) * ((1 << 8) - 1) / ((1 << 4) - 1)) << 16;	//R
+		bugger[i] += (bit_extracted(argb1555, 5, 5) * ((1 << 8) - 1) / ((1 << 4) - 1)) << 8;	//G
+		bugger[i] += bit_extracted(argb1555, 5, 0) * ((1 << 8) - 1) / ((1 << 4) - 1);			//B
 
-// Load an image from file as texture, then process it
-// int loadTexture(std::string fileName){
-// 	int x, y, n;
-//     // stbi_set_flip_vertically_on_load(true);
-// 	unsigned char *data = stbi_load(fileName.c_str(), &x, &y, &n, 0);
-// 	uint32_t palette[16];	//4bpp palette, only 16 entries
-// 	uint8_t entries_used = 0;
+		// (extracted value) * (Max for 8bpc) / (Max for that bpc)
 
-// 	if(n == 3){
-// 		// printf("Got %d channels\n", n);
-// 		printf("No alpha isn't currently unsupported\n");
-// 		return -1;
-// 	}
-// 	else if(n == 4){    //For pictures with alpha
-// 		// printf("Got %d channels\n", n);
-// 	}
-// 	else {
-// 		fprintf(stderr, "Image pixels are not RGB. Texture may not have loaded correctly.\n");
-// 		return -1;
-// 	}
+		//Last pixel is "00 FC" or "0 0 15 12" == "0 0 255 204" But that doesn't make sense, even if we conside its GBAR
+	}
+	return 0;
+}
 
-// 	//size = x * y * n * 8?
-// 	// while((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0){
-// 		// process bytesRead worth of data in buffer
-// 	// }
+uint8_t rgb565_to_argb8888(FILE * texture_file, dtex_header_t * dtex_header, uint32_t * bugger){
+	return 0;
+}
 
-// 	// FILE *file = fopen(fileName,"rb");  // r for read, b for binary
-// 	FILE *write_ptr;
-// 	write_ptr = fopen("test.bin","wb");  // w for write, b for binary
-// 	unsigned char *traversal = data;
-// 	uint32_t extracted;
-// 	uint8_t buffer[4];
-// 	for(int i = 0; i < x * y * n / 4; i++){
-// 	// 	// fread(&extracted, 1, sizeof(uint32_t), traversal);
-// 	// 	memcpy(&extracted, traversal, 4);
+uint8_t argb4444_to_argb8888(FILE * texture_file, dtex_header_t * dtex_header, uint32_t * bugger){
+	return 0;
+}
 
-// 	// 	bool found = false;
-// 	// 	if(entries_used != 0){
-// 	// 		for(int j = 0; j < entries_used; j++){
-// 	// 			if(extracted == palette[j]){
-// 	// 				found = true;
-// 	// 				break;
-// 	// 			}
-// 	// 		}
-// 	// 	}
-// 	// 	if(found){
-// 	// 		palette[entries_used] = extracted;
-// 	// 	}
+uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, uint16_t * width){
+	dtex_header_t dtex_header;
+	dpal_header_t dpal_header;
 
-// 	// 	traversal += sizeof(uint32_t);
-// 		// fread(&extracted, 1, sizeof(uint32_t), traversal);
-// 		// memcpy(&extracted, traversal, 4);
+	FILE *texture_file = fopen(texture_path, "rb");
+	if(!texture_file){return 1;}
 
-// 		// bool found = false;
-// 		// if(entries_used != 0){
-// 		// 	for(int j = 0; j < entries_used; j++){
-// 		// 		if(extracted == palette[j]){
-// 		// 			found = true;
-// 		// 			break;
-// 		// 		}
-// 		// 	}
-// 		// }
-// 		// if(found){
-// 		// 	palette[entries_used] = extracted;
-// 		// }
+	if(fread(&dtex_header, sizeof(dtex_header_t), 1, texture_file) != 1){fclose(texture_file); return 2;}
 
-// 		// traversal += sizeof(uint32_t);
+	if(memcmp(dtex_header.magic, "DTEX", 4)){fclose(texture_file); return 3;}
 
-// 		memcpy(&extracted, traversal, n);	//Extracts all 4 channels for ARGB and just 3 for RGB
-// 		buffer[0] = 0;
-// 		buffer[1] = 15;
-// 		buffer[2] = 1;
-// 		buffer[3] = 40;
-// 		fwrite(buffer, sizeof(uint8_t), sizeof(buffer), write_ptr);
+	uint8_t stride_setting = bit_extracted(dtex_header.type, 5, 0);
+	bool stride = dtex_header.type & (1 << 25);
+	bool twiddled = !(dtex_header.type & (1 << 26));	//Note this flag is TRUE if twiddled
+	uint8_t pixel_format = bit_extracted(dtex_header.type, 3, 27);
+	bool compressed = dtex_header.type & (1 << 30);
+	bool mipmapped = dtex_header.type & (1 << 31);
 
-// 		traversal += sizeof(uint8_t) * n;
+	printf("Format details: str_set %d, str %d, twid %d, pix %d, comp %d, mip %d, whole %d\n",
+		stride_setting, stride, twiddled, pixel_format, compressed, mipmapped, dtex_header.type);
 
-// 		break;
-// 	}
+	if(mipmapped || compressed || stride || pixel_format == 3 || pixel_format == 4){
+		printf("Unsupported dtex format detected. Stopping conversion\n");
+		fclose(texture_file);
+		return 4;
+	}
 
-// 	fclose(write_ptr);
+	//Allocate some space
+	*bugger = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
 
-// 	// for(int i = 0; i < entries_used; i++){
-// 		// printf("Entry %d is %d\n", i, palette[i]);
-// 	// }
+	// //Load the palette info
+	// if(pixel_format >= 5){
+	// 	FILE *palette_file = fopen(texture_path, "rb");
+	// 	if(!palette_file){fclose(texture_file); return 4;}
 
-// 	// for(int i = 0; i < 10; ++i){
-// 		// extracted = bits_get(data[i], 0, 8 * n); 
-// 	// }
-
-
-
-// 	stbi_image_free(data);
-
-// 	return 0;
-// }
-
-// void getARGB(uint8_t * argb, uint32_t extracted){
-// 	argb[0] = extracted >> 24;
-// 	argb[1] = (extracted >> 16) % (1 << 8);
-// 	argb[2] = (extracted >> 8) % (1 << 8);
-// 	argb[3] = extracted % (1 << 8);
-// 	return;
-// }
-
-// int pngToVmuLcdIcon(std::string source, std::string dest){
-// 	int x, y, n;
-// 	// stbi_set_flip_vertically_on_load(true);
-// 	unsigned char *data = stbi_load(source.c_str(), &x, &y, &n, 0);
-
-// 	if(n != 3 && n != 4){	//Not argb or rgb
-// 		fprintf(stderr, "Image pixels are not A/RGB. Texture may not have loaded correctly.\n");
-// 		return 1;
-// 	}
-
-// 	FILE *write_ptr;
-// 	write_ptr = fopen(dest.c_str(),"wb");  // w for write, b for binary
-// 	unsigned char *traversal = data;
-// 	uint32_t extracted;
-// 	uint8_t buffer[1];
-// 	uint8_t argb[4];
-// 	uint8_t * colour = argb;	//For some reason I can't pass a reference to argb into getARGB() :roll_eyes:
-// 	for(int i = 0; i < x * y * n / 4 / 8; i++){
-// 		buffer[0] = 0;
-
-// 		//Need to pack 8 pixels into one byte
-// 		for(int j = 0; j < 8; j++){
-// 			memcpy(&extracted, traversal, n);	//Extracts all 4 channels for ARGB and just 3 for RGB
-
-// 			getARGB(colour, extracted);
-// 			// printf("a %d, r %d, g %d, b %d\n", argb[0], argb[1], argb[2], argb[3]);
-
-// 			if(argb[0] + argb[1] + argb[2] + argb[3] <= 128 * 4){
-// 				buffer[0] += (0 << j);	//VMU icons use 0 for no pixel and 1 for pixel
-// 			}
-// 			else{
-// 				buffer[0] += (1 << j);
-// 			}
-// 			traversal += sizeof(uint8_t) * n;
-// 		}
-
-// 		fwrite(buffer, sizeof(uint8_t), sizeof(buffer), write_ptr);
-
-// 	}
-
-// 	fclose(write_ptr);
-// 	stbi_image_free(data);
-
-// 	return 0;
-// }
-
-// int pngToVmuSavefileIcon(std::string fileName, std::string dest){
-// 	printf("Unimplemented as of now\n");
-// 	return 0;
-// }
-
-// int main(int argC, char *argV[]){
-	// printf("Program works fine\n");
-
-	// return 0;
-
-	// if(argC != 4){
-	// 	printf("Wrong number of params, please pass in file names for\nA png source, a binary output and a 0 or 1 for savefile or LCD icon\n");
-	// 	return 1;
+	// 	if(fread(&dpal_header, sizeof(dpal_header_t), 1, palette_file) != 1){fclose(texture_file); fclose(palette_file); return 5;}
 	// }
 
-	// // loadTexture(argV[1]);
-	// if(atoi(argV[3]) == 0){
-	// 	pngToVmuSavefileIcon(argV[1], argV[2]);
-	// }
-	// else if(atoi(argV[3]) == 1){
-	// 	pngToVmuLcdIcon(argV[1], argV[2]);
-	// }
-	// else{
-	// 	printf("Invalid mode option, please choose 0 for savefile or 1 for VMU LCD\n");
-	// 	return 1;
-	// }
-	
-	// return 0;
-// }
+	uint16_t error = 0;
+	switch(pixel_format){
+		case 0:
+		 	error = argb1555_to_argb8888(texture_file, &dtex_header, *bugger);
+			break;
+		case 1:
+		 	error = rgb565_to_argb8888(texture_file, &dtex_header, *bugger);
+			break;
+		case 2:
+		 	error = argb4444_to_argb8888(texture_file, &dtex_header, *bugger);
+			break;
+		case 5:
+		case 6:
+			//Palettes, do nothing
+			break;
+		default: //It should never get here
+			fclose(texture_file);
+			return 5;
+	}
+	fclose(texture_file);
+	if(error){
+		return 6;
+	}
+
+	//Arrange the pixels in the correct order
+	if(twiddled){
+		;
+	}
+
+	//'type' contains the various flags and the pixel format packed together:
+	// bits 0-4 : Stride setting.
+	// 	The width of stride textures is NOT stored in 'width'. To get the actual
+	// 	width, multiply the stride setting by 32. The next power of two size up
+	// 	from the stride width will be stored in 'width'.
+	// bit 25 : Stride flag
+	// 	0 = Non-strided
+	// 	1 = Strided
+	// bit 26 : Untwiddled flag
+	// 	0 = Twiddled
+	// 	1 = Untwiddled
+	// bits 27-29 : Pixel format
+	// 	0 = ARGB1555
+	// 	1 = RGB565
+	// 	2 = ARGB4444
+	// 	3 = YUV422
+	// 	4 = BUMPMAP
+	// 	5 = PAL4BPP
+	// 	6 = PAL8BPP
+	// bit 30 : Compressed flag
+	// 	0 = Uncompressed
+	// 	1 = Compressed
+	// bit 31 : Mipmapped flag
+	// 	0 = No mipmaps
+	// 	1 = Mipmapped
+
+
+	//Read the rest of the header
+
+	// pvr_ptr_t  *dtex = pvr_mem_malloc(dtex_header.size);
+	// if(!*dtex){DTEX_ERROR(4);}
+
+	//Malloc enough space for the uncompressed texture
+	//Read in
+	// if(fread(*dtex, dtex_header.size, 1, texture_file) != 1){DTEX_ERROR(5);}
+
+	*width = dtex_header.width;
+	*height = dtex_header.height;
+
+	return 0;
+}
 
 int main(int argC, char *argV[]){
-	if(argC != 3){abort();}
-	return 0;
+	if(argC != 3 && argC != 4){
+		printf("\nWrong number of arguments provided. This is the format\n");
+		printf("./DtexToARGB8888 [dtex_filename] [argb8888_binary_filename] *[--preview]\n");
+		printf("Preview is an optional tag that will make a png aswell\n");
 
-	// read_png_file(argV[1]);
+		printf("Please not the following stuff isn't supported:\n");
+		printf("\t-Untwiddled\n");
+		printf("\t-Stride\n");
+		printf("\t-YUV422 and BUMPMAP pixel formats\n");
+		printf("\t-Compressed\n");
+		printf("\t-Mipmapped\n");
 
-	//argb8888ToPng();
-	process_png_file();
-	write_png_file(argV[2]);
+		return 1;
+	}
+
+	bool flag_png_preview;
+	for(int i = 1; i < argC; i++){
+		!strcmp(argV[i], "--preview") ? flag_png_preview = true : flag_png_preview = false;
+	}
+
+	uint32_t * texture = NULL;
+	uint16_t height;
+	uint16_t width;
+	if(0){
+		height = 4;
+		width = 4;
+		texture = (uint32_t*) malloc(sizeof(uint32_t) * height * width);
+		texture[0] = (255 << 24) + (255 << 16) + (255 << 8) + 255;		//White
+		texture[1] = (255 << 24) + (0 << 16) + (0 << 8) + 0;			//Black
+		texture[2] = (255 << 24) + (255 << 16) + (0 << 8) + 0;			//Red
+		texture[3] = (255 << 24) + (0 << 16) + (255 << 8) + 0;			//Green
+		texture[4] = (255 << 24) + (0 << 16) + (0 << 8) + 255;			//Blue
+		texture[5] = (255 << 24) + (128 << 16) + (128 << 8) + 128;		//grey
+		texture[6] = (255 << 24) + (255 << 16) + (128 << 8) + 128;		//salmon pink
+		texture[7] = (255 << 24) + (128 << 16) + (255 << 8) + 128;		//pale green
+		texture[8] = (255 << 24) + (128 << 16) + (128 << 8) + 255;		//lavendar???
+		texture[9] = (255 << 24) + (128 << 16) + (128 << 8) + 0;		//Dark yellow
+		texture[10] = (255 << 24) + (128 << 16) + (0 << 8) + 128;		//Dark purple
+		texture[11] = (255 << 24) + (0 << 16) + (128 << 8) + 128;		//Dark torquoise
+		texture[12] = (255 << 24) + (128 << 16) + (0 << 8) + 0;			//Dark red
+		texture[13] = (255 << 24) + (0 << 16) + (128 << 8) + 0;			//Dark blue
+		texture[14] = (255 << 24) + (0 << 16) + (0 << 8) + 128;			//Dark green
+		texture[15] = (0 << 24) + (0 << 16) + (0 << 8) + 0;				//Transparent
+	}
+	else{
+		load_dtex(argV[1], &texture, &height, &width);
+		for(int i = 0; i < width * height; i++){
+			printf("%d\n", texture[i]);
+		}
+	}
+	// printf("Test1\n");
+	// printf("\t Width %d, Height %d\n", width, height);
+	// printf("Test2\n");
+
+	png_details_t p_det;
+	if(argb8888_to_png_details(texture, height, width, &p_det)){return 1;}
+	free(texture);
+	// printf("Test3\n");
+
+	char * name = (char *) malloc(strlen(argV[1]) * sizeof(char));
+	strcpy(name, argV[1]);
+	name[strlen(argV[1]) - 4] = 'p';
+	name[strlen(argV[1]) - 3] = 'n';
+	name[strlen(argV[1]) - 2] = 'g';
+	name[strlen(argV[1]) - 1] = '\0';
+	printf("Names %s, %s\n", name, argV[1]);
+	write_png_file(name, &p_det);
 	printf("Processed\n");
+
+	free(name);
 
 	return 0;
 }

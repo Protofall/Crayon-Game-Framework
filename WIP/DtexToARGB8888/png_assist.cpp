@@ -1,64 +1,75 @@
 #include "png_assist.h"
 
-int width, height;
-png_byte color_type;
-png_byte bit_depth;
-png_bytep *row_pointers;
+// int width, height;
+// png_byte color_type;
+// png_byte bit_depth;
+// png_bytep *row_pointers;
 
-void read_png_file(char *filename){
+void read_png_file(char *filename, png_details * p_det){
 	FILE *fp = fopen(filename, "rb");
 
 	png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if(!png) abort();
+	if(!png){abort();}
 
 	png_infop info = png_create_info_struct(png);
-	if(!info) abort();
+	if(!info){abort();}
 
-	if(setjmp(png_jmpbuf(png))) abort();
+	if(setjmp(png_jmpbuf(png))){abort();}
 
 	png_init_io(png, fp);
 
 	png_read_info(png, info);
 
-	width      = png_get_image_width(png, info);
-	height     = png_get_image_height(png, info);
-	color_type = png_get_color_type(png, info);
-	bit_depth  = png_get_bit_depth(png, info);
+	p_det->width      = png_get_image_width(png, info);
+	p_det->height     = png_get_image_height(png, info);
+	p_det->color_type = png_get_color_type(png, info);
+	p_det->bit_depth  = png_get_bit_depth(png, info);
+
+	// printf("Here are the values from this fucked library: %d, %d\n", p_det->color_type, p_det->bit_depth);
 
 	// Read any color_type into 8bit depth, RGBA format.
 	// See http://www.libpng.org/pub/png/libpng-manual.txt
 
-	if(bit_depth == 16)
+	if(p_det->bit_depth == 16){
 		png_set_strip_16(png);
+	}
 
-	if(color_type == PNG_COLOR_TYPE_PALETTE)
+	if(p_det->color_type == PNG_COLOR_TYPE_PALETTE){
 		png_set_palette_to_rgb(png);
+	}
 
 	// PNG_COLOR_TYPE_GRAY_ALPHA is always 8 or 16bit depth.
-	if(color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+	if(p_det->color_type == PNG_COLOR_TYPE_GRAY && p_det->bit_depth < 8){
 		png_set_expand_gray_1_2_4_to_8(png);
+	}
 
-	if(png_get_valid(png, info, PNG_INFO_tRNS))
+	if(png_get_valid(png, info, PNG_INFO_tRNS)){
 		png_set_tRNS_to_alpha(png);
+	}
 
 	// These color_type don't have an alpha channel then fill it with 0xff.
-	if(color_type == PNG_COLOR_TYPE_RGB ||
-		 color_type == PNG_COLOR_TYPE_GRAY ||
-		 color_type == PNG_COLOR_TYPE_PALETTE)
+	if(p_det->color_type == PNG_COLOR_TYPE_RGB ||
+		 p_det->color_type == PNG_COLOR_TYPE_GRAY ||
+		 p_det->color_type == PNG_COLOR_TYPE_PALETTE){
 		png_set_filler(png, 0xFF, PNG_FILLER_AFTER);
+	}
 
-	if(color_type == PNG_COLOR_TYPE_GRAY ||
-		 color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+	if(p_det->color_type == PNG_COLOR_TYPE_GRAY ||
+		 p_det->color_type == PNG_COLOR_TYPE_GRAY_ALPHA){
 		png_set_gray_to_rgb(png);
+	}
 
 	png_read_update_info(png, info);
 
-	row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
-	for(int y = 0; y < height; y++) {
-		row_pointers[y] = (png_byte*)malloc(png_get_rowbytes(png,info));
+	p_det->row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * p_det->height);
+	for(int y = 0; y < p_det->height; y++){
+		// png_uint_32 value = png_get_rowbytes(png,info);	//Seems to be equal to 4 times width
+		// printf("%d: %d\n", y, value);
+		// p_det->row_pointers[y] = (png_byte*)malloc(value);
+		p_det->row_pointers[y] = (png_byte*)malloc(png_get_rowbytes(png,info));
 	}
 
-	png_read_image(png, row_pointers);
+	png_read_image(png, p_det->row_pointers);
 
 	png_destroy_read_struct(&png, &info, NULL);
     png = NULL;
@@ -67,32 +78,32 @@ void read_png_file(char *filename){
 	fclose(fp);
 }
 
-void write_png_file(char *filename){
+void write_png_file(char *filename, png_details * p_det){
 	int y;
+	FILE *fp = NULL;
+	png_structp png = NULL;
+	png_infop info = NULL;
 
-	FILE *fp = fopen(filename, "wb");
-	if(!fp) abort();
+	//Open file for writing (binary mode)
+	fp = fopen(filename, "wb");
+	if(!fp){abort();}
 
-	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if (!png) abort();
+	//Initialize write structure
+	png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if(!png){abort();}
 
-	png_infop info = png_create_info_struct(png);
-	if (!info) abort();
+	//Initialize info structure
+	info = png_create_info_struct(png);
+	if(!info){abort();}
 
-	if (setjmp(png_jmpbuf(png))) abort();
+	//Setup Exception handling
+	if(setjmp(png_jmpbuf(png))){abort();}
 
 	png_init_io(png, fp);
 
-	// Output is 8bit depth, RGBA format.
-	png_set_IHDR(
-		png,
-		info,
-		width, height,
-		8,
-		PNG_COLOR_TYPE_RGBA,
-		PNG_INTERLACE_NONE,
-		PNG_COMPRESSION_TYPE_DEFAULT,
-		PNG_FILTER_TYPE_DEFAULT
+	png_set_IHDR(png, info, p_det->width, p_det->height,
+		8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
+		PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT
 	);
 	png_write_info(png, info);
 
@@ -100,13 +111,14 @@ void write_png_file(char *filename){
 	// Use png_set_filler().
 	//png_set_filler(png, 0, PNG_FILLER_AFTER);
 
-	png_write_image(png, row_pointers);
+	png_write_image(png, p_det->row_pointers);
+
 	png_write_end(png, NULL);
 
-	for(int y = 0; y < height; y++) {
-		free(row_pointers[y]);
+	for(int y = 0; y < p_det->height; y++){
+		free(p_det->row_pointers[y]);
 	}
-	free(row_pointers);
+	free(p_det->row_pointers);
 
 	if(png && info){
 		png_destroy_write_struct(&png, &info);
@@ -115,14 +127,58 @@ void write_png_file(char *filename){
 	fclose(fp);
 }
 
-void process_png_file(){
-	for(int y = 0; y < height; y++) {
-		png_bytep row = row_pointers[y];
-		for(int x = 0; x < width; x++) {
-			png_bytep px = &(row[x * 4]);
+void process_png_file(png_details * p_det){
+	for(int y = 0; y < p_det->height; y++){
+		for(int x = 0; x < p_det->width; x++){
+			png_bytep px = &(p_det->row_pointers[y][x * 4]);
 			// Do something awesome for each pixel here...
-			printf("%4d, %4d = RGBA(%3d, %3d, %3d, %3d)\n", x, y, px[0], px[1], px[2], px[3]);
-			// px[0] = 255;
+			// printf("%4d, %4d = RGBA(%3d, %3d, %3d, %3d)\n", x, y, px[0], px[1], px[2], px[3]);
+			px[0] = 255;
+			// p_det->row_pointers[y][0] = 255;	//Fails
 		}
 	}
 }
+
+// k lots of 1's bitwise and with your number moved right by p bits
+int bit_extracted(int number, int k, int p){
+	return (((1 << k) - 1) & (number >> p)); 
+}
+
+uint8_t argb8888_to_png_details(uint32_t * pixel_data, int height, int width, png_details * p_det){
+	p_det->height = height;
+	p_det->width = width;
+
+	p_det->color_type = PNG_COLOR_MASK_COLOR + PNG_COLOR_MASK_ALPHA;	//= 2 + 4 = 6. They describe the color_type field in png_info
+	p_det->bit_depth = 8;	//argb8888, can be 1, 2, 4, 8, or 16 bits/channel (from IHDR)
+
+	//Allocate space
+	p_det->row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * p_det->height);
+	for(int y = 0; y < p_det->height; y++){
+		p_det->row_pointers[y] = (png_byte*)malloc(sizeof(png_byte) * p_det->width * 4);
+	}
+
+	for(int y = 0; y < p_det->height; y++){
+		for(int x = 0; x < p_det->width; x++){
+
+			png_bytep px = &(p_det->row_pointers[y][x * 4]);
+			// printf("%4d, %4d = RGBA(%3d, %3d, %3d, %3d)\n", x, y, px[0], px[1], px[2], px[3]);
+
+			// fprintf(stderr, "Tester\n");
+
+			//This block is causing a seg fault right now
+			px[0] = bit_extracted(pixel_data[(y * width) + x], 8, 16);	//R
+			px[1] = bit_extracted(pixel_data[(y * width) + x], 8, 8);	//G
+			px[2] = bit_extracted(pixel_data[(y * width) + x], 8, 0);	//B
+			px[3] = bit_extracted(pixel_data[(y * width) + x], 8, 24);	//A
+		}
+	}
+	return 0;
+}
+
+//from pngconf.h
+
+//typedef png_byte * png_bytep;
+//typedef png_byte * * png_bytepp;
+
+//Somewhat useful
+//https://linux.die.net/man/3/libpng

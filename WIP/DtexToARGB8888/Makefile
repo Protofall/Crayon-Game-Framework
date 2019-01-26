@@ -30,3 +30,12 @@ clean:
 run:
 	./$(EXE)
 
+dtex_examples:
+	texconv -i "textures/dwarfy.png" -o "textures/dwarfy_ARGB1555.dtex" -f "ARGB1555"
+	texconv -i "textures/dwarfy.png" -o "textures/dwarfy_RGB565.dtex" -f "RGB565"
+	texconv -i "textures/dwarfy.png" -o "textures/dwarfy_ARGB4444.dtex" -f "ARGB4444"
+	texconv -i "textures/dwarfy.png" -o "textures/dwarfy_YUV422.dtex" -f "YUV422"
+	texconv -i "textures/dwarfy.png" -o "textures/dwarfy_BUMPMAP.dtex" -f "BUMPMAP"
+	
+	texconv -i "textures/insta.png" -o "textures/insta_PAL4BPP.dtex" -f "PAL4BPP"
+	texconv -i "textures/insta.png" -o "textures/insta_PAL8BPP.dtex" -f "PAL8BPP"
