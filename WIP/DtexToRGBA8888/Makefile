@@ -16,7 +16,7 @@ OBJS = $(CPPFILES:%.cpp=%.o)
 # re-made if they've been modified, or something they depend
 # on has been modified.
 
-all: clean $(EXE)
+all: clean dtex_examples $(EXE)
 
 $(EXE): $(OBJS)
 	$(CC) -o $(EXE) $(OBJS) -std=gnu++11 -lpng
@@ -42,7 +42,7 @@ dtex_examples:
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_BUMPMAP.dtex" -f "BUMPMAP"
 	
 	texconv -i "textures/source/simple.png" -o "textures/simple_RGB565.dtex" -f "RGB565"
-
+	texconv -i "textures/source/simple2.png" -o "textures/simple2_RGB565.dtex" -f "RGB565"
 	texconv -i "textures/source/simpleRect.png" -o "textures/simpleRect_RGB565.dtex" -f "RGB565"
 
 	texconv -i "textures/source/test1.png" -o "textures/test1_RGB565.dtex" -f "RGB565"

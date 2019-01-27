@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <cstdint>
+#include <math.h>
 
 #include "png_assist.h"
 
@@ -19,66 +20,34 @@ typedef struct dpal_header{
 	uint32_t color_count; //number of 32-bit ARGB palette entries
 } dpal_header_t;
 
-//These three functions grab a file pointer to a texture of that format and convert and place it in the bugger
+//This function grabs a file pointer to a texture of that format and convert and place it in the bugger
 uint8_t dtex_to_rgba8888(FILE * texture_file, dtex_header_t * dtex_header, uint32_t * bugger,
 	uint8_t bpc_a, uint8_t bpc_r, uint8_t bpc_g, uint8_t bpc_b){
+	uint16_t extracted;
 
-	uint16_t argb1555;
-
-	// bool first = true;
 	for(int i = 0; i < dtex_header->width * dtex_header->height; i++){
-		if(fread(&argb1555, sizeof(uint16_t), 1, texture_file) != 1){return 1;}
-		// if(first){
-			// printf("\nargb1555 %x ", argb1555);
+		if(fread(&extracted, sizeof(uint16_t), 1, texture_file) != 1){return 1;}
 
-			// argb[0] = bit_extracted(argb1555, 1, 15);
-			// argb[1] = (((1 << 5) - 1) & (argb1555 >> 10));
-			// argb[2] = bit_extracted(argb1555, 5, 5);
-			// argb[3] = bit_extracted(argb1555, 5, 0);
-		// }
-
-		// bugger[i] = (((argb1555 & (1 << 15)) * 255) << 24);	//Alpha
-
-		//But what happens when a bpc is zero? We divide by zero...
-		bugger[i] = (bit_extracted(argb1555, bpc_r, bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_r) - 1)) << 24;					//R
-		bugger[i] += (bit_extracted(argb1555, bpc_g, bpc_b) * ((1 << 8) - 1) / ((1 << bpc_g) - 1)) << 16;							//G
-		bugger[i] += (bit_extracted(argb1555, bpc_b, 0) * ((1 << 8) - 1) / ((1 << bpc_b) - 1)) << 8;								//B
 		if(bpc_a != 0){
-			bugger[i] += bit_extracted(argb1555, bpc_a, bpc_r + bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_a) - 1);				//Alpha
+			bugger[i] = bit_extracted(extracted, bpc_a, bpc_r + bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_a) - 1);	//Alpha
 		}
-		else{	//We do this to avoid a "divide by zero" error
-			bugger[i] += (1 << 8) - 1;
+		else{	//We do this to avoid a "divide by zero" error and we don't care about colour data for transparent pixels
+			bugger[i] = (1 << 8) - 1;
+			// continue;
 		}
 
-		// if(first){
-			// printf("%x, %x, %x\n", ((1 << 5) - 1), (argb1555 >> 10), ((1 << 5) - 1) & (argb1555 >> 10));	//1F, 3F == 1 1111, 11 1111, 1F
-			// printf("argb8888 %x\n", bugger[i]);
-			// printf("a %x r %x g %x b %x\n", argb[0], argb[1], argb[2], argb[3]);	//These seem to be all correct
-			// printf("New: a %x r %x g %x b %x\n\n", argb[0] * ((1 << 8) - 1) / ((1 << 1) - 1),
-												// argb[1] * ((1 << 8) - 1) / ((1 << 4) - 1),
-												// argb[2] * ((1 << 8) - 1) / ((1 << 4) - 1),
-												// argb[3] * ((1 << 8) - 1) / ((1 << 4) - 1));
-			// first = false;
+		bugger[i] += (bit_extracted(extracted, bpc_r, bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_r) - 1)) << 24;		//R
+		bugger[i] += (bit_extracted(extracted, bpc_g, bpc_b) * ((1 << 8) - 1) / ((1 << bpc_g) - 1)) << 16;				//G
+		bugger[i] += (bit_extracted(extracted, bpc_b, 0) * ((1 << 8) - 1) / ((1 << bpc_b) - 1)) << 8;					//B
 
-			//20F == 0010 0000 1111...It should be 11111...
-
-			//Original is fc00 == 1 111 11 00000 00000
-			//New should be ???
-			//First pixel comes out as 010f0000 == 0001 0000 1111 0000 0000 0000.
-			//Extracted is correct. New is a ff r 20f g 0 b 0
-		// }
-
-		// (extracted value) * (Max for 8bpc) / (Max for that bpc)
+		// (extracted value) * (Max for 8bpc) / (Max for that bpc) = value
 	}
 	return 0;
 }
 
-uint8_t rgb565_to_argb8888(FILE * texture_file, dtex_header_t * dtex_header, uint32_t * bugger){
-	return 0;
-}
-
-uint8_t argb4444_to_argb8888(FILE * texture_file, dtex_header_t * dtex_header, uint32_t * bugger){
-	return 0;
+//x and y are zero indexed
+uint32_t get_2D_array_id(uint16_t x, uint16_t y, uint16_t height){
+	return (y * height) + x;
 }
 
 uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, uint16_t * width){
@@ -99,8 +68,8 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 	bool compressed = dtex_header.type & (1 << 30);
 	bool mipmapped = dtex_header.type & (1 << 31);
 
-	printf("Format details: str_set %d, str %d, twid %d, pix %d, comp %d, mip %d, whole %d\n",
-		stride_setting, stride, twiddled, pixel_format, compressed, mipmapped, dtex_header.type);
+	// printf("Format details: str_set %d, str %d, twid %d, pix %d, comp %d, mip %d, whole %d\n",
+		// stride_setting, stride, twiddled, pixel_format, compressed, mipmapped, dtex_header.type);
 
 	if(mipmapped || compressed || stride || pixel_format == 3 || pixel_format == 4){
 		printf("Unsupported dtex format detected. Stopping conversion\n");
@@ -146,6 +115,35 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 	//Arrange the pixels in the correct order using something similar to a Z-order curve,
 		//except its "top left, bottom left, top right, bottom right"
 	if(twiddled){
+		//Confirm its a texture we can work on (Dimensions are a power of two)
+		if(!(dtex_header.width == 0) && !(dtex_header.width & (dtex_header.width - 1))
+			&& !(dtex_header.height == 0) && !(dtex_header.height & (dtex_header.height - 1))){
+
+			//Since I dunno how to handle this for now
+			if(dtex_header.width != dtex_header.height){
+				return 7;
+			}
+
+			//These are x where the dims = 2^x.
+			uint8_t width_power = log(dtex_header.width) / log(2);
+			uint8_t height_power = log(dtex_header.height) / log(2);
+			// uint8_t current_power = 0;
+			// uint8_t current_max_power = 1;
+
+			// for(int i = 0; i < dtex_header.width && dtex_header.height; i++){
+				// bugger_the_2nd[get_2D_array_id(0, 0, dtex_header.height)] = *bugger[i];
+			// }
+
+			// printf("Powers: %d %d\n", width_power, height_power);
+
+			//This will become the untwiddled texture and we'll free the old data after and point to this
+			uint32_t * bugger_the_2nd = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
+			// uint32_t get_2D_array_id(x, y, dtex_header.height);
+			free(bugger_the_2nd);
+		}
+		else{	//Dimensions aren't power of twos and its not square
+			return 7;
+		}
 		;
 	}
 
@@ -198,6 +196,7 @@ int main(int argC, char *argV[]){
 		printf("\t-YUV422 and BUMPMAP pixel formats\n");
 		printf("\t-Compressed\n");
 		printf("\t-Mipmapped\n");
+		printf("\t-Non-square textures...dunno how they twiddle\n");
 
 		return 1;
 	}
@@ -211,8 +210,8 @@ int main(int argC, char *argV[]){
 	}
 
 	uint32_t * texture = NULL;
-	uint16_t height;
-	uint16_t width;
+	uint16_t height = 0;
+	uint16_t width = 0;
 	if(0){
 		//Test uint32_t to png example (NOTE THIS IS IN THE ARGB8888 FORMAT)
 		height = 4;
@@ -252,7 +251,6 @@ int main(int argC, char *argV[]){
 	fwrite(texture, sizeof(uint32_t), height * width, f_binary);	//Note this is stored in little endian
 	fclose(f_binary);
 
-
 	//Output a PNG if requested
 	if(flag_png_preview){
 		png_details_t p_det;
@@ -264,9 +262,7 @@ int main(int argC, char *argV[]){
 		name[strlen(argV[1]) - 3] = 'n';
 		name[strlen(argV[1]) - 2] = 'g';
 		name[strlen(argV[1]) - 1] = '\0';
-		printf("Names %s, %s\n", name, argV[1]);
 		write_png_file(name, &p_det);
-		printf("Processed\n");
 
 		free(name);
 	}

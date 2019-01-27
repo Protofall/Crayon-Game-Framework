@@ -1,10 +1,5 @@
 #include "png_assist.h"
 
-// int width, height;
-// png_byte color_type;
-// png_byte bit_depth;
-// png_bytep *row_pointers;
-
 void read_png_file(char *filename, png_details * p_det){
 	FILE *fp = fopen(filename, "rb");
 
@@ -25,7 +20,7 @@ void read_png_file(char *filename, png_details * p_det){
 	p_det->color_type = png_get_color_type(png, info);
 	p_det->bit_depth  = png_get_bit_depth(png, info);
 
-	// printf("Here are the values from this fucked library: %d, %d\n", p_det->color_type, p_det->bit_depth);
+	// printf("Here are the values from this horridly documented library: %d, %d\n", p_det->color_type, p_det->bit_depth);
 
 	// Read any color_type into 8bit depth, RGBA format.
 	// See http://www.libpng.org/pub/png/libpng-manual.txt
