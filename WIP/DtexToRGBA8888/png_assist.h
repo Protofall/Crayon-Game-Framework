@@ -22,6 +22,6 @@ void write_png_file(char *filename, png_details * p_det);
 void process_png_file(png_details * p_det);
 
 int bit_extracted(uint32_t number, int k, int p);
-uint8_t argb8888_to_png_details(uint32_t * pixel_data, int height, int width, png_details * p_det);
+uint8_t rgba8888_to_png_details(uint32_t * pixel_data, int height, int width, png_details * p_det);
 
 #endif

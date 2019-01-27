@@ -20,7 +20,7 @@ typedef struct dpal_header{
 } dpal_header_t;
 
 //These three functions grab a file pointer to a texture of that format and convert and place it in the bugger
-uint8_t dtex_to_argb8888(FILE * texture_file, dtex_header_t * dtex_header, uint32_t * bugger,
+uint8_t dtex_to_rgba8888(FILE * texture_file, dtex_header_t * dtex_header, uint32_t * bugger,
 	uint8_t bpc_a, uint8_t bpc_r, uint8_t bpc_g, uint8_t bpc_b){
 
 	uint16_t argb1555;
@@ -40,15 +40,15 @@ uint8_t dtex_to_argb8888(FILE * texture_file, dtex_header_t * dtex_header, uint3
 		// bugger[i] = (((argb1555 & (1 << 15)) * 255) << 24);	//Alpha
 
 		//But what happens when a bpc is zero? We divide by zero...
+		bugger[i] = (bit_extracted(argb1555, bpc_r, bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_r) - 1)) << 24;					//R
+		bugger[i] += (bit_extracted(argb1555, bpc_g, bpc_b) * ((1 << 8) - 1) / ((1 << bpc_g) - 1)) << 16;							//G
+		bugger[i] += (bit_extracted(argb1555, bpc_b, 0) * ((1 << 8) - 1) / ((1 << bpc_b) - 1)) << 8;								//B
 		if(bpc_a != 0){
-			bugger[i] = (bit_extracted(argb1555, bpc_a, bpc_r + bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_a) - 1)) << 24;	//Alpha
+			bugger[i] += bit_extracted(argb1555, bpc_a, bpc_r + bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_a) - 1);				//Alpha
 		}
 		else{	//We do this to avoid a "divide by zero" error
-			bugger[i] = ((1 << 8) - 1) << 24;
+			bugger[i] += (1 << 8) - 1;
 		}
-		bugger[i] += (bit_extracted(argb1555, bpc_r, bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_r) - 1)) << 16;					//R
-		bugger[i] += (bit_extracted(argb1555, bpc_g, bpc_b) * ((1 << 8) - 1) / ((1 << bpc_g) - 1)) << 8;							//G
-		bugger[i] += bit_extracted(argb1555, bpc_b, 0) * ((1 << 8) - 1) / ((1 << bpc_b) - 1);										//B
 
 		// if(first){
 			// printf("%x, %x, %x\n", ((1 << 5) - 1), (argb1555 >> 10), ((1 << 5) - 1) & (argb1555 >> 10));	//1F, 3F == 1 1111, 11 1111, 1F
@@ -122,13 +122,13 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 	uint16_t error = 0;
 	switch(pixel_format){
 		case 0:
-		 	error = dtex_to_argb8888(texture_file, &dtex_header, *bugger, 1, 5, 5, 5);
+		 	error = dtex_to_rgba8888(texture_file, &dtex_header, *bugger, 1, 5, 5, 5);
 			break;
 		case 1:
-		 	error = dtex_to_argb8888(texture_file, &dtex_header, *bugger, 0, 5, 6, 5);
+		 	error = dtex_to_rgba8888(texture_file, &dtex_header, *bugger, 0, 5, 6, 5);
 			break;
 		case 2:
-		 	error = dtex_to_argb8888(texture_file, &dtex_header, *bugger, 4, 4, 4, 4);
+		 	error = dtex_to_rgba8888(texture_file, &dtex_header, *bugger, 4, 4, 4, 4);
 			break;
 		case 5:
 		case 6:
@@ -214,7 +214,7 @@ int main(int argC, char *argV[]){
 	uint16_t height;
 	uint16_t width;
 	if(0){
-		//Test uint32_t to png example
+		//Test uint32_t to png example (NOTE THIS IS IN THE ARGB8888 FORMAT)
 		height = 4;
 		width = 4;
 		texture = (uint32_t*) malloc(sizeof(uint32_t) * height * width);
@@ -256,7 +256,7 @@ int main(int argC, char *argV[]){
 	//Output a PNG if requested
 	if(flag_png_preview){
 		png_details_t p_det;
-		if(argb8888_to_png_details(texture, height, width, &p_det)){return 1;}
+		if(rgba8888_to_png_details(texture, height, width, &p_det)){return 1;}
 
 		char * name = (char *) malloc(strlen(argV[1]) * sizeof(char));
 		strcpy(name, argV[1]);

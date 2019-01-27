@@ -145,7 +145,7 @@ int bit_extracted(uint32_t number, int k, int p){
 	return (((1 << k) - 1) & (number >> p)); 
 }
 
-uint8_t argb8888_to_png_details(uint32_t * pixel_data, int height, int width, png_details * p_det){
+uint8_t rgba8888_to_png_details(uint32_t * pixel_data, int height, int width, png_details * p_det){
 	p_det->height = height;
 	p_det->width = width;
 
@@ -163,14 +163,10 @@ uint8_t argb8888_to_png_details(uint32_t * pixel_data, int height, int width, pn
 
 			png_bytep px = &(p_det->row_pointers[y][x * 4]);
 			// printf("%4d, %4d = RGBA(%3d, %3d, %3d, %3d)\n", x, y, px[0], px[1], px[2], px[3]);
-
-			// fprintf(stderr, "Tester\n");
-
-			//This block is causing a seg fault right now
-			px[0] = bit_extracted(pixel_data[(y * width) + x], 8, 16);	//R
-			px[1] = bit_extracted(pixel_data[(y * width) + x], 8, 8);	//G
-			px[2] = bit_extracted(pixel_data[(y * width) + x], 8, 0);	//B
-			px[3] = bit_extracted(pixel_data[(y * width) + x], 8, 24);	//A
+			px[0] = bit_extracted(pixel_data[(y * width) + x], 8, 24);	//R
+			px[1] = bit_extracted(pixel_data[(y * width) + x], 8, 16);	//G
+			px[2] = bit_extracted(pixel_data[(y * width) + x], 8, 8);	//B
+			px[3] = bit_extracted(pixel_data[(y * width) + x], 8, 0);	//A
 		}
 	}
 	return 0;
