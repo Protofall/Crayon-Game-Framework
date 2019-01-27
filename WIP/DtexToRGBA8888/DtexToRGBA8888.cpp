@@ -5,6 +5,7 @@
 
 #include "png_assist.h"
 
+//32 + 16 + 16 + 32 + 32 = 32 + 32 + 64 = 104 bits = 16 bytes
 typedef struct dtex_header{
 	uint8_t magic[4]; //magic number "DTEX"
 	uint16_t   width; //texture width in pixels
@@ -19,20 +20,55 @@ typedef struct dpal_header{
 } dpal_header_t;
 
 //These three functions grab a file pointer to a texture of that format and convert and place it in the bugger
-uint8_t argb1555_to_argb8888(FILE * texture_file, dtex_header_t * dtex_header, uint32_t * bugger){
+uint8_t dtex_to_argb8888(FILE * texture_file, dtex_header_t * dtex_header, uint32_t * bugger,
+	uint8_t bpc_a, uint8_t bpc_r, uint8_t bpc_g, uint8_t bpc_b){
+
 	uint16_t argb1555;
-	bool error = 0;
+
+	// bool first = true;
 	for(int i = 0; i < dtex_header->width * dtex_header->height; i++){
 		if(fread(&argb1555, sizeof(uint16_t), 1, texture_file) != 1){return 1;}
+		// if(first){
+			// printf("\nargb1555 %x ", argb1555);
+
+			// argb[0] = bit_extracted(argb1555, 1, 15);
+			// argb[1] = (((1 << 5) - 1) & (argb1555 >> 10));
+			// argb[2] = bit_extracted(argb1555, 5, 5);
+			// argb[3] = bit_extracted(argb1555, 5, 0);
+		// }
+
 		// bugger[i] = (((argb1555 & (1 << 15)) * 255) << 24);	//Alpha
-		bugger[i] = (bit_extracted(argb1555, 1, 15) * ((1 << 8) - 1) / ((1 << 1) - 1)) << 24;	//Alpha
-		bugger[i] += (bit_extracted(argb1555, 5, 10) * ((1 << 8) - 1) / ((1 << 4) - 1)) << 16;	//R
-		bugger[i] += (bit_extracted(argb1555, 5, 5) * ((1 << 8) - 1) / ((1 << 4) - 1)) << 8;	//G
-		bugger[i] += bit_extracted(argb1555, 5, 0) * ((1 << 8) - 1) / ((1 << 4) - 1);			//B
+
+		//But what happens when a bpc is zero? We divide by zero...
+		if(bpc_a != 0){
+			bugger[i] = (bit_extracted(argb1555, bpc_a, bpc_r + bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_a) - 1)) << 24;	//Alpha
+		}
+		else{	//We do this to avoid a "divide by zero" error
+			bugger[i] = ((1 << 8) - 1) << 24;
+		}
+		bugger[i] += (bit_extracted(argb1555, bpc_r, bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_r) - 1)) << 16;					//R
+		bugger[i] += (bit_extracted(argb1555, bpc_g, bpc_b) * ((1 << 8) - 1) / ((1 << bpc_g) - 1)) << 8;							//G
+		bugger[i] += bit_extracted(argb1555, bpc_b, 0) * ((1 << 8) - 1) / ((1 << bpc_b) - 1);										//B
+
+		// if(first){
+			// printf("%x, %x, %x\n", ((1 << 5) - 1), (argb1555 >> 10), ((1 << 5) - 1) & (argb1555 >> 10));	//1F, 3F == 1 1111, 11 1111, 1F
+			// printf("argb8888 %x\n", bugger[i]);
+			// printf("a %x r %x g %x b %x\n", argb[0], argb[1], argb[2], argb[3]);	//These seem to be all correct
+			// printf("New: a %x r %x g %x b %x\n\n", argb[0] * ((1 << 8) - 1) / ((1 << 1) - 1),
+												// argb[1] * ((1 << 8) - 1) / ((1 << 4) - 1),
+												// argb[2] * ((1 << 8) - 1) / ((1 << 4) - 1),
+												// argb[3] * ((1 << 8) - 1) / ((1 << 4) - 1));
+			// first = false;
+
+			//20F == 0010 0000 1111...It should be 11111...
+
+			//Original is fc00 == 1 111 11 00000 00000
+			//New should be ???
+			//First pixel comes out as 010f0000 == 0001 0000 1111 0000 0000 0000.
+			//Extracted is correct. New is a ff r 20f g 0 b 0
+		// }
 
 		// (extracted value) * (Max for 8bpc) / (Max for that bpc)
-
-		//Last pixel is "00 FC" or "0 0 15 12" == "0 0 255 204" But that doesn't make sense, even if we conside its GBAR
 	}
 	return 0;
 }
@@ -86,13 +122,13 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 	uint16_t error = 0;
 	switch(pixel_format){
 		case 0:
-		 	error = argb1555_to_argb8888(texture_file, &dtex_header, *bugger);
+		 	error = dtex_to_argb8888(texture_file, &dtex_header, *bugger, 1, 5, 5, 5);
 			break;
 		case 1:
-		 	error = rgb565_to_argb8888(texture_file, &dtex_header, *bugger);
+		 	error = dtex_to_argb8888(texture_file, &dtex_header, *bugger, 0, 5, 6, 5);
 			break;
 		case 2:
-		 	error = argb4444_to_argb8888(texture_file, &dtex_header, *bugger);
+		 	error = dtex_to_argb8888(texture_file, &dtex_header, *bugger, 4, 4, 4, 4);
 			break;
 		case 5:
 		case 6:
@@ -107,7 +143,8 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 		return 6;
 	}
 
-	//Arrange the pixels in the correct order
+	//Arrange the pixels in the correct order using something similar to a Z-order curve,
+		//except its "top left, bottom left, top right, bottom right"
 	if(twiddled){
 		;
 	}
@@ -139,25 +176,20 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 	// 	1 = Mipmapped
 
 
-	//Read the rest of the header
-
-	// pvr_ptr_t  *dtex = pvr_mem_malloc(dtex_header.size);
-	// if(!*dtex){DTEX_ERROR(4);}
-
-	//Malloc enough space for the uncompressed texture
-	//Read in
-	// if(fread(*dtex, dtex_header.size, 1, texture_file) != 1){DTEX_ERROR(5);}
-
 	*width = dtex_header.width;
 	*height = dtex_header.height;
 
 	return 0;
 }
 
+//Add argb8888/rgba8888 toggle.
+	//rgba8888 is the default
 int main(int argC, char *argV[]){
 	if(argC != 3 && argC != 4){
+		invalidInput:
+
 		printf("\nWrong number of arguments provided. This is the format\n");
-		printf("./DtexToARGB8888 [dtex_filename] [argb8888_binary_filename] *[--preview]\n");
+		printf("./DtexToRGBA8888 [dtex_filename] [rgba8888_binary_filename] *[--preview]\n");
 		printf("Preview is an optional tag that will make a png aswell\n");
 
 		printf("Please not the following stuff isn't supported:\n");
@@ -173,12 +205,16 @@ int main(int argC, char *argV[]){
 	bool flag_png_preview;
 	for(int i = 1; i < argC; i++){
 		!strcmp(argV[i], "--preview") ? flag_png_preview = true : flag_png_preview = false;
+		if(argC == 3){
+			goto invalidInput;
+		}
 	}
 
 	uint32_t * texture = NULL;
 	uint16_t height;
 	uint16_t width;
 	if(0){
+		//Test uint32_t to png example
 		height = 4;
 		width = 4;
 		texture = (uint32_t*) malloc(sizeof(uint32_t) * height * width);
@@ -200,31 +236,41 @@ int main(int argC, char *argV[]){
 		texture[15] = (0 << 24) + (0 << 16) + (0 << 8) + 0;				//Transparent
 	}
 	else{
-		load_dtex(argV[1], &texture, &height, &width);
-		for(int i = 0; i < width * height; i++){
-			printf("%d\n", texture[i]);
+		uint8_t error_code = load_dtex(argV[1], &texture, &height, &width);
+		if(error_code){
+			printf("Error %d has occurred. Terminating program\n", error_code);
+			free(texture);
+			return 1;
 		}
 	}
-	// printf("Test1\n");
-	// printf("\t Width %d, Height %d\n", width, height);
-	// printf("Test2\n");
 
-	png_details_t p_det;
-	if(argb8888_to_png_details(texture, height, width, &p_det)){return 1;}
+	FILE * f_binary = fopen(argV[2], "wb");
+	if(f_binary == NULL){
+		printf("Error opening file!\n");
+		return 1;
+	}
+	fwrite(texture, sizeof(uint32_t), height * width, f_binary);	//Note this is stored in little endian
+	fclose(f_binary);
+
+
+	//Output a PNG if requested
+	if(flag_png_preview){
+		png_details_t p_det;
+		if(argb8888_to_png_details(texture, height, width, &p_det)){return 1;}
+
+		char * name = (char *) malloc(strlen(argV[1]) * sizeof(char));
+		strcpy(name, argV[1]);
+		name[strlen(argV[1]) - 4] = 'p';
+		name[strlen(argV[1]) - 3] = 'n';
+		name[strlen(argV[1]) - 2] = 'g';
+		name[strlen(argV[1]) - 1] = '\0';
+		printf("Names %s, %s\n", name, argV[1]);
+		write_png_file(name, &p_det);
+		printf("Processed\n");
+
+		free(name);
+	}
 	free(texture);
-	// printf("Test3\n");
-
-	char * name = (char *) malloc(strlen(argV[1]) * sizeof(char));
-	strcpy(name, argV[1]);
-	name[strlen(argV[1]) - 4] = 'p';
-	name[strlen(argV[1]) - 3] = 'n';
-	name[strlen(argV[1]) - 2] = 'g';
-	name[strlen(argV[1]) - 1] = '\0';
-	printf("Names %s, %s\n", name, argV[1]);
-	write_png_file(name, &p_det);
-	printf("Processed\n");
-
-	free(name);
 
 	return 0;
 }

@@ -117,6 +117,10 @@ build () {
 					texconvFormat="RGB565"
 				elif [ "$part" = "ARGB4444" ];then
 					texconvFormat="ARGB4444"
+				elif [ "$part" = "YUV422" ];then
+					texconvFormat="YUV422"
+				elif [ "$part" = "BUMPMAP" ];then
+					texconvFormat="BUMPMAP"
 				elif [ "$part" = "PAL4BPP" ];then
 					texconvFormat="PAL4BPP"
 				elif [ "$part" = "PAL8BPP" ];then
@@ -223,6 +227,7 @@ done
 
 echo "WARNING: GZ instructions haven't been tested in this script"
 echo -e "There's a chance items with a crayon_gz tag won't be processed right\n"
+echo "And I haven't tested YUV422 and BUMPMAP texture formats"
 build "$assets" "$projectRoot/$cdfs" "$noRM"
 
 exit 0

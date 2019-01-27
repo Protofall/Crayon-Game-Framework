@@ -139,8 +139,9 @@ void process_png_file(png_details * p_det){
 	}
 }
 
+
 // k lots of 1's bitwise and with your number moved right by p bits
-int bit_extracted(int number, int k, int p){
+int bit_extracted(uint32_t number, int k, int p){
 	return (((1 << k) - 1) & (number >> p)); 
 }
 
