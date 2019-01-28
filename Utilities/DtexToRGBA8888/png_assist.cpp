@@ -122,17 +122,16 @@ void write_png_file(char *filename, png_details * p_det){
 	fclose(fp);
 }
 
-void process_png_file(png_details * p_det){
-	for(int y = 0; y < p_det->height; y++){
-		for(int x = 0; x < p_det->width; x++){
-			png_bytep px = &(p_det->row_pointers[y][x * 4]);
-			// Do something awesome for each pixel here...
-			// printf("%4d, %4d = RGBA(%3d, %3d, %3d, %3d)\n", x, y, px[0], px[1], px[2], px[3]);
-			px[0] = 255;
-			// p_det->row_pointers[y][0] = 255;	//Fails
-		}
-	}
-}
+//void process_png_file(png_details * p_det){
+//	for(int y = 0; y < p_det->height; y++){
+//		for(int x = 0; x < p_det->width; x++){
+//			png_bytep px = &(p_det->row_pointers[y][x * 4]);
+//			// Do something awesome for each pixel here...
+//			// printf("%4d, %4d = RGBA(%3d, %3d, %3d, %3d)\n", x, y, px[0], px[1], px[2], px[3]);
+//			px[0] = 255;
+//		}
+//	}
+//}
 
 
 // k lots of 1's bitwise and with your number moved right by p bits
@@ -145,7 +144,7 @@ uint8_t rgba8888_to_png_details(uint32_t * pixel_data, int height, int width, pn
 	p_det->width = width;
 
 	p_det->color_type = PNG_COLOR_MASK_COLOR + PNG_COLOR_MASK_ALPHA;	//= 2 + 4 = 6. They describe the color_type field in png_info
-	p_det->bit_depth = 8;	//argb8888, can be 1, 2, 4, 8, or 16 bits/channel (from IHDR)
+	p_det->bit_depth = 8;	//rgba8888, can be 1, 2, 4, 8, or 16 bits/channel (from IHDR)
 
 	//Allocate space
 	p_det->row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * p_det->height);
