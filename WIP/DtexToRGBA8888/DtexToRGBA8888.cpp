@@ -21,7 +21,7 @@ typedef struct dpal_header{
 } dpal_header_t;
 
 //This function takes an element from the texture array and converts it from whatever bpc combo you set to RGBA8888
-uint8_t dtex_to_rgba8888(dtex_header_t * dtex_header, uint32_t * bugger,
+uint8_t dtex_argb_to_rgba8888(dtex_header_t * dtex_header, uint32_t * bugger,
 	uint8_t bpc_a, uint8_t bpc_r, uint8_t bpc_g, uint8_t bpc_b){
 	uint16_t extracted;
 
@@ -44,7 +44,7 @@ uint8_t dtex_to_rgba8888(dtex_header_t * dtex_header, uint32_t * bugger,
 	return 0;
 }
 
-uint32_t func(uint16_t M, uint16_t N, uint32_t t){
+uint32_t get_twiddled_index(uint16_t M, uint16_t N, uint32_t t){
 	uint x = 0, y = 0;
 	uint i = N, j = M;
 	while (N || M) {
@@ -123,7 +123,6 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 
 	uint8_t bpc[4];
 	uint8_t bpp;
-	uint16_t error = 0;
 	bool paletted = false;
 	switch(pixel_format){
 		case 0:
@@ -140,29 +139,65 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 		case 5:
 			bpp = 4;
 			paletted = true;
-			// break;
+			break;
 		case 6:
 			bpp = 8;
 			paletted = true;
-			// break;
+			break;
 		default: //Unsupported formats
 			fclose(texture_file);
 			return 6;
 	}
 
+	// bool twiddle_enabled = true;
+	bool twiddle_enabled = false;
+
+	size_t read_size;
+	if(bpp == 16){
+		read_size = sizeof(uint16_t);
+	}
+	else{
+		read_size = sizeof(uint8_t);
+	}
+
+	uint32_t array_index;
+	uint16_t extracted;
+	uint16_t error = 0;
 	for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
-		uint16_t extracted;
-		if(fread(&extracted, sizeof(uint16_t), 1, texture_file) != 1){error = 1; break;}
-		// uint32_t array_index = func(dtex_header.width, dtex_header.height, i);
-		uint32_t array_index = i;
-		printf("array_index, %zu\n", array_index);
-		(*bugger)[array_index] = extracted;
+		if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
+
+		//Everything except PAL4BPP
+		if(bpp != 4){
+			if(twiddled && twiddle_enabled){
+				array_index = get_twiddled_index(dtex_header.width, dtex_header.height, i);
+			}
+			else{
+				array_index = i;			
+			}
+			printf("array_index, %d\n", array_index);
+			(*bugger)[array_index] = extracted;
+		}
+		else{	//Due to two pixels per byte, I need slightly different code here
+			uint16_t byte_section[2];	//Extracted must be split into two vars containing the top and bottom 4 bits
+			byte_section[0] = bit_extracted(extracted, 4, 4);
+			byte_section[1] = bit_extracted(extracted, 4, 0);
+			for(int j = 0; j < 2; j++){
+				if(twiddled && twiddle_enabled){
+					array_index = get_twiddled_index(dtex_header.width, dtex_header.height, i + j);
+				}
+				else{
+					array_index = i + j;			
+				}
+				printf("PAL4BPP: array_index, %d\n", array_index);
+				(*bugger)[array_index] = byte_section[j];
+			}
+		}
 	}
 	fclose(texture_file);
 	if(error){return 7;}
 
 	if(!paletted){
-		error = dtex_to_rgba8888(&dtex_header, *bugger, bpc[0], bpc[1], bpc[2], bpc[3]);
+		error = dtex_argb_to_rgba8888(&dtex_header, *bugger, bpc[0], bpc[1], bpc[2], bpc[3]);
 	}
 	else{
 		// //Load the palette info
@@ -171,44 +206,44 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 
 		// if(fread(&dpal_header, sizeof(dpal_header_t), 1, palette_file) != 1){fclose(texture_file); fclose(palette_file); return 5;}
 
-		printf("Palettes currently unsupported");
+		printf("Palettes currently unsupported\n");
 		return 8;
 	}
 
-	// //Arrange the pixels in the correct order using something similar to a Z-order curve,
-	// 	//except its "top left, bottom left, top right, bottom right"
-	// // if(twiddled){
-	// // 	//Confirm its a texture we can work on (Dimensions are a power of two)
-	// // 	if(!(dtex_header.width == 0) && !(dtex_header.width & (dtex_header.width - 1))
-	// // 		&& !(dtex_header.height == 0) && !(dtex_header.height & (dtex_header.height - 1))){
+	//Arrange the pixels in the correct order using something similar to a Z-order curve,
+		//except its "top left, bottom left, top right, bottom right"
+	// if(twiddled){
+	// 	//Confirm its a texture we can work on (Dimensions are a power of two)
+	// 	if(!(dtex_header.width == 0) && !(dtex_header.width & (dtex_header.width - 1))
+	// 		&& !(dtex_header.height == 0) && !(dtex_header.height & (dtex_header.height - 1))){
 
-	// // 		//Since I dunno how to handle this for now
-	// // 		if(dtex_header.width != dtex_header.height){
-	// // 			return 7;
-	// // 		}
+	// 		//Since I dunno how to handle this for now
+	// 		if(dtex_header.width != dtex_header.height){
+	// 			return 7;
+	// 		}
 
-	// // 		//These are x where the dims = 2^x.
-	// // 		uint8_t width_power = log(dtex_header.width) / log(2);
-	// // 		uint8_t height_power = log(dtex_header.height) / log(2);
-	// // 		// uint8_t current_power = 0;
-	// // 		// uint8_t current_max_power = 1;
+	// 		//These are x where the dims = 2^x.
+	// 		uint8_t width_power = log(dtex_header.width) / log(2);
+	// 		uint8_t height_power = log(dtex_header.height) / log(2);
+	// 		// uint8_t current_power = 0;
+	// 		// uint8_t current_max_power = 1;
 
-	// // 		// for(int i = 0; i < dtex_header.width && dtex_header.height; i++){
-	// // 			// bugger_the_2nd[get_2D_array_id(0, 0, dtex_header.height)] = *bugger[i];
-	// // 		// }
+	// 		// for(int i = 0; i < dtex_header.width && dtex_header.height; i++){
+	// 			// bugger_the_2nd[get_2D_array_id(0, 0, dtex_header.height)] = *bugger[i];
+	// 		// }
 
-	// // 		// printf("Powers: %d %d\n", width_power, height_power);
+	// 		// printf("Powers: %d %d\n", width_power, height_power);
 
-	// // 		//This will become the untwiddled texture and we'll free the old data after and point to this
-	// // 		uint32_t * bugger_the_2nd = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
-	// // 		// uint32_t get_2D_array_id(x, y, dtex_header.height);
-	// // 		free(bugger_the_2nd);
-	// // 	}
-	// // 	else{	//Dimensions aren't power of twos and its not square
-	// // 		return 7;
-	// // 	}
-	// // 	;
-	// // }
+	// 		//This will become the untwiddled texture and we'll free the old data after and point to this
+	// 		uint32_t * bugger_the_2nd = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
+	// 		// uint32_t get_2D_array_id(x, y, dtex_header.height);
+	// 		free(bugger_the_2nd);
+	// 	}
+	// 	else{	//Dimensions aren't power of twos and its not square
+	// 		return 7;
+	// 	}
+	// 	;
+	// }
 
 	*width = dtex_header.width;
 	*height = dtex_header.height;
