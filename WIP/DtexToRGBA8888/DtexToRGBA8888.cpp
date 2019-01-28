@@ -44,28 +44,87 @@ uint8_t dtex_argb_to_rgba8888(dtex_header_t * dtex_header, uint32_t * bugger,
 	return 0;
 }
 
+//0 should be 0
+//1 should be 8 (if width == 8)
+//2 == 1
+//3 == 9
+
+//For 1, y = (y << 1) | 1, then y = (y << 1) (because t >>= 1)
+//X is the same
 uint32_t get_twiddled_index(uint16_t M, uint16_t N, uint32_t t){
 	uint x = 0, y = 0;
 	uint i = N, j = M;
-	while (N || M) {
-		if (M >>= 1) {
+	while(i || j){
+		if(j >>= 1){
 			y = (y << 1) | (t & 1);
-			t >>= 1;    //t is the dtex coordinate of the pixel
+			t >>= 1;	//t is the dtex coordinate of the pixel
 		}
-		if (N >>= 1) {
+		if(i >>= 1){
 			x = (x << 1) | (t & 1);
 			t >>= 1;
 		}
 	}
-	return y * (N + x);
+	return y * N + x;
+}
+
+// uint32_t get_twiddled_index(uint16_t w, uint16_t h, uint32_t p){
+// 	uint32_t ddx = 1, ddy = w;
+// 	uint32_t q = 0;
+
+// 	for(int i = 0; i < 16; i++){
+// 		if((h >>= 1) && (p & 1)){
+// 			q |= ddy;
+// 			p >>= 1;
+// 		}
+// 		ddy <<= 1;
+// 		if((w >>= 1) && (p & 1)){
+// 			q |= ddx;
+// 			p >>= 1;
+// 		}
+// 		ddx <<= 1;
+// 	}
+
+// 	return q;
+// }
+
+uint32_t argb8888_to_rgba8888(uint32_t argb8888){
+	return (argb8888 << 8) + bit_extracted(argb8888, 8, 24);
+}
+
+uint8_t apply_palette(char * palette_path, uint32_t * bugger, uint32_t texture_size){
+	dpal_header_t dpal_header;
+	
+	FILE * palette_file = fopen(palette_path, "rb");
+	if(!palette_file){return 1;}
+
+	if(fread(&dpal_header, sizeof(dpal_header_t), 1, palette_file) != 1){fclose(palette_file); return 2;}
+
+	if(memcmp(dpal_header.magic, "DPAL", 4)){fclose(palette_file); return 3;}
+
+	uint32_t * palette_buffer = (uint32_t *) malloc(sizeof(uint32_t) * dpal_header.color_count);
+	if(palette_buffer == NULL){fclose(palette_file); return 4;}
+
+	if(fread(palette_buffer, sizeof(uint32_t) * dpal_header.color_count, 1, palette_file) != 1){fclose(palette_file); return 5;}
+	fclose(palette_file);
+
+	for(int i = 0; i < texture_size; i++){
+		if(bugger[i] < dpal_header.color_count){
+			bugger[i] = argb8888_to_rgba8888(palette_buffer[bugger[i]]);
+			// bugger[i] = palette_buffer[bugger[i]];
+		}
+		else{	//Invalid index
+			return 6;
+		}
+	}
+
+	return 0;
 }
 
 //Segfaults when accessing any bugger address other than 0...
 uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, uint16_t * width){
 	dtex_header_t dtex_header;
-	dpal_header_t dpal_header;
 
-	FILE *texture_file = fopen(texture_path, "rb");
+	FILE * texture_file = fopen(texture_path, "rb");
 	if(!texture_file){return 1;}
 
 	if(fread(&dtex_header, sizeof(dtex_header_t), 1, texture_file) != 1){fclose(texture_file); return 2;}
@@ -118,6 +177,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 	*bugger = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
 	if(*bugger == NULL){
 		printf("Malloc failed");
+		fclose(texture_file);
 		return 5;
 	}
 
@@ -149,8 +209,8 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 			return 6;
 	}
 
-	// bool twiddle_enabled = true;
-	bool twiddle_enabled = false;
+	bool twiddle_enabled = true;
+	// bool twiddle_enabled = false;
 
 	size_t read_size;
 	if(bpp == 16){
@@ -190,6 +250,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 				}
 				printf("PAL4BPP: array_index, %d\n", array_index);
 				(*bugger)[array_index] = byte_section[j];
+				i += j;
 			}
 		}
 	}
@@ -200,14 +261,19 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 		error = dtex_argb_to_rgba8888(&dtex_header, *bugger, bpc[0], bpc[1], bpc[2], bpc[3]);
 	}
 	else{
-		// //Load the palette info
-		// FILE *palette_file = fopen(texture_path, "rb");
-		// if(!palette_file){fclose(texture_file); return 4;}
-
-		// if(fread(&dpal_header, sizeof(dpal_header_t), 1, palette_file) != 1){fclose(texture_file); fclose(palette_file); return 5;}
-
-		printf("Palettes currently unsupported\n");
-		return 8;
+		char * palette_path = (char *) malloc(sizeof(char) * (strlen(texture_path) + 5));
+		strcpy(palette_path, texture_path);
+		palette_path[strlen(texture_path)] = '.';
+		palette_path[strlen(texture_path) + 1] = 'p';
+		palette_path[strlen(texture_path) + 2] = 'a';
+		palette_path[strlen(texture_path) + 3] = 'l';
+		palette_path[strlen(texture_path) + 4] = '\0';
+		// printf("Palette name: %s\n", palette_path);
+		error = apply_palette(palette_path, *bugger, dtex_header.width * dtex_header.height);
+		free(palette_path);
+		
+		// printf("Palettes currently unsupported\n");
+		// return 8;
 	}
 
 	//Arrange the pixels in the correct order using something similar to a Z-order curve,

@@ -47,5 +47,6 @@ dtex_examples:
 
 	texconv -i "textures/source/test1.png" -o "textures/test1_RGB565.dtex" -f "RGB565"
 
+	texconv -i "textures/source/insta.png" -o "textures/insta_RGB565.dtex" -f "RGB565"
 	texconv -i "textures/source/insta.png" -o "textures/insta_PAL4BPP.dtex" -f "PAL4BPP"
 	texconv -i "textures/source/insta.png" -o "textures/insta_PAL8BPP.dtex" -f "PAL8BPP"
