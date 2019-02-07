@@ -3,7 +3,7 @@
 //For example, call this like so (Assuming file is 12 bytes long)
 // uint8_t *my_stuff;
 // crayon_assist_read_file((void *) &my_stuff, "romdisk/read_data.txt", 12);
-extern uint8_t crayon_assist_read_file(void **buffer, char *path, size_t size_bytes, uint8_t allocated){
+extern uint8_t crayon_assist_read_file(void ** buffer, char * path, size_t size_bytes, uint8_t allocated){
 	if(!allocated){
 		*buffer = malloc(size_bytes);
 	}
@@ -17,7 +17,7 @@ extern uint8_t crayon_assist_read_file(void **buffer, char *path, size_t size_by
 	return 0;
 }
 
-extern uint32_t crayon_assist_fgeti(FILE *f, int16_t * last_char){
+extern uint32_t crayon_assist_fgeti(FILE * f, int16_t * last_char){
 	uint32_t n = 0;
 	int16_t d;	//EOF is -1 so we can't use a uint8_t
 	for(d = 0; d < 10; d = fgetc(f) - '0'){

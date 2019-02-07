@@ -314,9 +314,6 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 					goto verts_rotated;
 				}
 			}
-			// else{
-			// 	//Unimplemented "rotation from flip bits" option
-			// }
 		}
 
 		//Imagine a "goto verts_normal;" for this little bit
