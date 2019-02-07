@@ -40,6 +40,9 @@ dtex_examples:
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB4444.dtex" -f "ARGB4444"
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_YUV422.dtex" -f "YUV422"
 	#texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_BUMPMAP.dtex" -f "BUMPMAP"
+
+	texconv -i "textures/source/cow.png" -o "textures/cow_RGB565.dtex" -f "RGB565"
+	texconv -i "textures/source/cow.png" -o "textures/cow_YUV422.dtex" -f "YUV422"
 	
 	texconv -i "textures/source/simpleRect.png" -o "textures/simpleRect_RGB565.dtex" -f "RGB565"	#Showing non-square textures work
 

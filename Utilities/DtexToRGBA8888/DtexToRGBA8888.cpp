@@ -18,10 +18,6 @@ typedef struct dpal_header{
 	uint32_t color_count; //number of 32-bit ARGB palette entries
 } dpal_header_t;
 
-void yuv422_to_rgba8888(dtex_header_t * dtex_header, uint32_t * bugger){
-	;
-}
-
 //This function takes an element from the texture array and converts it from whatever bpc combo you set to RGBA8888
 void dtex_argb_to_rgba8888(dtex_header_t * dtex_header, uint32_t * bugger,
 	uint8_t bpc_a, uint8_t bpc_r, uint8_t bpc_g, uint8_t bpc_b){
@@ -45,59 +41,107 @@ void dtex_argb_to_rgba8888(dtex_header_t * dtex_header, uint32_t * bugger,
 	return;
 }
 
-//This is the function that JamoHTP did. It boggled my mind too much
-uint32_t get_twiddled_index(uint16_t w, uint16_t h, uint32_t p){
-    uint32_t ddx = 1, ddy = w;
-    uint32_t q = 0;
-
-    for(int i = 0; i < 16; i++){
-        if(h >>= 1){
-            if(p & 1){q |= ddy;}
-            p >>= 1;
-        }
-        ddy <<= 1;
-        if(w >>= 1){
-            if(p & 1){q |= ddx;}
-            p >>= 1;
-        }
-        ddx <<= 1;
-    }
-
-    return q;
-}
-
 uint32_t argb8888_to_rgba8888(uint32_t argb8888){
 	return (argb8888 << 8) + bit_extracted(argb8888, 8, 24);
 }
 
 //Given an array of indexes and a dtex.pal file, it will replace all indexes with the correct colour
-uint8_t apply_palette(char * palette_path, uint32_t * bugger, uint32_t texture_size){
+uint8_t apply_palette(dtex_header_t * dtex_header, uint32_t * bugger, char * texture_path){
+	char * palette_path = (char *) malloc(sizeof(char) * (strlen(texture_path) + 5));
+	if(palette_path == NULL){return 1;}
+	strcpy(palette_path, texture_path);
+	palette_path[strlen(texture_path)] = '.';
+	palette_path[strlen(texture_path) + 1] = 'p';
+	palette_path[strlen(texture_path) + 2] = 'a';
+	palette_path[strlen(texture_path) + 3] = 'l';
+	palette_path[strlen(texture_path) + 4] = '\0';
+
 	dpal_header_t dpal_header;
 	
 	FILE * palette_file = fopen(palette_path, "rb");
-	if(!palette_file){return 1;}
+	free(palette_path);
+	if(!palette_file){return 2;}
 
-	if(fread(&dpal_header, sizeof(dpal_header_t), 1, palette_file) != 1){fclose(palette_file); return 2;}
+	if(fread(&dpal_header, sizeof(dpal_header_t), 1, palette_file) != 1){fclose(palette_file); return 3;}
 
-	if(memcmp(dpal_header.magic, "DPAL", 4)){fclose(palette_file); return 3;}
+	if(memcmp(dpal_header.magic, "DPAL", 4)){fclose(palette_file); return 4;}
 
 	uint32_t * palette_buffer = (uint32_t *) malloc(sizeof(uint32_t) * dpal_header.color_count);
-	if(palette_buffer == NULL){fclose(palette_file); return 4;}
+	if(palette_buffer == NULL){fclose(palette_file); return 5;}
 
-	if(fread(palette_buffer, sizeof(uint32_t) * dpal_header.color_count, 1, palette_file) != 1){fclose(palette_file); return 5;}
+	if(fread(palette_buffer, sizeof(uint32_t) * dpal_header.color_count, 1, palette_file) != 1){fclose(palette_file); return 6;}
 	fclose(palette_file);
 
-	for(int i = 0; i < texture_size; i++){
+	for(int i = 0; i < dtex_header->width * dtex_header->height; i++){
 		if(bugger[i] < dpal_header.color_count){
 			bugger[i] = argb8888_to_rgba8888(palette_buffer[bugger[i]]);
 		}
 		else{	//Invalid palette index
-			printf("%d\n", bugger[i]);
-			return 6;
+			return 7;
 		}
 	}
 
 	return 0;
+}
+
+//Based on the cow example, I think the Green channel is (mostly) fine and the R/B channels are defective
+uint32_t yuv444_to_rgba8888(uint8_t y, uint8_t u, uint8_t v){
+	//Note RGB must be clamped within 0 to 255, the uint8_t does this automatically
+	uint8_t R = y + (11/8) * (v - 128);
+	uint8_t G = y - 0.25 * (11/8) * (u - 128) - (0.5 * (11/8) * (v - 128));
+	uint8_t B = y + 1.25 * (11/8) * (u - 128);
+	return (R << 24) + (G << 16) + (B << 8) + 255;	//RGBA with full alpha
+}
+
+/*
+From wiki
+C = y - 16
+D = u - 128
+E = v - 128
+R = ((298 * C + 409 * E + 128) >> 8) % 256
+G = ((298 * C - 100 * D - 208 * E + 128) >> 8) % 256
+B = ((298 * C + 516 * D + 128) >> 8) % 256
+
+R = ((298 * (y - 16) + 409 * (v - 128) + 128) >> 8) % 256
+G = ((298 * (y - 16) - 100 * (u - 128) - 208 * (v - 128) + 128) >> 8) % 256
+B = ((298 * (y - 16) + 516 * (u - 128) + 128) >> 8) % 256
+*/
+
+void yuv422_to_rgba8888(dtex_header_t * dtex_header, uint32_t * bugger){
+	//We handle 2 pixels at a time (4 bytes = 2 pixels, u y1, v, y2)
+	uint16_t byte_section[2];	//Contains 2 vars
+	for(int i = 0; i < dtex_header->width * dtex_header->height; i += 2){
+		//Might need to swap order in pairs (u/y1 and v/y2)
+		uint8_t u = bit_extracted(bugger[i], 8, 0);
+		uint8_t y1 = bit_extracted(bugger[i], 8, 8);
+		uint8_t v = bit_extracted(bugger[i + 1], 8, 0);
+		uint8_t y2 = bit_extracted(bugger[i + 1], 8, 8);
+
+		bugger[i] = yuv444_to_rgba8888(y1, u, v);
+		bugger[i + 1] = yuv444_to_rgba8888(y2, u, v);
+	}
+	return;
+}
+
+//This is the function that JamoHTP did. It boggled my mind too much
+uint32_t get_twiddled_index(uint16_t w, uint16_t h, uint32_t p){
+	uint32_t ddx = 1, ddy = w;
+	uint32_t q = 0;
+
+	for(int i = 0; i < 16; i++){
+		if(h >>= 1){
+			if(p & 1){q |= ddy;}
+			p >>= 1;
+		}
+		ddy <<= 1;
+		if(w >>= 1){
+			if(p & 1){q |= ddx;}
+			p >>= 1;
+		}
+		ddx <<= 1;
+	}
+
+	return q;
 }
 
 uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, uint16_t * width){
@@ -170,7 +214,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 			bpc[0] = 0; bpc[1] = 5; bpc[2] = 6; bpc[3] = 5; bpp = 16; rgb = true; break;
 		case 2:
 			bpc[0] = 4; bpc[1] = 4; bpc[2] = 4; bpc[3] = 4; bpp = 16; rgb = true; break;
-		case 3:	//YUV422
+		case 3:
 			bpp = 16; yuv = true; break;
 		case 4:	//BUMPMAP
 			printf("Pixel format %d isn't supported\n", pixel_format);
@@ -232,17 +276,8 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 		dtex_argb_to_rgba8888(&dtex_header, *bugger, bpc[0], bpc[1], bpc[2], bpc[3]);
 	}
 	else if(paletted){
-		char * palette_path = (char *) malloc(sizeof(char) * (strlen(texture_path) + 5));
-		if(palette_path == NULL){return 8;}
-		strcpy(palette_path, texture_path);
-		palette_path[strlen(texture_path)] = '.';
-		palette_path[strlen(texture_path) + 1] = 'p';
-		palette_path[strlen(texture_path) + 2] = 'a';
-		palette_path[strlen(texture_path) + 3] = 'l';
-		palette_path[strlen(texture_path) + 4] = '\0';
-		error = apply_palette(palette_path, *bugger, dtex_header.width * dtex_header.height);
-		if(error){return 8 + error;}	//Error goes up t0 6
-		free(palette_path);
+		error = apply_palette(&dtex_header, *bugger, texture_path);
+		if(error){return 7 + error;}	//Error goes up to 7
 	}
 	else if(yuv){
 		yuv422_to_rgba8888(&dtex_header, *bugger);
