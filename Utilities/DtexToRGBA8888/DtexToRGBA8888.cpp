@@ -281,27 +281,56 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 	//Read the whole file into memory
 	uint8_t error = 0;
 	uint16_t extracted;
-	for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
-		if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
+	int index;
+	// for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
+		// if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
+
+
 		if(bpp != 4){
-			// for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
-				// if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
-				dtex_buffer[i] = extracted;
+			// if(twiddled){
+			// 	index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
 			// }
+			// else{
+			// 	index = i;
+			// }
+			for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
+				if(twiddled){
+					index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
+				}
+				else{
+					index = i;
+				}
+
+				if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
+				dtex_buffer[index] = extracted;
+			}
 		}
 		else{	//PAL4BPP
-			// for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
+			// if(twiddled){
+			// 	index = get_twiddled_index(dtex_header.width, dtex_header.height, i + (1 - j));
+			// }
+			// else{
+			// 	index = i + (1 - j);
+			// }
+			for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
 				uint16_t byte_section[2];	//Extracted must be split into two vars containing the top and bottom 4 bits
-				// if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
+				if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
 				byte_section[0] = bit_extracted(extracted, 4, 4);
 				byte_section[1] = bit_extracted(extracted, 4, 0);
 				for(int j = 0; j < 2; j++){
-					dtex_buffer[i + (1 - j)] = byte_section[j];
+					if(twiddled){
+						index = get_twiddled_index(dtex_header.width, dtex_header.height, i + (1 - j));
+					}
+					else{
+						index = i + (1 - j);
+					}
+
+					dtex_buffer[index] = byte_section[j];
 					i += j;
 				}
-			// }
+			}
 		}
-	}
+	// }
 
 	fclose(texture_file);
 	if(error){return 7;}
@@ -325,24 +354,26 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 		return 15;
 	}
 
+	*rgba8888_buffer = dtex_buffer;
+
 	//Untwiddle
-	if(twiddled){
-		*rgba8888_buffer = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
-		if(*rgba8888_buffer == NULL){
-			printf("Malloc failed");
-			return 16;
-		}
-		uint32_t array_index;
-		for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
-			array_index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
-																						//We then set that index pixel to the value at index i
-			(*rgba8888_buffer)[array_index] = dtex_buffer[i];
-		}
-		free(dtex_buffer);
-	}
-	else{
-		*rgba8888_buffer = dtex_buffer;
-	}
+	// if(twiddled){
+	// 	*rgba8888_buffer = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
+	// 	if(*rgba8888_buffer == NULL){
+	// 		printf("Malloc failed");
+	// 		return 16;
+	// 	}
+	// 	uint32_t array_index;
+	// 	for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
+	// 		array_index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
+	// 																					//We then set that index pixel to the value at index i
+	// 		(*rgba8888_buffer)[array_index] = dtex_buffer[i];
+	// 	}
+	// 	free(dtex_buffer);
+	// }
+	// else{
+	// 	*rgba8888_buffer = dtex_buffer;
+	// }
 
 	//Set the dimensions
 	*width = dtex_header.width;
@@ -374,7 +405,7 @@ int main(int argC, char *argV[]){
 	bool flag_png_preview;
 	for(int i = 1; i < argC; i++){
 		!strcmp(argV[i], "--preview") ? flag_png_preview = true : flag_png_preview = false;
-		if(argC == 3){
+		if(argC == 3 && flag_png_preview){
 			goto invalidInput;
 			return 0;
 		}
@@ -418,3 +449,6 @@ int main(int argC, char *argV[]){
 
 	return 0;
 }
+
+//NOTE: YUV422 format is a little dull compared to the DTEX preview
+

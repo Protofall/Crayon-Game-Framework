@@ -32,22 +32,40 @@ clean:
 	rm -f *.bin
 
 run:
-	./$(EXE)
+	./DtexToRGBA8888 textures/cow_RGB565.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/cow_YUV422.dtex lol.bin --preview
+
+	./DtexToRGBA8888 textures/cow_part_YUV422.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/cow_part_YUV422_s.dtex lol.bin --preview
+
+	./DtexToRGBA8888 textures/dwarfy_ARGB1555.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/dwarfy_RGB565.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/dwarfy_ARGB4444.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/dwarfy_YUV422.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/dwarfy_BUMPMAP.dtex lol.bin --preview
+
+	./DtexToRGBA8888 textures/simpleRect_RGB565.dtex lol.bin --preview
+
+	./DtexToRGBA8888 textures/insta_RGB565.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/insta_PAL4BPP.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/insta_PAL8BPP.dtex lol.bin --preview
+
 
 dtex_examples:
-	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB1555.dtex" -f "ARGB1555"
-	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_RGB565.dtex" -f "RGB565"
-	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB4444.dtex" -f "ARGB4444"
-	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_YUV422.dtex" -f "YUV422"
-	#texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_BUMPMAP.dtex" -f "BUMPMAP"
-
 	texconv -i "textures/source/cow.png" -o "textures/cow_RGB565.dtex" -f "RGB565"
 	texconv -i "textures/source/cow.png" -o "textures/cow_YUV422.dtex" -f "YUV422"
 
 	texconv -i "textures/source/cow_part.png" -o "textures/cow_part_YUV422.dtex" -f "YUV422"
 	texconv -i "textures/source/cow_part.png" -o "textures/cow_part_YUV422_s.dtex" -f "YUV422" -stride 1	#32/32 = 1. Basically gives us an untwiddled version
+
+	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB1555.dtex" -f "ARGB1555"
+	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_RGB565.dtex" -f "RGB565"
+	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB4444.dtex" -f "ARGB4444"
+	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_YUV422.dtex" -f "YUV422"
+	#texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_BUMPMAP.dtex" -f "BUMPMAP"
 	
 	texconv -i "textures/source/simpleRect.png" -o "textures/simpleRect_RGB565.dtex" -f "RGB565"	#Showing non-square textures work
+	texconv -i "textures/source/simpleRect.png" -o "textures/simpleRect_PAL4BPP.dtex" -f "PAL4BPP"
 
 	texconv -i "textures/source/insta.png" -o "textures/insta_RGB565.dtex" -f "RGB565"
 	texconv -i "textures/source/insta.png" -o "textures/insta_PAL4BPP.dtex" -f "PAL4BPP"
