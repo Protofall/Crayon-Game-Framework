@@ -34,29 +34,47 @@ clean:
 run:
 	./DtexToRGBA8888 textures/cow_RGB565.dtex lol.bin --preview
 	./DtexToRGBA8888 textures/cow_YUV422.dtex lol.bin --preview
-
-	./DtexToRGBA8888 textures/cow_part_YUV422.dtex lol.bin --preview
-	./DtexToRGBA8888 textures/cow_part_YUV422_s.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/cow_YUV422_s.dtex lol.bin --preview
 
 	./DtexToRGBA8888 textures/dwarfy_ARGB1555.dtex lol.bin --preview
 	./DtexToRGBA8888 textures/dwarfy_RGB565.dtex lol.bin --preview
 	./DtexToRGBA8888 textures/dwarfy_ARGB4444.dtex lol.bin --preview
 	./DtexToRGBA8888 textures/dwarfy_YUV422.dtex lol.bin --preview
-	./DtexToRGBA8888 textures/dwarfy_BUMPMAP.dtex lol.bin --preview
+	#./DtexToRGBA8888 textures/dwarfy_BUMPMAP.dtex lol.bin --preview
 
 	./DtexToRGBA8888 textures/simpleRect_RGB565.dtex lol.bin --preview
+
+	./DtexToRGBA8888 textures/strideTest_RGB565.dtex lol.bin --preview
 
 	./DtexToRGBA8888 textures/insta_RGB565.dtex lol.bin --preview
 	./DtexToRGBA8888 textures/insta_PAL4BPP.dtex lol.bin --preview
 	./DtexToRGBA8888 textures/insta_PAL8BPP.dtex lol.bin --preview
 
+#To show --preview is causing issues
+run2:
+	./DtexToRGBA8888 textures/cow_RGB565.dtex lol.bin
+	./DtexToRGBA8888 textures/cow_YUV422.dtex lol.bin
+	./DtexToRGBA8888 textures/cow_YUV422_s.dtex lol.bin
+
+	./DtexToRGBA8888 textures/dwarfy_ARGB1555.dtex lol.bin
+	./DtexToRGBA8888 textures/dwarfy_RGB565.dtex lol.bin
+	./DtexToRGBA8888 textures/dwarfy_ARGB4444.dtex lol.bin
+	./DtexToRGBA8888 textures/dwarfy_YUV422.dtex lol.bin
+	#./DtexToRGBA8888 textures/dwarfy_BUMPMAP.dtex lol.bin
+
+	./DtexToRGBA8888 textures/simpleRect_RGB565.dtex lol.bin
+
+	./DtexToRGBA8888 textures/strideTest_RGB565.dtex lol.bin
+
+	./DtexToRGBA8888 textures/insta_RGB565.dtex lol.bin
+	./DtexToRGBA8888 textures/insta_PAL4BPP.dtex lol.bin
+	./DtexToRGBA8888 textures/insta_PAL8BPP.dtex lol.bin
+
 
 dtex_examples:
 	texconv -i "textures/source/cow.png" -o "textures/cow_RGB565.dtex" -f "RGB565"
 	texconv -i "textures/source/cow.png" -o "textures/cow_YUV422.dtex" -f "YUV422"
-
-	texconv -i "textures/source/cow_part.png" -o "textures/cow_part_YUV422.dtex" -f "YUV422"
-	texconv -i "textures/source/cow_part.png" -o "textures/cow_part_YUV422_s.dtex" -f "YUV422" -stride 1	#32/32 = 1. Basically gives us an untwiddled version
+	texconv -i "textures/source/cow.png" -o "textures/cow_YUV422_s.dtex" -f "YUV422" -stride 4	#128/32 = 4
 
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB1555.dtex" -f "ARGB1555"
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_RGB565.dtex" -f "RGB565"
@@ -66,6 +84,8 @@ dtex_examples:
 	
 	texconv -i "textures/source/simpleRect.png" -o "textures/simpleRect_RGB565.dtex" -f "RGB565"	#Showing non-square textures work
 	texconv -i "textures/source/simpleRect.png" -o "textures/simpleRect_PAL4BPP.dtex" -f "PAL4BPP"
+
+	texconv -i "textures/source/strideTest.png" -o "textures/strideTest_RGB565.dtex" -f "RGB565" -stride 3	#96/32 = 3. Note stride only applies to width
 
 	texconv -i "textures/source/insta.png" -o "textures/insta_RGB565.dtex" -f "RGB565"
 	texconv -i "textures/source/insta.png" -o "textures/insta_PAL4BPP.dtex" -f "PAL4BPP"
