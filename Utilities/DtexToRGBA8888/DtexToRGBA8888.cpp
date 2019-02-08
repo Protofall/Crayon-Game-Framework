@@ -5,6 +5,8 @@
 
 #include "png_assist.h"
 
+#define DTEX_DEBUG 1
+
 typedef struct dtex_header{
 	uint8_t magic[4]; //magic number "DTEX"
 	uint16_t   width; //texture width in pixels
@@ -19,24 +21,24 @@ typedef struct dpal_header{
 } dpal_header_t;
 
 //This function takes an element from the texture array and converts it from whatever bpc combo you set to RGBA8888
-void dtex_argb_to_rgba8888(dtex_header_t * dtex_header, uint32_t * bugger,
+void dtex_argb_to_rgba8888(dtex_header_t * dtex_header, uint32_t * dtex_buffer,
 	uint8_t bpc_a, uint8_t bpc_r, uint8_t bpc_g, uint8_t bpc_b){
 	uint16_t extracted;
 
 	for(int i = 0; i < dtex_header->width * dtex_header->height; i++){
-		extracted = bugger[i];
+		extracted = dtex_buffer[i];
 
 		// (extracted value) * (Max for 8bpc) / (Max for that bpc) = value
 		if(bpc_a != 0){
-			bugger[i] = bit_extracted(extracted, bpc_a, bpc_r + bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_a) - 1);	//Alpha
+			dtex_buffer[i] = bit_extracted(extracted, bpc_a, bpc_r + bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_a) - 1);	//Alpha
 		}
 		else{	//We do this to avoid a "divide by zero" error and we don't care about colour data for transparent pixels
-			bugger[i] = (1 << 8) - 1;
+			dtex_buffer[i] = (1 << 8) - 1;
 		}
 
-		bugger[i] += (bit_extracted(extracted, bpc_r, bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_r) - 1)) << 24;		//R
-		bugger[i] += (bit_extracted(extracted, bpc_g, bpc_b) * ((1 << 8) - 1) / ((1 << bpc_g) - 1)) << 16;				//G
-		bugger[i] += (bit_extracted(extracted, bpc_b, 0) * ((1 << 8) - 1) / ((1 << bpc_b) - 1)) << 8;					//B
+		dtex_buffer[i] += (bit_extracted(extracted, bpc_r, bpc_g + bpc_b) * ((1 << 8) - 1) / ((1 << bpc_r) - 1)) << 24;		//R
+		dtex_buffer[i] += (bit_extracted(extracted, bpc_g, bpc_b) * ((1 << 8) - 1) / ((1 << bpc_g) - 1)) << 16;				//G
+		dtex_buffer[i] += (bit_extracted(extracted, bpc_b, 0) * ((1 << 8) - 1) / ((1 << bpc_b) - 1)) << 8;					//B
 	}
 	return;
 }
@@ -46,7 +48,7 @@ uint32_t argb8888_to_rgba8888(uint32_t argb8888){
 }
 
 //Given an array of indexes and a dtex.pal file, it will replace all indexes with the correct colour
-uint8_t apply_palette(dtex_header_t * dtex_header, uint32_t * bugger, char * texture_path){
+uint8_t apply_palette(dtex_header_t * dtex_header, uint32_t * dtex_buffer, char * texture_path){
 	char * palette_path = (char *) malloc(sizeof(char) * (strlen(texture_path) + 5));
 	if(palette_path == NULL){return 1;}
 	strcpy(palette_path, texture_path);
@@ -73,8 +75,8 @@ uint8_t apply_palette(dtex_header_t * dtex_header, uint32_t * bugger, char * tex
 	fclose(palette_file);
 
 	for(int i = 0; i < dtex_header->width * dtex_header->height; i++){
-		if(bugger[i] < dpal_header.color_count){
-			bugger[i] = argb8888_to_rgba8888(palette_buffer[bugger[i]]);
+		if(dtex_buffer[i] < dpal_header.color_count){
+			dtex_buffer[i] = argb8888_to_rgba8888(palette_buffer[dtex_buffer[i]]);
 		}
 		else{	//Invalid palette index
 			return 7;
@@ -90,11 +92,12 @@ uint32_t yuv444_to_rgba8888(uint8_t y, uint8_t u, uint8_t v){
 	uint8_t R = y + (11/8) * (v - 128);
 	uint8_t G = y - 0.25 * (11/8) * (u - 128) - (0.5 * (11/8) * (v - 128));
 	uint8_t B = y + 1.25 * (11/8) * (u - 128);
+
 	return (R << 24) + (G << 16) + (B << 8) + 255;	//RGBA with full alpha
 }
 
 /*
-From wiki
+From wiki (If I use this, it will create a glitchy MESS)
 C = y - 16
 D = u - 128
 E = v - 128
@@ -107,19 +110,42 @@ G = ((298 * (y - 16) - 100 * (u - 128) - 208 * (v - 128) + 128) >> 8) % 256
 B = ((298 * (y - 16) + 516 * (u - 128) + 128) >> 8) % 256
 */
 
-void yuv422_to_rgba8888(dtex_header_t * dtex_header, uint32_t * bugger){
-	//We handle 2 pixels at a time (4 bytes = 2 pixels, u y1, v, y2)
+/*
+
+YUV422
+Note YUV422 doesn't mean 4 + 2 + 2 bits per pixel (1 bytes per pixel), its actually a ration. 4:2:2
+
+To convert from YUV422 to RGB888, we first need to convert to YUV444
+
+YUV444    3 bytes per pixel     (12 bytes per 4 pixels)
+YUV422    4 bytes per 2 pixels  ( 8 bytes per 4 pixels)		//Does this mean "2 bytes per pixel"? No, its stored "u, y1, v, y2" and the u/v is shared for those two pixels...for some reason...So although each pixel is still "12 bits/1.5 bytes" because data is shared Its more like "16bits/2 bytes" per pixel
+
+*/
+
+void yuv422_to_rgba8888(dtex_header_t * dtex_header, uint32_t * dtex_buffer){
+	//We handle 2 pixels at a time (4 bytes = 2 pixels, u y0, v, y1)
 	uint16_t byte_section[2];	//Contains 2 vars
 	for(int i = 0; i < dtex_header->width * dtex_header->height; i += 2){
-		//Might need to swap order in pairs (u/y1 and v/y2)
-		uint8_t u = bit_extracted(bugger[i], 8, 0);
-		uint8_t y1 = bit_extracted(bugger[i], 8, 8);
-		uint8_t v = bit_extracted(bugger[i + 1], 8, 0);
-		uint8_t y2 = bit_extracted(bugger[i + 1], 8, 8);
+		uint8_t u = bit_extracted(dtex_buffer[i], 8, 0);
+		uint8_t y0 = bit_extracted(dtex_buffer[i], 8, 8);
+		uint8_t v = bit_extracted(dtex_buffer[i + 1], 8, 0);
+		uint8_t y1 = bit_extracted(dtex_buffer[i + 1], 8, 8);
 
-		bugger[i] = yuv444_to_rgba8888(y1, u, v);
-		bugger[i + 1] = yuv444_to_rgba8888(y2, u, v);
+		dtex_buffer[i] = yuv444_to_rgba8888(y0, u, v);
+		dtex_buffer[i + 1] = yuv444_to_rgba8888(y1, u, v);
+		// if(i == 0){
+			// printf("Test\n");
+			#if DTEX_DEBUG == 1
+			// printf("%d, %d, %d, %d\n", y0, y1, u, v);	//For some reason having a printf in this function causes a crash with libpng stuff????
+			#endif
+			//174, 175, 154, 155
+				//Produces (201, 154, 206) and (147, 192, 141) instead of (139,182,218) and (138,181,217)
+					//Just by looking at the red calculation, "v - 128" = "155 - 128" = 27. Since all components are positive,
+					//ofc the result for red would be greater than y0
+				//Green is more interesting...
+		// }
 	}
+	// printf("Apparently libpng hates this printf :(\n");
 	return;
 }
 
@@ -144,7 +170,10 @@ uint32_t get_twiddled_index(uint16_t w, uint16_t h, uint32_t p){
 	return q;
 }
 
-uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, uint16_t * width){
+//Maybe change this so I have the "unformatted" buffer and then there's rgba8888_buffer, the main buffer
+	//And a seperate buffer for compressed data before its loaded in
+	//This means we only malloc rgba8888_buffer at the end when we're doing the un-twiddling
+uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * height, uint16_t * width){
 	dtex_header_t dtex_header;
 
 	FILE * texture_file = fopen(texture_path, "rb");
@@ -160,9 +189,6 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 	uint8_t pixel_format = bit_extracted(dtex_header.type, 3, 27);
 	bool compressed = dtex_header.type & (1 << 30);
 	bool mipmapped = dtex_header.type & (1 << 31);
-
-	// printf("Format details: str_set %d, str %d, twid %d, pix %d, comp %d, mip %d, whole %d\n",
-		// stride_setting, stride, twiddled, pixel_format, compressed, mipmapped, dtex_header.type);
 
 	//'type' contains the various flags and the pixel format packed together:
 	// bits 0-4 : Stride setting.
@@ -190,15 +216,29 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 	// 	0 = No mipmaps
 	// 	1 = Mipmapped
 
+	#if DTEX_DEBUG == 1
+	printf("Format details: str_set %d, str %d, twid %d, pix %d, comp %d, mip %d, whole %d\n",
+		stride_setting, stride, twiddled, pixel_format, compressed, mipmapped, dtex_header.type);
+
+	if(mipmapped || compressed || pixel_format == 4){
+		printf("Unsupported dtex parameter detected. Stopping conversion\n");
+		fclose(texture_file);
+		return 4;
+	}
+
+	#else
+
 	if(mipmapped || compressed || stride || pixel_format == 4){
 		printf("Unsupported dtex parameter detected. Stopping conversion\n");
 		fclose(texture_file);
 		return 4;
 	}
 
-	//Allocate some space
-	*bugger = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
-	if(*bugger == NULL){
+	#endif
+
+	//When adding compression support, also malloc an array to dump the compressed file
+	uint32_t * dtex_buffer = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
+	if(dtex_buffer == NULL){
 		printf("Malloc failed");
 		fclose(texture_file);
 		return 5;
@@ -246,7 +286,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 		if(bpp != 4){
 			// for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
 				// if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
-				(*bugger)[i] = extracted;
+				dtex_buffer[i] = extracted;
 			// }
 		}
 		else{	//PAL4BPP
@@ -256,14 +296,9 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 				byte_section[0] = bit_extracted(extracted, 4, 4);
 				byte_section[1] = bit_extracted(extracted, 4, 0);
 				for(int j = 0; j < 2; j++){
-					(*bugger)[i + (1 - j)] = byte_section[j];
+					dtex_buffer[i + (1 - j)] = byte_section[j];
 					i += j;
 				}
-				// for(int j = 1; j > 0; j--){
-				// 	(*bugger)[i + j] = byte_section[j];
-				// 	i += (!j);
-				// }
-
 			// }
 		}
 	}
@@ -273,14 +308,14 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 
 	//Convert from whatever format to RGBA8888
 	if(rgb){
-		dtex_argb_to_rgba8888(&dtex_header, *bugger, bpc[0], bpc[1], bpc[2], bpc[3]);
+		dtex_argb_to_rgba8888(&dtex_header, dtex_buffer, bpc[0], bpc[1], bpc[2], bpc[3]);
 	}
 	else if(paletted){
-		error = apply_palette(&dtex_header, *bugger, texture_path);
+		error = apply_palette(&dtex_header, dtex_buffer, texture_path);
 		if(error){return 7 + error;}	//Error goes up to 7
 	}
 	else if(yuv){
-		yuv422_to_rgba8888(&dtex_header, *bugger);
+		yuv422_to_rgba8888(&dtex_header, dtex_buffer);
 	}
 	else if(bumpmap){
 		;
@@ -292,8 +327,8 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 
 	//Untwiddle
 	if(twiddled){
-		uint32_t * twiddled_index = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
-		if(twiddled_index == NULL){
+		*rgba8888_buffer = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
+		if(*rgba8888_buffer == NULL){
 			printf("Malloc failed");
 			return 16;
 		}
@@ -301,11 +336,12 @@ uint8_t load_dtex(char * texture_path, uint32_t ** bugger, uint16_t * height, ui
 		for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
 			array_index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
 																						//We then set that index pixel to the value at index i
-			twiddled_index[array_index] = (*bugger)[i];
+			(*rgba8888_buffer)[array_index] = dtex_buffer[i];
 		}
-		free(*bugger);
-		*bugger = twiddled_index;
-		twiddled_index = NULL;
+		free(dtex_buffer);
+	}
+	else{
+		*rgba8888_buffer = dtex_buffer;
 	}
 
 	//Set the dimensions

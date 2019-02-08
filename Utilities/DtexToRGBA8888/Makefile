@@ -43,6 +43,9 @@ dtex_examples:
 
 	texconv -i "textures/source/cow.png" -o "textures/cow_RGB565.dtex" -f "RGB565"
 	texconv -i "textures/source/cow.png" -o "textures/cow_YUV422.dtex" -f "YUV422"
+
+	texconv -i "textures/source/cow_part.png" -o "textures/cow_part_YUV422.dtex" -f "YUV422"
+	texconv -i "textures/source/cow_part.png" -o "textures/cow_part_YUV422_s.dtex" -f "YUV422" -stride 1	#32/32 = 1. Basically gives us an untwiddled version
 	
 	texconv -i "textures/source/simpleRect.png" -o "textures/simpleRect_RGB565.dtex" -f "RGB565"	#Showing non-square textures work
 
