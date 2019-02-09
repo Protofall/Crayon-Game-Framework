@@ -32,26 +32,26 @@ clean:
 	rm -f *.bin
 
 run:
-	./DtexToRGBA8888 textures/cow_RGB565.dtex lol.bin --preview
-	./DtexToRGBA8888 textures/cow_YUV422.dtex lol.bin --preview
-	./DtexToRGBA8888 textures/cow_YUV422_s.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/cow_RGB565.dtex --binary lol.bin --png textures/cow_RGB565.png
+	./DtexToRGBA8888 textures/cow_YUV422.dtex --binary lol.bin --png textures/cow_YUV422.png
+	./DtexToRGBA8888 textures/cow_YUV422_s.dtex --binary lol.bin --png textures/cow_YUV422_s.png
 
-	./DtexToRGBA8888 textures/dwarfy_ARGB1555.dtex lol.bin --preview
-	./DtexToRGBA8888 textures/dwarfy_RGB565.dtex lol.bin --preview
-	./DtexToRGBA8888 textures/dwarfy_ARGB4444.dtex lol.bin --preview
-	./DtexToRGBA8888 textures/dwarfy_YUV422.dtex lol.bin --preview
-	#./DtexToRGBA8888 textures/dwarfy_BUMPMAP.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/dwarfy_ARGB1555.dtex --binary lol.bin --png textures/dwarfy_ARGB1555.png
+	./DtexToRGBA8888 textures/dwarfy_RGB565.dtex --binary lol.bin --png textures/dwarfy_RGB565.png
+	./DtexToRGBA8888 textures/dwarfy_ARGB4444.dtex --binary lol.bin --png textures/dwarfy_ARGB4444.png
+	./DtexToRGBA8888 textures/dwarfy_YUV422.dtex --binary lol.bin --png textures/dwarfy_YUV422.png
+	#./DtexToRGBA8888 textures/dwarfy_BUMPMAP.dtex --binary lol.bin --png textures/dwarfy_BUMPMAP.png
 
-	./DtexToRGBA8888 textures/insta_RGB565.dtex lol.bin --preview
-	./DtexToRGBA8888 textures/insta_PAL4BPP.dtex lol.bin --preview
-	./DtexToRGBA8888 textures/insta_PAL8BPP.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/insta_RGB565.dtex --binary lol.bin --png textures/insta_RGB565.png
+	./DtexToRGBA8888 textures/insta_PAL4BPP.dtex --binary lol.bin --png textures/insta_PAL4BPP.png
+	./DtexToRGBA8888 textures/insta_PAL8BPP.dtex --binary lol.bin --png textures/insta_PAL8BPP.png
 
-	./DtexToRGBA8888 textures/lines_PAL8BPP.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/lines_PAL8BPP.dtex --binary lol.bin --png textures/lines_PAL8BPP.png
 
-	./DtexToRGBA8888 textures/simpleRect_RGB565.dtex lol.bin --preview
-	./DtexToRGBA8888 textures/simpleRect_PAL4BPP.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/simpleRect_RGB565.dtex --binary lol.bin --png textures/simpleRect_RGB565.png
+	./DtexToRGBA8888 textures/simpleRect_PAL4BPP.dtex --binary lol.bin --png textures/simpleRect_PAL4BPP.png
 
-	./DtexToRGBA8888 textures/strideTest_RGB565.dtex lol.bin --preview
+	./DtexToRGBA8888 textures/strideTest_RGB565.dtex --binary lol.bin --png textures/strideTest_RGB565.png
 
 dtex_examples:
 	texconv -i "textures/source/cow.png" -o "textures/cow_RGB565.dtex" -f "RGB565"

@@ -5,7 +5,7 @@
 
 #include "png_assist.h"
 
-#define DTEX_DEBUG 1
+#define DTEX_DEBUG 0
 #define WHY_DOESNT_THIS_WORK 0
 
 typedef struct dtex_header{
@@ -225,55 +225,12 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 	#if DTEX_DEBUG == 1
 	printf("Format details: str_set %d, str %d, twid %d, pix %d, comp %d, mip %d, whole %d\n",
 		stride_setting, stride, twiddled, pixel_format, compressed, mipmapped, dtex_header.type);
-	/*
-
-	[ERROR] Image textures/source/strideTest.png has an invalid texture size 192x192
-
-	XXXXX
-	00001	= 1
-	00010	= 2
-	00011	= 3
-	00100	= 4
-	00101	= 5
-	00110	= 6
-	00111	= 7
-	01000	= 8
-	10000	= 16
-	11111	= 31
-
-	//There's no reason 3/6 shouldn't work
-
-	*/
-
-	if(mipmapped || compressed || pixel_format == 4){
-		printf("Unsupported dtex parameter detected. Stopping conversion\n");
-		fclose(texture_file);
-		return 4;
-	}
-
-	#else
-
-	if(mipmapped || compressed || stride || pixel_format == 4){
-		printf("Unsupported dtex parameter detected. Stopping conversion\n");
-		fclose(texture_file);
-		return 4;
-	}
-
 	#endif
 
-	//The width/height aren't accurate (Goes to next power of two up). This will give us the true dimensions
-	if(stride){
-		dtex_header.width = stride_setting * 32;
-		// dtex_header.height = stride_setting * 32;
-	}
-
-
-	//When adding compression support, also malloc an array to dump the compressed file
-	*rgba8888_buffer = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
-	if(*rgba8888_buffer == NULL){
-		printf("Malloc failed\n");
+	if(mipmapped || compressed || pixel_format == 4){
+		printf("Program incomplete. Unsupported dtex parameter detected. Stopping conversion\n");
 		fclose(texture_file);
-		return 5;
+		return 4;
 	}
 
 	uint8_t bpc[4];
@@ -291,7 +248,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 		case 4:	//BUMPMAP
 			printf("Pixel format %d isn't supported\n", pixel_format);
 			fclose(texture_file);
-			return 6;
+			return 5;
 		case 5:
 			bpp = 4; paletted = true; break;
 		case 6:
@@ -299,7 +256,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 		default:
 			printf("Pixel format %d doesn't exist\n", pixel_format);
 			fclose(texture_file);
-			return 6;
+			return 5;
 	}
 
 	size_t read_size;
@@ -310,6 +267,26 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 		read_size = sizeof(uint8_t);
 	}
 
+	if((twiddled && stride) || (compressed && (yuv || bumpmap)) ||
+		((!twiddled || stride) && (compressed || mipmapped || paletted))){
+		printf("Invalid combination of header parameters\n");
+		fclose(texture_file);
+		return 6;
+	}
+
+	//The width isn't accurate (Goes to next power of two up). This will give us the true width
+	if(stride){
+		dtex_header.width = stride_setting * 32;
+	}
+
+
+	//When adding compression support, also malloc an array to dump the compressed file
+	*rgba8888_buffer = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
+	if(*rgba8888_buffer == NULL){
+		printf("Malloc failed\n");
+		fclose(texture_file);
+		return 7;
+	}
 
 	//Read the whole file into memory and untwiddle if need be
 	uint8_t error = 0;
@@ -388,7 +365,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 	#endif
 
 	fclose(texture_file);
-	if(error){return 7;}
+	if(error){return 8;}
 
 	//Convert from whatever format to RGBA8888
 	if(rgb){
@@ -396,7 +373,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 	}
 	else if(paletted){
 		error = apply_palette(&dtex_header, *rgba8888_buffer, texture_path);
-		if(error){return 7 + error;}	//Error goes up to 7
+		if(error){return 8 + error;}	//Error goes up to 7
 	}
 	else if(yuv){
 		yuv422_to_rgba8888(&dtex_header, *rgba8888_buffer);
@@ -406,7 +383,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 	}
 	else{
 		printf("Somehow an unsupported texture format got through\n");
-		return 15;
+		return 16;
 	}
 
 	//Set the dimensions
@@ -418,11 +395,11 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 
 void invalid_input(){
 	printf("\nWrong number of arguments provided. This is the format\n");
-	printf("./DtexToRGBA8888 [dtex_filename] [rgba8888_binary_filename] *[--preview]\n");
-	printf("Preview is an optional tag that will make a png aswell\n");
+	printf("./DtexToRGBA8888 [dtex_filename] *[--binary] [rgba8888_binary_filename] *[--png] [png_filename]\n");
+	printf("png and binary is an optional tag that toggle png and/or binary outputs\n");
+	printf("However you must choose at least one\n");
 
 	printf("Please not the following stuff isn't supported:\n");
-	printf("\t-Stride\n");
 	printf("\t-BUMPMAP pixel format\n");
 	printf("\t-Compressed\n");
 	printf("\t-Mipmapped\n");
@@ -432,22 +409,42 @@ void invalid_input(){
 
 //Add argb8888/rgba8888 toggle.
 	//rgba8888 is the default
-int main(int argC, char *argV[]){
-	if(argC != 3 && argC != 4){
-		invalid_input();
-		return 1;
-	}
-
-	bool flag_binary_preview;
-	uint8_t binary_index;
-	bool flag_png_preview;
-	uint8_t png_index;
+int main(int argC, char *argV[]){	//argC is params + prog name count. So in "./prog lol 4" argC = 3 ("4" is param index 2)
+	bool flag_binary_preview = false;
+	uint8_t binary_index = 0;
+	bool flag_png_preview = false;
+	uint8_t png_index = 0;
 	for(int i = 1; i < argC; i++){
-		!strcmp(argV[i], "--preview") ? flag_png_preview = true : flag_png_preview = false;
-		if(argC == 3 && flag_png_preview){	//If this is the case, we're missing a file name
+		//1st param is reserved for the dtex name
+		if(i == 1 && !(strlen(argV[i]) >= 4 && strcmp(argV[i] + strlen(argV[i]) - 5, ".dtex") == 0)){
 			invalid_input();
 			return 1;
 		}
+
+		if(!strcmp(argV[i], "--binary")){
+			if(i + 1 >= argC){
+				invalid_input();
+				return 1;
+			}
+			flag_binary_preview = true;
+			binary_index = i + 1;
+		}
+
+		if(!strcmp(argV[i], "--png")){
+			if(i + 1 < argC && strlen(argV[i + 1]) >= 4 && strcmp(argV[i + 1] + strlen(argV[i + 1]) - 4, ".png") == 0){
+				flag_png_preview = true;
+				png_index = i + 1;
+			}
+			else{
+				invalid_input();
+				return 1;
+			}
+		}
+	}
+
+	if(!flag_binary_preview && !flag_png_preview){
+		invalid_input();
+		return 1;
 	}
 
 	uint32_t * texture = NULL;
@@ -461,27 +458,21 @@ int main(int argC, char *argV[]){
 		return 1;
 	}
 
-	FILE * f_binary = fopen(argV[2], "wb");
-	if(f_binary == NULL){
-		printf("Error opening file!\n");
-		return 1;
+	if(flag_binary_preview){
+		FILE * f_binary = fopen(argV[binary_index], "wb");
+		if(f_binary == NULL){
+			printf("Error opening file!\n");
+			return 1;
+		}
+		fwrite(texture, sizeof(uint32_t), height * width, f_binary);	//Note this is stored in little endian
+		fclose(f_binary);
 	}
-	fwrite(texture, sizeof(uint32_t), height * width, f_binary);	//Note this is stored in little endian
-	fclose(f_binary);
 
 	//Output a PNG if requested
 	if(flag_png_preview){
 		png_details_t p_det;
 		if(rgba8888_to_png_details(texture, height, width, &p_det)){return 1;}
-		char * name = (char *) malloc((strlen(argV[1]) + 1) * sizeof(char));
-		strcpy(name, argV[1]);
-		name[strlen(argV[1]) - 4] = 'p';
-		name[strlen(argV[1]) - 3] = 'n';
-		name[strlen(argV[1]) - 2] = 'g';
-		name[strlen(argV[1]) - 1] = '\0';
-		write_png_file(name, &p_det);
-
-		free(name);
+		write_png_file(argV[png_index], &p_det);
 	}
 	free(texture);
 
