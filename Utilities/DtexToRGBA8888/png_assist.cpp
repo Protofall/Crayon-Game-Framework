@@ -73,50 +73,61 @@ void read_png_file(char *filename, png_details * p_det){
 	fclose(fp);
 }
 
+void free_png_texture_buffer(png_details * p_det){
+	for(int y = 0; y < p_det->height; y++){
+		free(p_det->row_pointers[y]);
+	}
+
+	free(p_det->row_pointers);
+	return;
+}
+
 void write_png_file(char *filename, png_details * p_det){
 	int y;
 	FILE *fp = NULL;
-	png_structp png = NULL;
-	png_infop info = NULL;
+	png_structp png_ptr = NULL;
+	png_infop info_ptr = NULL;
+	// png_bytep row = NULL;
 
 	//Open file for writing (binary mode)
 	fp = fopen(filename, "wb");
 	if(!fp){abort();}
 
 	//Initialize write structure
-	png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if(!png){abort();}
+	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if(!png_ptr){abort();}
 
 	//Initialize info structure
-	info = png_create_info_struct(png);
-	if(!info){abort();}
+	info_ptr = png_create_info_struct(png_ptr);
+	if(!info_ptr){abort();}
 
 	//Setup Exception handling
-	if(setjmp(png_jmpbuf(png))){abort();}
+	if(setjmp(png_jmpbuf(png_ptr))){abort();}
 
-	png_init_io(png, fp);
+	png_init_io(png_ptr, fp);
 
-	png_set_IHDR(png, info, p_det->width, p_det->height,
+	png_set_IHDR(png_ptr, info_ptr, p_det->width, p_det->height,
 		8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
 		PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT
 	);
-	png_write_info(png, info);
+	// png_set_IHDR(png_ptr, info_ptr, p_det->width, p_det->height,
+	// 	8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
+	// 	PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE
+	// );
+	png_write_info(png_ptr, info_ptr);
 
 	// To remove the alpha channel for PNG_COLOR_TYPE_RGB format,
 	// Use png_set_filler().
-	//png_set_filler(png, 0, PNG_FILLER_AFTER);
+	//png_set_filler(png_ptr, 0, PNG_FILLER_AFTER);
 
-	png_write_image(png, p_det->row_pointers);
+	png_write_image(png_ptr, p_det->row_pointers);
 
-	png_write_end(png, NULL);
+	png_write_end(png_ptr, NULL);
 
-	for(int y = 0; y < p_det->height; y++){
-		free(p_det->row_pointers[y]);
-	}
-	free(p_det->row_pointers);
+	free_png_texture_buffer(p_det);
 
-	if(png && info){
-		png_destroy_write_struct(&png, &info);
+	if(png_ptr && info_ptr){
+		png_destroy_write_struct(&png_ptr, &info_ptr);
 	}
 
 	fclose(fp);

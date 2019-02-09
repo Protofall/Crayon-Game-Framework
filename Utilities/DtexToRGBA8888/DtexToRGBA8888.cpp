@@ -83,7 +83,7 @@ uint8_t apply_palette(dtex_header_t * dtex_header, uint32_t * dtex_buffer, char 
 				dtex_buffer[i] = argb8888_to_rgba8888(palette_buffer[dtex_buffer[i]]);
 			}
 			else{	//Invalid palette index
-				printf("Paletted texture references colour ID (%u) that doesn't exist\n", dtex_buffer[i]);
+				printf("Paletted texture (Index %d) references colour ID (%u) that DNE\n", i, dtex_buffer[i]);
 				PAL_ERROR(7);
 			}
 		}
@@ -225,13 +225,6 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 	#if DTEX_DEBUG == 1
 	printf("Format details: str_set %d, str %d, twid %d, pix %d, comp %d, mip %d, whole %d\n",
 		stride_setting, stride, twiddled, pixel_format, compressed, mipmapped, dtex_header.type);
-
-	//The width/height aren't accurate (Goes to next power of two up). This will give us the true dimensions
-	if(stride){
-		dtex_header.width = stride_setting * 32;
-		// dtex_header.height = stride_setting * 32;
-	}
-
 	/*
 
 	[ERROR] Image textures/source/strideTest.png has an invalid texture size 192x192
@@ -268,9 +261,16 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 
 	#endif
 
+	//The width/height aren't accurate (Goes to next power of two up). This will give us the true dimensions
+	if(stride){
+		dtex_header.width = stride_setting * 32;
+		// dtex_header.height = stride_setting * 32;
+	}
+
+
 	//When adding compression support, also malloc an array to dump the compressed file
-	uint32_t * dtex_buffer = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
-	if(dtex_buffer == NULL){
+	*rgba8888_buffer = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
+	if(*rgba8888_buffer == NULL){
 		printf("Malloc failed\n");
 		fclose(texture_file);
 		return 5;
@@ -317,6 +317,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 	int index;
 
 	//NOTE for some reason this messes up for PAL8BPP. It appears to read garbage data, but I have no idea why
+		//However sometimes it DOES work...and it turns out correct...what?
 	#if WHY_DOESNT_THIS_WORK == 1
 		for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
 			if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
@@ -329,7 +330,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 				else{
 					index = i;
 				}
-				dtex_buffer[index] = extracted;
+				(*rgba8888_buffer)[index] = extracted;
 			}
 			else{	//PAL4BPP
 				uint16_t byte_section[2];	//Extracted must be split into two vars containing the top and bottom 4 bits
@@ -343,7 +344,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 						index = i + (1 - j);
 					}
 
-					dtex_buffer[index] = byte_section[j];
+					(*rgba8888_buffer)[index] = byte_section[j];
 					i += j;
 				}
 			}
@@ -361,7 +362,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 				}
 
 				if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
-				dtex_buffer[index] = extracted;
+				(*rgba8888_buffer)[index] = extracted;
 			}
 		}
 		else{	//PAL4BPP
@@ -378,7 +379,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 						index = i + (1 - j);
 					}
 
-					dtex_buffer[index] = byte_section[j];
+					(*rgba8888_buffer)[index] = byte_section[j];
 					i += j;
 				}
 			}
@@ -391,14 +392,14 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 
 	//Convert from whatever format to RGBA8888
 	if(rgb){
-		dtex_argb_to_rgba8888(&dtex_header, dtex_buffer, bpc[0], bpc[1], bpc[2], bpc[3]);
+		dtex_argb_to_rgba8888(&dtex_header, *rgba8888_buffer, bpc[0], bpc[1], bpc[2], bpc[3]);
 	}
 	else if(paletted){
-		error = apply_palette(&dtex_header, dtex_buffer, texture_path);
+		error = apply_palette(&dtex_header, *rgba8888_buffer, texture_path);
 		if(error){return 7 + error;}	//Error goes up to 7
 	}
 	else if(yuv){
-		yuv422_to_rgba8888(&dtex_header, dtex_buffer);
+		yuv422_to_rgba8888(&dtex_header, *rgba8888_buffer);
 	}
 	else if(bumpmap){
 		;
@@ -407,8 +408,6 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 		printf("Somehow an unsupported texture format got through\n");
 		return 15;
 	}
-
-	*rgba8888_buffer = dtex_buffer;
 
 	//Set the dimensions
 	*width = dtex_header.width;
@@ -473,19 +472,14 @@ int main(int argC, char *argV[]){
 	//Output a PNG if requested
 	if(flag_png_preview){
 		png_details_t p_det;
-		printf("Tester1\n");
 		if(rgba8888_to_png_details(texture, height, width, &p_det)){return 1;}
-		printf("Tester2\n");
-
-		char * name = (char *) malloc(strlen(argV[1]) * sizeof(char));
+		char * name = (char *) malloc((strlen(argV[1]) + 1) * sizeof(char));
 		strcpy(name, argV[1]);
 		name[strlen(argV[1]) - 4] = 'p';
 		name[strlen(argV[1]) - 3] = 'n';
 		name[strlen(argV[1]) - 2] = 'g';
 		name[strlen(argV[1]) - 1] = '\0';
-		printf("Tester3\n");
 		write_png_file(name, &p_det);
-		printf("Tester4\n");
 
 		free(name);
 	}
@@ -495,4 +489,3 @@ int main(int argC, char *argV[]){
 }
 
 //NOTE: YUV422 format is a little dull compared to the DTEX preview
-

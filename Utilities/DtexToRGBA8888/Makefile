@@ -85,7 +85,7 @@ dtex_examples:
 	texconv -i "textures/source/simpleRect.png" -o "textures/simpleRect_RGB565.dtex" -f "RGB565"	#Showing non-square textures work
 	texconv -i "textures/source/simpleRect.png" -o "textures/simpleRect_PAL4BPP.dtex" -f "PAL4BPP"
 
-	texconv -i "textures/source/strideTest.png" -o "textures/strideTest_RGB565.dtex" -f "RGB565" -stride 3	#96/32 = 3. Note stride only applies to width
+	texconv -i "textures/source/strideTest.png" -o "textures/strideTest_RGB565.dtex" -f "RGB565" -stride 3	#96/32 = 3. Note stride only applies to width (Height of 96 doesn't work)
 
 	texconv -i "textures/source/insta.png" -o "textures/insta_RGB565.dtex" -f "RGB565"
 	texconv -i "textures/source/insta.png" -o "textures/insta_PAL4BPP.dtex" -f "PAL4BPP"
