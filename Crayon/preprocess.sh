@@ -128,11 +128,6 @@ build () {
 			fi
 		done
 
-		# echo "For result $?"
-		# echo -e "\nI have escaped!\n"
-
-		# echo -e "\n\nHow am I here?\n\n"
-
 		IFS=$oldIFS	#Restore IFS
 
 		outputName=$(echo $outputName | sed 's/.$//')	#Remove the trailing character (A full stop hopefully)
@@ -148,10 +143,7 @@ build () {
 			else
 				mkdir "$2/$outputName"
 
-				# echo -e "\noutputName1 $outputName"
 				build "$x" "$2/$outputName" "$3"
-				# echo "outputName2 $outputName"
-				# echo "Previous == $?"
 
 				if [ $(($crayonField & $((1 << 1)))) -ne 0 ];then	#If we have an image tag
 					back="$PWD"
@@ -200,9 +192,12 @@ build () {
 		fi
 
 	done
-	cd ..
+	errorCode=$?
+	if [[ $errorCode != 0 ]]; then
+		exit $errorCode
+	fi
 
-	# exit 0
+	cd ..
 }
 
 noRM=0	#0 means it will remove temp files, 1 means it won't remove them
@@ -229,6 +224,8 @@ echo -e "I haven't tested the BUMPMAP texture format, but it should \"work\"\n"
 build "$assets" "$projectRoot/$cdfs" "$noRM"
 
 exit 0
+
+
 
 #The below comment is very old and I'm not sure if its accurate or not. Please feel free to ignore it
 
