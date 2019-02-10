@@ -14,12 +14,15 @@ extern uint8_t crayon_assist_new_extension(char ** dest, char * source, char * e
 		return 2;
 	}
 	*dest = malloc(sizeof(char) * (i + strlen(extension)));
+	if(!(*dest)){	//Somehow the malloc failed. Thats bad!
+		return 3;
+	}
 	uint16_t j;
 	for(j = 0; j < i; j++){	//Add the all of source except for everything after the last '.'
-	    (*dest)[j] = source[j];
+		(*dest)[j] = source[j];
 	}
-	for(i = 0; i < strlen(extension); i++){	//Append the extension
-	    (*dest)[j + i] = extension[i];
+	for(i = 0; i < strlen(extension) + 1; i++){	//Append the extension
+		(*dest)[j + i] = extension[i];
 	}
 	return 0;
 }

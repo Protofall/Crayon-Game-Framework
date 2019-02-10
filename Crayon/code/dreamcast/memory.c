@@ -79,25 +79,8 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 		if(resultPal){ERROR(7 + resultPal);}
 	}
 
-	char *txt_path = (char *) malloc((path_length) * sizeof(char));  //Add a check here to see if it failed
-	if(!txt_path){ERROR(13);}
-
-	strncpy(txt_path, path, path_length - 4);
-	// strcat(txt_path, "txt");	//At some point comeback and use something like this instead of the 4 commands below
-	txt_path[path_length - 4] = 't';
-	txt_path[path_length - 3] = 'x';
-	txt_path[path_length - 2] = 't';
-	txt_path[path_length - 1] = '\0';
-
-	// char *txt_path = (char *) malloc((path_length + 1) * sizeof(char));  //Add a check here to see if it failed
-	// if(!txt_path){ERROR(13);}
-
-	// strcpy(txt_path, path);
-	// // strcat(txt_path, "txt");	//At some point comeback and use something like this instead of the 4 commands below
-	// txt_path[path_length - 3] = 't';
-	// txt_path[path_length - 2] = 'x';
-	// txt_path[path_length - 1] = 't';
-	// txt_path[path_length - 0] = '\0';
+	char * txt_path = NULL;
+	if(crayon_assist_new_extension(&txt_path, path, "txt")){ERROR(13);}
 
 	sheet_file = fopen(txt_path, "rb");
 	free(txt_path);

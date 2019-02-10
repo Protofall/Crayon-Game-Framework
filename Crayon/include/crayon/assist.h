@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-//UNTESTED
 //Searches for the last '.' in a string and makes copy, but with "extension" after it
 //Note that "." is not a valid source and will result in an error (Since there's nothing before the '.')
 extern uint8_t crayon_assist_new_extension(char ** dest, char * source, char * extension);
