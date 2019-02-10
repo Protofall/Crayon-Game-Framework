@@ -64,7 +64,7 @@ packerSheet () {
 	cd ..
 }
 
-#Parameters: #$1 is asset, $2 is projectRoot/cdfs, $3 is the "noRM" flag
+#Parameters: $1 is asset, $2 is projectRoot/cdfs, $3 is the "noRM" flag
 build () {
 	cd "$1"
 	ls "$PWD" | while read x; do
@@ -88,6 +88,8 @@ build () {
 			# ARGB1555 = 0
 			# RGB565 = 1
 			# ARGB4444 = 2
+			# YUV422 = 3
+			# BUMPMAP = 4
 			# PAL4BPP = 5
 			# PAL8BPP = 6
 
@@ -98,36 +100,21 @@ build () {
 		for part in $x
 		do
 			if [ "$part" = "crayon_gz" ];then
-				((crayonField=crayonField+$((1<<0))))
+				crayonField=$(($crayonField|$((1 << 0))))
 			elif [ "$part" = "crayon_img" ];then
-				((crayonField=crayonField+$((1<<1))))
+				crayonField=$(($crayonField|$((1 << 1))))
 			elif [ "$part" = "crayon_spritesheet" ];then
-				((crayonField=crayonField+$((1<<2))))
+				crayonField=$(($crayonField|$((1 << 2))))
 			elif [ "$part" = "ARGB1555" ] || [ "$part" = "RGB565" ] || [ "$part" = "ARGB4444" ] ||
-				[ "$part" = "PAL4BPP" ] || [ "$part" = "PAL8BPP" ];then
+				[ "$part" = "YUV422" ] || [ "$part" = "BUMPMAP" ] || [ "$part" = "PAL4BPP" ] ||
+				[ "$part" = "PAL8BPP" ];then
 				if [ $(($crayonField & $((1<<3)) )) -ne 0 ];then	#Prevents multiple format tags
 					echo "	ERROR: You can't use multiple texconv formats"
-					IFS=$oldIFS	#Restore IFS
+					IFS=$oldIFS	#Restore IFS, dunno if necessary for an exit
 					exit 1
 				fi
-
-				if [ "$part" = "ARGB1555" ];then
-					texconvFormat="ARGB1555"
-				elif [ "$part" = "RGB565" ];then
-					texconvFormat="RGB565"
-				elif [ "$part" = "ARGB4444" ];then
-					texconvFormat="ARGB4444"
-				elif [ "$part" = "YUV422" ];then
-					texconvFormat="YUV422"
-				elif [ "$part" = "BUMPMAP" ];then
-					texconvFormat="BUMPMAP"
-				elif [ "$part" = "PAL4BPP" ];then
-					texconvFormat="PAL4BPP"
-				elif [ "$part" = "PAL8BPP" ];then
-					texconvFormat="PAL8BPP"
-				fi
-
-				((crayonField=crayonField+$((1<<3))))
+				texconvFormat="$part"
+				crayonField=$(($crayonField|$((1 << 3))))
 			else
 				outputName+="$part".	#Only do this on a non-crayon tag
 			fi
@@ -135,11 +122,16 @@ build () {
 			if [ $(($crayonField & $((1 << 1)) )) -ne 0 ] && [ $crayonField -ne $((1 << 1)) ] &&
 				[ $crayonField -ne $(( $((1 << 1)) + $((1 << 0)) )) ];then	#If we're trying to image-ify with invalid tags, error
 				echo "	ERROR: If using crayon_img tag, you can only also have a crayon_gz tag"
-				IFS=$oldIFS	#Restore IFS
+				IFS=$oldIFS
 				echo "	Filename: " $x
 				exit 1
 			fi
 		done
+
+		# echo "For result $?"
+		# echo -e "\nI have escaped!\n"
+
+		# echo -e "\n\nHow am I here?\n\n"
 
 		IFS=$oldIFS	#Restore IFS
 
@@ -155,7 +147,11 @@ build () {
 				packerSheet "$x" "$2" "$texconvFormat" "$3"	#This builds the spritesheet then converts it to a dtex
 			else
 				mkdir "$2/$outputName"
+
+				# echo -e "\noutputName1 $outputName"
 				build "$x" "$2/$outputName" "$3"
+				# echo "outputName2 $outputName"
+				# echo "Previous == $?"
 
 				if [ $(($crayonField & $((1 << 1)))) -ne 0 ];then	#If we have an image tag
 					back="$PWD"
@@ -205,6 +201,8 @@ build () {
 
 	done
 	cd ..
+
+	# exit 0
 }
 
 noRM=0	#0 means it will remove temp files, 1 means it won't remove them
@@ -227,10 +225,16 @@ done
 
 echo "WARNING: GZ instructions haven't been tested in this script"
 echo -e "There's a chance items with a crayon_gz tag won't be processed right\n"
-echo "And I haven't tested YUV422 and BUMPMAP texture formats"
+echo -e "I haven't tested the BUMPMAP texture format, but it should \"work\"\n"
 build "$assets" "$projectRoot/$cdfs" "$noRM"
 
 exit 0
+
+#The below comment is very old and I'm not sure if its accurate or not. Please feel free to ignore it
+
+
+
+
 
 #crayon fields:
 

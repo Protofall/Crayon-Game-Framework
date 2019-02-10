@@ -480,3 +480,13 @@ int main(int argC, char *argV[]){	//argC is params + prog name count. So in "./p
 }
 
 //NOTE: YUV422 format is a little dull compared to the DTEX preview
+
+/*
+
+	Bumpmap. 16bpp, S value: 8 bits; R value: 8 bits
+
+	The 8-bit parameters that are specified, S and R, set the two angles
+		that define the vector to a point on a hemisphere, as shown in the
+		illustration below (Page 139. https://segaretro.org/images/7/78/DreamcastDevBoxSystemArchitecture.pdf)
+
+*/
