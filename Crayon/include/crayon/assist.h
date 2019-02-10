@@ -6,6 +6,11 @@
 #include <stdint.h>
 
 //UNTESTED
+//Searches for the last '.' in a string and makes copy, but with "extension" after it
+//Note that "." is not a valid source and will result in an error (Since there's nothing before the '.')
+extern uint8_t crayon_assist_new_extension(char ** dest, char * source, char * extension);
+
+//UNTESTED
 //Last param is used if your var already has been allocated space either by stack or previous malloc
 extern uint8_t crayon_assist_read_file(void ** buffer, char * path, size_t size_bytes, uint8_t allocated);
 
