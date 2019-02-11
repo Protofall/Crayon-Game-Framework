@@ -1,27 +1,49 @@
 #include "assist.h"
 
-//How to call: if(crayon_assist_new_extension(&last_path, first_path, "dtex")){return 1;}
-extern uint8_t crayon_assist_new_extension(char ** dest, char * source, char * extension){
+extern uint8_t crayon_assist_append_extension(char ** dest, char * source1, char * source2){
+	if(!source1 || !source2){
+		return 1;
+	}
+	uint16_t s1_length = strlen(source1);	//Remember for "good\0" strlen returns 4
+	uint16_t s2_length = strlen(source2);
+	*dest = malloc(sizeof(char) * (s1_length + s2_length + 1));	// +1 for null-terminator
+	if(!(*dest)){	//Somehow the malloc failed. Thats bad!
+		return 2;
+	}
+	uint16_t i;
+	for(i = 0; i < s1_length; i++){		//Copy over source1
+		(*dest)[i] = source1[i];
+	}
+	uint16_t j;
+	for(j = 0; j <= s2_length; j++){	// <= because we copy null-terminator
+		(*dest)[i + j] = source2[j];
+	}
+	return 0;
+}
+
+//How to call: if(crayon_assist_change_extension(&last_path, first_path, "dtex")){return 1;}
+extern uint8_t crayon_assist_change_extension(char ** dest, char * source, char * extension){
 	if(!source || !extension){
 		return 1;
 	}
 	uint16_t i;
-	uint16_t source_length = strlen(source);	//Remember for "good\0" strlen returns 4
+	uint16_t source_length = strlen(source);
 	for(i = source_length - 1; i > 0; i--){	//Find the beginning of the extension (Works backwards to find last full stop)
 		if(source[i] == '.'){i++; break;}
 	}
 	if(i == 0){
 		return 2;
 	}
-	*dest = malloc(sizeof(char) * (i + strlen(extension)));
-	if(!(*dest)){	//Somehow the malloc failed. Thats bad!
+	uint8_t ext_length = strlen(extension) + 1;
+	*dest = malloc(sizeof(char) * (i + ext_length));
+	if(!(*dest)){
 		return 3;
 	}
 	uint16_t j;
 	for(j = 0; j < i; j++){	//Add the all of source except for everything after the last '.'
 		(*dest)[j] = source[j];
 	}
-	for(i = 0; i < strlen(extension) + 1; i++){	//Append the extension
+	for(i = 0; i < ext_length; i++){	//Append the extension
 		(*dest)[j + i] = extension[i];
 	}
 	return 0;

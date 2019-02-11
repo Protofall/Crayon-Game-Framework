@@ -63,14 +63,9 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	}
 	int path_length = strlen(path);
 	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
-		char *palette_path = (char *) malloc((path_length + 5) * sizeof(char));
-		if(!palette_path){ERROR(7);}
-		strcpy(palette_path, path);
-		palette_path[path_length] = '.';
-		palette_path[path_length + 1] = 'p';
-		palette_path[path_length + 2] = 'a';
-		palette_path[path_length + 3] = 'l';
-		palette_path[path_length + 4] = '\0';
+		char * palette_path = NULL;
+		crayon_assist_append_extension(&palette_path, path, ".pal");
+
 		cp->palette = NULL;
 		int resultPal = crayon_memory_load_palette(cp, bpp, palette_path);
 			//The function will modify the palette and colour count. Also it sends the BPP through
@@ -80,7 +75,7 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	}
 
 	char * txt_path = NULL;
-	if(crayon_assist_new_extension(&txt_path, path, "txt")){ERROR(13);}
+	if(crayon_assist_change_extension(&txt_path, path, "txt")){ERROR(13);}
 
 	sheet_file = fopen(txt_path, "rb");
 	free(txt_path);
@@ -173,14 +168,9 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	}
 	int path_length = strlen(path);
 	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
-		char *palette_path = (char *) malloc((path_length + 5)*sizeof(char));
-		if(!palette_path){ERROR(7);}
-		strcpy(palette_path, path);
-		palette_path[path_length] = '.';
-		palette_path[path_length + 1] = 'p';
-		palette_path[path_length + 2] = 'a';
-		palette_path[path_length + 3] = 'l';
-		palette_path[path_length + 4] = '\0';
+		char * palette_path = NULL;
+		crayon_assist_append_extension(&palette_path, path, ".pal");
+
 		cp->palette = NULL;
 		int resultPal = crayon_memory_load_palette(cp, bpp, palette_path);
 			//The function will modify the palette and colour count. Also it sends the BPP through
@@ -189,15 +179,8 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 		if(resultPal){ERROR(7 + resultPal);}
 	}
 
-	char *txt_path = (char *) malloc((path_length)*sizeof(char));  //Add a check here to see if it failed
-	if(!txt_path){ERROR(13);}
-
-	strncpy(txt_path, path, path_length - 4);
-	// strcat(txt_path, "txt");	//At some point comeback and use something like this instead of the 4 commands below
-	txt_path[path_length - 4] = 't';
-	txt_path[path_length - 3] = 'x';
-	txt_path[path_length - 2] = 't';
-	txt_path[path_length - 1] = '\0';
+	char * txt_path = NULL;
+	if(crayon_assist_change_extension(&txt_path, path, "txt")){ERROR(13);}
 
 	sheet_file = fopen(txt_path, "rb");
 	free(txt_path);
@@ -321,14 +304,9 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	}
 	int path_length = strlen(path);
 	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
-		char *palette_path = (char *) malloc((path_length + 5)*sizeof(char));
-		if(!palette_path){ERROR(7);}
-		strcpy(palette_path, path);
-		palette_path[path_length] = '.';
-		palette_path[path_length + 1] = 'p';
-		palette_path[path_length + 2] = 'a';
-		palette_path[path_length + 3] = 'l';
-		palette_path[path_length + 4] = '\0';
+		char * palette_path = NULL;
+		crayon_assist_append_extension(&palette_path, path, ".pal");
+		
 		cp->palette = NULL;
 		int resultPal = crayon_memory_load_palette(cp, bpp, palette_path);
 			//The function will modify the palette and colour count. Also it sends the BPP through
@@ -337,15 +315,8 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 		if(resultPal){ERROR(7 + resultPal);}
 	}
 
-	char *txt_path = (char *) malloc((path_length)*sizeof(char));  //Add a check here to see if it failed
-	if(!txt_path){ERROR(13);}
-
-	strncpy(txt_path, path, path_length - 4);
-	// strcat(txt_path, "txt");	//At some point comeback and use something like this instead of the 4 commands below
-	txt_path[path_length - 4] = 't';
-	txt_path[path_length - 3] = 'x';
-	txt_path[path_length - 2] = 't';
-	txt_path[path_length - 1] = '\0';
+	char * txt_path = NULL;
+	if(crayon_assist_change_extension(&txt_path, path, "txt")){ERROR(13);}
 
 	sheet_file = fopen(txt_path, "rb");
 	free(txt_path);

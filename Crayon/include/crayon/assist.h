@@ -5,9 +5,12 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+//Takes two strings and returns a string which is source2 appended to source1
+extern uint8_t crayon_assist_append_extension(char ** dest, char * source1, char * source2);
+
 //Searches for the last '.' in a string and makes copy, but with "extension" after it
 //Note that "." is not a valid source and will result in an error (Since there's nothing before the '.')
-extern uint8_t crayon_assist_new_extension(char ** dest, char * source, char * extension);
+extern uint8_t crayon_assist_change_extension(char ** dest, char * source, char * extension);
 
 //UNTESTED
 //Last param is used if your var already has been allocated space either by stack or previous malloc
