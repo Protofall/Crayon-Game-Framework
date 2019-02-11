@@ -103,42 +103,37 @@ uint8_t apply_palette(dtex_header_t * dtex_header, uint32_t * dtex_buffer, char 
 	return pal_error;
 }
 
+int32_t bound(int32_t min, int32_t val, int32_t max){
+	if(val < min){
+		return min;
+	}
+	if(val > max){
+		return max;
+	}
+	return val;
+}
+
 //The image appears to be abit dull. Need to check if this is how it should be or the texconv preview isn't accurate
 uint32_t yuv444_to_rgba8888(uint8_t y, uint8_t u, uint8_t v){
-	//Note RGB must be clamped within 0 to 255, the uint8_t does this automatically
-	uint8_t R = y + (11/8) * (v - 128);
-	uint8_t G = y - 0.25 * (11/8) * (u - 128) - (0.5 * (11/8) * (v - 128));
-	uint8_t B = y + 1.25 * (11/8) * (u - 128);
+	//I think this is fine since a uint8_t's range is 0 to 255 and I think a int8_t's range is -128 to 127
+	int8_t u2 = u - 128;
+	int8_t v2 = v - 128;
+
+	//Note RGB must be clamped within 0 to 255
+	//We can't just cast it to a uint8_t because we don't want it to over/underflow
+	uint8_t R = bound(0, (int)(y + 1.375 * v2), 255);
+	uint8_t G = bound(0, (int)(y - (0.25 * 1.375) * u2 - (0.5 * 1.375 * v2)), 255);
+	uint8_t B = bound(0, (int)(y + (1.25 * 1.375) * u2), 255);
 
 	return (R << 24) + (G << 16) + (B << 8) + 255;	//RGBA with full alpha
 }
 
-/*
-From wiki (If I use this, it will create a glitchy MESS)
-C = y - 16
-D = u - 128
-E = v - 128
-R = ((298 * C + 409 * E + 128) >> 8) % 256
-G = ((298 * C - 100 * D - 208 * E + 128) >> 8) % 256
-B = ((298 * C + 516 * D + 128) >> 8) % 256
+//Note YUV422 doesn't mean 4 + 2 + 2 bits per pixel (1 bytes per pixel), its actually a ration. 4:2:2
 
-R = ((298 * (y - 16) + 409 * (v - 128) + 128) >> 8) % 256
-G = ((298 * (y - 16) - 100 * (u - 128) - 208 * (v - 128) + 128) >> 8) % 256
-B = ((298 * (y - 16) + 516 * (u - 128) + 128) >> 8) % 256
-*/
+//To convert from YUV422 to RGB888, we first need to convert to YUV444
 
-/*
-
-YUV422
-Note YUV422 doesn't mean 4 + 2 + 2 bits per pixel (1 bytes per pixel), its actually a ration. 4:2:2
-
-To convert from YUV422 to RGB888, we first need to convert to YUV444
-
-YUV444    3 bytes per pixel     (12 bytes per 4 pixels)
-YUV422    4 bytes per 2 pixels  ( 8 bytes per 4 pixels)
-
-*/
-
+//YUV444    3 bytes per pixel     (12 bytes per 4 pixels)
+//YUV422    4 bytes per 2 pixels  ( 8 bytes per 4 pixels)
 void yuv422_to_rgba8888(dtex_header_t * dtex_header, uint32_t * dtex_buffer){
 	//We handle 2 pixels at a time (4 bytes = 2 pixels, u y0, v, y1)
 	uint16_t byte_section[2];	//Contains 2 vars
