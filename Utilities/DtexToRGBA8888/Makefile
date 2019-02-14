@@ -27,18 +27,22 @@ clean:
 
 run:
 	./DtexToRGBA8888 textures/cow_RGB565.dtex --binary lol.bin --png textures/cow_RGB565.png
+	# ./DtexToRGBA8888 textures/cow_RGB565_m.dtex --binary lol.bin --png textures/cow_RGB565_m.png
 	./DtexToRGBA8888 textures/cow_YUV422.dtex --binary lol.bin --png textures/cow_YUV422.png
+	# ./DtexToRGBA8888 textures/cow_YUV422_c.dtex --binary lol.bin --png textures/cow_YUV422_c.png
 	./DtexToRGBA8888 textures/cow_YUV422_s.dtex --binary lol.bin --png textures/cow_YUV422_s.png
 
 	./DtexToRGBA8888 textures/dwarfy_ARGB1555.dtex --binary lol.bin --png textures/dwarfy_ARGB1555.png
+	./DtexToRGBA8888 textures/dwarfy_ARGB1555_c.dtex --binary lol.bin --png textures/dwarfy_ARGB1555_c.png	#New untested compressed option
 	./DtexToRGBA8888 textures/dwarfy_RGB565.dtex --binary lol.bin --png textures/dwarfy_RGB565.png
 	./DtexToRGBA8888 textures/dwarfy_ARGB4444.dtex --binary lol.bin --png textures/dwarfy_ARGB4444.png
 	./DtexToRGBA8888 textures/dwarfy_YUV422.dtex --binary lol.bin --png textures/dwarfy_YUV422.png
-	#./DtexToRGBA8888 textures/dwarfy_BUMPMAP.dtex --binary lol.bin --png textures/dwarfy_BUMPMAP.png
 
 	./DtexToRGBA8888 textures/insta_RGB565.dtex --binary lol.bin --png textures/insta_RGB565.png
 	./DtexToRGBA8888 textures/insta_PAL4BPP.dtex --binary lol.bin --png textures/insta_PAL4BPP.png
 	./DtexToRGBA8888 textures/insta_PAL8BPP.dtex --binary lol.bin --png textures/insta_PAL8BPP.png
+	# ./DtexToRGBA8888 textures/insta_PAL4BPP_c.dtex --binary lol.bin --png textures/insta_PAL4BPP_c.png
+	# ./DtexToRGBA8888 textures/insta_PAL8BPP_c.dtex --binary lol.bin --png textures/insta_PAL8BPP_c.png
 
 	./DtexToRGBA8888 textures/lines_PAL8BPP.dtex --binary lol.bin --png textures/lines_PAL8BPP.png
 
@@ -49,18 +53,30 @@ run:
 
 dtex_examples:
 	texconv -i "textures/source/cow.png" -o "textures/cow_RGB565.dtex" -f "RGB565"
+	# texconv -i "textures/source/cow.png" -o "textures/cow_RGB565_m.dtex" -f "RGB565" -mipmap
 	texconv -i "textures/source/cow.png" -o "textures/cow_YUV422.dtex" -f "YUV422"
+	texconv -i "textures/source/cow.png" -o "textures/cow_YUV422_c.dtex" -f "YUV422" -compress	#Despite the Sega docs saying you can't compress YUV422, you can
 	texconv -i "textures/source/cow.png" -o "textures/cow_YUV422_s.dtex" -f "YUV422" -stride 4	#128/32 = 4
 
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB1555.dtex" -f "ARGB1555"
+	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB1555_c.dtex" -f "ARGB1555" -compress --preview preview.png --vqcodeusage usage.png
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_RGB565.dtex" -f "RGB565"
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB4444.dtex" -f "ARGB4444"
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_YUV422.dtex" -f "YUV422"
-	#texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_BUMPMAP.dtex" -f "BUMPMAP"
 
 	texconv -i "textures/source/insta.png" -o "textures/insta_RGB565.dtex" -f "RGB565"
+	texconv -i "textures/source/insta.png" -o "textures/insta_RGB565_c.dtex" -f "RGB565" -compress
 	texconv -i "textures/source/insta.png" -o "textures/insta_PAL4BPP.dtex" -f "PAL4BPP"
 	texconv -i "textures/source/insta.png" -o "textures/insta_PAL8BPP.dtex" -f "PAL8BPP"
+	texconv -i "textures/source/insta.png" -o "textures/insta_PAL4BPP_c.dtex" -f "PAL4BPP" -compress	#Compression works slightly differently for 4 and 8bpp
+	texconv -i "textures/source/insta.png" -o "textures/insta_PAL8BPP_c.dtex" -f "PAL8BPP" -compress
+
+	# texconv -i "textures/source/insta_16.png" -o "textures/insta_16_PAL4BPP_c.dtex" -f "PAL4BPP" -compress
+	# texconv -i "textures/source/insta_16.png" -o "textures/insta_16_PAL8BPP_c.dtex" -f "PAL8BPP" -compress
+	# texconv -i "textures/source/insta_32.png" -o "textures/insta_32_PAL4BPP_c.dtex" -f "PAL4BPP" -compress
+	# texconv -i "textures/source/insta_32.png" -o "textures/insta_32_PAL8BPP_c.dtex" -f "PAL8BPP" -compress
+	# texconv -i "textures/source/insta_32.png" -o "textures/insta_32_PAL4BPP.dtex" -f "PAL4BPP"
+	# texconv -i "textures/source/insta_32.png" -o "textures/insta_32_PAL8BPP.dtex" -f "PAL8BPP"
 
 	texconv -i "textures/source/lines.png" -o "textures/lines_PAL8BPP.dtex" -f "PAL8BPP"
 

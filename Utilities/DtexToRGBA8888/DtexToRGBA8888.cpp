@@ -6,7 +6,6 @@
 #include "png_assist.h"
 
 #define DTEX_DEBUG 0
-#define WHY_DOESNT_THIS_WORK 0
 
 typedef struct dtex_header{
 	uint8_t magic[4]; //magic number "DTEX"
@@ -182,7 +181,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 	if(memcmp(dtex_header.magic, "DTEX", 4)){fclose(texture_file); return 3;}
 
 	uint8_t stride_setting = bit_extracted(dtex_header.type, 5, 0);
-	bool stride = dtex_header.type & (1 << 25);
+	bool strided = dtex_header.type & (1 << 25);
 	bool twiddled = !(dtex_header.type & (1 << 26));	//Note this flag is TRUE if twiddled
 	uint8_t pixel_format = bit_extracted(dtex_header.type, 3, 27);
 	bool compressed = dtex_header.type & (1 << 30);
@@ -219,12 +218,15 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 
 	#if DTEX_DEBUG == 1
 	printf("Format details: str_set %d, str %d, twid %d, pix %d, comp %d, mip %d, whole %d\n",
-		stride_setting, stride, twiddled, pixel_format, compressed, mipmapped, dtex_header.type);
+		stride_setting, strided, twiddled, pixel_format, compressed, mipmapped, dtex_header.type);
 	#endif
 
+	//Note: If you plan to add support mip-maps, I believe the mip-mapped YUV422 1x1 texture is actually
+		//in RGB565 format because YUV422 can only represent pairs of pixels
 	if(mipmapped || compressed || pixel_format == 4){
 		printf("Program incomplete. Unsupported dtex parameter detected. Stopping conversion\n");
 		fclose(texture_file);
+		// exit(0);
 		return 4;
 	}
 
@@ -255,25 +257,40 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 	}
 
 	size_t read_size;
-	if(bpp == 16){
+	if(bpp == 16){	//ARGB, YUV, BUMPMAP
 		read_size = sizeof(uint16_t);
 	}
-	else{
+	else{	//PAL[X]BPP where X == 4 || 8
 		read_size = sizeof(uint8_t);
 	}
 
-	if((twiddled && stride) || (compressed && (yuv || bumpmap)) ||
-		((!twiddled || stride) && (compressed || mipmapped || paletted))){
+	//Acording to the texconv github, these are the only invalid setting combinations
+	if((strided && (paletted || bumpmap)) || (strided && (compressed || mipmapped || twiddled))){
 		printf("Invalid combination of header parameters\n");
 		fclose(texture_file);
 		return 6;
 	}
 
 	//The width isn't accurate (Goes to next power of two up). This will give us the true width
-	if(stride){
+	if(strided){
 		dtex_header.width = stride_setting * 32;
 	}
 
+	//The Sega docs says this must be true. Comfirm at some point
+		//Tvspelsfreak (Creator of texconv) says rectangular compressed textures are fine
+		//http://dcemulation.org/phpBB/viewtopic.php?f=29&t=103369#p1045504
+		//Rectangular mipmaps don't seem to work at all (Compressed or not)
+	// if(compressed && (dtex_header.width != dtex_header.height)){
+	// 	printf("Compressed textures must be square\n");
+	// 	printf("\tConfirm this is actually true!\n");
+	// 	fclose(texture_file);
+	// 	return 6;
+	// }
+
+	//For compressed size, I believe its a 2KB block normally (16bpp * 4 * 256, 256 lots of "group of 4" 16BPP entries)
+		//But I think for the paletted mode the overhead is smaller (8 * 4 * 256 for 8BPP and 4 * 4 * 256 for 4BPP)
+		//0-255 is represented in an 8-bit variable, therefore for all modes the box is "h / 2 * w / 2 * 8 = h * w * 2"
+			//Ofc the dtex header is 16 bytes, but we've already read that
 
 	//When adding compression support, also malloc an array to dump the compressed file
 	*rgba8888_buffer = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
@@ -285,79 +302,55 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 
 	//Read the whole file into memory and untwiddle if need be
 	uint8_t error = 0;
-	uint16_t extracted;
 	int index;
 
-	//NOTE for some reason this messes up for PAL8BPP. It appears to read garbage data, but I have no idea why
-		//However sometimes it DOES work...and it turns out correct...what?
-	#if WHY_DOESNT_THIS_WORK == 1
+	//Had to split PAL8BPP off from 16BPP because sometimes it bugged out when I tried to read a byte into a 16-bit var
+	if(bpp == 16){
+		uint16_t extracted;
 		for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
 			if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
-
-
-			if(bpp != 4){
+			if(twiddled){
+				index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
+			}
+			else{
+				index = i;
+			}
+			(*rgba8888_buffer)[index] = extracted;
+		}
+	}
+	else if(bpp == 8){	//PAL8BPP
+		uint8_t extracted;
+		for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
+			if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
+			if(twiddled){
+				index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
+			}
+			else{
+				index = i;
+			}
+			(*rgba8888_buffer)[index] = extracted;
+		}
+	}
+	else{	//PAL4BPP
+		uint8_t extracted;
+		for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
+			if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
+			uint8_t byte_section[2];	//Extracted must be split into two vars containing the top and bottom 4 bits
+			byte_section[0] = bit_extracted(extracted, 4, 4);
+			byte_section[1] = bit_extracted(extracted, 4, 0);
+			for(int j = 0; j < 2; j++){
 				if(twiddled){
-					index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
+					index = get_twiddled_index(dtex_header.width, dtex_header.height, i + (1 - j));
 				}
 				else{
-					index = i;
+					index = i + (1 - j);
 				}
-				(*rgba8888_buffer)[index] = extracted;
-			}
-			else{	//PAL4BPP
-				uint16_t byte_section[2];	//Extracted must be split into two vars containing the top and bottom 4 bits
-				byte_section[0] = bit_extracted(extracted, 4, 4);
-				byte_section[1] = bit_extracted(extracted, 4, 0);
-				for(int j = 0; j < 2; j++){
-					if(twiddled){
-						index = get_twiddled_index(dtex_header.width, dtex_header.height, i + (1 - j));
-					}
-					else{
-						index = i + (1 - j);
-					}
 
-					(*rgba8888_buffer)[index] = byte_section[j];
-					i += j;
-				}
+				(*rgba8888_buffer)[index] = byte_section[j];
+				i += j;
 			}
 		}
-
-	#else	//This version works fine right now
-
-		if(bpp != 4){
-			for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
-				if(twiddled){
-					index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
-				}
-				else{
-					index = i;
-				}
-
-				if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
-				(*rgba8888_buffer)[index] = extracted;
-			}
-		}
-		else{	//PAL4BPP
-			for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
-				uint16_t byte_section[2];	//Extracted must be split into two vars containing the top and bottom 4 bits
-				if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
-				byte_section[0] = bit_extracted(extracted, 4, 4);
-				byte_section[1] = bit_extracted(extracted, 4, 0);
-				for(int j = 0; j < 2; j++){
-					if(twiddled){
-						index = get_twiddled_index(dtex_header.width, dtex_header.height, i + (1 - j));
-					}
-					else{
-						index = i + (1 - j);
-					}
-
-					(*rgba8888_buffer)[index] = byte_section[j];
-					i += j;
-				}
-			}
-		}
-
-	#endif
+	}
 
 	fclose(texture_file);
 	if(error){return 8;}
