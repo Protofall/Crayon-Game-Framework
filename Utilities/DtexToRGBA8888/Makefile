@@ -53,7 +53,7 @@ run:
 
 dtex_examples:
 	texconv -i "textures/source/cow.png" -o "textures/cow_RGB565.dtex" -f "RGB565"
-	# texconv -i "textures/source/cow.png" -o "textures/cow_RGB565_m.dtex" -f "RGB565" -mipmap
+	texconv -i "textures/source/cow.png" -o "textures/cow_RGB565_m.dtex" -f "RGB565" -mipmap
 	texconv -i "textures/source/cow.png" -o "textures/cow_YUV422.dtex" -f "YUV422"
 	texconv -i "textures/source/cow.png" -o "textures/cow_YUV422_c.dtex" -f "YUV422" -compress	#Despite the Sega docs saying you can't compress YUV422, you can
 	texconv -i "textures/source/cow.png" -o "textures/cow_YUV422_s.dtex" -f "YUV422" -stride 4	#128/32 = 4
@@ -75,6 +75,8 @@ dtex_examples:
 	# texconv -i "textures/source/insta_16.png" -o "textures/insta_16_PAL8BPP_c.dtex" -f "PAL8BPP" -compress
 	# texconv -i "textures/source/insta_32.png" -o "textures/insta_32_PAL4BPP_c.dtex" -f "PAL4BPP" -compress
 	# texconv -i "textures/source/insta_32.png" -o "textures/insta_32_PAL8BPP_c.dtex" -f "PAL8BPP" -compress
+	# texconv -i "textures/source/insta_32.png" -o "textures/insta_16_PAL4BPP.dtex" -f "PAL4BPP"
+	# texconv -i "textures/source/insta_32.png" -o "textures/insta_16_PAL8BPP.dtex" -f "PAL8BPP"
 	# texconv -i "textures/source/insta_32.png" -o "textures/insta_32_PAL4BPP.dtex" -f "PAL4BPP"
 	# texconv -i "textures/source/insta_32.png" -o "textures/insta_32_PAL8BPP.dtex" -f "PAL8BPP"
 

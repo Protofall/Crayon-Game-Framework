@@ -223,10 +223,9 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 
 	//Note: If you plan to add support mip-maps, I believe the mip-mapped YUV422 1x1 texture is actually
 		//in RGB565 format because YUV422 can only represent pairs of pixels
-	if(mipmapped || compressed || pixel_format == 4){
+	if(mipmapped || pixel_format == 4){
 		printf("Program incomplete. Unsupported dtex parameter detected. Stopping conversion\n");
 		fclose(texture_file);
-		// exit(0);
 		return 4;
 	}
 
@@ -257,7 +256,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 	}
 
 	size_t read_size;
-	if(bpp == 16){	//ARGB, YUV, BUMPMAP
+	if(bpp == 16){	//ARGB, YUV422, BUMPMAP
 		read_size = sizeof(uint16_t);
 	}
 	else{	//PAL[X]BPP where X == 4 || 8
@@ -271,7 +270,14 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 		return 6;
 	}
 
-	//The width isn't accurate (Goes to next power of two up). This will give us the true width
+	//I think rectangular mip-maps are illegal based on a comment Tvspelsfreak made
+	if(mipmapped && (dtex_header.width != dtex_header.height)){
+		printf("Invalid combination of header parameters\n");
+		fclose(texture_file);
+		return 6;
+	}
+
+	//The width isn't accurate for strided textures (Goes to next power of two up). This will give us the true width
 	if(strided){
 		dtex_header.width = stride_setting * 32;
 	}
@@ -287,11 +293,6 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 	// 	return 6;
 	// }
 
-	//For compressed size, I believe its a 2KB block normally (16bpp * 4 * 256, 256 lots of "group of 4" 16BPP entries)
-		//But I think for the paletted mode the overhead is smaller (8 * 4 * 256 for 8BPP and 4 * 4 * 256 for 4BPP)
-		//0-255 is represented in an 8-bit variable, therefore for all modes the box is "h / 2 * w / 2 * 8 = h * w * 2"
-			//Ofc the dtex header is 16 bytes, but we've already read that
-
 	//When adding compression support, also malloc an array to dump the compressed file
 	*rgba8888_buffer = (uint32_t *) malloc(sizeof(uint32_t) * dtex_header.height * dtex_header.width);
 	if(*rgba8888_buffer == NULL){
@@ -300,67 +301,142 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 		return 7;
 	}
 
-	//Read the whole file into memory and untwiddle if need be
-	uint8_t error = 0;
+	//Read the whole file into memory and untwiddle/decompress if need be
 	int index;
+	if(compressed){
+		//For compressed size, I believe its a 2KB block normally (16bpp * 4 * 256, 256 lots of "group of 4" 16BPP entries)
+		//But I think for the paletted mode the overhead is smaller (8 * 4 * 256 for 8BPP and 4 * 4 * 256 for 4BPP)
+		//0-255 is represented in an 8-bit variable, therefore for all modes the box is "h / 2 * w / 2 * 8 = h * w * 2"
+			//Ofc the dtex header is 16 bytes, but we've already read that
 
-	//Had to split PAL8BPP off from 16BPP because sometimes it bugged out when I tried to read a byte into a 16-bit var
-	if(bpp == 16){
-		uint16_t extracted;
-		for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
-			if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
-			if(twiddled){
-				index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
+		uint32_t * code_book = (uint32_t *) malloc(sizeof(uint32_t) * 2 * 256);
+		if(code_book == NULL){
+			printf("Malloc failed\n");
+			fclose(texture_file);
+			return 30;
+		}
+
+		uint8_t compress_error = 0;
+		#define COMPRESS_ERROR(n) {compress_error = n; goto compress_cleanup;}
+
+			if(fread(code_book, sizeof(uint32_t) * 2, 256, texture_file) != 256){	//256 lots of 64-bit entries totals to 2KB
+				printf("Dtex file is smaller than expected\n");
+				COMPRESS_ERROR(31);
+			}
+
+			if(bpp == 16){
+				uint16_t extracted = 0;
+				const int pixels = (dtex_header.width / 2) * (dtex_header.height / 2);
+				for(int i = 0; i < pixels; i++){
+					if(fread(&extracted, sizeof(uint8_t), 1, texture_file) != 1){printf("i = %d\n", i); COMPRESS_ERROR(32);}
+
+					//As of now I know extracted, index and the texel values are all correct
+						//Note: The same texconv command can create two different dtex files, use the same one for testing
+						//Use texconv-master for quicker testing
+
+					const uint16_t texel0 = bit_extracted(code_book[(2 * extracted)], 16, 0);
+					const uint16_t texel1 = bit_extracted(code_book[(2 * extracted)], 16, 16);
+					const uint16_t texel2 = bit_extracted(code_book[(2 * extracted) + 1], 16, 32);
+					const uint16_t texel3 = bit_extracted(code_book[(2 * extracted) + 1], 16, 48);
+					const int index = get_twiddled_index(dtex_header.width / 2, dtex_header.height / 2, i);	//Confirmed, this is the same as texconv's twiddle array
+					// const int x = (index % (dtex_header.width / 2)) * 2;
+					// const int y = (index / (dtex_header.width / 2)) * 2;
+
+					(*rgba8888_buffer)[index] = texel0;
+					(*rgba8888_buffer)[index + dtex_header.width] = texel1;
+					(*rgba8888_buffer)[index + 1] = texel2;
+					(*rgba8888_buffer)[index + dtex_header.width + 1] = texel3;
+
+					//If this triggers, we have a problem
+					if(index >= (dtex_header.width * dtex_header.height) || index + dtex_header.width + 1 >= (dtex_header.width * dtex_header.height)){
+						printf("index is too big! %d\n", index);
+					}
+				}
+			}
+			else if(bpp == 8){
+				printf("Compressed PAL8BPP textures aren't supported yet\n");
+				COMPRESS_ERROR(34);
 			}
 			else{
-				index = i;
+				printf("Compressed PAL4BPP textures aren't supported yet\n");
+				COMPRESS_ERROR(35);
 			}
-			(*rgba8888_buffer)[index] = extracted;
-		}
+
+		#undef COMPRESS_ERROR
+
+		compress_cleanup:
+
+		printf("Compression not fully supported yet\n");
+		fclose(texture_file);
+		free(code_book);
+		if(compress_error){return compress_error;}
 	}
-	else if(bpp == 8){	//PAL8BPP
-		uint8_t extracted;
-		for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
-			if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
-			if(twiddled){
-				index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
-			}
-			else{
-				index = i;
-			}
-			(*rgba8888_buffer)[index] = extracted;
-		}
-	}
-	else{	//PAL4BPP
-		uint8_t extracted;
-		for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
-			if(fread(&extracted, read_size, 1, texture_file) != 1){error = 1; break;}
-			uint8_t byte_section[2];	//Extracted must be split into two vars containing the top and bottom 4 bits
-			byte_section[0] = bit_extracted(extracted, 4, 4);
-			byte_section[1] = bit_extracted(extracted, 4, 0);
-			for(int j = 0; j < 2; j++){
+	else{
+		//Had to split PAL8BPP off from 16BPP because sometimes it bugged out when I tried to read a byte into a 16-bit var
+		uint8_t load_error = 0;
+		#define LOAD_ERROR(n) {load_error = n; goto load_cleanup;}
+
+		if(bpp == 16){
+			uint16_t extracted;
+			for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
+				if(fread(&extracted, read_size, 1, texture_file) != 1){LOAD_ERROR(8);}
 				if(twiddled){
-					index = get_twiddled_index(dtex_header.width, dtex_header.height, i + (1 - j));
+					index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
 				}
 				else{
-					index = i + (1 - j);
+					index = i;
 				}
-
-				(*rgba8888_buffer)[index] = byte_section[j];
-				i += j;
+				(*rgba8888_buffer)[index] = extracted;
 			}
 		}
-	}
+		else if(bpp == 8){	//PAL8BPP
+			uint8_t extracted;
+			for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
+				if(fread(&extracted, read_size, 1, texture_file) != 1){LOAD_ERROR(8);}
+				if(twiddled){
+					index = get_twiddled_index(dtex_header.width, dtex_header.height, i);	//Given i, it says which element should be there to twiddle it
+				}
+				else{
+					index = i;
+				}
+				(*rgba8888_buffer)[index] = extracted;
+			}
+		}
+		else{	//PAL4BPP
+			uint8_t extracted;
+			for(int i = 0; i < dtex_header.width * dtex_header.height; i++){
+				if(fread(&extracted, read_size, 1, texture_file) != 1){LOAD_ERROR(8);}
+				uint8_t byte_section[2];	//Extracted must be split into two vars containing the top and bottom 4 bits
+				byte_section[0] = bit_extracted(extracted, 4, 4);
+				byte_section[1] = bit_extracted(extracted, 4, 0);
+				for(int j = 0; j < 2; j++){
+					if(twiddled){
+						index = get_twiddled_index(dtex_header.width, dtex_header.height, i + (1 - j));
+					}
+					else{
+						index = i + (1 - j);
+					}
 
-	fclose(texture_file);
-	if(error){return 8;}
+					(*rgba8888_buffer)[index] = byte_section[j];
+					i += j;
+				}
+			}
+		}
+
+		#undef LOAD_ERROR
+
+		load_cleanup:
+
+		fclose(texture_file);
+		if(load_error){return load_error;}
+	}
 
 	//Convert from whatever format to RGBA8888
 	if(rgb){
 		dtex_argb_to_rgba8888(&dtex_header, *rgba8888_buffer, bpc[0], bpc[1], bpc[2], bpc[3]);
 	}
 	else if(paletted){
-		error = apply_palette(&dtex_header, *rgba8888_buffer, texture_path);
+		uint8_t error = apply_palette(&dtex_header, *rgba8888_buffer, texture_path);
 		if(error){return 8 + error;}	//Error goes up to 7
 	}
 	else if(yuv){
