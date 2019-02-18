@@ -330,27 +330,28 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 				for(int i = 0; i < pixels; i++){
 					if(fread(&extracted, sizeof(uint8_t), 1, texture_file) != 1){printf("i = %d\n", i); COMPRESS_ERROR(32);}
 
-					//As of now I know extracted, index and the texel values are all correct
-						//Note: The same texconv command can create two different dtex files, use the same one for testing
-						//Use texconv-master for quicker testing
-
 					const uint16_t texel0 = bit_extracted(code_book[(2 * extracted)], 16, 0);
 					const uint16_t texel1 = bit_extracted(code_book[(2 * extracted)], 16, 16);
 					const uint16_t texel2 = bit_extracted(code_book[(2 * extracted) + 1], 16, 32);
 					const uint16_t texel3 = bit_extracted(code_book[(2 * extracted) + 1], 16, 48);
-					const int index = get_twiddled_index(dtex_header.width / 2, dtex_header.height / 2, i);	//Confirmed, this is the same as texconv's twiddle array
-					// const int x = (index % (dtex_header.width / 2)) * 2;
-					// const int y = (index / (dtex_header.width / 2)) * 2;
+					int index = get_twiddled_index(dtex_header.width / 2, dtex_header.height / 2, i);
+					index = ((index % (dtex_header.width / 2)) * 2) + (((index / (dtex_header.width / 2)) * 2) * dtex_header.width);	//Get the true index since
+																																		//dims are different
 
 					(*rgba8888_buffer)[index] = texel0;
 					(*rgba8888_buffer)[index + dtex_header.width] = texel1;
 					(*rgba8888_buffer)[index + 1] = texel2;
 					(*rgba8888_buffer)[index + dtex_header.width + 1] = texel3;
 
-					//If this triggers, we have a problem
-					if(index >= (dtex_header.width * dtex_header.height) || index + dtex_header.width + 1 >= (dtex_header.width * dtex_header.height)){
-						printf("index is too big! %d\n", index);
-					}
+					// (*rgba8888_buffer)[2 * (index)] = texel0;
+					// (*rgba8888_buffer)[2 * (index + dtex_header.width)] = texel1;
+					// (*rgba8888_buffer)[2 * (index) + 1] = texel2;
+					// (*rgba8888_buffer)[2 * (index + dtex_header.width) + 1] = texel3;
+
+					// const int x = (index % (dtex_header.width / 2)) * 2;
+					// const int y = (index / (dtex_header.width / 2)) * 2;
+					// x + (y * dtex_header.width)
+					// ((index % (dtex_header.width / 2)) * 2) + (((index / (dtex_header.width / 2)) * 2) * dtex_header.width)
 				}
 			}
 			else if(bpp == 8){

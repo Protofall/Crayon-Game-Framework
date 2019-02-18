@@ -29,7 +29,7 @@ run:
 	./DtexToRGBA8888 textures/cow_RGB565.dtex --binary lol.bin --png textures/cow_RGB565.png
 	# ./DtexToRGBA8888 textures/cow_RGB565_m.dtex --binary lol.bin --png textures/cow_RGB565_m.png
 	./DtexToRGBA8888 textures/cow_YUV422.dtex --binary lol.bin --png textures/cow_YUV422.png
-	# ./DtexToRGBA8888 textures/cow_YUV422_c.dtex --binary lol.bin --png textures/cow_YUV422_c.png
+	./DtexToRGBA8888 textures/cow_YUV422_c.dtex --binary lol.bin --png textures/cow_YUV422_c.png
 	./DtexToRGBA8888 textures/cow_YUV422_s.dtex --binary lol.bin --png textures/cow_YUV422_s.png
 
 	./DtexToRGBA8888 textures/dwarfy_ARGB1555.dtex --binary lol.bin --png textures/dwarfy_ARGB1555.png
