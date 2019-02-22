@@ -309,7 +309,7 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 		//0-255 is represented in an 8-bit variable, therefore for all modes the box is "h / 2 * w / 2 * 8 = h * w * 2"
 			//Ofc the dtex header is 16 bytes, but we've already read that
 
-		uint32_t * code_book = (uint32_t *) malloc(sizeof(uint32_t) * 2 * 256);
+		uint32_t * code_book = (uint32_t *) malloc(sizeof(uint32_t) * 2 * 256);	//Each uint32_t pair is one code-book entry
 		if(code_book == NULL){
 			printf("Malloc failed\n");
 			fclose(texture_file);
@@ -325,49 +325,122 @@ uint8_t load_dtex(char * texture_path, uint32_t ** rgba8888_buffer, uint16_t * h
 			}
 
 			if(bpp == 16){
-				uint16_t extracted = 0;
+				uint8_t extracted = 0;
 				const int pixels = (dtex_header.width / 2) * (dtex_header.height / 2);
 				for(int i = 0; i < pixels; i++){
-					if(fread(&extracted, sizeof(uint8_t), 1, texture_file) != 1){printf("i = %d\n", i); COMPRESS_ERROR(32);}
+					if(fread(&extracted, sizeof(uint8_t), 1, texture_file) != 1){COMPRESS_ERROR(32);}
 
+					// k lots of 1's bitwise and with your number moved right by p bits
 					const uint16_t texel0 = bit_extracted(code_book[(2 * extracted)], 16, 0);
 					const uint16_t texel1 = bit_extracted(code_book[(2 * extracted)], 16, 16);
-					const uint16_t texel2 = bit_extracted(code_book[(2 * extracted) + 1], 16, 32);
-					const uint16_t texel3 = bit_extracted(code_book[(2 * extracted) + 1], 16, 48);
+					const uint16_t texel2 = bit_extracted(code_book[(2 * extracted) + 1], 16, 0);
+					const uint16_t texel3 = bit_extracted(code_book[(2 * extracted) + 1], 16, 16);
 					int index = get_twiddled_index(dtex_header.width / 2, dtex_header.height / 2, i);
 					index = ((index % (dtex_header.width / 2)) * 2) + (((index / (dtex_header.width / 2)) * 2) * dtex_header.width);	//Get the true index since
 																																		//dims are different
-
 					(*rgba8888_buffer)[index] = texel0;
-					(*rgba8888_buffer)[index + dtex_header.width] = texel1;
 					(*rgba8888_buffer)[index + 1] = texel2;
+					(*rgba8888_buffer)[index + dtex_header.width] = texel1;
 					(*rgba8888_buffer)[index + dtex_header.width + 1] = texel3;
-
-					// (*rgba8888_buffer)[2 * (index)] = texel0;
-					// (*rgba8888_buffer)[2 * (index + dtex_header.width)] = texel1;
-					// (*rgba8888_buffer)[2 * (index) + 1] = texel2;
-					// (*rgba8888_buffer)[2 * (index + dtex_header.width) + 1] = texel3;
-
-					// const int x = (index % (dtex_header.width / 2)) * 2;
-					// const int y = (index / (dtex_header.width / 2)) * 2;
-					// x + (y * dtex_header.width)
-					// ((index % (dtex_header.width / 2)) * 2) + (((index / (dtex_header.width / 2)) * 2) * dtex_header.width)
 				}
 			}
 			else if(bpp == 8){
-				printf("Compressed PAL8BPP textures aren't supported yet\n");
-				COMPRESS_ERROR(34);
+				uint8_t extracted[2];
+				uint16_t texels[16];
+				const int pixels = (dtex_header.width / 4) * (dtex_header.height / 4);
+				for(int i = 0; i < pixels; i++){
+					if(fread(&extracted[0], sizeof(uint8_t), 1, texture_file) != 1){COMPRESS_ERROR(32);}
+					if(fread(&extracted[1], sizeof(uint8_t), 1, texture_file) != 1){COMPRESS_ERROR(32);}
+
+					texels[0] = bit_extracted(code_book[(2 * extracted[0])], 8, 0);
+					texels[1] = bit_extracted(code_book[(2 * extracted[0])], 8, 8);
+					texels[2] = bit_extracted(code_book[(2 * extracted[0])], 8, 16);
+					texels[3] = bit_extracted(code_book[(2 * extracted[0])], 8, 24);
+					texels[4] = bit_extracted(code_book[(2 * extracted[0]) + 1], 8, 0);
+					texels[5] = bit_extracted(code_book[(2 * extracted[0]) + 1], 8, 8);
+					texels[6] = bit_extracted(code_book[(2 * extracted[0]) + 1], 8, 16);
+					texels[7] = bit_extracted(code_book[(2 * extracted[0]) + 1], 8, 24);
+					texels[8] = bit_extracted(code_book[(2 * extracted[1])], 8, 0);
+					texels[9] = bit_extracted(code_book[(2 * extracted[1])], 8, 8);
+					texels[10] = bit_extracted(code_book[(2 * extracted[1])], 8, 16);
+					texels[11] = bit_extracted(code_book[(2 * extracted[1])], 8, 24);
+					texels[12] = bit_extracted(code_book[(2 * extracted[1]) + 1], 8, 0);
+					texels[13] = bit_extracted(code_book[(2 * extracted[1]) + 1], 8, 8);
+					texels[14] = bit_extracted(code_book[(2 * extracted[1]) + 1], 8, 16);
+					texels[15] = bit_extracted(code_book[(2 * extracted[1]) + 1], 8, 24);
+
+					int index = get_twiddled_index(dtex_header.width / 4, dtex_header.height / 4, i);
+					index = ((index % (dtex_header.width / 4)) * 4) + (((index / (dtex_header.width / 4)) * 4) * dtex_header.width);	//Get the true index since
+																																		//dims are different
+					(*rgba8888_buffer)[index + 0] = texels[0];
+					(*rgba8888_buffer)[index + 1] = texels[2];
+					(*rgba8888_buffer)[index + 2] = texels[8];
+					(*rgba8888_buffer)[index + 3] = texels[10];
+					(*rgba8888_buffer)[index + 0 + dtex_header.width] = texels[1];
+					(*rgba8888_buffer)[index + 1 + dtex_header.width] = texels[3];
+					(*rgba8888_buffer)[index + 2 + dtex_header.width] = texels[9];
+					(*rgba8888_buffer)[index + 3 + dtex_header.width] = texels[11];
+					(*rgba8888_buffer)[index + 0 + (2 * dtex_header.width)] = texels[4];
+					(*rgba8888_buffer)[index + 1 + (2 * dtex_header.width)] = texels[6];
+					(*rgba8888_buffer)[index + 2 + (2 * dtex_header.width)] = texels[12];
+					(*rgba8888_buffer)[index + 3 + (2 * dtex_header.width)] = texels[14];
+					(*rgba8888_buffer)[index + 0 + (3 * dtex_header.width)] = texels[5];
+					(*rgba8888_buffer)[index + 1 + (3 * dtex_header.width)] = texels[7];
+					(*rgba8888_buffer)[index + 2 + (3 * dtex_header.width)] = texels[13];
+					(*rgba8888_buffer)[index + 3 + (3 * dtex_header.width)] = texels[15];
+
+				}
 			}
 			else{
-				printf("Compressed PAL4BPP textures aren't supported yet\n");
-				COMPRESS_ERROR(35);
+				uint8_t extracted = 0;
+				uint16_t texels[16];
+				const int pixels = (dtex_header.width / 4) * (dtex_header.height / 4);
+				for(int i = 0; i < pixels; i++){
+					if(fread(&extracted, sizeof(uint8_t), 1, texture_file) != 1){COMPRESS_ERROR(32);}
+
+					texels[0] = bit_extracted(code_book[(2 * extracted)], 4, 0);
+					texels[1] = bit_extracted(code_book[(2 * extracted)], 4, 4);
+					texels[2] = bit_extracted(code_book[(2 * extracted)], 4, 8);
+					texels[3] = bit_extracted(code_book[(2 * extracted)], 4, 12);
+					texels[4] = bit_extracted(code_book[(2 * extracted)], 4, 16);
+					texels[5] = bit_extracted(code_book[(2 * extracted)], 4, 20);
+					texels[6] = bit_extracted(code_book[(2 * extracted)], 4, 24);
+					texels[7] = bit_extracted(code_book[(2 * extracted)], 4, 28);
+					texels[8] = bit_extracted(code_book[(2 * extracted) + 1], 4, 0);
+					texels[9] = bit_extracted(code_book[(2 * extracted) + 1], 4, 4);
+					texels[10] = bit_extracted(code_book[(2 * extracted) + 1], 4, 8);
+					texels[11] = bit_extracted(code_book[(2 * extracted) + 1], 4, 12);
+					texels[12] = bit_extracted(code_book[(2 * extracted) + 1], 4, 16);
+					texels[13] = bit_extracted(code_book[(2 * extracted) + 1], 4, 20);
+					texels[14] = bit_extracted(code_book[(2 * extracted) + 1], 4, 24);
+					texels[15] = bit_extracted(code_book[(2 * extracted) + 1], 4, 28);
+
+					int index = get_twiddled_index(dtex_header.width / 4, dtex_header.height / 4, i);
+					index = ((index % (dtex_header.width / 4)) * 4) + (((index / (dtex_header.width / 4)) * 4) * dtex_header.width);	//Get the true index since
+																																		//dims are different
+					(*rgba8888_buffer)[index + 0] = texels[0];
+					(*rgba8888_buffer)[index + 1] = texels[2];
+					(*rgba8888_buffer)[index + 2] = texels[8];
+					(*rgba8888_buffer)[index + 3] = texels[10];
+					(*rgba8888_buffer)[index + 0 + dtex_header.width] = texels[1];
+					(*rgba8888_buffer)[index + 1 + dtex_header.width] = texels[3];
+					(*rgba8888_buffer)[index + 2 + dtex_header.width] = texels[9];
+					(*rgba8888_buffer)[index + 3 + dtex_header.width] = texels[11];
+					(*rgba8888_buffer)[index + 0 + (2 * dtex_header.width)] = texels[4];
+					(*rgba8888_buffer)[index + 1 + (2 * dtex_header.width)] = texels[6];
+					(*rgba8888_buffer)[index + 2 + (2 * dtex_header.width)] = texels[12];
+					(*rgba8888_buffer)[index + 3 + (2 * dtex_header.width)] = texels[14];
+					(*rgba8888_buffer)[index + 0 + (3 * dtex_header.width)] = texels[5];
+					(*rgba8888_buffer)[index + 1 + (3 * dtex_header.width)] = texels[7];
+					(*rgba8888_buffer)[index + 2 + (3 * dtex_header.width)] = texels[13];
+					(*rgba8888_buffer)[index + 3 + (3 * dtex_header.width)] = texels[15];
+				}
 			}
 
 		#undef COMPRESS_ERROR
 
 		compress_cleanup:
 
-		printf("Compression not fully supported yet\n");
 		fclose(texture_file);
 		free(code_book);
 		if(compress_error){return compress_error;}

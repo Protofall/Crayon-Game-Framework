@@ -27,29 +27,29 @@ clean:
 
 run:
 	./DtexToRGBA8888 textures/cow_RGB565.dtex --binary lol.bin --png textures/cow_RGB565.png
-	# ./DtexToRGBA8888 textures/cow_RGB565_m.dtex --binary lol.bin --png textures/cow_RGB565_m.png
-	./DtexToRGBA8888 textures/cow_YUV422.dtex --binary lol.bin --png textures/cow_YUV422.png
-	./DtexToRGBA8888 textures/cow_YUV422_c.dtex --binary lol.bin --png textures/cow_YUV422_c.png
-	./DtexToRGBA8888 textures/cow_YUV422_s.dtex --binary lol.bin --png textures/cow_YUV422_s.png
+	# ./DtexToRGBA8888 textures/cow_RGB565_m.dtex --png textures/cow_RGB565_m.png
+	./DtexToRGBA8888 textures/cow_YUV422.dtex --png textures/cow_YUV422.png
+	./DtexToRGBA8888 textures/cow_YUV422_c.dtex --png textures/cow_YUV422_c.png
+	./DtexToRGBA8888 textures/cow_YUV422_s.dtex --png textures/cow_YUV422_s.png
 
-	./DtexToRGBA8888 textures/dwarfy_ARGB1555.dtex --binary lol.bin --png textures/dwarfy_ARGB1555.png
-	./DtexToRGBA8888 textures/dwarfy_ARGB1555_c.dtex --binary lol.bin --png textures/dwarfy_ARGB1555_c.png	#New untested compressed option
-	./DtexToRGBA8888 textures/dwarfy_RGB565.dtex --binary lol.bin --png textures/dwarfy_RGB565.png
-	./DtexToRGBA8888 textures/dwarfy_ARGB4444.dtex --binary lol.bin --png textures/dwarfy_ARGB4444.png
-	./DtexToRGBA8888 textures/dwarfy_YUV422.dtex --binary lol.bin --png textures/dwarfy_YUV422.png
+	./DtexToRGBA8888 textures/dwarfy_ARGB1555.dtex --png textures/dwarfy_ARGB1555.png
+	./DtexToRGBA8888 textures/dwarfy_ARGB1555_c.dtex --png textures/dwarfy_ARGB1555_c.png	#New untested compressed option
+	./DtexToRGBA8888 textures/dwarfy_RGB565.dtex --png textures/dwarfy_RGB565.png
+	./DtexToRGBA8888 textures/dwarfy_ARGB4444.dtex --png textures/dwarfy_ARGB4444.png
+	./DtexToRGBA8888 textures/dwarfy_YUV422.dtex --png textures/dwarfy_YUV422.png
 
-	./DtexToRGBA8888 textures/insta_RGB565.dtex --binary lol.bin --png textures/insta_RGB565.png
-	./DtexToRGBA8888 textures/insta_PAL4BPP.dtex --binary lol.bin --png textures/insta_PAL4BPP.png
-	./DtexToRGBA8888 textures/insta_PAL8BPP.dtex --binary lol.bin --png textures/insta_PAL8BPP.png
-	# ./DtexToRGBA8888 textures/insta_PAL4BPP_c.dtex --binary lol.bin --png textures/insta_PAL4BPP_c.png
-	# ./DtexToRGBA8888 textures/insta_PAL8BPP_c.dtex --binary lol.bin --png textures/insta_PAL8BPP_c.png
+	./DtexToRGBA8888 textures/insta_RGB565.dtex --png textures/insta_RGB565.png
+	./DtexToRGBA8888 textures/insta_PAL4BPP.dtex --png textures/insta_PAL4BPP.png
+	./DtexToRGBA8888 textures/insta_PAL8BPP.dtex --png textures/insta_PAL8BPP.png
+	./DtexToRGBA8888 textures/insta_PAL4BPP_c.dtex --png textures/insta_PAL4BPP_c.png
+	./DtexToRGBA8888 textures/insta_PAL8BPP_c.dtex --png textures/insta_PAL8BPP_c.png
 
-	./DtexToRGBA8888 textures/lines_PAL8BPP.dtex --binary lol.bin --png textures/lines_PAL8BPP.png
+	./DtexToRGBA8888 textures/lines_PAL8BPP.dtex --png textures/lines_PAL8BPP.png
 
-	./DtexToRGBA8888 textures/simpleRect_RGB565.dtex --binary lol.bin --png textures/simpleRect_RGB565.png
-	./DtexToRGBA8888 textures/simpleRect_PAL4BPP.dtex --binary lol.bin --png textures/simpleRect_PAL4BPP.png
+	./DtexToRGBA8888 textures/simpleRect_RGB565.dtex --png textures/simpleRect_RGB565.png
+	./DtexToRGBA8888 textures/simpleRect_PAL4BPP.dtex --png textures/simpleRect_PAL4BPP.png
 
-	./DtexToRGBA8888 textures/strideTest_RGB565.dtex --binary lol.bin --png textures/strideTest_RGB565.png
+	./DtexToRGBA8888 textures/strideTest_RGB565.dtex --png textures/strideTest_RGB565.png
 
 dtex_examples:
 	texconv -i "textures/source/cow.png" -o "textures/cow_RGB565.dtex" -f "RGB565"
@@ -70,15 +70,6 @@ dtex_examples:
 	texconv -i "textures/source/insta.png" -o "textures/insta_PAL8BPP.dtex" -f "PAL8BPP"
 	texconv -i "textures/source/insta.png" -o "textures/insta_PAL4BPP_c.dtex" -f "PAL4BPP" -compress	#Compression works slightly differently for 4 and 8bpp
 	texconv -i "textures/source/insta.png" -o "textures/insta_PAL8BPP_c.dtex" -f "PAL8BPP" -compress
-
-	# texconv -i "textures/source/insta_16.png" -o "textures/insta_16_PAL4BPP_c.dtex" -f "PAL4BPP" -compress
-	# texconv -i "textures/source/insta_16.png" -o "textures/insta_16_PAL8BPP_c.dtex" -f "PAL8BPP" -compress
-	# texconv -i "textures/source/insta_32.png" -o "textures/insta_32_PAL4BPP_c.dtex" -f "PAL4BPP" -compress
-	# texconv -i "textures/source/insta_32.png" -o "textures/insta_32_PAL8BPP_c.dtex" -f "PAL8BPP" -compress
-	# texconv -i "textures/source/insta_32.png" -o "textures/insta_16_PAL4BPP.dtex" -f "PAL4BPP"
-	# texconv -i "textures/source/insta_32.png" -o "textures/insta_16_PAL8BPP.dtex" -f "PAL8BPP"
-	# texconv -i "textures/source/insta_32.png" -o "textures/insta_32_PAL4BPP.dtex" -f "PAL4BPP"
-	# texconv -i "textures/source/insta_32.png" -o "textures/insta_32_PAL8BPP.dtex" -f "PAL8BPP"
 
 	texconv -i "textures/source/lines.png" -o "textures/lines_PAL8BPP.dtex" -f "PAL8BPP"
 
