@@ -59,7 +59,7 @@ dtex_examples:
 	texconv -i "textures/source/cow.png" -o "textures/cow_YUV422_s.dtex" -f "YUV422" -stride 4	#128/32 = 4
 
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB1555.dtex" -f "ARGB1555"
-	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB1555_c.dtex" -f "ARGB1555" -compress --preview preview.png --vqcodeusage usage.png
+	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB1555_c.dtex" -f "ARGB1555" -compress
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_RGB565.dtex" -f "RGB565"
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_ARGB4444.dtex" -f "ARGB4444"
 	texconv -i "textures/source/dwarfy.png" -o "textures/dwarfy_YUV422.dtex" -f "YUV422"
