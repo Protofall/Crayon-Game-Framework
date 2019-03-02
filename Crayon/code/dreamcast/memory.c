@@ -61,7 +61,6 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	else if(texture_format == 6){
 		bpp = 8;
 	}
-	int path_length = strlen(path);
 	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
 		char * palette_path = NULL;
 		crayon_assist_append_extension(&palette_path, path, ".pal");
@@ -166,7 +165,6 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	else if(texture_format == 6){
 		bpp = 8;
 	}
-	int path_length = strlen(path);
 	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
 		char * palette_path = NULL;
 		crayon_assist_append_extension(&palette_path, path, ".pal");
@@ -302,7 +300,6 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	else if(texture_format == 6){
 		bpp = 8;
 	}
-	int path_length = strlen(path);
 	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
 		char * palette_path = NULL;
 		crayon_assist_append_extension(&palette_path, path, ".pal");

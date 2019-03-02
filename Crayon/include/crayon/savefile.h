@@ -66,12 +66,13 @@ uint8_t crayon_savefile_get_valid_screens();
 uint8_t crayon_savefile_get_valid_function(uint32_t function);	//Can be used to find all devices with function X
 
 //Make sure to call this after making a new savefile struct otherwise you can get strange results
-void crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
+	//Also note the return value is 1 when the number of icons is greater than 3. The DC BIOS can't render icons with 4 or more frames
+uint8_t crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
 	uint8_t icon_anim_count, uint16_t icon_anim_speed, char * desc_long, char * desc_short, char * app_id, char * save_name);
 
 //Returns 0 on success and 1 or more if failure. Handles loading and saving of uncompressed savefiles
 uint8_t crayon_savefile_load(crayon_savefile_details_t * savefile_details);
-uint16_t crayon_savefile_save(crayon_savefile_details_t * savefile_details);
+uint8_t crayon_savefile_save(crayon_savefile_details_t * savefile_details);
 
 //------------Not savefile, but VMU related---------------
 

@@ -980,7 +980,7 @@ int main(){
 	Exit_loop_1:
 
 	//Load savefile and sanitise the input
-	crayon_savefile_load(&MS_options.savefile_details);
+	crayon_savefile_load(&MS_options.savefile_details);	//Note if no save was found, this loads nothing...but its fine
 	uint8_t hacker = 0;
 	if(MS_options.savefile_details.valid_saves){
 		hacker = setup_sanitise_savefile(&MS_options.savefile);

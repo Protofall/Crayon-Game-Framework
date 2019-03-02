@@ -87,7 +87,7 @@ void crayon_savefile_load_icon(crayon_savefile_details_t * savefile_details, cha
 
 	//Get the size of the file
 	fseek(icon_data_file, 0, SEEK_END);
-	size_data = ftell(icon_data_file);
+	size_data = ftell(icon_data_file);	//This will account for multi-frame icons
 	fseek(icon_data_file, 0, SEEK_SET);
 
 	savefile_details->icon = (unsigned char *) malloc(size_data);
@@ -210,7 +210,7 @@ uint8_t crayon_savefile_get_valid_function(uint32_t function){
 }
 
 //Make sure to call this after making a new savefile struct otherwise you can get strange results
-void crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
+uint8_t crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
 	uint8_t icon_anim_count, uint16_t icon_anim_speed, char * desc_long, char * desc_short, char * app_id, char * save_name){
 	savefile_details->savefile_data = savefile_data;
 	savefile_details->savefile_size = savefile_size;
@@ -229,7 +229,10 @@ void crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_
 	savefile_details->savefile_port = -1;
 	savefile_details->savefile_slot = -1;
 
-	return;
+	if(icon_anim_count > 3){
+		return 1;
+	}
+	return 0;
 }
 
 uint8_t crayon_savefile_load(crayon_savefile_details_t * savefile_details){
@@ -274,7 +277,7 @@ uint8_t crayon_savefile_load(crayon_savefile_details_t * savefile_details){
 	return 0;
 }
 
-uint16_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
+uint8_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	//The requested VMU is not a valid memory card
 	if(!crayon_savefile_get_vmu_bit(savefile_details->valid_memcards, savefile_details->savefile_port, savefile_details->savefile_slot)){
 		return 1;
@@ -287,7 +290,7 @@ uint16_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	}
 
 	vmu_pkg_t pkg;
-	uint8 *pkg_out, *data;
+	uint8 *pkg_out, *data;	//pkg_out is allocated in vmu_pkg_build
 	int pkg_size;
 	FILE *fp;
 	file_t f;
@@ -334,18 +337,19 @@ uint16_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	if(vmufs_free_blocks(vmu) + blocks_freed < (pkg_size >> 9)){
 		free(pkg_out);
 		free(data);
-		return pkg_size >> 9;
+		// return pkg_size >> 9;
+		return 4;
 	}
 
 	//Can't open file for some reason
 	if(!(fp = fopen(savename, "wb"))){
 		free(pkg_out);
 		free(data);
-		return 4;
+		return 5;
 	}
 
 	if(fwrite(pkg_out, 1, pkg_size, fp) != (size_t)pkg_size){
-		rv = 5;
+		rv = 6;
 	}
 
 	fclose(fp);
