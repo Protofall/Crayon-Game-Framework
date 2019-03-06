@@ -952,7 +952,7 @@ int main(){
 
 	//Setting the default save_detail vars
 	crayon_savefile_init_savefile_details(&MS_options.savefile_details, (uint8_t *)&MS_options.savefile,
-		sizeof(minesweeper_savefile_t), 1, 0, "Made with Crayon by Protofall\0", "Minesweeper\0",
+		sizeof(minesweeper_savefile_t), 1, 0, 0, "Made with Crayon by Protofall\0", "Minesweeper\0",
 		"Proto_MS_1_3_0\0", "MINESWEEPER.s\0");
 
 	//Apply the VMU LCD icon (Apparently this is automatic if your savefile is an ICONDATA.VMS)

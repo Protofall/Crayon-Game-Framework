@@ -60,12 +60,26 @@ uint8_t crayon_savefile_check_for_device(int8_t port, int8_t slot, uint32_t func
 
 //Note Crayon doesn't bother supporting eye catchers. Haven't tested multi-frame icons
 	//I used the "vmu_pkg_build" function's source as a guide for this. Doesn't work with compressed saves
-uint16_t crayon_savefile_get_save_block_count(crayon_savefile_details_t * savefile_details){
+int16_t crayon_savefile_get_save_block_count(crayon_savefile_details_t * savefile_details){
 	int pkg_size, data_len;
 	data_len = savefile_details->savefile_size;
+	uint16_t eyecatch_size  = 0;
+	switch(savefile_details->eyecatch_type){
+		case 0:
+			eyecatch_size = 0; break;
+		case 1:
+			eyecatch_size = 8064; break;
+		case 2:
+			eyecatch_size = 512 + 4032; break;
+		case 3:
+			eyecatch_size = 32 + 2016; break;
+		default:
+			return -1;
+	}
 
 	//Get the total number of bytes. Keep in mind we need to think about the icon/s
-	pkg_size = sizeof(vmu_hdr_t) + (512 * savefile_details->icon_anim_count) + data_len;
+	pkg_size = sizeof(vmu_hdr_t) + (512 * savefile_details->icon_anim_count) +
+		eyecatch_size + data_len;
 
 	return pkg_size >> 9;	//2^9 is 512 so this gets us the number of blocks
 }
@@ -116,6 +130,50 @@ void crayon_savefile_load_icon(crayon_savefile_details_t * savefile_details, cha
 void crayon_savefile_free_icon(crayon_savefile_details_t * savefile_details){
 	free(savefile_details->icon);
 	free(savefile_details->icon_palette);
+	return;
+}
+
+uint8_t crayon_savefile_load_eyecatch(crayon_savefile_details_t * savefile_details, char * eyecatch_path){
+	FILE * eyecatch_data_file;
+	int size_data;
+
+	eyecatch_data_file = fopen(eyecatch_path, "rb");
+	if(!eyecatch_data_file){
+		return 1;
+	}
+
+	uint16_t eyecatch_size = 0;
+	switch(savefile_details->eyecatch_type){
+		case 1:
+			eyecatch_size = 8064;	break;
+		case 2:
+			eyecatch_size = 512 + 4032;	break;
+		case 3:
+			eyecatch_size = 32 + 2016;	break;
+		default:
+			return 2;
+	}
+
+	//Get the size of the file
+	fseek(eyecatch_data_file, 0, SEEK_END);
+	size_data = ftell(eyecatch_data_file);	//Confirming its the right size
+	fseek(eyecatch_data_file, 0, SEEK_SET);
+
+	if(size_data != eyecatch_size){
+		return 3;
+	}
+
+	savefile_details->eyecatch_data = (uint8_t *) malloc(size_data);
+	if(fread(savefile_details->eyecatch_data, size_data, 1, eyecatch_data_file) != 1){
+		return 4;
+	}
+	fclose(eyecatch_data_file);
+
+	return 0 ;
+}
+
+void crayon_savefile_free_eyecatch(crayon_savefile_details_t * savefile_details){
+	free(savefile_details->eyecatch_data);
 	return;
 }
 
@@ -211,11 +269,12 @@ uint8_t crayon_savefile_get_valid_function(uint32_t function){
 
 //Make sure to call this after making a new savefile struct otherwise you can get strange results
 uint8_t crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
-	uint8_t icon_anim_count, uint16_t icon_anim_speed, char * desc_long, char * desc_short, char * app_id, char * save_name){
+	uint8_t icon_anim_count, uint16_t icon_anim_speed, uint8_t eyecatch_type, char * desc_long, char * desc_short, char * app_id, char * save_name){
 	savefile_details->savefile_data = savefile_data;
 	savefile_details->savefile_size = savefile_size;
 	savefile_details->icon_anim_count = icon_anim_count;
 	savefile_details->icon_anim_speed = icon_anim_speed;
+	savefile_details->eyecatch_type = eyecatch_type;
 
 	strcpy(savefile_details->desc_long, desc_long);
 	strcpy(savefile_details->desc_short, desc_short);
@@ -320,7 +379,10 @@ uint8_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	pkg.icon_anim_speed = savefile_details->icon_anim_speed;
 	memcpy(pkg.icon_pal, savefile_details->icon_palette, 32);
 	pkg.icon_data = savefile_details->icon;
-	pkg.eyecatch_type = VMUPKG_EC_NONE;
+	pkg.eyecatch_type = savefile_details->eyecatch_type;
+	if(pkg.eyecatch_type){
+		pkg.eyecatch_data = savefile_details->eyecatch_data;
+	}
 	pkg.data_len = savefile_details->savefile_size;
 	pkg.data = data;
 

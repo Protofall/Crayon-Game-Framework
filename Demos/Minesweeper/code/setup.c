@@ -542,12 +542,12 @@ uint8_t setup_update_old_saves(crayon_savefile_details_t * new_savefile_details)
 
 	//Pre 1.2.0, it used the incorrect length app_id. Savefile format is still the same as pre 1.3.0
 	crayon_savefile_init_savefile_details(&pre_1_2_0_savefile_details, (uint8_t *)&pre_1_3_0_savefile,
-		sizeof(pre_1_3_0_minesweeper_savefile_t), 1, 0, "Made with Crayon by Protofall\0", "Minesweepe\0",
+		sizeof(pre_1_3_0_minesweeper_savefile_t), 1, 0, 0, "Made with Crayon by Protofall\0", "Minesweepe\0",
 		"Proto_Minesweepe\0", "MINESWEEPER.s\0");
 
 	//This is pre 1.3.0, it had an insufficient pref_mines var size
 	crayon_savefile_init_savefile_details(&pre_1_3_0_savefile_details, (uint8_t *)&pre_1_3_0_savefile,
-		sizeof(pre_1_3_0_minesweeper_savefile_t), 1, 0, "Made with Crayon by Protofall\0", "Minesweepe\0",
+		sizeof(pre_1_3_0_minesweeper_savefile_t), 1, 0, 0, "Made with Crayon by Protofall\0", "Minesweepe\0",
 		"Proto_Minesweep\0", "MINESWEEPER.s\0");
 
 	//Check for saves with old name (Pre 1.2.0)

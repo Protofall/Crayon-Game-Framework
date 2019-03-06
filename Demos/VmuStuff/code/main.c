@@ -198,18 +198,19 @@ int main(){
 		crayon_memory_mount_romdisk("/cd/sf_icon.img", "/Save");
 	#endif
 
-	crayon_savefile_details_t savefile_details;
-	minesweeper_savefile_t savefile;
-	crayon_savefile_load_icon(&savefile_details, "/Save/image.bin", "/Save/palette.bin");
-
 	uint8_t * vmu_lcd_icon = NULL;
 	setup_vmu_icon_load(&vmu_lcd_icon, "/Save/LCD.bin");
 
-	fs_romdisk_unmount("/SaveFile");
-
+	crayon_savefile_details_t savefile_details;
+	minesweeper_savefile_t savefile;
 	crayon_savefile_init_savefile_details(&savefile_details, (uint8_t *)&savefile,
-		sizeof(minesweeper_savefile_t), 3, 15, "Crayon's VMU demo\0", "Save Demo\0",
+		sizeof(minesweeper_savefile_t), 3, 15, 2, "Crayon's VMU demo\0", "Save Demo\0",
 		"Proto_Save_demo\0", "SAVE_DEMO.s\0");
+
+	crayon_savefile_load_icon(&savefile_details, "/Save/image.bin", "/Save/palette.bin");
+	uint8_t res = crayon_savefile_load_eyecatch(&savefile_details, "/Save/eyecatch2.bin");	//Must be called AFTER init
+
+	fs_romdisk_unmount("/SaveFile");
 
 	//Apply the VMU LCD icon (Apparently this is automatic if your savefile is an ICONDATA.VMS)
 	setup_vmu_icon_apply(vmu_lcd_icon, savefile_details.valid_vmu_screens);
@@ -265,9 +266,14 @@ int main(){
 	#endif
 
 	char buffer[70];
+	if(!res){
 	sprintf(buffer, "Save created\nUses %d blocks and has %d frames of\nanimation",
-		((uint8_t)(savefile_details.savefile_size / 512) + 1) + savefile_details.icon_anim_count,
+		crayon_savefile_get_save_block_count(&savefile_details),
 		savefile_details.icon_anim_count);
+	}
+	else{
+		sprintf(buffer, "It failed with code %d", res);
+	}
 
 	uint8_t end = 0;
 	while(!end){
@@ -304,6 +310,7 @@ int main(){
 	}
 
 	crayon_savefile_free_icon(&savefile_details);
+	crayon_savefile_free_eyecatch(&savefile_details);
 	pvr_mem_free(font_tex);
 
 	return 0;
