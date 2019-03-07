@@ -191,6 +191,12 @@ int main(){
 		}
 	#endif
 
+	crayon_savefile_details_t savefile_details;
+	minesweeper_savefile_t savefile;
+	crayon_savefile_init_savefile_details(&savefile_details, (uint8_t *)&savefile,
+		sizeof(minesweeper_savefile_t), 3, 15, "Crayon's VMU demo\0", "Save Demo\0",
+		"ProtoSaveDemo2\0", "SAVE_DEMO.s\0");
+
 	//Load the VMU icon data
 	#if CRAYON_SD_MODE == 1
 		crayon_memory_mount_romdisk("/sd/sf_icon.img", "/Save");
@@ -201,14 +207,9 @@ int main(){
 	uint8_t * vmu_lcd_icon = NULL;
 	setup_vmu_icon_load(&vmu_lcd_icon, "/Save/LCD.bin");
 
-	crayon_savefile_details_t savefile_details;
-	minesweeper_savefile_t savefile;
-	crayon_savefile_init_savefile_details(&savefile_details, (uint8_t *)&savefile,
-		sizeof(minesweeper_savefile_t), 3, 15, 2, "Crayon's VMU demo\0", "Save Demo\0",
-		"Proto_Save_demo\0", "SAVE_DEMO.s\0");
-
+	
 	crayon_savefile_load_icon(&savefile_details, "/Save/image.bin", "/Save/palette.bin");
-	uint8_t res = crayon_savefile_load_eyecatch(&savefile_details, "/Save/eyecatch2.bin");	//Must be called AFTER init
+	uint8_t res = crayon_savefile_load_eyecatch(&savefile_details, "/Save/eyecatch3.bin");	//Must be called AFTER init
 
 	fs_romdisk_unmount("/SaveFile");
 

@@ -63,7 +63,7 @@ void crayon_savefile_set_vmu_bit(uint8_t * vmu_bitmap, int8_t savefile_port, int
 void crayon_savefile_load_icon(crayon_savefile_details_t * savefile_details, char * image, char * palette);
 void crayon_savefile_free_icon(crayon_savefile_details_t * savefile_details);
 
-uint8_t crayon_savefile_load_eyecatch(crayon_savefile_details_t * savefile_details, char * eyecatch_path);	//MUST be called after init
+uint8_t crayon_savefile_load_eyecatch(crayon_savefile_details_t * savefile_details, char * eyecatch_path);	//Also sets eyecatch_type
 void crayon_savefile_free_eyecatch(crayon_savefile_details_t * savefile_details);
 
 //Returns an 8 bit var for each VMU (a1a2b1b2c1c2d1d2)
@@ -74,8 +74,9 @@ uint8_t crayon_savefile_get_valid_function(uint32_t function);	//Can be used to 
 
 //Make sure to call this after making a new savefile struct otherwise you can get strange results
 	//Also note the return value is 1 when the number of icons is greater than 3. The DC BIOS can't render icons with 4 or more frames
+	//If you call this AFTER loading an eyecatcher it will override the eyecatch_type variable with zero. Call init FIRST
 uint8_t crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
-	uint8_t icon_anim_count, uint16_t icon_anim_speed, uint8_t eyecatch_type, char * desc_long, char * desc_short, char * app_id, char * save_name);
+	uint8_t icon_anim_count, uint16_t icon_anim_speed, char * desc_long, char * desc_short, char * app_id, char * save_name);
 
 //Returns 0 on success and 1 or more if failure. Handles loading and saving of uncompressed savefiles
 uint8_t crayon_savefile_load(crayon_savefile_details_t * savefile_details);
