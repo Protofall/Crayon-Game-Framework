@@ -64,13 +64,13 @@ int16_t crayon_savefile_get_save_block_count(crayon_savefile_details_t * savefil
 	data_len = savefile_details->savefile_size;
 	uint16_t eyecatch_size  = 0;
 	switch(savefile_details->eyecatch_type){
-		case 0:
+		case VMUPKG_EC_NONE:
 			eyecatch_size = 0; break;
-		case 1:
+		case VMUPKG_EC_16BIT:
 			eyecatch_size = 8064; break;
-		case 2:
+		case VMUPKG_EC_256COL:
 			eyecatch_size = 512 + 4032; break;
-		case 3:
+		case VMUPKG_EC_16COL:
 			eyecatch_size = 32 + 2016; break;
 		default:
 			return -1;
@@ -147,11 +147,11 @@ uint8_t crayon_savefile_load_eyecatch(crayon_savefile_details_t * savefile_detai
 
 	switch(size_data){
 		case 8064:
-			savefile_details->eyecatch_type = 1; break;
+			savefile_details->eyecatch_type = VMUPKG_EC_16BIT; break;
 		case 4544:
-			savefile_details->eyecatch_type = 2; break;
+			savefile_details->eyecatch_type = VMUPKG_EC_256COL; break;
 		case 2048:
-			savefile_details->eyecatch_type = 3; break;
+			savefile_details->eyecatch_type = VMUPKG_EC_16COL; break;
 		default:
 			return 2;
 	}
@@ -269,7 +269,7 @@ uint8_t crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefi
 	savefile_details->savefile_size = savefile_size;
 	savefile_details->icon_anim_count = icon_anim_count;
 	savefile_details->icon_anim_speed = icon_anim_speed;
-	savefile_details->eyecatch_type = 0;	//The default
+	savefile_details->eyecatch_type = VMUPKG_EC_NONE;	//The default
 
 	strcpy(savefile_details->desc_long, desc_long);
 	strcpy(savefile_details->desc_short, desc_short);
@@ -350,7 +350,7 @@ uint8_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	file_t f;
 	char savename[32];
 	maple_device_t *vmu;
-	int blocks_freed = 0;
+	uint16_t blocks_freed = 0;
 	uint8_t rv = 0;
 
 	vmu = maple_enum_dev(savefile_details->savefile_port, savefile_details->savefile_slot);
@@ -386,15 +386,15 @@ uint8_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	//Check if a file exists with that name, since we'll overwrite it.
 	f = fs_open(savename, O_RDONLY);
 	if(f != FILEHND_INVALID){
-		blocks_freed = fs_total(f) >> 9;
+		int fs_size = fs_total(f);
+		blocks_freed = (fs_size >> 9) + (fs_size & ((1 << 9) - 1));
 		fs_close(f);
 	}
 
 	//Make sure there's enough free space on the VMU.
-	if(vmufs_free_blocks(vmu) + blocks_freed < (pkg_size >> 9)){
+	if(vmufs_free_blocks(vmu) + blocks_freed < (pkg_size >> 9) + (pkg_size & ((1 << 9) - 1))){
 		free(pkg_out);
 		free(data);
-		// return pkg_size >> 9;
 		return 4;
 	}
 
