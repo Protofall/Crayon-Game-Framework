@@ -240,22 +240,8 @@ void reset_grid(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_
 		free(grid->logic_grid);
 	}
 
-	//New
-	// if(grid->draw_grid.positions != NULL){
-		// free(grid->draw_grid.positions);
-	// }
-	// if(grid->draw_grid.frame_coord_keys != NULL){
-		// free(grid->draw_grid.frame_coord_keys);
-	// }
-
 	grid->draw_grid.num_sprites = x * y;
 	grid->logic_grid = (uint8_t *) malloc(grid->draw_grid.num_sprites * sizeof(uint8_t));
-
-	//New
-	// grid->draw_grid.positions = (float *) malloc(2 * grid->draw_grid.num_sprites * sizeof(float));
-	// grid->draw_grid.frame_coord_keys = (uint8_t *) malloc(grid->draw_grid.num_sprites * sizeof(uint8_t));
-	// grid->draw_grid.positions = (float *) malloc(2 * grid->draw_grid.num_sprites * sizeof(float));
-	// grid->draw_grid.frame_coord_keys = (uint8_t *) malloc(grid->draw_grid.num_sprites * sizeof(uint8_t));
 
 	//Calculate some start_x stuff. Default for expert is 80, 104
 	grid->start_x = 320 - (grid->x * 8);
@@ -1650,6 +1636,22 @@ int main(){
 	crayon_memory_swap_colour(&cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
 	crayon_memory_swap_colour(&cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
 
+	//Setup the main palettes (Only need to call this once unless I change palettes)
+	crayon_graphics_setup_palette(&Board_P);		//0
+	crayon_graphics_setup_palette(&Icons_P);		//1
+	crayon_graphics_setup_palette(&Controllers_P);	//2
+	if(!MS_options.operating_system){	//Since it uses palettes and XP doesn't, we do this
+		crayon_graphics_setup_palette(&Windows_P);	//1. But since Windows uses 8bpp, this doesn't overlap with "Icons" and "Controllers"
+	}
+	crayon_graphics_setup_palette(&cursor_red);	//8
+	crayon_graphics_setup_palette(&cursor_yellow);	//9
+	crayon_graphics_setup_palette(&cursor_green);	//10
+	crayon_graphics_setup_palette(&cursor_blue);	//11
+
+	crayon_graphics_setup_palette(&White_Tahoma_P);//61
+	crayon_graphics_setup_palette(&Tahoma_P);		//62
+	// crayon_graphics_setup_palette(&BIOS_P);		//63
+
 	pvr_stats_t pvr_stats;
 	while(1){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -2009,22 +2011,6 @@ int main(){
 
 		pvr_wait_ready();
 		pvr_scene_begin();
-
-		//Setup the main palette
-		crayon_graphics_setup_palette(&Board_P);		//0
-		crayon_graphics_setup_palette(&Icons_P);		//1
-		crayon_graphics_setup_palette(&Controllers_P);	//2
-		if(!MS_options.operating_system){	//Since it uses palettes and XP doesn't, we do this
-			crayon_graphics_setup_palette(&Windows_P);	//1. But since Windows uses 8bpp, this doesn't overlap with "Icons" and "Controllers"
-		}
-		crayon_graphics_setup_palette(&cursor_red);	//8
-		crayon_graphics_setup_palette(&cursor_yellow);	//9
-		crayon_graphics_setup_palette(&cursor_green);	//10
-		crayon_graphics_setup_palette(&cursor_blue);	//11
-
-		crayon_graphics_setup_palette(&White_Tahoma_P);//61
-		crayon_graphics_setup_palette(&Tahoma_P);		//62
-		// crayon_graphics_setup_palette(&BIOS_P);		//63
 
 		//Transfer more stuff from this list into either the PT or OP lists
 		pvr_list_begin(PVR_LIST_TR_POLY);

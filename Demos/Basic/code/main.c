@@ -253,11 +253,14 @@ int main(){
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
+	crayon_graphics_setup_palette(&BIOS_P);
+	crayon_graphics_setup_palette(&Tahoma_P);
+	crayon_graphics_setup_palette(&Red_Man_P);
+	crayon_graphics_setup_palette(&Green_Man_P);
+
 	pvr_stats_t stats;
 	// uint32_t previous_buttons[4] = {0};
-
 	while(1){
-
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
 		//Change the direction the guy is facing
@@ -273,11 +276,6 @@ int main(){
 
 		pvr_wait_ready();
 		pvr_scene_begin();
-
-		crayon_graphics_setup_palette(&BIOS_P);
-		crayon_graphics_setup_palette(&Tahoma_P);
-		crayon_graphics_setup_palette(&Red_Man_P);
-		crayon_graphics_setup_palette(&Green_Man_P);
 
 		pvr_get_stats(&stats);
 
