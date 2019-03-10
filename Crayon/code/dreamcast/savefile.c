@@ -58,6 +58,11 @@ uint8_t crayon_savefile_check_for_device(int8_t port, int8_t slot, uint32_t func
 	return 0;
 }
 
+//Rounds the number down to nearest multiple of 512, then adds 1 if there's a remainder
+uint16_t crayon_savefile_bytes_to_blocks(size_t bytes){
+	return (bytes >> 9) + !!(bytes & ((1 << 9) - 1));
+}
+
 //I used the "vmu_pkg_build" function's source as a guide for this. Doesn't work with compressed saves
 int16_t crayon_savefile_get_save_block_count(crayon_savefile_details_t * savefile_details){
 	int pkg_size, data_len;
@@ -80,9 +85,7 @@ int16_t crayon_savefile_get_save_block_count(crayon_savefile_details_t * savefil
 	pkg_size = sizeof(vmu_hdr_t) + (512 * savefile_details->icon_anim_count) +
 		eyecatch_size + data_len;
 
-	return (pkg_size >> 9) + !!(pkg_size & ((1 << 9) - 1));	//2^9 is 512 so this gets us the number of blocks
-															//First part gets size in blocks, but rounds down
-															//Right side accounts for any remainder
+	return crayon_savefile_bytes_to_blocks(pkg_size);
 }
 
 uint8_t crayon_savefile_get_vmu_bit(uint8_t vmu_bitmap, int8_t savefile_port, int8_t savefile_slot){
@@ -387,12 +390,12 @@ uint8_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	f = fs_open(savename, O_RDONLY);
 	if(f != FILEHND_INVALID){
 		int fs_size = fs_total(f);
-		blocks_freed = (fs_size >> 9) + (fs_size & ((1 << 9) - 1));
+		blocks_freed = crayon_savefile_bytes_to_blocks(fs_size);;
 		fs_close(f);
 	}
 
 	//Make sure there's enough free space on the VMU.
-	if(vmufs_free_blocks(vmu) + blocks_freed < (pkg_size >> 9) + (pkg_size & ((1 << 9) - 1))){
+	if(vmufs_free_blocks(vmu) + blocks_freed < crayon_savefile_bytes_to_blocks(pkg_size)){
 		free(pkg_out);
 		free(data);
 		return 4;

@@ -47,6 +47,7 @@ typedef struct crayon_savefile_details{
 
 uint8_t crayon_savefile_check_for_save(crayon_savefile_details_t * savefile_details, int8_t savefile_port, int8_t savefile_slot);	//1 if save DNE. 0 if it does
 uint8_t crayon_savefile_check_for_device(int8_t port, int8_t slot, uint32_t function);	//0 if device is valid
+uint16_t crayon_savefile_bytes_to_blocks(size_t bytes);	//Takes a byte count and returns no. blocks needed to save it
 int16_t crayon_savefile_get_save_block_count(crayon_savefile_details_t * savefile_details);	//Returns the number of blocks your save file will need (Uncompressed)
 
 

@@ -209,7 +209,7 @@ int main(){
 
 	
 	crayon_savefile_load_icon(&savefile_details, "/Save/image.bin", "/Save/palette.bin");
-	uint8_t res = crayon_savefile_load_eyecatch(&savefile_details, "/Save/eyecatch3.bin");	//Must be called AFTER init
+	uint8_t res = crayon_savefile_load_eyecatch(&savefile_details, "Save/eyecatch3.bin");	//Must be called AFTER init
 
 	fs_romdisk_unmount("/SaveFile");
 
