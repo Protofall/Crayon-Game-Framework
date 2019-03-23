@@ -2340,7 +2340,7 @@ int main(){
 
 			//Draw the grid's boarder
 			if(MS_options.focus <= 1){
-				custom_poly_boarder(3, MS_grid.start_x, MS_grid.start_y, 16, MS_grid.x * 16, MS_grid.y * 16, 4286611584u, 4294967295u);
+				custom_poly_boarder(3, MS_grid.start_x, MS_grid.start_y, 16, MS_grid.x * 16, MS_grid.y * 16, 0xFF808080, 0xFFFFFFFF);
 			}
 			else{
 				if(MS_options.focus >= 2){	//The yellowy background + dividing line
@@ -2359,12 +2359,12 @@ int main(){
 
 			//Draw the boarders for digit display (I think I should move these calls into digit display itself)
 			custom_poly_boarder(1, 20, 65, 16, Board.animation_array[1].frame_width * 3, Board.animation_array[1].frame_height,
-				4286611584u, 4294967295u);
+				0xFF808080, 0xFFFFFFFF);
 			custom_poly_boarder(1, 581, 65, 16, Board.animation_array[1].frame_width * 3, Board.animation_array[1].frame_height,
-				4286611584u, 4294967295u);
+				0xFF808080, 0xFFFFFFFF);
 
 			//Draw the big indent boarder that encapsulates digit displays and face
-			custom_poly_boarder(2, 14, 59, 16, 615, 33, 4286611584u, 4294967295u);
+			custom_poly_boarder(2, 14, 59, 16, 615, 33, 0xFF808080, 0xFFFFFFFF);
 
 			//Draw the MS background stuff
 			crayon_graphics_draw_untextured_array(&Bg_polys, PVR_LIST_OP_POLY);
