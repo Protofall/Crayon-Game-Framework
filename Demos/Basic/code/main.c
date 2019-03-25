@@ -261,6 +261,7 @@ int main(){
 	pvr_stats_t stats;
 	// uint32_t previous_buttons[4] = {0};
 	while(1){
+		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
 		//Change the direction the guy is facing
@@ -274,7 +275,6 @@ int main(){
 		// previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
 		MAPLE_FOREACH_END()
 
-		pvr_wait_ready();
 		pvr_scene_begin();
 
 		pvr_get_stats(&stats);

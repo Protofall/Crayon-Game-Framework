@@ -278,13 +278,13 @@ int main(){
 
 	uint8_t end = 0;
 	while(!end){
+		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 			if(st->buttons & CONT_START){
 				end = 1;
 			}
 		MAPLE_FOREACH_END()
 
-		pvr_wait_ready();
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_TR_POLY);

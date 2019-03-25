@@ -1654,6 +1654,9 @@ int main(){
 
 	pvr_stats_t pvr_stats;
 	while(1){
+		pvr_wait_ready();	//This lives up here since imput handling depends on vblanks
+							//input polled on vblanks
+
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
 		if(st->joyx > 0){	//Converting from -128, 127 to -1, 1 CHECK IF I'M DIVIDING RIGHT (Should they be all 127 or 128 or this?)
@@ -2009,7 +2012,7 @@ int main(){
 
 		pvr_get_stats(&pvr_stats);
 
-		pvr_wait_ready();
+		// pvr_wait_ready();	//Moved further up
 		pvr_scene_begin();
 
 		//Transfer more stuff from this list into either the PT or OP lists
