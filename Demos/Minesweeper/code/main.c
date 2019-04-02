@@ -2262,7 +2262,7 @@ int main(){
 			else if(MS_options.focus == 5){
 
 				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.3.0 (Build 3011: Service Pack 5)\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.3.0-dev (Build 3011: Service Pack 5)\0");
 				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
 				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
 				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
