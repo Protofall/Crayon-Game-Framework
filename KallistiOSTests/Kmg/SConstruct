@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+#Is the above line needed?
+
+# Command(all, ["Kmg.elf"], [
+# 		"shell command 1",
+# 		"shell command 2",
+# 		"shell command 3",
+# 		])
+
+# Command(all, ["Kmg.elf", "dependency1"], [
+# 		"shell command 1",
+# 		"shell command 2",
+# 		"shell command 3",
+# 		])
+
+
+#Importing system variables such as KOS_BASE and CRAYON_BASE
+	#This method will store the ENTIRE environment, if you want to use just a few select vars check this:
+	# https://stackoverflow.com/questions/32835854/getting-the-value-of-external-environment-variable
+import os	#Seems to import system variables so hopefully this includes KOS_BASE and CRAYON_BASE
+
+env = Environment(ENV = os.environ)
+KOS_BASE = os.environ.get('KOS_BASE')
+CRAYON_BASE = os.environ.get('CRAYON_BASE')	#Note, environment vars *must* be exported otherwise this will return "None"
+print "KOS' path: " + KOS_BASE
+print "Crayon's path: " + CRAYON_BASE
+
+# https://scons.org/doc/2.3.0/HTML/scons-user/x1444.html
+# I might be able to call program with my sh4 compiler via this method...
+# I can make a custom "construction" environment with the KOS sh4 compiler and call program, library on that.
+
+TARGET = Dir('.').path.rsplit('/', 1)[1] + "Test"		#Executable name (First part gets the name of the parent dir)
+BINS = TARGET + ".bin" + " 1st_read.bin"				#Binaries
+SCRAMBLED = "1st_read.bin"								#Scrambled-file-name
+KOS_ROMDISK_DIR = "romdisk"
+OBJS = TARGET + ".o" + " " + KOS_ROMDISK_DIR + ".o"		#Objects
+
+CFILES = ' '.join(map(str, Glob('*.c')))		#Convert from list to string
+
+# print TARGET
+# print BINS
+# print SCRAMBLED
+# print KOS_ROMDISK_DIR
+# print OBJS
+# print "C files: " + CFILES
+
+
+
+
+
+
+
+
+
+
+
+#str(list) #Might be useful
+
+# from subprocess import call
+# call("echo test")
+
+#Doesn't seem to work, probs because this makes "Nothing" and hence none of the build parts depend on "Nothing"
+# path = ['/usr/local/bin', '/bin', '/usr/bin']
+# env = Environment(ENV = {'PATH' : path})
+# env.Command ('', '', 'echo test')
+# env.Command('','',action="echo test")
+
+#Split helps turn a string with spaces into a list
+# Program('program', Split('main.c file1.c file2.c'))
+# Program(TARGET + '.elf', Split(b))
+
+#Execute(Mkdir('bin'))
+
+# Library('foo', ['f1.c', 'f2.c', 'f3.c'])
+
+# % scons -Q
+# cc -o f1.o -c f1.c
+# cc -o f2.o -c f2.c
+# cc -o f3.o -c f3.c
+# ar rc libfoo.a f1.o f2.o f3.o
+# ranlib libfoo.a
+
+#Library('foo', ['f1.c', 'f2.o', 'f3.c', 'f4.o'])	#Is useful because it can take pre-compiled files. Might be able to use with KOS
+
+#Whats the difference between a static library and normal library. Which one is KOS?
+#Linking with libraries: https://scons.org/doc/2.3.0/HTML/scons-user/x667.html

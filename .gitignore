@@ -23,3 +23,7 @@ redream.cfg
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+#Sconstruct internal files
+.sconsign.dblite
+
