@@ -4,9 +4,13 @@ BINS = $(TARGET).bin 1st_read.bin
 
 SCRAMBLED = 1st_read.bin
 
-OBJS = $(TARGET).o romdisk.o
-
 KOS_ROMDISK_DIR = romdisk
+
+OBJS = $(TARGET).o $(KOS_ROMDISK_DIR).o
+
+LIBS = -lkmg -lkosutils
+
+CFLAGS = $(KOS_CFLAGS)	#This was blank before, but it worked...I wonder why
 
 all: $(TARGET).cdi
 
@@ -20,7 +24,7 @@ $(SCRAMBLED): $(TARGET).elf
 	$(KOS_BASE)/utils/scramble/scramble $(TARGET).bin $(SCRAMBLED)
 
 $(TARGET).elf: $(OBJS)
-	kos-cc -o $(TARGET).elf $(OBJS) -lkmg -lkosutils
+	kos-cc -o $(TARGET).elf $(OBJS) $(LIBS)
 #I think -lkmg for the kmg port and -lkosutils for the .kmg
 
 $(TARGET).cdi: $(SCRAMBLED)
@@ -41,7 +45,7 @@ romdisk/%.kmg: assets/ARGB4444/%.png
 	$(KOS_BASE)/utils/vqenc/vqenc -v -t -q -k -a $<
 	mv assets/ARGB4444/$*.kmg romdisk/
 
-#The only stuff we needed from "# include $(KOS_BASE)/Makefile.rules"
+#The only stuff we needed from "include $(KOS_BASE)/Makefile.rules"
 %.o: %.c
 	kos-cc $(CFLAGS) -c $< -o $@
 

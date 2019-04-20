@@ -186,25 +186,43 @@ objectLogicID is basically the general behaviour of a texture. So a background h
 + Texconv
 	+ QT is required to build the Texconv executable
 + cdi4dc (Unix build)
++ SCons (Makefile alternative)
 
 ### Installing Pre-requisites
 
 Assuming you have a working clone of KOS.
 
 For cdi4dc:
+
 `git clone https://github.com/Kazade/img4dc.git`
+
 `cd img4dc`
+
 `cmake .`
+
 `make`
+
 
 For texconv:
+
 `sudo apt-get install qt5-default qtbase5-dev`
+
 `git clone https://github.com/tvspelsfreak/texconv`
+
 `cd texconv`
+
 `qmake`
+
 `make`
 
-Copy the executables for texconv and cdi4dc into a directory whose path is listed in the ~/.profile file (Or add you own directory path)
+
+Copy the executables for texconv and cdi4dc into a directory whose path is listed in the `~/.profile` file (Or add you own directory path)
+
+
+Crayon also uses SConstruct as an alternative to makefiles due to its enhanced ability. If you don't already have it installed, run this command
+
+`sudo apt-get install scons`
+
 
 **CHECK** Do we also require the `convert` command?
 

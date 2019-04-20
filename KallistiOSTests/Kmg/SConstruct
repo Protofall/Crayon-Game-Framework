@@ -1,29 +1,22 @@
 #!/usr/bin/env python
 #Is the above line needed?
 
-# Command(all, ["Kmg.elf"], [
-# 		"shell command 1",
-# 		"shell command 2",
-# 		"shell command 3",
-# 		])
+Help("""
+	Type:
 
-# Command(all, ["Kmg.elf", "dependency1"], [
-# 		"shell command 1",
-# 		"shell command 2",
-# 		"shell command 3",
-# 		])
-
+	'scons program' to build the program
+	'scons clean' to remove program files
+""")
 
 #Importing system variables such as KOS_BASE and CRAYON_BASE
 	#This method will store the ENTIRE environment, if you want to use just a few select vars check this:
 	# https://stackoverflow.com/questions/32835854/getting-the-value-of-external-environment-variable
 import os	#Seems to import system variables so hopefully this includes KOS_BASE and CRAYON_BASE
 
-env = Environment(ENV = os.environ)
 KOS_BASE = os.environ.get('KOS_BASE')
 CRAYON_BASE = os.environ.get('CRAYON_BASE')	#Note, environment vars *must* be exported otherwise this will return "None"
-print "KOS' path: " + KOS_BASE
-print "Crayon's path: " + CRAYON_BASE
+# print "KOS' path: " + KOS_BASE
+# print "Crayon's path: " + CRAYON_BASE
 
 # https://scons.org/doc/2.3.0/HTML/scons-user/x1444.html
 # I might be able to call program with my sh4 compiler via this method...
@@ -34,8 +27,11 @@ BINS = TARGET + ".bin" + " 1st_read.bin"				#Binaries
 SCRAMBLED = "1st_read.bin"								#Scrambled-file-name
 KOS_ROMDISK_DIR = "romdisk"
 OBJS = TARGET + ".o" + " " + KOS_ROMDISK_DIR + ".o"		#Objects
+LIBS = "-lkmg -lkosutils"								#Libs used when making the .elf file
 
 CFILES = ' '.join(map(str, Glob('*.c')))		#Convert from list to string
+
+CFILES = "kmgTest.c"
 
 # print TARGET
 # print BINS
@@ -45,6 +41,50 @@ CFILES = ' '.join(map(str, Glob('*.c')))		#Convert from list to string
 # print "C files: " + CFILES
 
 
+#SCons rebuilds default is based on a MD5 checksum instead of a timestamp like makefiles. This can be changed though with "Decider('timestamp-newer')"
+#You have multiple decider options including combos
+
+#"One drawback to using times stamps exactly like Make is that if an input file's modification time suddenly becomes older than a target file, the target file will not be rebuilt. This can happen if an old copy of a source file is restored from a backup archive, for example. The contents of the restored file will likely be different than they were the last time a dependent target was built, but the target won't be rebuilt because the modification time of the source file is not newer than the target."
+# Maybe thats why it messed up with Crayon building strangly
+
+
+
+#This environment allows us to implicitly set dependencies.
+	#So if f1.c includes "stark.h" this will detect that and check "stark.h" first (And its dependencies)
+
+CFLAGS = os.environ.get('KOS_CFLAGS')
+print CFLAGS
+CXXFLAGS = os.environ.get('KOS_CPPFLAGS')
+
+# env_dreamcast = Environment(CPPPATH = ['.'], CC = 'kos-cc', CCFLAGS = CFLAGS)	#Note CC is for C and CXX is for CC/C++
+																		#CPPPATH is for C and CC/C++
+
+# env_dreamcast = Environment(CPPPATH = ['.'])
+env_dreamcast = Environment(CPPPATH = ['.'], CC = 'kos-cc', CCFLAGS = CFLAGS)
+env_dreamcast['ENV']['PATH'] = os.environ['PATH']	#Import PATH for us. This fiexes the "Unable to find kos-cc" thing
+													#You could just add "ENV = os.environ" to the constructor instead
+env_dreamcast.Object("kmgTest.o", "kmgTest.c")	#Command should work, but we get the 2nd arg issue again...
+
+# print env_dreamcast['ENV']['PATH']
+
+#env_dreamcast.Append(CCFLAGS = ['-BLAH']) #is useful
+
+# print "CC is:", env['CC']
+# o = env_dreamcast.Object(TARGET, CFILES)	#No -o, hence it doesn't know where to output. -c is the source file
+											#I get the feeling I can't really use Program/Object to make my files...I have to use Command
+											#Also it can't find "kos-cc", but can find "/opt/.../gnu_wrappers/kos-cc"...why?
+											#That directory *is* in my path
+
+# env_dreamcast.Replace(CFLAGS=CFLAGS)	#Set the value for the environment to use
+# env_dreamcast.Command("kmgTest.o", "kmgTest.c","kos-cc $CFLAGS -c $SOURCE -o $TARGET")	#Can't find first arg (-O2), not being parsed right
+# https://scons.org/doc/2.3.0/HTML/scons-user/c1818.html
+# Possibly useful for the cd/sd/pc options (All of chapter 8 is really)
+
+#What this should look like:
+
+#kos-cc -O2 -fomit-frame-pointer -ml -m4-single-only -ffunction-sections -fdata-sections  -I/opt/toolchains/dc/kos/include
+#-I/opt/toolchains/dc/kos/kernel/arch/dreamcast/include -I/opt/toolchains/dc/kos/addons/include -I/opt/toolchains/dc/kos/../kos-ports/include
+#-D_arch_dreamcast -D_arch_sub_pristine -Wall -g -fno-builtin -fno-strict-aliasing -c kmgTest.c -o kmgTest.o
 
 
 
@@ -52,6 +92,24 @@ CFILES = ' '.join(map(str, Glob('*.c')))		#Convert from list to string
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+# scons -Q --tree=all
+
+# scons -Q --implicit-cache hello	#This will cache all includes so we don't need to scan the file each time
+
+# Program('hello.c', CPPPATH=['/usr/include'])	#Do I really need to set CPPPATH to this for stuff to work?
+
+# <https://scons.org/doc/2.3.0/HTML/scons-user/x1302.html>	#Order only dependencies. File must be created after *****
 
 
 #str(list) #Might be useful
@@ -84,3 +142,20 @@ CFILES = ' '.join(map(str, Glob('*.c')))		#Convert from list to string
 
 #Whats the difference between a static library and normal library. Which one is KOS?
 #Linking with libraries: https://scons.org/doc/2.3.0/HTML/scons-user/x667.html
+
+# Command(all, ["Kmg.elf"], [
+# 		"shell command 1",
+# 		"shell command 2",
+# 		"shell command 3",
+# 		])
+
+# Command(all, ["Kmg.elf", "dependency1"], [
+# 		"shell command 1",
+# 		"shell command 2",
+# 		"shell command 3",
+# 		])
+
+
+#Prints all environment vars
+# for item in sorted(env.Dictionary().items()):
+             # print "construction variable = '%s', value = '%s'" % item
