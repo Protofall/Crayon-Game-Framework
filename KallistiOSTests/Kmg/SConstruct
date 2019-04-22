@@ -42,36 +42,27 @@ env_dreamcast['ENV'].update({k: v for k, v in os.environ.items() if k.startswith
 env_dreamcast.Replace(LIBS=LIBS)
 env_dreamcast.Replace(OBJS=OBJS)	#For elf
 env_dreamcast.Replace(KOS_BASE=env_dreamcast['ENV']['KOS_BASE'])	#First var is env_dreamcast['KOS_BASE']
-env_dreamcast.Replace(PROJ_NAME=TARGET)
-# env_dreamcast.Replace(ISO=TARGET + ".iso")
+env_dreamcast.Replace(PROJ_NAME=TARGET)	#Since the cdi step makes an iso, this is useful
 
 #Create new commands
-romdisk = Builder(action="$KOS_BASE/utils/bin2o/bin2o romdisk.img romdisk romdisk.o")	#Unfinished, currently does make romdisk.img
+romdisk = Builder(action="$KOS_BASE/utils/bin2o/bin2o $SOURCE romdisk $TARGET")
 elf = Builder(action="kos-cc -o $TARGET $SOURCES $LIBS")	#SOURCES takes all dependencies and shoves them into one command
-# Command("target", ["dependency0", "dependency1"], [
-#        "shell command 1",
-#        "shell command 2",
-#        "shell command 3",
-#        ])
-
 kos_bin = Builder(action="sh-elf-objcopy -R .stack -O binary $SOURCE $TARGET")
 scramble = Builder(action="$KOS_BASE/utils/scramble/scramble $SOURCE $TARGET")
-cdi = Builder(action=["mkisofs -G $KOS_BASE/../IP.BIN -C 0,11702 -J -l -r -o $(PROJ_NAME).iso .",
-					"cdi4dc $(PROJ_NAME).iso $TARGET"])
-# cdi = Builder(action=["mkisofs -G $KOS_BASE/../IP.BIN -C 0,11702 -J -l -r -o $ISO .",
-# 					"cdi4dc $ISO $TARGET"])
+iso = Builder(action="mkisofs -G $KOS_BASE/../IP.BIN -C 0,11702 -J -l -r -o $TARGET .")
+cdi = Builder(action="cdi4dc $SOURCE $TARGET")
 
 #Add the builders
-builders = { "Romdisk": romdisk,  "Elf": elf, "KosBin": kos_bin, "Scramble": scramble, "Cdi": cdi}
+builders = { "Romdisk": romdisk,  "Elf": elf, "KosBin": kos_bin, "Scramble": scramble, "Iso": iso, "Cdi": cdi}
 env_dreamcast.Append(BUILDERS=builders)
-
 
 #Create files
 env_dreamcast.Object('kmgTest.o', 'kmgTest.c')
+bad = env_dreamcast.Command(KOS_ROMDISK_DIR + ".img", "", "make $TARGET")	#For a learning piece, I can't be bothered re-creating this in SCons
+Clean(bad, ["romdisk/icon64.kmg", "romdisk/image.kmg", "romdisk/nerstr.kmg"])	#This will clean the files we don't want from the romdisk folder
 env_dreamcast.Romdisk(target = KOS_ROMDISK_DIR + ".o", source = KOS_ROMDISK_DIR + ".img")
-env_dreamcast.Elf(TARGET + ".elf", OBJS.split())	#Issue. Its checking for file "kmgTest.o romdisk.o" instead of each individually
-													#but if I pass in a list it will call elf once per element
-													#Should be doing "kos-cc -o kmgTest.elf romdisk.o kmgTest.o -lkmg -lkosutils"
+env_dreamcast.Elf(TARGET + ".elf", OBJS.split())
 env_dreamcast.KosBin(BIN, TARGET + ".elf")
 env_dreamcast.Scramble(SCRAMBLED, BIN)
-env_dreamcast.Cdi(TARGET + ".cdi", SCRAMBLED)
+env_dreamcast.Iso(TARGET + ".iso", None)
+env_dreamcast.Cdi(TARGET + ".cdi", TARGET + ".iso")
