@@ -1,32 +1,77 @@
-Help("""
-	Type:
 
-	'scons program' to build the program
-	'scons clean' to remove program files
-""")
+if GetOption('help'):
+	print """
+	Run 'scons' to build the program (make)
+	Run 'scons -c' to remove program files (make clean)
+	Optional flags "platform" and "load-method"
+	"""
+	exit()
+
+# PLATFORM = ARGUMENTS.get('platform')
+# LOAD_METHOD = ARGUMENTS.get('load-method')
+
+# if PLATFORM is None and PLATFORM != "dreamcast":
+# 	print "Unsupported platform \"" + str(PLATFORM) + "\""
+# 	print "Currently supported platforms include: dreamcast"
+# 	exit()
+
+# if LOAD_METHOD is None and LOAD_METHOD != "cd" and LOAD_METHOD != "sd":
+# 	print "Unsupported load method \"" + str(LOAD_METHOD) + "\""
+# 	print "Currently supported platforms include: cd, sd"
+# 	exit()
 
 import os
 
-KOS_BASE = os.environ.get('KOS_BASE')	#Kinda made redundant by the "Adding in KOS vars" line
-
-TARGET = Dir('.').path.rsplit('/', 1)[1] + "Test"		#Executable name (First part gets the name of the parent dir)
-BINS = TARGET + ".bin" + " 1st_read.bin"				#Binaries
+TARGET = "kmgTest"										#Executable name (First part gets the name of the parent dir)
+# TARGET = Dir('.').path.rsplit('/', 1)[1] + "Test"		#Executable name (First part gets the name of the parent dir)
+BIN = TARGET + ".bin"									#Binaries
 SCRAMBLED = "1st_read.bin"								#Scrambled-file-name
 KOS_ROMDISK_DIR = "romdisk"
 OBJS = TARGET + ".o" + " " + KOS_ROMDISK_DIR + ".o"		#Objects
 LIBS = "-lkmg -lkosutils"								#Libs used when making the .elf file
 
 CFILES = ' '.join(map(str, Glob('*.c')))		#Convert from list to string
+CPPFILES = ' '.join(map(str, Glob('*.cpp')))	#Convert from list to string
 
 env_dreamcast = Environment(CPPPATH = ['.'], CC = 'kos-cc', CCFLAGS = os.environ.get('KOS_CFLAGS'))
 env_dreamcast['ENV']['PATH'] = os.environ['PATH']	#Import PATH for us. This fixes the "Unable to find kos-cc" thing
 													#You could just add "ENV = os.environ" to the constructor instead
 env_dreamcast['ENV'].update({k: v for k, v in os.environ.items() if k.startswith('KOS_')})	#Adding in KOS vars
 
-#Both methods should work
-# if True:
-	# env_dreamcast.Object(target = 'kmgTest.o', source = 'kmgTest.c')	#Command should work, but we get the 2nd arg issue again...
-# else:
-	# env_dreamcast.Command("kmgTest.o", "kmgTest.c","kos-cc $CCFLAGS -c $SOURCE -o $TARGET")	#Can't find first arg (-O2)
+#Insert my variables
+env_dreamcast.Replace(LIBS=LIBS)
+env_dreamcast.Replace(OBJS=OBJS)	#For elf
+env_dreamcast.Replace(KOS_BASE=env_dreamcast['ENV']['KOS_BASE'])	#First var is env_dreamcast['KOS_BASE']
+env_dreamcast.Replace(PROJ_NAME=TARGET)
+# env_dreamcast.Replace(ISO=TARGET + ".iso")
 
-env_dreamcast.Object(target = 'kmgTest.o', source = 'kmgTest.c')
+#Create new commands
+romdisk = Builder(action="$KOS_BASE/utils/bin2o/bin2o romdisk.img romdisk romdisk.o")	#Unfinished, currently does make romdisk.img
+elf = Builder(action="kos-cc -o $TARGET $SOURCES $LIBS")	#SOURCES takes all dependencies and shoves them into one command
+# Command("target", ["dependency0", "dependency1"], [
+#        "shell command 1",
+#        "shell command 2",
+#        "shell command 3",
+#        ])
+
+kos_bin = Builder(action="sh-elf-objcopy -R .stack -O binary $SOURCE $TARGET")
+scramble = Builder(action="$KOS_BASE/utils/scramble/scramble $SOURCE $TARGET")
+cdi = Builder(action=["mkisofs -G $KOS_BASE/../IP.BIN -C 0,11702 -J -l -r -o $(PROJ_NAME).iso .",
+					"cdi4dc $(PROJ_NAME).iso $TARGET"])
+# cdi = Builder(action=["mkisofs -G $KOS_BASE/../IP.BIN -C 0,11702 -J -l -r -o $ISO .",
+# 					"cdi4dc $ISO $TARGET"])
+
+#Add the builders
+builders = { "Romdisk": romdisk,  "Elf": elf, "KosBin": kos_bin, "Scramble": scramble, "Cdi": cdi}
+env_dreamcast.Append(BUILDERS=builders)
+
+
+#Create files
+env_dreamcast.Object('kmgTest.o', 'kmgTest.c')
+env_dreamcast.Romdisk(target = KOS_ROMDISK_DIR + ".o", source = KOS_ROMDISK_DIR + ".img")
+env_dreamcast.Elf(TARGET + ".elf", OBJS.split())	#Issue. Its checking for file "kmgTest.o romdisk.o" instead of each individually
+													#but if I pass in a list it will call elf once per element
+													#Should be doing "kos-cc -o kmgTest.elf romdisk.o kmgTest.o -lkmg -lkosutils"
+env_dreamcast.KosBin(BIN, TARGET + ".elf")
+env_dreamcast.Scramble(SCRAMBLED, BIN)
+env_dreamcast.Cdi(TARGET + ".cdi", SCRAMBLED)
