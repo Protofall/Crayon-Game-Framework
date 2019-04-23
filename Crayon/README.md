@@ -14,16 +14,17 @@
 + (DONE BY DEFAULT?) Maple/Controller support (!!!)
 + (DONE? (Added font support)) (Error_Freeze() Isn't enough) Error display support (!!!)
 + Video mode support (!!!)
++ Projection/view/camera support (!!!)
 + Rendering lists of ease of use (!!)
-+ Threading support (!!)
++ (DONE BY DEFAULT?) Threading support (!!)
 + (DONE) VGA/Progressive Scan support (!!)
-+ VMU save/load support (!!)
-+ VMU draw to screen support (!!)
++ (DONE) VMU save/load support (!!)
++ (DONE? Not greyscale yet) VMU draw to screen support (!!)
 + (DONE) Sound effect support (!!)
 + BG music support (!!)
 + (DONE) 8bpp loading/rendering support (!!)
 + (DONE) Non paletted RGB565 loading/rendering support (!!)
-+ Selector to easily choose between "sd" and "cd" dirs (cd for CD-Rs, sd for the sdloader method) (!)
++ (DONE) Selector to easily choose between "sd" and "cd" dirs (cd for CD-Rs, sd for the sdloader method) (!)
 + (DONE) Non paletted ARGB4444 loading/rendering support (!)
 + Palette entry modification support (!)
 + RAM/VRAM (And SRAM?) space debug (!)
@@ -185,28 +186,46 @@ objectLogicID is basically the general behaviour of a texture. So a background h
 + TexturePacker
 + Texconv
 	+ QT is required to build the Texconv executable
-+ cdi4dc (Unix build)
++ cdi4dc (Kazade's Unix build)
++ SCons (Makefile alternative)
 
 ### Installing Pre-requisites
 
 Assuming you have a working clone of KOS.
 
 For cdi4dc:
+
 `git clone https://github.com/Kazade/img4dc.git`
+
 `cd img4dc`
+
 `cmake .`
+
 `make`
+
 
 For texconv:
+
 `sudo apt-get install qt5-default qtbase5-dev`
+
 `git clone https://github.com/tvspelsfreak/texconv`
+
 `cd texconv`
+
 `qmake`
+
 `make`
 
-Copy the executables for texconv and cdi4dc into a directory whose path is listed in the ~/.profile file (Or add you own directory path)
 
-**CHECK** Do we also require the `convert` command?
+Copy the executables for texconv and cdi4dc into a directory whose path is listed in the `~/.profile` file (Or add you own directory path)
+
+
+Crayon also uses SConstruct as an alternative to makefiles due to its enhanced ability. If you don't already have it installed, run this command
+
+`sudo apt-get install scons`
+
+
+**CHECK** Do we also require the `convert` command? Its used for changing the png's size to be power of 2 by power of 2
 
 For TexturePacker:
 + Go onto their website and download the free .deb file
@@ -219,7 +238,7 @@ If I remembered that correctly, now you should have an up and running Crayon fra
 
 Force vid_set_mode(DM_640x480_VGA, PM_RGB565); for VGA mode...I think RGB888 might not be compatible with the pvr system (Only RGB565)
 
-Sprite mode might only be able to reliably do a maximum dimension of 256 by 256 textures. Any larger could cause "Jitter" effects
+Sprite mode might only be able to reliably do a maximum dimension of 256 by 256 textures. Any larger could cause "Jitter" effects due to 16-bit UV inaccuracy
 
 ### Useful for identifying colour count
 

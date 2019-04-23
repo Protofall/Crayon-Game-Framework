@@ -6,7 +6,7 @@ include $(KOS_BASE)/Makefile.rules
 
 OBJS = $(name).o savefile.o
 
-KOS_LOCAL_CFLAGS = -I$(KOS_BASE)/addons/zlib
+# KOS_LOCAL_CFLAGS = -I$(KOS_BASE)/addons/zlib
 	
 clean:
 	-rm -f $(name).elf $(OBJS)
@@ -15,11 +15,6 @@ clean:
 	-rm -f $(name).cdi
 	-rm -f 1st_read.bin
 	-rm -f romdisk_boot.*
-
-dist:
-	-rm -f $(OBJS)
-	-rm -f romdisk_boot.*
-	$(KOS_STRIP) $(name).elf
 	
 rm-cdi:
 	-rm -f $(name).cdi
@@ -35,11 +30,12 @@ $(name).elf: $(OBJS) romdisk_boot.o
 	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) -o $@ $(KOS_START) $^ -lz -lm $(KOS_LIBS)
 
 romdisk_boot.img:
-	$(KOS_GENROMFS) -f $@ -d romdisk_boot -v
+	$(KOS_GENROMFS) -f $@ -d romdisk_boot
 
 romdisk_boot.o: romdisk_boot.img
 	$(KOS_BASE)/utils/bin2o/bin2o $< romdisk_boot $@
 
+#dc-tool
 run: $(name).elf
 	$(KOS_LOADER) $<
 
