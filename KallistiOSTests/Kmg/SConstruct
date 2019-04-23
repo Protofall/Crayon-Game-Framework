@@ -1,4 +1,3 @@
-
 if GetOption('help'):
 	print """
 	Run 'scons' to build the program (make)
@@ -22,25 +21,25 @@ if GetOption('help'):
 
 import os
 
-TARGET = "kmgTest"										#Executable name (First part gets the name of the parent dir)
-# TARGET = Dir('.').path.rsplit('/', 1)[1] + "Test"		#Executable name (First part gets the name of the parent dir)
-BIN = TARGET + ".bin"									#Binaries
-SCRAMBLED = "1st_read.bin"								#Scrambled-file-name
-KOS_ROMDISK_DIR = "romdisk"
-OBJS = TARGET + ".o" + " " + KOS_ROMDISK_DIR + ".o"		#Objects
-LIBS = "-lkmg -lkosutils"								#Libs used when making the .elf file
-
-CFILES = ' '.join(map(str, Glob('*.c')))		#Convert from list to string
-CPPFILES = ' '.join(map(str, Glob('*.cpp')))	#Convert from list to string
-
 env_dreamcast = Environment(CPPPATH = ['.'], CC = 'kos-cc', CCFLAGS = os.environ.get('KOS_CFLAGS'))
 env_dreamcast['ENV']['PATH'] = os.environ['PATH']	#Import PATH for us. This fixes the "Unable to find kos-cc" thing
 													#You could just add "ENV = os.environ" to the constructor instead
 env_dreamcast['ENV'].update({k: v for k, v in os.environ.items() if k.startswith('KOS_')})	#Adding in KOS vars
 
+TARGET = "kmgTest"										#Executable name
+# TARGET = Dir('.').path.rsplit('/', 1)[1] + "Test"		#Executable name (First part gets the name of the parent dir)
+BIN = TARGET + ".bin"									#Binaries
+SCRAMBLED = "1st_read.bin"								#Scrambled-file-name
+KOS_ROMDISK_DIR = "romdisk"
+CFILES = Glob('*.c')
+CPPFILES = Glob('*.cpp') + Glob('*.cc')
+
+CODE_OBJS = [os.path.splitext(str(f))[0]+".o" for f in CFILES + CPPFILES]
+ALL_OBJS = CODE_OBJS + [KOS_ROMDISK_DIR + ".o"]
+LIBS = "-lkmg -lkosutils"								#Libs used when making the .elf file
+
 #Insert my variables
 env_dreamcast.Replace(LIBS=LIBS)
-env_dreamcast.Replace(OBJS=OBJS)	#For elf
 env_dreamcast.Replace(KOS_BASE=env_dreamcast['ENV']['KOS_BASE'])	#First var is env_dreamcast['KOS_BASE']
 env_dreamcast.Replace(PROJ_NAME=TARGET)	#Since the cdi step makes an iso, this is useful
 
@@ -61,7 +60,7 @@ env_dreamcast.Object('kmgTest.o', 'kmgTest.c')
 bad = env_dreamcast.Command(KOS_ROMDISK_DIR + ".img", "", "make $TARGET")	#For a learning piece, I can't be bothered re-creating this in SCons
 Clean(bad, ["romdisk/icon64.kmg", "romdisk/image.kmg", "romdisk/nerstr.kmg"])	#This will clean the files we don't want from the romdisk folder
 env_dreamcast.Romdisk(target = KOS_ROMDISK_DIR + ".o", source = KOS_ROMDISK_DIR + ".img")
-env_dreamcast.Elf(TARGET + ".elf", OBJS.split())
+env_dreamcast.Elf(TARGET + ".elf", ALL_OBJS)	#Since ALL_OBJS is a list, we don't need to split
 env_dreamcast.KosBin(BIN, TARGET + ".elf")
 env_dreamcast.Scramble(SCRAMBLED, BIN)
 env_dreamcast.Iso(TARGET + ".iso", None)
