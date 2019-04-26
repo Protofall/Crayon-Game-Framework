@@ -1,0 +1,55 @@
+PLATFORM = ARGUMENTS.get('PLATFORM')
+if PLATFORM == None:
+	print """
+	Please specify the target platform to compile Crayon for, or to clean, on the command
+	line (eg. `scons PLATFORM=dreamcast`). Run `ls code` for a list of platform names
+	"""
+	exit()
+
+import os
+
+#Set vars non-dependent on environment
+LIB_NAME	= "crayon"
+SRC			= "code/" + PLATFORM
+LIB			= "lib/" + PLATFORM
+BUILD		= "build"
+
+Repository(SRC)	#Adds the source code for Glob to search in
+CFILES		= ["code/" + PLATFORM + "/" + str(s) for s in Glob('*.c')]	#Converts SCons objects to str (Still list of X)
+OBJS		= ["build/"+os.path.splitext(f)[0]+".o" for f in CFILES]
+
+#Setup environment
+env_crayon = Environment(CPPPATH = ['./' + SRC], CC = 'kos-cc', CCFLAGS = os.environ.get('KOS_CFLAGS'))
+# print env_crayon['CPPPATH']
+# exit()
+env_crayon['ENV']['PATH'] = os.environ['PATH']	#Import PATH for us. This fixes the "Unable to find kos-cc" thing
+															#You could just add "ENV = os.environ" to the constructor instead
+env_crayon['ENV'].update({k: v for k, v in os.environ.items() if k.startswith('KOS_')})	#Adding in KOS vars
+
+#Set var dependent on environment
+CFLAGS		= env_crayon['ENV']['KOS_CFLAGS'] + " -Iinclude/crayon"
+
+
+# print LIB_NAME
+# print CFLAGS
+# print SRC
+# print LIB
+# print BUILD
+# print CFILES
+# print OBJS
+# exit()
+
+# #Create new builder
+lib = Builder(action=["mkdir -p $TARGET",
+					"rm -f $TARGET",
+					"$KOS_AR rcs $TARGET $SOURCE"])
+
+# #Add the builders
+builders = { "Lib": lib}
+env_crayon.Append(BUILDERS=builders)
+
+#Create files and folders
+for f in CFILES:#{
+	env_crayon.Object(os.path.splitext(str(f))[0]+".o", str(f))
+#}
+env_crayon.Lib(target = LIB + "/lib" + LIB_NAME + ".a", source = OBJS)
