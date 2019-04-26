@@ -29,7 +29,9 @@ clean:
 #------------------------------------------------------------------------------
 
 $(LIB)/lib$(LIB_NAME).a: $(OBJS)
-	@mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)	#Dir is not same as bash's dir. This is makefile specific
+						#And it takes a filename and returns the path section
+						#So here thats just "$(LIB)"
 	rm -f $@
 	$(KOS_AR) rcs $@ $^
 

@@ -19,30 +19,21 @@ CFILES		= ["code/" + PLATFORM + "/" + str(s) for s in Glob('*.c')]	#Converts SCo
 OBJS		= ["build/"+os.path.splitext(f)[0]+".o" for f in CFILES]
 
 #Setup environment
-env_crayon = Environment(CPPPATH = ['./' + SRC], CC = 'kos-cc', CCFLAGS = os.environ.get('KOS_CFLAGS'))
-# print env_crayon['CPPPATH']
-# exit()
+env_crayon = Environment(CPPPATH = ['.'], CC = 'kos-cc', CCFLAGS = os.environ.get('KOS_CFLAGS'))
 env_crayon['ENV']['PATH'] = os.environ['PATH']	#Import PATH for us. This fixes the "Unable to find kos-cc" thing
 															#You could just add "ENV = os.environ" to the constructor instead
 env_crayon['ENV'].update({k: v for k, v in os.environ.items() if k.startswith('KOS_')})	#Adding in KOS vars
 
 #Set var dependent on environment
 CFLAGS		= env_crayon['ENV']['KOS_CFLAGS'] + " -Iinclude/crayon"
-
-
-# print LIB_NAME
-# print CFLAGS
-# print SRC
-# print LIB
-# print BUILD
-# print CFILES
-# print OBJS
-# exit()
+env_crayon.Replace(CCFLAGS=os.environ.get('KOS_CFLAGS') + " " + CFLAGS)
+env_crayon.Replace(CRAYON_LIB_PATH=LIB)
+env_crayon.Replace(KOS_AR=env_crayon['ENV']['KOS_AR'])
 
 # #Create new builder
-lib = Builder(action=["mkdir -p $TARGET",
+lib = Builder(action=["mkdir -p $CRAYON_LIB_PATH",
 					"rm -f $TARGET",
-					"$KOS_AR rcs $TARGET $SOURCE"])
+					"$KOS_AR rcs $TARGET $SOURCES"])
 
 # #Add the builders
 builders = { "Lib": lib}
@@ -50,6 +41,7 @@ env_crayon.Append(BUILDERS=builders)
 
 #Create files and folders
 for f in CFILES:#{
-	env_crayon.Object(os.path.splitext(str(f))[0]+".o", str(f))
+	env_crayon.Object("build/" + os.path.splitext(str(f))[0]+".o", str(f))
 #}
-env_crayon.Lib(target = LIB + "/lib" + LIB_NAME + ".a", source = OBJS)
+lib_build = env_crayon.Lib(target = LIB + "/lib" + LIB_NAME + ".a", source = OBJS)
+Clean(lib_build, [LIB, BUILD])
