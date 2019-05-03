@@ -4,7 +4,7 @@ if PLATFORM == None:
 	Please specify the target platform to compile Crayon for, or to clean, on the command
 	line (eg. `scons PLATFORM=dreamcast`). Run `ls code` for a list of platform names
 	"""
-	exit()
+	exit(1)
 
 import os
 
@@ -26,7 +26,8 @@ env_crayon['ENV'].update({k: v for k, v in os.environ.items() if k.startswith('K
 
 #Set var dependent on environment
 CFLAGS		= env_crayon['ENV']['KOS_CFLAGS'] + " -Iinclude/crayon"
-env_crayon.Replace(CCFLAGS=os.environ.get('KOS_CFLAGS') + " " + CFLAGS)
+env_crayon.Append(CCFLAGS=CFLAGS)	#Adds more flags to the existing var
+# env_crayon.Replace(CCFLAGS=os.environ.get('KOS_CFLAGS') + " " + CFLAGS)
 env_crayon.Replace(CRAYON_LIB_PATH=LIB)
 env_crayon.Replace(KOS_AR=env_crayon['ENV']['KOS_AR'])
 

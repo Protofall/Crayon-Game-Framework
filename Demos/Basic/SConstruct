@@ -1,0 +1,30 @@
+import os
+
+CRAYON_BASE = os.environ['CRAYON_BASE']
+if CRAYON_BASE == None:	#Not in the environment
+	CRAYON_BASE = ARGUMENTS.get('CRAYON_BASE')
+	if CRAYON_BASE == None:	#Not in the arguments either
+		print """
+	Cannot locate Crayon. Please set CRAYON_BASE to Crayon's root directory, either in your
+	environment, or in a command line argument to scons (eg. scons CRAYON_BASE="path/to/Crayon")
+		"""
+		exit(1)
+
+import commands
+
+CRAYON_PROJ_NAME 	= commands.getoutput("basename \"`pwd`\"")	#Basic
+CRAYON_PROJ_LIBS	= "-lkosext2fs -lz"
+CRAYON_PROJ_SRC_C	= commands.getoutput("find code -type f -name \"*.c\" | tr '\n' ' '")
+CRAYON_PROJ_SRC_CPP	= commands.getoutput("find code -type f \( -name *.cpp -o -name *.cc \)  | tr '\n' ' '")
+CRAYON_BUILD_DIR	= "build"
+CRAYON_PREPROCESOR	= ""
+DREAMCAST_EMULATOR	= "redream"
+
+# print "\nREADING OUT:"
+# print CRAYON_PROJ_NAME
+# print CRAYON_PROJ_LIBS
+# print CRAYON_PROJ_SRC_C
+# print CRAYON_PROJ_SRC_CPP
+# print CRAYON_BUILD_DIR
+# print CRAYON_PREPROCESOR
+# print DREAMCAST_EMULATOR
