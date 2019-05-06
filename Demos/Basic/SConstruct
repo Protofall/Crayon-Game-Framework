@@ -14,17 +14,23 @@ import commands
 
 CRAYON_PROJ_NAME 	= commands.getoutput("basename \"`pwd`\"")	#Basic
 CRAYON_PROJ_LIBS	= "-lkosext2fs -lz"
-CRAYON_PROJ_SRC_C	= commands.getoutput("find code -type f -name \"*.c\" | tr '\n' ' '")
-CRAYON_PROJ_SRC_CPP	= commands.getoutput("find code -type f \( -name *.cpp -o -name *.cc \)  | tr '\n' ' '")
+CRAYON_PROJ_SRC_C	= commands.getoutput("find code -type f -name '*.c' | tr '\n' ' '")	#Note, since this is in the user space, the file paths can have spaces
+																						#Therefore I should modify this to be a list of strings
+CRAYON_PROJ_SRC_CPP	= commands.getoutput("find code -type f \( -name '*.cpp' -o -name '*.cc' \)  | tr '\n' ' '")
 CRAYON_BUILD_DIR	= "build"
 CRAYON_PREPROCESOR	= ""
 DREAMCAST_EMULATOR	= "redream"
 
-# print "\nREADING OUT:"
-# print CRAYON_PROJ_NAME
-# print CRAYON_PROJ_LIBS
-# print CRAYON_PROJ_SRC_C
-# print CRAYON_PROJ_SRC_CPP
-# print CRAYON_BUILD_DIR
-# print CRAYON_PREPROCESOR
-# print DREAMCAST_EMULATOR
+print "\nREADING OUT:"
+print CRAYON_PROJ_NAME
+print CRAYON_PROJ_LIBS
+print CRAYON_PROJ_SRC_C
+print CRAYON_PROJ_SRC_CPP
+print CRAYON_BUILD_DIR
+print CRAYON_PREPROCESOR
+print DREAMCAST_EMULATOR
+
+import dreamcast
+
+print("build_id=" + dreamcast.build_id())
+dreamcast.MakeWorkDir('test')
