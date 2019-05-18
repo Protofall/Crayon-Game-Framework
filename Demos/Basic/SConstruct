@@ -30,22 +30,6 @@ print CRAYON_BUILD_DIR
 print CRAYON_PREPROCESOR
 print DREAMCAST_EMULATOR
 
-# import scons_read_test
-
-# print("build_id=" + scons_read_test.build_id())
-# # env=Environment(tools=['default', scons_read_test.TOOL_ADD_HEADER], HEADER="=====")	#This sets the environment and adds the "AddHeader" tool to the list.
-# 																						#I think this is the equivalent of the below
-
-# env=Environment(tools=['default'])
-# scons_read_test.TOOL_ADD_HEADER(env)
-# env.Replace(HEADER = "=====")
-
-# env.AddHeader('tgt', None)
-# print env['HEADER']
-
-import dreamcast
-
-
 # Make env and load with the existing vars
 env=Environment()
 env.Replace(CRAYON_BASE = CRAYON_BASE)	#We made this local var at the beginning
@@ -57,7 +41,18 @@ env.Replace(CRAYON_BUILD_DIR = CRAYON_BUILD_DIR)
 env.Replace(CRAYON_PREPROCESOR = CRAYON_PREPROCESOR)
 # env.Replace(DREAMCAST_EMULATOR = DREAMCAST_EMULATOR)
 
-#Load the platform-specific scons file
-dreamcast.Init(env)
+#The ability to access any python file, specifically our rule file
+extras_path = CRAYON_BASE + "/rules/" + "dreamcast.py"
 
-# print "Its: " + env['CRAYON_BASE']
+import imp
+extras_steps = imp.load_source('dreamcast', extras_path)
+
+#Load the platform-specific scons file
+extras_steps.Init(env)
+print env['CRAYON_TEST']	#To confirm it loaded
+
+
+
+
+# ~~scons --site-dir="$CRAYON_BASE/rules" -Q~~
+# Just use `scons -Q` now
