@@ -22,4 +22,6 @@ def Init(env):
 
 	#Add the builders
 	env.Append(BUILDERS= {'Elf': elf, 'KosBin': kos_bin, 'Scramble': scramble, 'Iso': iso, 'Cdi': cdi})
+	
+	#Test var
 	env.Append(CRAYON_TEST= "true m8")
