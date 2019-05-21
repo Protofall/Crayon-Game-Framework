@@ -6,14 +6,14 @@
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
 
-#if CRAYON_SD_MODE == 1
+#if CRAYON_BOOT_MODE == 1
 	//For mounting the sd dir
 	#include <dc/sd.h>
 	#include <kos/blockdev.h>
 	#include <ext2/fs_ext2.h>
 #endif
 
-#if CRAYON_SD_MODE == 1
+#if CRAYON_BOOT_MODE == 1
 	#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
 
 	static void unmount_ext2_sd(){
@@ -82,7 +82,7 @@ int main(){
 	pvr_init(&pvr_params);	//Init the pvr system
 
 	int sd_present = 0;
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
 		if(sdRes == 0){
 			sd_present = 1;
@@ -97,14 +97,14 @@ int main(){
 	crayon_palette_t Logo_P;
 
 	//Load the VMU icon data
-	#if CRAYON_SD_MODE == 2
+	#if CRAYON_BOOT_MODE == 2
 		crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
-	#elif CRAYON_SD_MODE == 1
+	#elif CRAYON_BOOT_MODE == 1
 		crayon_memory_mount_romdisk("/sd/stuff.img", "/files");
-	#elif CRAYON_SD_MODE == 0
+	#elif CRAYON_BOOT_MODE == 0
 		crayon_memory_mount_romdisk("/cd/stuff.img", "/files");
 	#else
-		#error Invalid CRAYON_SD_MODE value
+		#error Invalid CRAYON_BOOT_MODE value
 	#endif
 
 	//Load the assets
@@ -112,7 +112,7 @@ int main(){
 
 	fs_romdisk_unmount("/SaveFile");
 
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 

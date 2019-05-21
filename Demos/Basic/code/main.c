@@ -6,14 +6,14 @@
 #include <dc/maple.h>
 #include <dc/maple/controller.h> //For the "Press start to exit" thing
 
-#if CRAYON_SD_MODE == 1
+#if CRAYON_BOOT_MODE == 1
 	//For mounting the sd dir
 	#include <dc/sd.h>
 	#include <kos/blockdev.h>
 	#include <ext2/fs_ext2.h>
 #endif
 
-#if CRAYON_SD_MODE == 1
+#if CRAYON_BOOT_MODE == 1
 	#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
 
 	static void unmount_ext2_sd(){
@@ -78,7 +78,7 @@ pvr_init_params_t pvr_params = {
 };
 
 int main(){
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
 		if(sdRes != 0){
 			error_freeze("SD card couldn't be mounted: %d", sdRes);
@@ -100,7 +100,7 @@ int main(){
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P, Red_Man_P, Green_Man_P;
 
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		crayon_memory_mount_romdisk("/sd/colourMod.img", "/files");
 	#else
 		crayon_memory_mount_romdisk("/cd/colourMod.img", "/files");
@@ -114,7 +114,7 @@ int main(){
 
 	fs_romdisk_unmount("/files");
 
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 

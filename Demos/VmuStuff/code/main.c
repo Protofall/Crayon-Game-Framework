@@ -12,14 +12,14 @@
 
 #define CRAYON_DEBUG 0
 
-#if CRAYON_SD_MODE == 1
+#if CRAYON_BOOT_MODE == 1
 	//For mounting the sd dir
 	#include <dc/sd.h>
 	#include <kos/blockdev.h>
 	#include <ext2/fs_ext2.h>
 #endif
 
-#if CRAYON_SD_MODE == 1
+#if CRAYON_BOOT_MODE == 1
 	#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
 
 	static void unmount_ext2_sd(){
@@ -77,7 +77,7 @@ void font_init(){
 	//Load the file into memory (Well, we have a baked-in romdisk...but still fine anyways)
 	uint16_t header_size = 265;
 	uint16_t file_size = 4361;
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		FILE * texture_file = fopen("sd/fixed-fiction.pbm", "rb");
 	#else
 		FILE * texture_file = fopen("cd/fixed-fiction.pbm", "rb");
@@ -181,7 +181,7 @@ void draw_string(float x, float y, float z, uint8_t a, uint8_t r, uint8_t g, uin
 }
 
 int main(){
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
 		if(sdRes == 0){
 			MS_options.sd_present = 1;
@@ -198,7 +198,7 @@ int main(){
 		"ProtoSaveDemo2\0", "SAVE_DEMO.s\0");
 
 	//Load the VMU icon data
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		crayon_memory_mount_romdisk("/sd/sf_icon.img", "/Save");
 	#else
 		crayon_memory_mount_romdisk("/cd/sf_icon.img", "/Save");
@@ -262,7 +262,7 @@ int main(){
 	pvr_init_defaults();	//Init kos
 	font_init();
 
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
