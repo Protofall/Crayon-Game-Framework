@@ -78,6 +78,8 @@ pvr_init_params_t pvr_params = {
 };
 
 int main(){
+	pvr_init(&pvr_params);
+	
 	#if CRAYON_BOOT_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
 		if(sdRes != 0){
@@ -91,8 +93,6 @@ int main(){
 	else{	//Else its RGB and we default to NTSC interlace
 		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
 	}
-
-	pvr_init(&pvr_params);
 
 	crayon_spritesheet_t Dwarf, Opaque, Man;
 	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw;

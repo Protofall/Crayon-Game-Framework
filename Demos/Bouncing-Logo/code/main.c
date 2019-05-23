@@ -81,14 +81,10 @@ pvr_init_params_t pvr_params = {
 int main(){
 	pvr_init(&pvr_params);	//Init the pvr system
 
-	int sd_present = 0;
 	#if CRAYON_BOOT_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
-		if(sdRes == 0){
-			sd_present = 1;
-		}
-		else{
-			return 0;
+		if(sdRes != 0){
+			error_freeze("SD card couldn't be mounted: %d", sdRes);
 		}
 	#endif
 
@@ -96,7 +92,7 @@ int main(){
 	crayon_sprite_array_t Logo_Draw;
 	crayon_palette_t Logo_P;
 
-	//Load the VMU icon data
+	//Load the logo
 	#if CRAYON_BOOT_MODE == 2
 		crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
 	#elif CRAYON_BOOT_MODE == 1
@@ -107,26 +103,29 @@ int main(){
 		#error Invalid CRAYON_BOOT_MODE value
 	#endif
 
-	//Load the assets
+	//Load the asset
 	crayon_memory_load_spritesheet(&Logo, &Logo_P, 0, "/files/logo.dtex");
 
-	fs_romdisk_unmount("/SaveFile");
+	fs_romdisk_unmount("/files");
 
 	#if CRAYON_BOOT_MODE == 1
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	crayon_memory_init_sprite_array(&Logo_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Logo, &Logo.animation_array[0], Logo_P);
+	crayon_memory_init_sprite_array(&Logo_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Logo, &Logo.animation_array[0], &Logo_P);
 	Logo_Draw.positions[0] = 0;
 	Logo_Draw.positions[1] = 0;
-	Logo_Draw.draw_z[0] = 1;
+	Logo_Draw.draw_z[0] = 2;
 	Logo_Draw.scales[0] = 1;
+	Logo_Draw.scales[1] = 1;
 	Logo_Draw.flips[0] = 0;
 	Logo_Draw.rotations[0] = 0;
 	Logo_Draw.colours[0] = 0;
 	Logo_Draw.frame_coord_keys[0] = 0;
 	crayon_graphics_frame_coordinates(Logo_Draw.animation, Logo_Draw.frame_coord_map + 0, Logo_Draw.frame_coord_map + 1, 0);
+
+	// crayon_memory_swap_colour(&Logo_P, 0xFFE7561F, 0xFF0000FF, 0);	//This will change the orange to a blue
 
 	uint8_t end = 0;
 	while(!end){
@@ -137,17 +136,20 @@ int main(){
 			}
 		MAPLE_FOREACH_END()
 
+		crayon_graphics_setup_palette(&Logo_P);	//Could live outside the loop, but later we will change the palette when it hits the corners
+
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 			crayon_graphics_draw_sprites(&Logo_Draw, PVR_LIST_PT_POLY);
+			// crayon_graphics_draw_untextured_poly(0, 0, 1, 640, 480, 0xFF008844, PVR_LIST_PT_POLY);
 		pvr_list_finish();
 
 		pvr_scene_finish();
 	}
 
 	//Also frees the spritesheet and palette
-	crayon_memory_free_sprite_array(&MS_grid.draw_grid, 1, 1);
+	crayon_memory_free_sprite_array(&Logo_Draw, 1, 1);
 
 	return 0;
 }

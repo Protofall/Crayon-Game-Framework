@@ -19,14 +19,14 @@ CFILES		= ["code/" + PLATFORM + "/" + str(s) for s in Glob('*.c')]	#Converts SCo
 OBJS		= ["build/"+os.path.splitext(f)[0]+".o" for f in CFILES]
 
 #Setup environment
-env_crayon = Environment(CPPPATH = ['.'], CC = 'kos-cc', CCFLAGS = os.environ.get('KOS_CFLAGS'))
+env_crayon = Environment(CPPPATH = ['.'], CC = 'kos-cc')
 env_crayon['ENV']['PATH'] = os.environ['PATH']	#Import PATH for us. This fixes the "Unable to find kos-cc" thing
 															#You could just add "ENV = os.environ" to the constructor instead
 env_crayon['ENV'].update({k: v for k, v in os.environ.items() if k.startswith('KOS_')})	#Adding in KOS vars
 
 #Set var dependent on environment
 CFLAGS		= env_crayon['ENV']['KOS_CFLAGS'] + " -Iinclude/crayon"
-env_crayon.Append(CCFLAGS=CFLAGS)	#Adds more flags to the existing var
+env_crayon.Replace(CCFLAGS=CFLAGS)	#Adds more flags to the existing var
 # env_crayon.Replace(CCFLAGS=os.environ.get('KOS_CFLAGS') + " " + CFLAGS)
 env_crayon.Replace(CRAYON_LIB_PATH=LIB)
 env_crayon.Replace(KOS_AR=env_crayon['ENV']['KOS_AR'])
