@@ -92,9 +92,12 @@ int main(){
 	crayon_sprite_array_t Logo_Draw;
 	crayon_palette_t Logo_P;
 
+	int a = crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
+	error_freeze("Res: %d", a);
+
 	//Load the logo
 	#if CRAYON_BOOT_MODE == 2
-		crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
+		int b = crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
 	#elif CRAYON_BOOT_MODE == 1
 		crayon_memory_mount_romdisk("/sd/stuff.img", "/files");
 	#elif CRAYON_BOOT_MODE == 0
@@ -102,6 +105,8 @@ int main(){
 	#else
 		#error Invalid CRAYON_BOOT_MODE value
 	#endif
+
+	// error_freeze("Res: %d", a);
 
 	//Load the asset
 	crayon_memory_load_spritesheet(&Logo, &Logo_P, 0, "/files/logo.dtex");

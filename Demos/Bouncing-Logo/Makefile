@@ -19,6 +19,8 @@ dc-cdi: crayon-cdi
 
 dc-sd: crayon-sd
 
+dc-pc: crayon-pc
+
 clean: crayon-clean
 
 help: crayon-pp-help

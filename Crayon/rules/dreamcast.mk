@@ -41,7 +41,7 @@ crayon-sd: crayon-rm-cdfs crayon-pp $(BUILD)/crayon-sd/$(PROJECT).elf.bin
 #   and stream over the network
 # UNTESTED
 .PHONY: crayon-pc
-crayon-sd: crayon-rm-cdfs crayon-pp $(BUILD)/crayon-pc/$(PROJECT).elf.bin
+crayon-pc: crayon-rm-cdfs crayon-pp $(BUILD)/crayon-pc/$(PROJECT).elf.bin
 	mv $(BUILD)/crayon-pc/$(PROJECT).elf.bin cdfs/$(PROJECT).bin
 
 #------------------------------------------------------------------------------
