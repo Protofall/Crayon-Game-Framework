@@ -27,7 +27,7 @@ typedef struct crayon_sprite_array{
 								//booleans/flip bits. Decide what type this should be...
 	uint8_t *draw_z;			//The layer to help deal with overlapping sprites/polys
 	uint16_t num_sprites;		//This tells the draw function how many sprites/polys to draw.
-	uint8_t unique_frames;		//The number of UVs in frame_coords_map
+	uint8_t unique_frames;		//The number of frames you want to use. Minimum 1
 
 	uint8_t options;			//Format XXCR (Flips)SFZ, Basically some booleans options relating to
 								//colour, rotations, flips, scales, frame_coords, z coord (layer)
