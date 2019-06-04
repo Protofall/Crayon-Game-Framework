@@ -244,3 +244,5 @@ Sprite mode might only be able to reliably do a maximum dimension of 256 by 256 
 
 `identify -format %k "filename" && echo` (includes alphas as seperate colours)
 
+`sudo apt install imagemagick`
+

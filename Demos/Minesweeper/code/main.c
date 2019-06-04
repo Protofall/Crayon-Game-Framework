@@ -27,14 +27,14 @@
 #define CRAYON_DEBUG 0
 //LOWER BUTTON TOP BOUND BECAUSE OF XP MODE
 
-#if CRAYON_SD_MODE == 1
+#if CRAYON_BOOT_MODE == 1
 	//For mounting the sd dir
 	#include <dc/sd.h>
 	#include <kos/blockdev.h>
 	#include <ext2/fs_ext2.h>
 #endif
 
-#if CRAYON_SD_MODE == 1
+#if CRAYON_BOOT_MODE == 1
 	#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
 
 	static void unmount_ext2_sd(){
@@ -912,7 +912,7 @@ int main(){
 
 	//These might be useful to set? But nothing changes if I use them or not...
 
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
 		if(sdRes == 0){
 			MS_options.sd_present = 1;
@@ -923,7 +923,7 @@ int main(){
 	#endif
 
 	//Load the VMU icon data
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		crayon_memory_mount_romdisk("/sd/SaveFile.img", "/Save");
 	#else
 		crayon_memory_mount_romdisk("/cd/SaveFile.img", "/Save");
@@ -1115,7 +1115,7 @@ int main(){
 	sfxhnd_t Sound_Tick, Sound_Death, Sound_Death_Italian, Sound_Win;	//Sound effect handles. Might add more later for startup sounds or maybe put them in cdda? (Note this is a uint32_t)
 	snd_stream_init();	//Needed otherwise snd_sfx calls crash
 
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		crayon_memory_mount_romdisk("/sd/Minesweeper.img", "/Minesweeper");
 	#else
 		crayon_memory_mount_romdisk("/cd/Minesweeper.img", "/Minesweeper");
@@ -1136,7 +1136,7 @@ int main(){
 
 	//Load the OS assets
 	if(MS_options.operating_system){
-		#if CRAYON_SD_MODE == 1
+		#if CRAYON_BOOT_MODE == 1
 			crayon_memory_mount_romdisk("/sd/XP.img", "/XP");
 		#else
 			crayon_memory_mount_romdisk("/cd/XP.img", "/XP");
@@ -1145,7 +1145,7 @@ int main(){
 		fs_romdisk_unmount("/XP");
 	}
 	else{
-		#if CRAYON_SD_MODE == 1
+		#if CRAYON_BOOT_MODE == 1
 			crayon_memory_mount_romdisk("/sd/2000.img", "/2000");
 		#else
 			crayon_memory_mount_romdisk("/cd/2000.img", "/2000");
@@ -1154,7 +1154,7 @@ int main(){
 		fs_romdisk_unmount("/2000");
 	}
 
-	#if CRAYON_SD_MODE == 1
+	#if CRAYON_BOOT_MODE == 1
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 

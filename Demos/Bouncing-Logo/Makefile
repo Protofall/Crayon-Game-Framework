@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# DemoCrayon Makefile
+# Bouncing-Logo Makefile
 #------------------------------------------------------------------------------
 $(if $(CRAYON_BASE),,$(error Cannot locate Crayon. Please set CRAYON_BASE to\
   Crayon's root directory, either in your environment, or in a command line\
@@ -9,8 +9,6 @@ CRAYON_PROJ_NAME   := $(notdir $(shell pwd))
 CRAYON_PROJ_LIBS   := -lkosext2fs -lz
 CRAYON_PROJ_SRC_C  := $(shell find code -type f -name "*.c")
 CRAYON_BUILD_DIR   := build
-CRAYON_PREPROCESOR :=
-DREAMCAST_EMULATOR := redream
 
 ### TODO: Write a cleaner set of shortcut rules in this example makefile.
 ###     The following rules emulate the previous version of this makefile.
@@ -20,6 +18,8 @@ all: crayon-cdi
 dc-cdi: crayon-cdi
 
 dc-sd: crayon-sd
+
+dc-pc: crayon-pc
 
 clean: crayon-clean
 

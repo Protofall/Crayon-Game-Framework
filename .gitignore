@@ -24,6 +24,7 @@ redream.cfg
 ehthumbs.db
 Thumbs.db
 
-#Sconstruct internal files
+#Sconstruct (And Python) internal files
 .sconsign.dblite
+*.pyc
 

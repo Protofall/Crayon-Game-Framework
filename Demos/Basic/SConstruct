@@ -1,0 +1,58 @@
+import os
+
+CRAYON_BASE = os.environ['CRAYON_BASE']
+if CRAYON_BASE == None:	#Not in the environment
+	CRAYON_BASE = ARGUMENTS.get('CRAYON_BASE')
+	if CRAYON_BASE == None:	#Not in the arguments either
+		print """
+	Cannot locate Crayon. Please set CRAYON_BASE to Crayon's root directory, either in your
+	environment, or in a command line argument to scons (eg. scons CRAYON_BASE="path/to/Crayon")
+		"""
+		exit(1)
+
+import commands
+
+CRAYON_PROJ_NAME 	= commands.getoutput("basename \"`pwd`\"")	#Basic
+CRAYON_PROJ_LIBS	= "-lkosext2fs -lz"
+CRAYON_PROJ_SRC_C	= commands.getoutput("find code -type f -name '*.c' | tr '\n' ' '")	#Note, since this is in the user space, the file paths can have spaces
+																						#Therefore I should modify this to be a list of strings
+CRAYON_PROJ_SRC_CPP	= commands.getoutput("find code -type f \( -name '*.cpp' -o -name '*.cc' \)  | tr '\n' ' '")
+CRAYON_BUILD_DIR	= "build"
+CRAYON_PREPROCESOR	= ""
+DREAMCAST_EMULATOR	= "redream"
+
+print "\nREADING OUT:"
+print CRAYON_PROJ_NAME
+print CRAYON_PROJ_LIBS
+print CRAYON_PROJ_SRC_C
+print CRAYON_PROJ_SRC_CPP
+print CRAYON_BUILD_DIR
+print CRAYON_PREPROCESOR
+print DREAMCAST_EMULATOR
+
+# Make env and load with the existing vars
+env=Environment()
+env.Replace(CRAYON_BASE = CRAYON_BASE)	#We made this local var at the beginning
+env.Replace(CRAYON_PROJ_NAME = CRAYON_PROJ_NAME)
+env.Replace(CRAYON_PROJ_LIBS = CRAYON_PROJ_LIBS)
+env.Replace(CRAYON_PROJ_SRC_C = CRAYON_PROJ_SRC_C)
+env.Replace(CRAYON_PROJ_SRC_CPP = CRAYON_PROJ_SRC_CPP)
+env.Replace(CRAYON_BUILD_DIR = CRAYON_BUILD_DIR)
+env.Replace(CRAYON_PREPROCESOR = CRAYON_PREPROCESOR)
+# env.Replace(DREAMCAST_EMULATOR = DREAMCAST_EMULATOR)
+
+#The ability to access any python file, specifically our rule file
+extras_path = CRAYON_BASE + "/rules/" + "dreamcast.py"
+
+import imp
+extras_steps = imp.load_source('dreamcast', extras_path)
+
+#Load the platform-specific scons file
+extras_steps.Init(env)
+print env['CRAYON_TEST']	#To confirm it loaded
+
+
+
+
+# ~~scons --site-dir="$CRAYON_BASE/rules" -Q~~
+# Just use `scons -Q` now
