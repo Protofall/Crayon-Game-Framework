@@ -934,7 +934,7 @@ int main(){
 	uint8_t * vmu_lcd_icon = NULL;
 	setup_vmu_icon_load(&vmu_lcd_icon, "/Save/LCD.bin");
 
-	fs_romdisk_unmount("/SaveFile");
+	fs_romdisk_unmount("/Save");
 
 	//Setting the default save_detail vars
 	crayon_savefile_init_savefile_details(&MS_options.savefile_details, (uint8_t *)&MS_options.savefile,

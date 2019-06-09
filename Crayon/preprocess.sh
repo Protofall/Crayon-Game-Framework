@@ -20,9 +20,15 @@ packerSheet () {
 	cd "$1"
 
 	name=$(echo $1 | cut -d'.' -f 1)	#The filename without the extension
-	pngs=$(echo $PWD/*.png)
-	TexturePacker --sheet "$2/$name.crayon_temp.png" --format gideros --data "$2/$name.crayon_temp.txt" --size-constraints POT --max-width 1024 --max-height 1024 --pack-mode Best --disable-rotation --trim-mode None --trim-sprite-names --algorithm Basic --png-opt-level 0 --extrude 0 --disable-auto-alias $pngs	#I need pngs to not be in quotes for it to work here
-
+	# pngs=$(echo $PWD/*.png)
+	# echo -e "\n\nThis is pngs\n$pngs\n\n"
+	# TexturePacker --sheet "$2/$name.crayon_temp.png" --format gideros --data "$2/$name.crayon_temp.txt" --size-constraints POT --max-width 1024 --max-height 1024 --pack-mode Best --disable-rotation --trim-mode None --trim-sprite-names --algorithm Basic --png-opt-level 0 --extrude 0 --disable-auto-alias $pngs	#I need pngs to not be in quotes for it to work here
+	
+	#Passing in the current dir instead of the pngs allows it to use spaced-name pngs
+	TexturePacker --sheet "$2/$name.crayon_temp.png" --format gideros --data "$2/$name.crayon_temp.txt" \
+	--size-constraints POT --max-width 1024 --max-height 1024 --pack-mode Best --disable-rotation --trim-mode \
+	None --trim-sprite-names --algorithm Basic --png-opt-level 0 --extrude 0 --disable-auto-alias "$PWD"	#Also this is where "Resulting sprite sheet" message comes from...for some reason
+	
 	#Texconv needs x by x images, so if width != height, we must update them to the larger one
 	dims=$(identify "$2/$name.crayon_temp.png" | cut -d' ' -f3)
 	dimW=$(echo $dims | cut -d'x' -f1)
@@ -141,14 +147,14 @@ build () {
 				fi
 				packerSheet "$x" "$2" "$texconvFormat" "$3"	#This builds the spritesheet then converts it to a dtex
 			else
-				mkdir "$2/$outputName"
+				mkdir -p "$2/$outputName"
 
 				build "$x" "$2/$outputName" "$3"
 
 				if [ $(($crayonField & $((1 << 1)))) -ne 0 ];then	#If we have an image tag
 					back="$PWD"
 					cd "$2"
-					$($KOS_GENROMFS -f $outputName.img -d $2/$outputName -v)	#This depends on current dir hence the cd commands
+					$("$KOS_GENROMFS" -f "$outputName.img" -d "$2/$outputName")	#This depends on current dir hence the cd commands
 					if [ "$3" = 0 ];then
 						rm -R "$2/$outputName"	#Delete the processed dir
 					fi
