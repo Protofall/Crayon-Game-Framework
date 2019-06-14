@@ -168,6 +168,19 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 	return 0;
 }
 
+extern uint8_t crayon_graphics_draw(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode, uint8_t draw_mode){
+	if(draw_mode & (1 << 1) == 0){
+		if(draw_mode & (1 << 0)){
+			return crayon_graphics_draw_sprites_enhanced(sprite_array, poly_list_mode);
+		}
+		return crayon_graphics_draw_sprites(sprite_array, poly_list_mode);
+	}
+	else{
+		printf("Camera mode is't implemented yet!");
+		return -1;
+	}
+}
+
 // 	//Use these to merge the two palette if's into one
 // 	// PVR_TXRFMT_PAL4BPP   (5 << 27)
 // 	// PVR_TXRFMT_PAL8BPP   (6 << 27)

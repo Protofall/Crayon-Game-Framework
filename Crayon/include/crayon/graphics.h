@@ -37,6 +37,12 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 	float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
 	uint8_t palette_number);
 
+extern uint8_t crayon_graphics_draw(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode, uint8_t draw_mode);
+
+
+//------------------Internal Drawing Functions------------------//
+
+
 //poly_list mode is for the tr/pt/op render list macro we want to use.
 extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
 
