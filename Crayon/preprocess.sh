@@ -19,10 +19,14 @@ helpInfo () {
 packerSheet () {
 	cd "$1"
 
-	name=$(echo $1 | cut -d'.' -f 1)	#The filename without the extension
-	pngs=$(echo $PWD/*.png)
-	TexturePacker --sheet "$2/$name.crayon_temp.png" --format gideros --data "$2/$name.crayon_temp.txt" --size-constraints POT --max-width 1024 --max-height 1024 --pack-mode Best --disable-rotation --trim-mode None --trim-sprite-names --algorithm Basic --png-opt-level 0 --extrude 0 --disable-auto-alias $pngs	#I need pngs to not be in quotes for it to work here
-
+	#The filename without the extension
+	name=$(echo $1 | cut -d'.' -f 1)
+	
+	#Passing in the current dir instead of the pngs allows it to use spaced-name pngs
+	TexturePacker --sheet "$2/$name.crayon_temp.png" --format gideros --data "$2/$name.crayon_temp.txt" \
+	--size-constraints POT --max-width 1024 --max-height 1024 --pack-mode Best --disable-rotation --trim-mode \
+	None --trim-sprite-names --algorithm Basic --png-opt-level 0 --extrude 0 --disable-auto-alias "$PWD"	#Also this is where "Resulting sprite sheet" message comes from...for some reason
+	
 	#Texconv needs x by x images, so if width != height, we must update them to the larger one
 	dims=$(identify "$2/$name.crayon_temp.png" | cut -d' ' -f3)
 	dimW=$(echo $dims | cut -d'x' -f1)
@@ -38,21 +42,22 @@ packerSheet () {
 	texconv -i "$2/$name.crayon_temp.png" -o "$2/$name.dtex" -f "$3"
 
 	pngCount=$(wc -l "$2/$name.crayon_temp.txt" | xargs | cut -d' ' -f 1)
-	echo "$pngCount" >> "$2/$name.txt"
+	echo "$pngCount" >> "$2/$name.txt"	#Output the number of sprites on top
 
 	#Make the new and improved txt file based on the dims of the original png's and the packer txt (Also crop name to remove last 2 fields)
-	cat "$2/$name.crayon_temp.txt" | tr -d ',' | while read VAR ; do #I assume the file name has no command in it because its stupid
-		VAR=$(echo "$VAR" | cut -d' ' -f 1,2,3,4,5)	#This removes the 4 last fields that are never used
-		textFileName="$(echo $VAR | cut -d' ' -f 1).crayon_anim"
+	cat "$2/$name.crayon_temp.txt" | while read VAR ; do #I assume the file name has no command in it because its stupid
+		spriteName=$(echo $VAR | cut -d',' -f 1)	#Extract the name
+		VAR=$(echo "$VAR" | cut -d' ' -f 2,3,4,5 | tr -d ',')	#This keeps only the top left x/y and width/height. Also removes commas
+		textFileName="$spriteName.crayon_anim"
 		if [[ -f "$textFileName" ]];then #If theres a txt, then append its content to the end
 			VAR+=" $(cat $textFileName)"
 		else	#If there was no txt file, we assume its just a normal sprite (aka 1 frame animation)
-			targetName="$(echo $VAR | cut -d' ' -f 1).png"
-			width="$(file $targetName | rev | cut -d' ' -f 6 | rev)"
-			height="$(file $targetName | rev | cut -d' ' -f 4 | rev | cut -d',' -f 1)"
+			targetName="$spriteName.png"
+			width="$(file "$targetName" | rev | cut -d' ' -f 6 | rev)"
+			height="$(file "$targetName" | rev | cut -d' ' -f 4 | rev | cut -d',' -f 1)"
 			VAR+=" $width $height 1"
 		fi
-		echo "$VAR" >> "$2/$name.txt"
+		echo -e "$spriteName\n$VAR" >> "$2/$name.txt"
 	done
 
 	#We remove old packer png and txt
@@ -141,14 +146,14 @@ build () {
 				fi
 				packerSheet "$x" "$2" "$texconvFormat" "$3"	#This builds the spritesheet then converts it to a dtex
 			else
-				mkdir "$2/$outputName"
+				mkdir -p "$2/$outputName"
 
 				build "$x" "$2/$outputName" "$3"
 
 				if [ $(($crayonField & $((1 << 1)))) -ne 0 ];then	#If we have an image tag
 					back="$PWD"
 					cd "$2"
-					$($KOS_GENROMFS -f $outputName.img -d $2/$outputName -v)	#This depends on current dir hence the cd commands
+					$("$KOS_GENROMFS" -f "$outputName.img" -d "$2/$outputName")	#This depends on current dir hence the cd commands
 					if [ "$3" = 0 ];then
 						rm -R "$2/$outputName"	#Delete the processed dir
 					fi

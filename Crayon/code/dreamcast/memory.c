@@ -90,32 +90,38 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	uint16_t i;
 	int8_t scanned;
 	char anim_name_part;
-	int32_t count;
-	for(i = 0; i < ss->animation_count; i++){
-		//Check the length of the name
-		anim_name_part = '0';
-		count = -1;
-		while(anim_name_part != ' '){
-			anim_name_part = getc(sheet_file);
-			count++;
+	int16_t count;
+	uint16_t sprite_index = 0;
+	for(i = 0; i < ss->animation_count * 2; i++){
+		if(i % 2 == 0){
+			//Check the length of the name
+			anim_name_part = '0';
+			count = -1;
+			while(anim_name_part != '\n'){
+				anim_name_part = getc(sheet_file);
+				count++;
+			}
+			ss->animation_array[sprite_index].name = (char *) malloc((count + 1) * sizeof(char));
+
+			fseek(sheet_file, -count - 1, SEEK_CUR);  //Go back so we can store the name
+			fread(ss->animation_array[sprite_index].name, sizeof(uint8_t), count, sheet_file);
+			ss->animation_array[sprite_index].name[count] = '\0';	//Add the null-terminator
 		}
-		ss->animation_array[i].name = (char *) malloc((count + 1) * sizeof(char));
-
-		fseek(sheet_file, -count - 1, SEEK_CUR);  //Go back so we can store the name
-		scanned = fscanf(sheet_file, "%s %hu %hu %hu %hu %hu %hu %d\n",
-								ss->animation_array[i].name,
-								&ss->animation_array[i].x,
-								&ss->animation_array[i].y,
-								&ss->animation_array[i].sheet_width,
-								&ss->animation_array[i].sheet_height,
-								&ss->animation_array[i].frame_width,
-								&ss->animation_array[i].frame_height,
+		else{
+			scanned = fscanf(sheet_file, "%hu %hu %hu %hu %hu %hu %d\n",
+								&ss->animation_array[sprite_index].x,
+								&ss->animation_array[sprite_index].y,
+								&ss->animation_array[sprite_index].sheet_width,
+								&ss->animation_array[sprite_index].sheet_height,
+								&ss->animation_array[sprite_index].frame_width,
+								&ss->animation_array[sprite_index].frame_height,
 								&uint8_holder);
-
-		ss->animation_array[i].frame_count = uint8_holder;
-		if(scanned != 8){
-			free(ss->animation_array);
-			ERROR(16);	//Possible Mem-leak place
+			ss->animation_array[sprite_index].frame_count = uint8_holder;
+			if(scanned != 7){
+				free(ss->animation_array);
+				ERROR(16);	//Possible Mem-leak place
+			}
+			sprite_index++;
 		}
 	}
 
