@@ -2,6 +2,9 @@
 #include <crayon/memory.h>
 #include <crayon/graphics.h>
 
+//For region and htz stuff
+#include <dc/flashrom.h>
+
 //For the controller and mouse
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
@@ -78,6 +81,29 @@ pvr_init_params_t pvr_params = {
 		0
 };
 
+void set_screen(float * htz_adjustment){
+	*htz_adjustment = 1.0;
+	uint8_t region = flashrom_get_region();
+	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1
+		region = 0;	//Invalid region
+	}
+
+	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
+		vid_set_mode(DM_640x480_VGA, PM_RGB565);
+	}
+	else{	//Else its RGB. This handles composite, S-video, SCART, etc
+		if(region == FLASHROM_REGION_EUROPE){
+			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
+			*htz_adjustment = 1.2;	//60/50Hz
+		}
+		else{
+			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
+		}
+	}
+
+	return;
+}
+
 int main(){
 	pvr_init(&pvr_params);	//Init the pvr system
 
@@ -88,12 +114,15 @@ int main(){
 		}
 	#endif
 
+	float htz_adjustment;
+	set_screen(&htz_adjustment);
+
 	crayon_spritesheet_t Logo;
 	crayon_sprite_array_t Logo_Draw;
 	crayon_palette_t Logo_P;
 
 	int a = crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
-	error_freeze("Res: %d", a);
+	// error_freeze("Res: %d", a);
 
 	//Load the logo
 	#if CRAYON_BOOT_MODE == 2
@@ -119,8 +148,8 @@ int main(){
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
 	crayon_memory_init_sprite_array(&Logo_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Logo, &Logo.animation_array[0], &Logo_P);
-	Logo_Draw.positions[0] = 0;
-	Logo_Draw.positions[1] = 0;
+	Logo_Draw.positions[0] = (640 - Logo.animation_array[0].frame_width) / 2;
+	Logo_Draw.positions[1] = (480 - Logo.animation_array[0].frame_height) / 2;
 	Logo_Draw.draw_z[0] = 2;
 	Logo_Draw.scales[0] = 1;
 	Logo_Draw.scales[1] = 1;
@@ -132,14 +161,41 @@ int main(){
 
 	// crayon_memory_swap_colour(&Logo_P, 0xFFE7561F, 0xFF0000FF, 0);	//This will change the orange to a blue
 
-	uint8_t end = 0;
-	while(!end){
+	pvr_set_bg_color(0.3, 0.3, 0.3);
+
+	uint8_t begin = 0;
+	uint8_t moving = 0;
+	float shrink_time = 3 * 60;	//Time it takes to shrink (In seconds, htz_adjust fixes for 50Hz)
+
+	//Once shrunk, this will be the new width/height
+	float new_width = Logo.animation_array[0].frame_width;
+	float new_height = Logo.animation_array[0].frame_height;
+	while(1){
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 			if(st->buttons & CONT_START){
-				end = 1;
+				begin = 1;
 			}
 		MAPLE_FOREACH_END()
+
+		if(moving){
+			Logo_Draw.positions[0] += 2 * htz_adjustment;
+			Logo_Draw.positions[1] += 2 * htz_adjustment;
+		}
+
+		if(begin && Logo_Draw.scales[0] > 0.5 && Logo_Draw.scales[1] > 0.4){
+			Logo_Draw.scales[0] -= (0.5/shrink_time) * htz_adjustment;
+			Logo_Draw.scales[1] -= (0.6/shrink_time) * htz_adjustment;
+			new_width = Logo.animation_array[0].frame_width * Logo_Draw.scales[0];
+			new_height = Logo.animation_array[0].frame_height * Logo_Draw.scales[1];
+			Logo_Draw.positions[0] = (640 - new_width) / 2;
+			Logo_Draw.positions[1] = (480 - new_height) / 2;
+		}
+		else{
+			if(begin){
+				moving = 1;
+			}
+		}
 
 		crayon_graphics_setup_palette(&Logo_P);	//Could live outside the loop, but later we will change the palette when it hits the corners
 
@@ -147,7 +203,10 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 			crayon_graphics_draw_sprites(&Logo_Draw, PVR_LIST_PT_POLY);
-			// crayon_graphics_draw_untextured_poly(0, 0, 1, 640, 480, 0xFF008844, PVR_LIST_PT_POLY);
+
+			//This is for debug to see the sprite's hitbox
+			crayon_graphics_draw_untextured_poly(Logo_Draw.positions[0], Logo_Draw.positions[1], 1, new_width, new_height, 0xFF008844, PVR_LIST_PT_POLY);
+
 		pvr_list_finish();
 
 		pvr_scene_finish();
