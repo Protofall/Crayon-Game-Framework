@@ -36,38 +36,41 @@ extern void crayon_graphics_frame_coordinates(const struct crayon_animation *ani
 	return;
 }
 
-extern void crayon_graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z, uint16_t dim_x,
+extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uint8_t draw_z, uint16_t dim_x,
   uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert;
+
+	float x = trunc(draw_x);
+	float y = trunc(draw_y);
 
 	pvr_poly_cxt_col(&cxt, poly_list_mode);
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
 	vert.argb = colour;
-	vert.oargb = 0;	//Not sure what this does
+	vert.oargb = 0;	//Due to header stuff, this doesn nothing
 	vert.flags = PVR_CMD_VERTEX;    //I think this is used to define the start of a new polygon
 
 	//These define the verticies of the triangles "strips" (One triangle uses verticies of other triangle)
-	vert.x = draw_x;
-	vert.y = draw_y;
+	vert.x = x;
+	vert.y = y;
 	vert.z = draw_z;
 	pvr_prim(&vert, sizeof(vert));
 
-	vert.x = draw_x + dim_x;
-	vert.y = draw_y;
+	vert.x = x + dim_x;
+	vert.y = y;
 	vert.z = draw_z;
 	pvr_prim(&vert, sizeof(vert));
 
-	vert.x = draw_x;
-	vert.y = draw_y + dim_y;
+	vert.x = x;
+	vert.y = y + dim_y;
 	vert.z = draw_z;
 	pvr_prim(&vert, sizeof(vert));
 
-	vert.x = draw_x + dim_x;
-	vert.y = draw_y + dim_y;
+	vert.x = x + dim_x;
+	vert.y = y + dim_y;
 	vert.z = draw_z;
 	vert.flags = PVR_CMD_VERTEX_EOL;
 	pvr_prim(&vert, sizeof(vert));
@@ -127,7 +130,7 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 	uint8_t palette_number){
 
 	//Screen coords. letter0 is top left coord, letter1 is bottom right coord. Z is depth (Layer)
-	const float x0 = trunc(draw_x);  //Do these really need to be floats?
+	const float x0 = trunc(draw_x);
 	const float y0 = trunc(draw_y);
 	const float x1 = x0 + (anim->frame_width) * scale_x;
 	const float y1 = y0 + (anim->frame_height) * scale_y;

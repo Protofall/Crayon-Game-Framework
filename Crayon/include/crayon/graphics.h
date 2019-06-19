@@ -19,8 +19,8 @@ extern void crayon_graphics_frame_coordinates(const struct crayon_animation *ani
 //------------------Drawing Untextured polys------------------//
 
 
-//Queue a colour/alpha poly to be rendered. I recomment the array version, but for simple implementation this is good
-extern void crayon_graphics_draw_untextured_poly(uint16_t draw_x, uint16_t draw_y, uint16_t draw_z,
+//Queue a colour/alpha poly to be rendered. I recommend the array version, but for simple implementation this is good
+extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uint8_t draw_z,
 	uint16_t dim_x, uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode);
 
 //Draw all coloured polys in the struct's list

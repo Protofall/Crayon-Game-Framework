@@ -117,6 +117,8 @@ int main(){
 	float htz_adjustment;
 	set_screen(&htz_adjustment);
 
+	srand(time(0));	//Set the seed for rand()
+
 	crayon_spritesheet_t Logo;
 	crayon_sprite_array_t Logo_Draw;
 	crayon_palette_t Logo_P;
@@ -159,33 +161,66 @@ int main(){
 	Logo_Draw.frame_coord_keys[0] = 0;
 	crayon_graphics_frame_coordinates(Logo_Draw.animation, Logo_Draw.frame_coord_map + 0, Logo_Draw.frame_coord_map + 1, 0);
 
-	// crayon_memory_swap_colour(&Logo_P, 0xFFE7561F, 0xFF0000FF, 0);	//This will change the orange to a blue
-
-	pvr_set_bg_color(0.3, 0.3, 0.3);
+	uint32_t colours[5];
+	colours[0] = Logo_P.palette[1];	//Orange
+	colours[1] = 0xFF002FFF;	//Blue
+	colours[2] = 0xFFCE21FF;	//Purple
+	colours[3] = 0xFFFF228D;	//Pink
+	colours[4] = 0xFFFFED00;	//Yellow
 
 	uint8_t begin = 0;
 	uint8_t moving = 0;
-	float shrink_time = 3 * 60;	//Time it takes to shrink (In seconds, htz_adjust fixes for 50Hz)
+	float shrink_time = 2.5 * 60;	//Time it takes to shrink (In seconds, htz_adjust fixes for 50Hz)
+
+	//Positive is bottom right, negative is top left
+	int8_t x_dir = rand() % 2;
+	if(!x_dir){x_dir = -1;}
+	int8_t y_dir = rand() % 2;
+	if(!y_dir){y_dir = -1;}
 
 	//Once shrunk, this will be the new width/height
 	float new_width = Logo.animation_array[0].frame_width;
 	float new_height = Logo.animation_array[0].frame_height;
+
 	while(1){
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-			if(st->buttons & CONT_START){
+			if(st->buttons || st->ltrig > 255 * 0.1 || st->rtrig > 255 * 0.1){
 				begin = 1;
 			}
 		MAPLE_FOREACH_END()
 
+		//Make the object bounce around
 		if(moving){
-			Logo_Draw.positions[0] += 2 * htz_adjustment;
-			Logo_Draw.positions[1] += 2 * htz_adjustment;
+			//Collision detection
+			if(Logo_Draw.positions[0] < 0){	//Off left side
+				x_dir = 1;
+				Logo_P.palette[1] = colours[rand() % 5];
+			} 
+			if(Logo_Draw.positions[1] < 0){	//Off top side
+				y_dir = 1;
+				Logo_P.palette[1] = colours[rand() % 5];
+			}
+			if(Logo_Draw.positions[0] + new_width > 640){	//Off right side
+				x_dir = -1;
+				Logo_P.palette[1] = colours[rand() % 5];
+			}
+			if(Logo_Draw.positions[1] + new_height > 480){	//Off bottom side
+				y_dir = -1;
+				Logo_P.palette[1] = colours[rand() % 5];
+			}
+
+			//colours Dark Blue, Purple, Pink, Orange, vright Green, Yellow
+
+			//Movement
+			Logo_Draw.positions[0] += 1.5 * htz_adjustment * x_dir;
+			Logo_Draw.positions[1] += 1.5 * htz_adjustment * y_dir;
 		}
 
-		if(begin && Logo_Draw.scales[0] > 0.5 && Logo_Draw.scales[1] > 0.4){
-			Logo_Draw.scales[0] -= (0.5/shrink_time) * htz_adjustment;
-			Logo_Draw.scales[1] -= (0.6/shrink_time) * htz_adjustment;
+		//Shrinking process
+		if(begin && Logo_Draw.scales[0] > 0.4 && Logo_Draw.scales[1] > 0.3){
+			Logo_Draw.scales[0] -= (0.6/shrink_time) * htz_adjustment;
+			Logo_Draw.scales[1] -= (0.7/shrink_time) * htz_adjustment;
 			new_width = Logo.animation_array[0].frame_width * Logo_Draw.scales[0];
 			new_height = Logo.animation_array[0].frame_height * Logo_Draw.scales[1];
 			Logo_Draw.positions[0] = (640 - new_width) / 2;
@@ -206,6 +241,7 @@ int main(){
 
 			//This is for debug to see the sprite's hitbox
 			crayon_graphics_draw_untextured_poly(Logo_Draw.positions[0], Logo_Draw.positions[1], 1, new_width, new_height, 0xFF008844, PVR_LIST_PT_POLY);
+			//Note, the x/y can't be negative. Is that a bug? Or a limitation of the basic function call?
 
 		pvr_list_finish();
 
