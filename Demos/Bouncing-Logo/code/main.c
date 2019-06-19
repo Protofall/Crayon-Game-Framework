@@ -238,11 +238,6 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 			crayon_graphics_draw_sprites(&Logo_Draw, PVR_LIST_PT_POLY);
-
-			//This is for debug to see the sprite's hitbox
-			crayon_graphics_draw_untextured_poly(Logo_Draw.positions[0], Logo_Draw.positions[1], 1, new_width, new_height, 0xFF008844, PVR_LIST_PT_POLY);
-			//Note, the x/y can't be negative. Is that a bug? Or a limitation of the basic function call?
-
 		pvr_list_finish();
 
 		pvr_scene_finish();
