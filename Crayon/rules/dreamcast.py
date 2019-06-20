@@ -1,6 +1,6 @@
 from SCons.Script import *	# Needed so we can use scons stuff like builders
 
-#UNFINISHED...probably
+#UNFINISHED
 def Init(env):
 
 	if 'CRAYON_BASE' not in env['ENV']:
@@ -26,6 +26,9 @@ def Init(env):
 	LIBS=""
 	IP_BIN=""
 	BUILD=env['ENV']['CRAYON_BUILD_DIR']
+	PREPROCESSOR=""
+	PREPROCESSOR_FLAGS=""
+	# BUILD_MODE=""
 
 	#Setting CFLAGS
 	if 'CRAYON_PROJ_CFLAGS' in env['ENV']:
@@ -54,9 +57,20 @@ def Init(env):
 	else:
 		IP_BIN = env['ENV']['CRAYON_BASE'] + "/IP.BIN"
 
+	#Setting PREPROCESSOR
+	if 'CRAYON_PP' in env['ENV']:
+		PREPROCESSOR = env['ENV']['CRAYON_PP']
+	else:
+		PREPROCESSOR = env['ENV']['CRAYON_BASE'] + "/preprocess.sh"
+
+	#Setting PREPROCESSOR_FLAGS
+	if 'CRAYON_PP_FLAGS' in env['ENV']:
+		PREPROCESSOR_FLAGS = env['ENV']['CRAYON_PP_FLAGS']
+
 	#Add our vars
-	env['ENV'].update(PROJECT=PROJECT, CFLAGS=CFLAGS,
-		LDFLAGS=LDFLAGS, LIBS=LIBS, IP_BIN=IP_BIN, BUILD=BUILD)
+	env['ENV'].update(PROJECT=PROJECT, CFLAGS=CFLAGS, LDFLAGS=LDFLAGS,
+		LIBS=LIBS, IP_BIN=IP_BIN, BUILD=BUILD, PREPROCESSOR=PREPROCESSOR,
+		PREPROCESSOR_FLAGS=PREPROCESSOR_FLAGS)
 
 	#Make builders
 	elf = Builder(action="kos-cc -o $TARGET $SOURCES $LIBS")	#SOURCES takes all dependencies and shoves them into one command
@@ -67,6 +81,8 @@ def Init(env):
 
 	#Add the builders
 	env.Append(BUILDERS= {'Elf': elf, 'KosBin': kos_bin, 'Scramble': scramble, 'Iso': iso, 'Cdi': cdi})
-	
-	#Test var
-	# env['ENV'].update(CRAYON_TEST = "true m8")
+
+	#I want this to depend on a "preprocessing" builder no matter the BOOT_MODE
+	#And...either the cdi builder for BOOT_MODE=cd else just a kos_bin
+	#We should set the builder dependencies here based on BOOT_MODE
+	# dreamcast = Builder()

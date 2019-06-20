@@ -23,6 +23,11 @@ CRAYON_PREPROCESOR	= ""
 DREAMCAST_EMULATOR	= "redream"
 
 
+
+### DONT FORGET TO TAKE THE BOOT MODE FROM THE COMMAND LINE
+
+
+
 # Make env and load with the existing vars
 env=Environment(CC = 'kos-cc')	#Currently will only work for Dreamcast
 env['ENV']['PATH'] = os.environ['PATH']	#Import PATH for us. This fixes the "Unable to find kos-cc" thing
@@ -56,5 +61,5 @@ extras_steps.Init(env)
 
 
 
-# ~~scons --site-dir="$CRAYON_BASE/rules" -Q~~
+# ~~scons --site-dir="$CRAYON_BASE/rules" -Q
 # Just use `scons -Q` now
