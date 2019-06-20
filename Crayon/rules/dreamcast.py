@@ -3,21 +3,17 @@ from SCons.Script import *	# Needed so we can use scons stuff like builders
 #UNFINISHED
 def Init(env):
 
-	if 'CRAYON_BASE' not in env['ENV']:
-		print "ERROR, variable " + "" + " not found. Stopping program ..."
-		quit()
+	#Checking if vital vars are present
+	checking_vars = ['CRAYON_BASE',
+					'CRAYON_PROJ_NAME',
+					'CRAYON_PROJ_LIBS',
+					'CRAYON_BUILD_DIR'
+	]
 
-	if 'CRAYON_PROJ_NAME' not in env['ENV']:
-		print "ERROR, variable " + "" + " not found. Stopping program ..."
-		quit()
-
-	if 'CRAYON_PROJ_LIBS' not in env['ENV']:
-		print "ERROR, variable " + "" + " not found. Stopping program ..."
-		quit()
-
-	if 'CRAYON_BUILD_DIR' not in env['ENV']:
-		print "ERROR, variable " + "" + " not found. Stopping program ..."
-		quit()
+	for x in checking_vars:
+		if x not in env['ENV']:
+			print "ERROR, variable " + x + " not found. Stopping program ..."
+			quit()
 
 	#Set env vars
 	PROJECT=env['ENV']['CRAYON_PROJ_NAME']
