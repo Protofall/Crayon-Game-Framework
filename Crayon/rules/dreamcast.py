@@ -3,15 +3,60 @@ from SCons.Script import *	# Needed so we can use scons stuff like builders
 #UNFINISHED...probably
 def Init(env):
 
-	#Set env vars (How will I do this because this depends on var from the caller)
-	# PROJECT	= $(CRAYON_PROJ_NAME)
-	# CFLAGS	= $(CRAYON_PROJ_CFLAGS) $(KOS_CFLAGS) -I$(CRAYON_BASE)/include
-	# LDFLAGS	= $(CRAYON_PROJ_LDFLAGS) $(KOS_LDFLAGS) -L$(CRAYON_BASE)/lib/dreamcast
-	# LIBS	= $(CRAYON_PROJ_LIBS) -lcrayon -lm $(KOS_LIBS)
-	# IP_BIN	= $(CRAYON_IP_BIN)$(if $(CRAYON_IP_BIN),,$(CRAYON_BASE)/IP.BIN)
-	# BUILD	= $(CRAYON_BUILD_DIR)
+	if 'CRAYON_BASE' not in env['ENV']:
+		print "ERROR, variable " + "" + " not found. Stopping program ..."
+		quit()
 
-	# print env['CRAYON_BASE']	#It is present
+	if 'CRAYON_PROJ_NAME' not in env['ENV']:
+		print "ERROR, variable " + "" + " not found. Stopping program ..."
+		quit()
+
+	if 'CRAYON_PROJ_LIBS' not in env['ENV']:
+		print "ERROR, variable " + "" + " not found. Stopping program ..."
+		quit()
+
+	if 'CRAYON_BUILD_DIR' not in env['ENV']:
+		print "ERROR, variable " + "" + " not found. Stopping program ..."
+		quit()
+
+	#Set env vars
+	PROJECT=env['ENV']['CRAYON_PROJ_NAME']
+	CFLAGS=""
+	LDFLAGS=""
+	LIBS=""
+	IP_BIN=""
+	BUILD=env['ENV']['CRAYON_BUILD_DIR']
+
+	#Setting CFLAGS
+	if 'CRAYON_PROJ_CFLAGS' in env['ENV']:
+		CFLAGS += env['ENV']['CRAYON_PROJ_CFLAGS'] + " "
+	if 'KOS_CFLAGS' in env['ENV']:
+		CFLAGS += env['ENV']['KOS_CFLAGS'] + " "
+	CFLAGS	+= "-I" + env['ENV']['CRAYON_BASE'] + "/include"
+
+	#Setting LDFLAGS
+	if 'CRAYON_PROJ_LDFLAGS' in env['ENV']:
+		LDFLAGS += env['ENV']['CRAYON_PROJ_LDFLAGS'] + " "
+	if 'KOS_LDFLAGS' in env['ENV']:
+		LDFLAGS += env['ENV']['KOS_LDFLAGS'] + " "
+	LDFLAGS += "-L" + env['ENV']['CRAYON_BASE'] + "/lib/dreamcast"
+
+	#Setting LIBS
+	if 'CRAYON_PROJ_LIBS' in env['ENV']:
+		LIBS += env['ENV']['CRAYON_PROJ_LIBS'] + " "
+	LIBS += "-lcrayon -lm"
+	if 'KOS_LIBS' in env['ENV']:
+		LIBS += " " + env['ENV']['KOS_LIBS']
+
+	#Setting IP.BIN location
+	if 'CRAYON_IP_BIN' in env['ENV']:
+		IP_BIN = env['ENV']['CRAYON_IP_BIN']
+	else:
+		IP_BIN = env['ENV']['CRAYON_BASE'] + "/IP.BIN"
+
+	#Add our vars
+	env['ENV'].update(PROJECT=PROJECT, CFLAGS=CFLAGS,
+		LDFLAGS=LDFLAGS, LIBS=LIBS, IP_BIN=IP_BIN, BUILD=BUILD)
 
 	#Make builders
 	elf = Builder(action="kos-cc -o $TARGET $SOURCES $LIBS")	#SOURCES takes all dependencies and shoves them into one command
@@ -24,4 +69,4 @@ def Init(env):
 	env.Append(BUILDERS= {'Elf': elf, 'KosBin': kos_bin, 'Scramble': scramble, 'Iso': iso, 'Cdi': cdi})
 	
 	#Test var
-	env.Append(CRAYON_TEST= "true m8")
+	# env['ENV'].update(CRAYON_TEST = "true m8")
