@@ -1,0 +1,12 @@
+How to run something via the BBA
+
+Make a PC build of your program.
+Hook the DC up to your router (Not the PC it will be communicating with)
+
+Run this command:
+	`sudo arp -s $DC_IP $DC_MAC` (For some reason this didn't work when added to my path, must have given an error since the DC wasn't there
+To confirm it works:
+	`ping $DC_IP`
+To run your program over the BBA use this command:
+	`sudo $(which dc-tool-ip) -t $DC_IP -c "cdfs" -x "cdfs/Bouncing-Logo.bin"` #Need to use sudo for -c param to hook right. Therefore we must give the absolute path for our executable using `which`. -t sets the IP to look for, -c is the path to your folder you'd like to be able to access and -x is the path to the executable
+
