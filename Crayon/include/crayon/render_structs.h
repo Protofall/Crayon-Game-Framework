@@ -4,13 +4,11 @@
 #include "texture_structs.h"  //For the spritehseet and anim structs
 
 /*
-Its designed for the multi-draw functions. If you want to draw a single
-thing with this struct then I think you'll still need to go through
-the multi-draw. It shouldn't be too much slower if any.
+This is designed for the multi-draw functions. If you want to draw a single thing with this struct
+then I you'll still need to go through the multi-draw. It shouldn't be too much slower if any.
 */
 
-//In revision 1 just skip colour and rotation since I still need to plan them more
-	//colour and rotation are currently unused
+//Sprite mode is complete (I hope), poly mode is missing colour and true rotation support
 typedef struct crayon_sprite_array{
 	float *pos;					//Width then Height extracted from anim/frame data,
 								//Each group of 2 is for one sub-texture
@@ -30,14 +28,18 @@ typedef struct crayon_sprite_array{
 	uint16_t list_size;			//This tells the draw function how many sprites/polys to draw.
 	uint8_t frames_used;		//The number of frames you want to use. Minimum 1
 
-	uint8_t options;			//Format XXCR (flip)SFZ, Basically some booleans options relating to
-								//colour, rotation, flip, scale, frame_coords, z coord (layer)
+	uint8_t options;			//Format -CCR (flip)SFZ, Basically some booleans options relating to
+								//fade/colour, rotation, flip, scale, frame_coords, z coord (layer)
 								//If that bit is set to true, then we use the first element of
 								//arrays (except map) for all sub-textures
 								//Else we assume each sprite has its own unique value
 
-	uint8_t filter;				//0 = none, 2 = Bilinear, 4 = Trilinear1, 6 = Trilinear2
+								//Note that the 1st colour bit tells it to use either Blend or Add
+								//mode when applying the colour
+								//Blend is the "Fade to colour" mode
+								//Add just gives a coloured translucent overlay to the sprite
 
+	uint8_t filter;				//0 = none, 2 = Bilinear, 4 = Trilinear1, 6 = Trilinear2
 
 	crayon_spritesheet_t *spritesheet;
 	crayon_animation_t *animation;

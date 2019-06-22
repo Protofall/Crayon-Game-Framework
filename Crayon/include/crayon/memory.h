@@ -47,10 +47,10 @@ extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, char
 extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id);
 
 //Set initial array sizes and options for your sprite_array
-extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t list_size,
-	uint8_t frames_used, uint8_t multi_layer, uint8_t multi_frames, uint8_t multi_scale, uint8_t multi_flip,
-	uint8_t multi_rotation, uint8_t multi_colour, uint8_t filter, crayon_spritesheet_t *ss, crayon_animation_t *anim,
-	crayon_palette_t *pal);
+//Option's format is -CCR (flip)SFZ
+extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
+	crayon_animation_t *anim, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
+	uint8_t filter);
 
 //UNTESTED (MS manually does the same things this function does)
 extern void crayon_memory_init_untextered_array(crayon_untextured_array_t *poly_array, uint16_t list_size, uint8_t multi_layer,

@@ -136,8 +136,6 @@ int main(){
 		#error Invalid CRAYON_BOOT_MODE value
 	#endif
 
-	// error_freeze("Res: %d", a);
-
 	//Load the asset
 	crayon_memory_load_spritesheet(&Logo, &Logo_P, 0, "/files/logo.dtex");
 
@@ -148,7 +146,7 @@ int main(){
 	#endif
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	crayon_memory_init_sprite_array(&Logo_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Logo, &Logo.animation_array[0], &Logo_P);
+	crayon_memory_init_sprite_array(&Logo_Draw, &Logo, &Logo.animation_array[0], &Logo_P, 1, 1, 0, 0);
 	Logo_Draw.pos[0] = (640 - Logo.animation_array[0].frame_width) / 2;
 	Logo_Draw.pos[1] = (480 - Logo.animation_array[0].frame_height) / 2;
 	Logo_Draw.layer[0] = 2;
@@ -184,6 +182,7 @@ int main(){
 	while(1){
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
+			//If any button is pressed, start the game (Doesn't check thumbstick)
 			if(st->buttons || st->ltrig > 255 * 0.1 || st->rtrig > 255 * 0.1){
 				begin = 1;
 			}
