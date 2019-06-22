@@ -146,10 +146,10 @@ int main(){
 	Man_Draw.layer[0] = 2;
 	Man_Draw.scale[0] = 7;
 	Man_Draw.scale[1] = 7;
-	Man_Draw.flip[0] = 0;
+	Man_Draw.flip[0] = 1;
 	Man_Draw.rotation[0] = 0;
-	// Man_Draw.colour[0] = 0xFFFFFFFF;
-	Man_Draw.colour[0] = 0;
+	Man_Draw.colour[0] = 0xFF0000FF;
+	Man_Draw.fade[0] = 255;
 	Man_Draw.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(Man_Draw.animation, Man_Draw.frame_coord_map + 0, Man_Draw.frame_coord_map + 1, 0);
 
@@ -163,10 +163,10 @@ int main(){
 	Opaque_Blend_Draw.scale[1] = 12;
 	Opaque_Blend_Draw.flip[0] = 0;
 	Opaque_Blend_Draw.rotation[0] = 0;
-	// Opaque_Blend_Draw.colour[0] = 0xFFFFFFFF;
-	// Opaque_Blend_Draw.colour[1] = 0xFFFFFFFF;
-	Opaque_Blend_Draw.colour[0] = 0;
-	Opaque_Blend_Draw.colour[1] = 0;
+	Opaque_Blend_Draw.colour[0] = 0xFF00FF00;
+	Opaque_Blend_Draw.colour[1] = 0xFFFF0000;
+	Opaque_Blend_Draw.fade[0] = 255;
+	Opaque_Blend_Draw.fade[1] = 255;
 	Opaque_Blend_Draw.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(Opaque_Blend_Draw.animation, Opaque_Blend_Draw.frame_coord_map + 0, Opaque_Blend_Draw.frame_coord_map + 1, 0);
 
@@ -180,13 +180,13 @@ int main(){
 	Opaque_Add_Draw.scale[1] = 12;
 	Opaque_Add_Draw.flip[0] = 0;
 	Opaque_Add_Draw.rotation[0] = 0;
-	// Opaque_Add_Draw.colour[0] = 0xFFFFFFFF;
-	// Opaque_Add_Draw.colour[1] = 0xFFFFFFFF;
-	Opaque_Add_Draw.colour[0] = 0;
-	Opaque_Add_Draw.colour[1] = 0;
+	Opaque_Add_Draw.colour[0] = 0xFF00FF00;
+	Opaque_Add_Draw.colour[1] = 0xFFFF0000;
+	Opaque_Add_Draw.fade[0] = 255;
+	Opaque_Add_Draw.fade[1] = 255;
 	Opaque_Add_Draw.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(Opaque_Add_Draw.animation, Opaque_Add_Draw.frame_coord_map + 0, Opaque_Add_Draw.frame_coord_map + 1, 0);
-
+	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 	while(1){
 		pvr_wait_ready();
 
@@ -195,12 +195,12 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
-			crayon_graphics_draw(&Opaque_Blend_Draw, PVR_LIST_OP_POLY, 0);
-			crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 0);
+			crayon_graphics_draw(&Opaque_Blend_Draw, PVR_LIST_OP_POLY, 1);
+			crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw(&Man_Draw, PVR_LIST_PT_POLY, 0);
+			crayon_graphics_draw(&Man_Draw, PVR_LIST_PT_POLY, 1);
 		pvr_list_finish();
 
 		pvr_scene_finish();
