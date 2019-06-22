@@ -36,7 +36,7 @@ extern void crayon_graphics_frame_coordinates(const struct crayon_animation *ani
 	return;
 }
 
-extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uint8_t draw_z, uint16_t dim_x,
+extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uint8_t layer, uint16_t dim_x,
   uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
@@ -56,22 +56,22 @@ extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uin
 	//These define the verticies of the triangles "strips" (One triangle uses verticies of other triangle)
 	vert.x = x;
 	vert.y = y;
-	vert.z = draw_z;
+	vert.z = layer;
 	pvr_prim(&vert, sizeof(vert));
 
 	vert.x = x + dim_x;
 	vert.y = y;
-	vert.z = draw_z;
+	vert.z = layer;
 	pvr_prim(&vert, sizeof(vert));
 
 	vert.x = x;
 	vert.y = y + dim_y;
-	vert.z = draw_z;
+	vert.z = layer;
 	pvr_prim(&vert, sizeof(vert));
 
 	vert.x = x + dim_x;
 	vert.y = y + dim_y;
-	vert.z = draw_z;
+	vert.z = layer;
 	vert.flags = PVR_CMD_VERTEX_EOL;
 	pvr_prim(&vert, sizeof(vert));
 	return;
@@ -88,35 +88,35 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
-	// uint8_t multiple_rotations = !!(poly_array->options & (1 << 0));	//Unused
+	// uint8_t multiple_rotation = !!(poly_array->options & (1 << 0));	//Unused
 	uint8_t multiple_dims = !!(poly_array->options & (1 << 1));
-	uint8_t multiple_colours = !!(poly_array->options & (1 << 2));
+	uint8_t multiple_colour = !!(poly_array->options & (1 << 2));
 	uint8_t multiple_z = !!(poly_array->options & (1 << 3));
 
 	int i;
-	for(i = 0; i < poly_array->num_polys; i++){
-		vert.argb = poly_array->colours[multiple_colours * i];	//If only one colour, this is forced to colour zero
+	for(i = 0; i < poly_array->list_size; i++){
+		vert.argb = poly_array->colour[multiple_colour * i];	//If only one colour, this is forced to colour zero
 		vert.oargb = 0;
 		vert.flags = PVR_CMD_VERTEX;
 
-		vert.x = trunc(poly_array->positions[2 * i]);
-		vert.y = trunc(poly_array->positions[(2 * i) + 1]);
-		vert.z = poly_array->draw_z[multiple_z * i];
+		vert.x = trunc(poly_array->pos[2 * i]);
+		vert.y = trunc(poly_array->pos[(2 * i) + 1]);
+		vert.z = poly_array->layer[multiple_z * i];
 		pvr_prim(&vert, sizeof(vert));
 
-		vert.x = trunc(poly_array->positions[2 * i] + poly_array->draw_dims[multiple_dims * 2 * i]);	//If using one dim, multiple dims reduces it to the first value
-		// vert.y = trunc(poly_array->positions[(2 * i) + 1]);
-		// vert.z = poly_array->draw_z[multiple_z * i];
+		vert.x = trunc(poly_array->pos[2 * i] + poly_array->dimensions[multiple_dims * 2 * i]);	//If using one dim, multiple dims reduces it to the first value
+		// vert.y = trunc(poly_array->pos[(2 * i) + 1]);
+		// vert.z = poly_array->layer[multiple_z * i];
 		pvr_prim(&vert, sizeof(vert));
 
-		vert.x = trunc(poly_array->positions[2 * i]);
-		vert.y = trunc(poly_array->positions[(2 * i) + 1] + poly_array->draw_dims[(multiple_dims * 2 * i) + 1]);
-		// vert.z = poly_array->draw_z[multiple_z * i];
+		vert.x = trunc(poly_array->pos[2 * i]);
+		vert.y = trunc(poly_array->pos[(2 * i) + 1] + poly_array->dimensions[(multiple_dims * 2 * i) + 1]);
+		// vert.z = poly_array->layer[multiple_z * i];
 		pvr_prim(&vert, sizeof(vert));
 
-		vert.x = trunc(poly_array->positions[2 * i] + poly_array->draw_dims[multiple_dims * 2 * i]);
-		// vert.y = trunc(poly_array->positions[(2 * i) + 1] + poly_array->draw_dims[(multiple_dims * 2 * i) + 1]);
-		// vert.z = poly_array->draw_z[multiple_z * i];
+		vert.x = trunc(poly_array->pos[2 * i] + poly_array->dimensions[multiple_dims * 2 * i]);
+		// vert.y = trunc(poly_array->pos[(2 * i) + 1] + poly_array->dimensions[(multiple_dims * 2 * i) + 1]);
+		// vert.z = poly_array->layer[multiple_z * i];
 		vert.flags = PVR_CMD_VERTEX_EOL;
 		pvr_prim(&vert, sizeof(vert));
 	}
@@ -125,7 +125,7 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 
 
 extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
-	const struct crayon_animation *anim, float draw_x, float draw_y, uint8_t draw_z,
+	const struct crayon_animation *anim, float draw_x, float draw_y, uint8_t layer,
 	float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
 	uint8_t palette_number){
 
@@ -134,7 +134,7 @@ extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 	const float y0 = trunc(draw_y);
 	const float x1 = x0 + (anim->frame_width) * scale_x;
 	const float y1 = y0 + (anim->frame_height) * scale_y;
-	const float z = draw_z;
+	const float z = layer;
 
 	//Texture coords. letter0 and letter1 have same logic as before (CHECK)
 	const float u0 = frame_x / (float)ss->dimensions;
@@ -210,7 +210,6 @@ extern uint8_t crayon_graphics_draw(crayon_sprite_array_t *sprite_array, uint8_t
 // 	//	 ss->dimensions, ss->dimensions, ss->texture, filter);
 
 
-//Need to come back and do rotations and maybe colour?
 extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
 	float u0, v0, u1, v1;
 	uint32_t duv;	//duv is used to assist in the rotations
@@ -236,7 +235,7 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 	//Easily lets us use the right index for each array
 		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
 	uint16_t *rotation_index, *flip_index, *frame_index, *z_index;
-	uint8_t multi_scales = !!(sprite_array->options & (1 << 2));
+	uint8_t multi_scale = !!(sprite_array->options & (1 << 2));
 	uint16_t i;	//The main loop's index
 	uint16_t zero = 0;
 	float rotation_under_360;
@@ -271,24 +270,24 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 	pvr_sprite_hdr_t header;
 	pvr_sprite_compile(&header, &context);
 	pvr_prim(&header, sizeof(header));
-	for(i = 0; i < sprite_array->num_sprites; i++){
+	for(i = 0; i < sprite_array->list_size; i++){
 		//These if statements will trigger once if we have a single element (i == 0)
 			//and every time for a multi-list
 		if(*z_index == i){	//z
-			vert.az = (float)sprite_array->draw_z[*z_index];
-			vert.bz = (float)sprite_array->draw_z[*z_index];
-			vert.cz = (float)sprite_array->draw_z[*z_index];
+			vert.az = (float)sprite_array->layer[*z_index];
+			vert.bz = (float)sprite_array->layer[*z_index];
+			vert.cz = (float)sprite_array->layer[*z_index];
 		}
 
 		if(*frame_index == i){	//frame
-			u0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[*frame_index])] / (float)sprite_array->spritesheet->dimensions;
-			v0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_keys[*frame_index]) + 1] / (float)sprite_array->spritesheet->dimensions;
+			u0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_key[*frame_index])] / (float)sprite_array->spritesheet->dimensions;
+			v0 = sprite_array->frame_coord_map[(2 * sprite_array->frame_coord_key[*frame_index]) + 1] / (float)sprite_array->spritesheet->dimensions;
 			u1 = u0 + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->dimensions;
 			v1 = v0 + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->dimensions;
 		}
 
 		if(*flip_index == i || *frame_index == i){	//UV
-			if(sprite_array->flips[*flip_index] & (1 << 0)){	//Is flipped?
+			if(sprite_array->flip[*flip_index] & (1 << 0)){	//Is flipped?
 				vert.auv = PVR_PACK_16BIT_UV(u1, v0);
 				vert.buv = PVR_PACK_16BIT_UV(u0, v0);
 				vert.cuv = PVR_PACK_16BIT_UV(u0, v1);
@@ -302,10 +301,10 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 			}
 		}
 
-		if(*rotation_index == i){	//rotations
+		if(*rotation_index == i){	//rotation
 			//No change is required for a 0 degree angle
-			if(sprite_array->rotations){
-				rotation_under_360 = fmod(sprite_array->rotations[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
+			if(sprite_array->rotation){
+				rotation_under_360 = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
 				if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
 
 				//For sprite mode we can't simply "rotate" the verts, instead we need to change the uv
@@ -333,15 +332,15 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 		}
 
 		//Imagine a "goto verts_normal;" for this little bit
-			//I couldn't actually do that since the verts wouldn't be set if the rotations aren't checked
+			//I couldn't actually do that since the verts wouldn't be set if the rotation aren't checked
 			//Hence it just flows here naturally
 
-		vert.ax = trunc(sprite_array->positions[2 * i]);
-		vert.ay = trunc(sprite_array->positions[(2 * i) + 1]);
-		vert.bx = vert.ax + trunc(sprite_array->animation->frame_width * sprite_array->scales[2 * i * multi_scales]);
+		vert.ax = trunc(sprite_array->pos[2 * i]);
+		vert.ay = trunc(sprite_array->pos[(2 * i) + 1]);
+		vert.bx = vert.ax + trunc(sprite_array->animation->frame_width * sprite_array->scale[2 * i * multi_scale]);
 		vert.by = vert.ay;
 		vert.cx = vert.bx;
-		vert.cy = vert.ay + trunc(sprite_array->animation->frame_height * sprite_array->scales[(2 * i * multi_scales) + 1]);
+		vert.cy = vert.ay + trunc(sprite_array->animation->frame_height * sprite_array->scale[(2 * i * multi_scale) + 1]);
 		vert.dx = vert.ax;
 		vert.dy = vert.cy;
 
@@ -355,12 +354,12 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 				//Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.ax = trunc(sprite_array->positions[2 * i]) + ((sprite_array->scales[(2 * i * multi_scales) + 1] * diff) / 2);
-			vert.ay = trunc(sprite_array->positions[(2 * i) + 1]) - ((sprite_array->scales[(2 * i * multi_scales)] * diff) / 2);
-			vert.bx = vert.ax + trunc(sprite_array->animation->frame_height * sprite_array->scales[(2 * i * multi_scales) + 1]);
+			vert.ax = trunc(sprite_array->pos[2 * i]) + ((sprite_array->scale[(2 * i * multi_scale) + 1] * diff) / 2);
+			vert.ay = trunc(sprite_array->pos[(2 * i) + 1]) - ((sprite_array->scale[(2 * i * multi_scale)] * diff) / 2);
+			vert.bx = vert.ax + trunc(sprite_array->animation->frame_height * sprite_array->scale[(2 * i * multi_scale) + 1]);
 			vert.by = vert.ay;
 			vert.cx = vert.bx;
-			vert.cy = vert.ay + trunc(sprite_array->animation->frame_width * sprite_array->scales[(2 * i * multi_scales)]);
+			vert.cy = vert.ay + trunc(sprite_array->animation->frame_width * sprite_array->scale[(2 * i * multi_scale)]);
 			vert.dx = vert.ax;
 			vert.dy = vert.cy;
 		}
@@ -381,11 +380,11 @@ extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){
 }
 
 extern uint8_t crayon_graphics_draw_text_mono(const struct crayon_font_mono *fm, uint8_t poly_list_mode, float draw_x,
-	float draw_y, uint8_t draw_z, float scale_x, float scale_y, uint8_t palette_number, char * string){
+	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number, char * string){
 
 	float x0 = trunc(draw_x);
 	float y0 = trunc(draw_y);
-	const float z = draw_z;
+	const float z = layer;
 
 	//x1 and y1 depend on the letter
 	float x1 = x0 + fm->char_width * scale_x;
@@ -454,11 +453,11 @@ extern uint8_t crayon_graphics_draw_text_mono(const struct crayon_font_mono *fm,
 }
 
 extern uint8_t crayon_graphics_draw_text_prop(const struct crayon_font_prop *fp, uint8_t poly_list_mode, float draw_x,
-	float draw_y, uint8_t draw_z, float scale_x, float scale_y, uint8_t palette_number, char * string){
+	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number, char * string){
 
 	float x0 = trunc(draw_x);
 	float y0 = trunc(draw_y);
-	const float z = draw_z;
+	const float z = layer;
 	float x1 = x0;
 	float y1 = y0 + fp->char_height * scale_y;
 	float v0 = 0;

@@ -20,7 +20,7 @@ extern void crayon_graphics_frame_coordinates(const struct crayon_animation *ani
 
 
 //Queue a colour/alpha poly to be rendered. I recommend the array version, but for simple implementation this is good
-extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uint8_t draw_z,
+extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uint8_t layer,
 	uint16_t dim_x, uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode);
 
 //Draw all coloured polys in the struct's list
@@ -33,7 +33,7 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 //Queue a texture to be rendered (If RGB565 or ARGB4444 then palette_number is never read)
 	//This is more so a learner function for noobies
 extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
-	const struct crayon_animation *anim, float draw_x, float draw_y, uint8_t draw_z,
+	const struct crayon_animation *anim, float draw_x, float draw_y, uint8_t layer,
 	float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
 	uint8_t palette_number);
 
@@ -61,11 +61,11 @@ extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
 
 //Draw string using mono font (string must be null-terminated)
 extern uint8_t crayon_graphics_draw_text_mono(const crayon_font_mono_t *fm, uint8_t poly_list_mode, float draw_x,
-	float draw_y, uint8_t draw_z, float scale_x, float scale_y, uint8_t palette_number, char * string);
+	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number, char * string);
 
 //Draw string using propertional font (string must be null-terminated)
 extern uint8_t crayon_graphics_draw_text_prop(const crayon_font_prop_t *fp, uint8_t poly_list_mode, float draw_x,
-	float draw_y, uint8_t draw_z, float scale_x, float scale_y, uint8_t palette_number, char * string);
+	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number, char * string);
 
 
 //------------------String info------------------//

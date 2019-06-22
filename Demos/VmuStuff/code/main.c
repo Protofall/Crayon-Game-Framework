@@ -268,7 +268,7 @@ int main(){
 
 	char buffer[70];
 	if(!res){
-	sprintf(buffer, "Save created\nUses %d blocks and has %d frames of\nanimation",
+		sprintf(buffer, "Save created\nUses %d blocks and has %d frames of\nanimation",
 		crayon_savefile_get_save_block_count(&savefile_details),
 		savefile_details.icon_anim_count);
 	}

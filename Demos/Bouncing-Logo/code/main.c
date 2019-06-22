@@ -149,15 +149,15 @@ int main(){
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
 	crayon_memory_init_sprite_array(&Logo_Draw, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Logo, &Logo.animation_array[0], &Logo_P);
-	Logo_Draw.positions[0] = (640 - Logo.animation_array[0].frame_width) / 2;
-	Logo_Draw.positions[1] = (480 - Logo.animation_array[0].frame_height) / 2;
-	Logo_Draw.draw_z[0] = 2;
-	Logo_Draw.scales[0] = 1;
-	Logo_Draw.scales[1] = 1;
-	Logo_Draw.flips[0] = 0;
-	Logo_Draw.rotations[0] = 0;
-	Logo_Draw.colours[0] = 0;
-	Logo_Draw.frame_coord_keys[0] = 0;
+	Logo_Draw.pos[0] = (640 - Logo.animation_array[0].frame_width) / 2;
+	Logo_Draw.pos[1] = (480 - Logo.animation_array[0].frame_height) / 2;
+	Logo_Draw.layer[0] = 2;
+	Logo_Draw.scale[0] = 1;
+	Logo_Draw.scale[1] = 1;
+	Logo_Draw.flip[0] = 0;
+	Logo_Draw.rotation[0] = 0;
+	Logo_Draw.colour[0] = 0;
+	Logo_Draw.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(Logo_Draw.animation, Logo_Draw.frame_coord_map + 0, Logo_Draw.frame_coord_map + 1, 0);
 
 	uint32_t colours[5];
@@ -192,19 +192,19 @@ int main(){
 		//Make the object bounce around
 		if(moving){
 			//Collision detection
-			if(Logo_Draw.positions[0] < 0){	//Off left side
+			if(Logo_Draw.pos[0] < 0){	//Off left side
 				x_dir = 1;
 				Logo_P.palette[1] = colours[rand() % 5];
 			} 
-			if(Logo_Draw.positions[1] < 0){	//Off top side
+			if(Logo_Draw.pos[1] < 0){	//Off top side
 				y_dir = 1;
 				Logo_P.palette[1] = colours[rand() % 5];
 			}
-			if(Logo_Draw.positions[0] + new_width > 640){	//Off right side
+			if(Logo_Draw.pos[0] + new_width > 640){	//Off right side
 				x_dir = -1;
 				Logo_P.palette[1] = colours[rand() % 5];
 			}
-			if(Logo_Draw.positions[1] + new_height > 480){	//Off bottom side
+			if(Logo_Draw.pos[1] + new_height > 480){	//Off bottom side
 				y_dir = -1;
 				Logo_P.palette[1] = colours[rand() % 5];
 			}
@@ -212,18 +212,18 @@ int main(){
 			//colours Dark Blue, Purple, Pink, Orange, vright Green, Yellow
 
 			//Movement
-			Logo_Draw.positions[0] += 1.5 * htz_adjustment * x_dir;
-			Logo_Draw.positions[1] += 1.5 * htz_adjustment * y_dir;
+			Logo_Draw.pos[0] += 1.5 * htz_adjustment * x_dir;
+			Logo_Draw.pos[1] += 1.5 * htz_adjustment * y_dir;
 		}
 
 		//Shrinking process
-		if(begin && Logo_Draw.scales[0] > 0.4 && Logo_Draw.scales[1] > 0.3){
-			Logo_Draw.scales[0] -= (0.6/shrink_time) * htz_adjustment;
-			Logo_Draw.scales[1] -= (0.7/shrink_time) * htz_adjustment;
-			new_width = Logo.animation_array[0].frame_width * Logo_Draw.scales[0];
-			new_height = Logo.animation_array[0].frame_height * Logo_Draw.scales[1];
-			Logo_Draw.positions[0] = (640 - new_width) / 2;
-			Logo_Draw.positions[1] = (480 - new_height) / 2;
+		if(begin && Logo_Draw.scale[0] > 0.4 && Logo_Draw.scale[1] > 0.3){
+			Logo_Draw.scale[0] -= (0.6/shrink_time) * htz_adjustment;
+			Logo_Draw.scale[1] -= (0.7/shrink_time) * htz_adjustment;
+			new_width = Logo.animation_array[0].frame_width * Logo_Draw.scale[0];
+			new_height = Logo.animation_array[0].frame_height * Logo_Draw.scale[1];
+			Logo_Draw.pos[0] = (640 - new_width) / 2;
+			Logo_Draw.pos[1] = (480 - new_height) / 2;
 		}
 		else{
 			if(begin){

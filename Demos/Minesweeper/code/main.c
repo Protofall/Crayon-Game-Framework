@@ -183,9 +183,9 @@ void clear_grid(MinesweeperGrid_t * grid){
 
 	int i = 0;
 	uint16_t mines_left = grid->num_mines;
-	uint16_t tiles_left = grid->draw_grid.num_sprites;
+	uint16_t tiles_left = grid->draw_grid.list_size;
 
-	while(i < grid->draw_grid.num_sprites){	//Populate board
+	while(i < grid->draw_grid.list_size){	//Populate board
 		double prob = (double)mines_left / (double)tiles_left;	//Can I do better than using a division?
 		grid->logic_grid[i] = 9 * true_prob(prob);
 		if(grid->logic_grid[i]){
@@ -196,8 +196,8 @@ void clear_grid(MinesweeperGrid_t * grid){
 		i++;
 	}
 
-	for(i = 0; i < grid->draw_grid.num_sprites; i++){
-		grid->draw_grid.frame_coord_keys[i] = 0;
+	for(i = 0; i < grid->draw_grid.list_size; i++){
+		grid->draw_grid.frame_coord_key[i] = 0;
 	}
 
 	grid->game_live = 0;
@@ -206,7 +206,7 @@ void clear_grid(MinesweeperGrid_t * grid){
 	grid->time_sec = 0;
 	grid->first_reveal = 0;
 
-	grid->non_mines_left = grid->draw_grid.num_sprites - grid->num_flags;
+	grid->non_mines_left = grid->draw_grid.list_size - grid->num_flags;
 
 	return;
 }
@@ -240,8 +240,8 @@ void reset_grid(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_
 		free(grid->logic_grid);
 	}
 
-	grid->draw_grid.num_sprites = x * y;
-	grid->logic_grid = (uint8_t *) malloc(grid->draw_grid.num_sprites * sizeof(uint8_t));
+	grid->draw_grid.list_size = x * y;
+	grid->logic_grid = (uint8_t *) malloc(grid->draw_grid.list_size * sizeof(uint8_t));
 
 	//Calculate some start_x stuff. Default for expert is 80, 104
 	grid->start_x = 320 - (grid->x * 8);
@@ -256,8 +256,8 @@ void reset_grid(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint8_
 		for(i = 0; i < grid->x; i++){   //i is x, j is y
 			uint16_t ele = (j * grid->x * 2) + (2 * i);
 
-			grid->draw_grid.positions[ele] = (float)(grid->start_x + (i * 16));
-			grid->draw_grid.positions[ele + 1] = (float)(grid->start_y + (j * 16));
+			grid->draw_grid.pos[ele] = (float)(grid->start_x + (i * 16));
+			grid->draw_grid.pos[ele + 1] = (float)(grid->start_y + (j * 16));
 		}
 	}
 
@@ -310,10 +310,10 @@ void reveal_map(MinesweeperGrid_t * grid){
 	if(grid->over_mode == 2){
 		for(i = 0; i < grid->x * grid->y; i++){
 			if(grid->logic_grid[i] == 9 || grid->logic_grid[i] == 41){	//Untouched or question marked
-				grid->draw_grid.frame_coord_keys[i] = 3;
+				grid->draw_grid.frame_coord_key[i] = 3;
 			}
 			if(grid->logic_grid[i] != 73 && grid->logic_grid[i] & 1<<6){	//Untouched or question marked
-				grid->draw_grid.frame_coord_keys[i] = 5;
+				grid->draw_grid.frame_coord_key[i] = 5;
 			}
 		}
 	}
@@ -321,7 +321,7 @@ void reveal_map(MinesweeperGrid_t * grid){
 		grid->num_flags = 0;
 		for(i = 0; i < grid->x * grid->y; i++){
 			if(grid->logic_grid[i] % (1 << 5) == 9){
-				grid->draw_grid.frame_coord_keys[i] = 1;
+				grid->draw_grid.frame_coord_key[i] = 1;
 			}
 		}
 	}
@@ -337,15 +337,15 @@ void discover_tile(MinesweeperGrid_t * grid, int ele_x, int ele_y){
 		}
 		if(grid->logic_grid[ele_logic] & 1 << 5){	//If questioned, remove the question mark and set it to a normal tile
 			grid->logic_grid[ele_logic] &= ~(1 << 5);
-			grid->draw_grid.frame_coord_keys[ele_logic] = 0;
+			grid->draw_grid.frame_coord_key[ele_logic] = 0;
 		}
 		if(grid->logic_grid[ele_logic] == 9){	//If mine
-			grid->draw_grid.frame_coord_keys[ele_logic] = 4;
+			grid->draw_grid.frame_coord_key[ele_logic] = 4;
 			grid->game_live = 0;
 			grid->over_mode = 1;
 		}
 		else{
-			grid->draw_grid.frame_coord_keys[ele_logic] = 7 + grid->logic_grid[ele_logic];
+			grid->draw_grid.frame_coord_key[ele_logic] = 7 + grid->logic_grid[ele_logic];
 			grid->non_mines_left--;
 		}
 		grid->logic_grid[ele_logic] |= (1 << 7);
@@ -442,7 +442,7 @@ void b_press(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, uint16_t 
 				grid->num_flags--;
 			}
 		}
-		grid->draw_grid.frame_coord_keys[ele_logic] = status;
+		grid->draw_grid.frame_coord_key[ele_logic] = status;
 	}
 	return;
 }
@@ -457,7 +457,7 @@ void digit_set(crayon_sprite_array_t * ren_list, int num, uint8_t display){
 		num = 999;
 	}
 
-	uint8_t * draw_key = ren_list->frame_coord_keys + (display * 3);	//Gives us the pointer to the right display
+	uint8_t * draw_key = ren_list->frame_coord_key + (display * 3);	//Gives us the pointer to the right display
 
 	char num_char[3];
 	sprintf(num_char, "%03d", num);	//Using this since its easier to convert to string than try and read from the int...
@@ -494,12 +494,12 @@ void grid_indent_logic(MinesweeperGrid_t * grid, int ele_x, int ele_y, uint8_t i
 //Pass in a pointer to the beginning of the queried cursor's position
 void face_logic(MinesweeperGrid_t * grid, crayon_sprite_array_t * face, float *cursor_position, uint8_t A_held, uint8_t X_held){
 	if(A_held || X_held){
-		if(!grid->over_mode && !face->frame_coord_keys[0]){	//Basically face_frame_id != 2, 3 or 4
-			face->frame_coord_keys[0] = 1;
+		if(!grid->over_mode && !face->frame_coord_key[0]){	//Basically face_frame_id != 2, 3 or 4
+			face->frame_coord_key[0] = 1;
 		}
-		if(A_held && (cursor_position[0] <= face->positions[0] + 26) && (cursor_position[1] <= face->positions[1] + 26)
-			&& cursor_position[0] >= face->positions[0] && cursor_position[1] >= face->positions[1]){	//If hovering over face and holding on it
-			face->frame_coord_keys[0] = 4;
+		if(A_held && (cursor_position[0] <= face->pos[0] + 26) && (cursor_position[1] <= face->pos[1] + 26)
+			&& cursor_position[0] >= face->pos[0] && cursor_position[1] >= face->pos[1]){	//If hovering over face and holding on it
+			face->frame_coord_key[0] = 4;
 		}
 	}
 }
@@ -553,19 +553,19 @@ void cursor_on_grid(MinesweeperGrid_t * grid, uint8_t *in_grid, int *ele_x, int 
 void keyboard_special_toggle(MinesweeperKeyboard_t * keyboard){
 	keyboard->special = !keyboard->special;
 	if(keyboard->special){	//In special mode
-		keyboard->mini_buttons.num_sprites = 42;
+		keyboard->mini_buttons.list_size = 42;
 		//Change the last two medium button's positions
-		keyboard->medium_buttons.positions[(2 * 3) + 1] = keyboard->keyboard_start_y + (4 * (30 - 3));
-		keyboard->medium_buttons.positions[(2 * 4) + 1] = keyboard->keyboard_start_y + (4 * (30 - 3));
-		keyboard->big_buttons.positions[3] = keyboard->keyboard_start_y + (4 * (30 - 3));	//Space's Y
+		keyboard->medium_buttons.pos[(2 * 3) + 1] = keyboard->keyboard_start_y + (4 * (30 - 3));
+		keyboard->medium_buttons.pos[(2 * 4) + 1] = keyboard->keyboard_start_y + (4 * (30 - 3));
+		keyboard->big_buttons.pos[3] = keyboard->keyboard_start_y + (4 * (30 - 3));	//Space's Y
 		keyboard->keyboard_height = 105 + 96 + 27;
 	}
 	else{	//In letter mode
-		keyboard->mini_buttons.num_sprites = 26;	//Only display the first 26 chars for no spec mode
+		keyboard->mini_buttons.list_size = 26;	//Only display the first 26 chars for no spec mode
 		//Change the last two medium button's positions
-		keyboard->medium_buttons.positions[(2 * 3) + 1] = keyboard->keyboard_start_y + (3 * (30 - 3));
-		keyboard->medium_buttons.positions[(2 * 4) + 1] = keyboard->keyboard_start_y + (3 * (30 - 3));
-		keyboard->big_buttons.positions[3] = keyboard->keyboard_start_y + (3 * (30 - 3));
+		keyboard->medium_buttons.pos[(2 * 3) + 1] = keyboard->keyboard_start_y + (3 * (30 - 3));
+		keyboard->medium_buttons.pos[(2 * 4) + 1] = keyboard->keyboard_start_y + (3 * (30 - 3));
+		keyboard->big_buttons.pos[3] = keyboard->keyboard_start_y + (3 * (30 - 3));
 		keyboard->keyboard_height = 105 + 96;
 	}
 	return;
@@ -577,10 +577,10 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 			uint8_t mini_button_pressed = 0;
 			uint8_t medium_button_pressed = 0;
 			uint8_t i;
-			for(i = 0; i < keyboard->mini_buttons.num_sprites; i++){
-				if((cursor_pos[0] >= keyboard->mini_buttons.positions[(2 * i)]) && (cursor_pos[1] >= keyboard->mini_buttons.positions[(2 * i) + 1])
-					&& cursor_pos[0] <= keyboard->mini_buttons.positions[(2 * i)] + keyboard->mini_buttons.animation->frame_width &&
-					cursor_pos[1] <= keyboard->mini_buttons.positions[(2 * i) + 1] + keyboard->mini_buttons.animation->frame_height){
+			for(i = 0; i < keyboard->mini_buttons.list_size; i++){
+				if((cursor_pos[0] >= keyboard->mini_buttons.pos[(2 * i)]) && (cursor_pos[1] >= keyboard->mini_buttons.pos[(2 * i) + 1])
+					&& cursor_pos[0] <= keyboard->mini_buttons.pos[(2 * i)] + keyboard->mini_buttons.animation->frame_width &&
+					cursor_pos[1] <= keyboard->mini_buttons.pos[(2 * i) + 1] + keyboard->mini_buttons.animation->frame_height){
 					mini_button_pressed = 1;
 					break;
 				}
@@ -603,10 +603,10 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 				}
 			}
 			else{
-				for(i = 0; i < keyboard->medium_buttons.num_sprites; i++){
-					if((cursor_pos[0] >= keyboard->medium_buttons.positions[(2 * i)]) && (cursor_pos[1] >= keyboard->medium_buttons.positions[(2 * i) + 1])
-						&& cursor_pos[0] <= keyboard->medium_buttons.positions[(2 * i)] + keyboard->medium_buttons.animation->frame_width &&
-						cursor_pos[1] <= keyboard->medium_buttons.positions[(2 * i) + 1] + keyboard->medium_buttons.animation->frame_height){
+				for(i = 0; i < keyboard->medium_buttons.list_size; i++){
+					if((cursor_pos[0] >= keyboard->medium_buttons.pos[(2 * i)]) && (cursor_pos[1] >= keyboard->medium_buttons.pos[(2 * i) + 1])
+						&& cursor_pos[0] <= keyboard->medium_buttons.pos[(2 * i)] + keyboard->medium_buttons.animation->frame_width &&
+						cursor_pos[1] <= keyboard->medium_buttons.pos[(2 * i) + 1] + keyboard->medium_buttons.animation->frame_height){
 						medium_button_pressed = 1;
 						break;
 					}
@@ -627,9 +627,9 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 					}
 				}
 				else{	//Check the big buttons
-					if((cursor_pos[0] >= keyboard->big_buttons.positions[0]) && (cursor_pos[1] >= keyboard->big_buttons.positions[1])
-						&& cursor_pos[0] <= keyboard->big_buttons.positions[0] + keyboard->big_buttons.animation->frame_width &&
-						cursor_pos[1] <= keyboard->big_buttons.positions[1] + keyboard->big_buttons.animation->frame_height){	//Enter pressed
+					if((cursor_pos[0] >= keyboard->big_buttons.pos[0]) && (cursor_pos[1] >= keyboard->big_buttons.pos[1])
+						&& cursor_pos[0] <= keyboard->big_buttons.pos[0] + keyboard->big_buttons.animation->frame_width &&
+						cursor_pos[1] <= keyboard->big_buttons.pos[1] + keyboard->big_buttons.animation->frame_height){	//Enter pressed
 
 						//Record names must have at least one char
 						if(keyboard->chars_typed <= 0){
@@ -653,9 +653,9 @@ uint8_t keyboard_logic(MinesweeperKeyboard_t * keyboard, MinesweeperOptions_t * 
 						//Resume focus 0 (Normal game play)
 						options->focus = 0;	//Change to 2 later when I make that screen
 					}
-					else if((cursor_pos[0] >= keyboard->big_buttons.positions[2]) && (cursor_pos[1] >= keyboard->big_buttons.positions[3])
-						&& cursor_pos[0] <= keyboard->big_buttons.positions[2] + keyboard->big_buttons.animation->frame_width &&
-						cursor_pos[1] <= keyboard->big_buttons.positions[3] + keyboard->big_buttons.animation->frame_height){	//Space pressed
+					else if((cursor_pos[0] >= keyboard->big_buttons.pos[2]) && (cursor_pos[1] >= keyboard->big_buttons.pos[3])
+						&& cursor_pos[0] <= keyboard->big_buttons.pos[2] + keyboard->big_buttons.animation->frame_width &&
+						cursor_pos[1] <= keyboard->big_buttons.pos[3] + keyboard->big_buttons.animation->frame_height){	//Space pressed
 						if(keyboard->chars_typed < 15){
 							keyboard->type_buffer[keyboard->chars_typed + 1] = '\0';
 							keyboard->type_buffer[keyboard->chars_typed] = ' ';
@@ -707,36 +707,36 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 
 	if(options->focus == 2){
 		if((buttons & CONT_A) && !(previous_buttons & CONT_A)){	//When we get a new score, we don't want to change focus easily
-			if((cursor_pos[0] <= options->number_changers.positions[0] + 16) && (cursor_pos[1] <= options->number_changers.positions[1] + 9)
-					&& cursor_pos[0] >= options->number_changers.positions[0] && cursor_pos[1] >= options->number_changers.positions[1]){	//Incrementer Y
+			if((cursor_pos[0] <= options->number_changers.pos[0] + 16) && (cursor_pos[1] <= options->number_changers.pos[1] + 9)
+					&& cursor_pos[0] >= options->number_changers.pos[0] && cursor_pos[1] >= options->number_changers.pos[1]){	//Incrementer Y
 				if(options->disp_y < 21){
 					options->disp_y++;
 					sprintf(options->y_buffer, "%d", options->disp_y);
 				}
 			}
-			else if((cursor_pos[0] <= options->number_changers.positions[0] + 16) && (cursor_pos[1] <= options->number_changers.positions[1] + 19)
-					&& cursor_pos[0] >= options->number_changers.positions[0] && cursor_pos[1] >= options->number_changers.positions[1] + 10){	//Decrementer Y
+			else if((cursor_pos[0] <= options->number_changers.pos[0] + 16) && (cursor_pos[1] <= options->number_changers.pos[1] + 19)
+					&& cursor_pos[0] >= options->number_changers.pos[0] && cursor_pos[1] >= options->number_changers.pos[1] + 10){	//Decrementer Y
 				if(options->disp_y > 9){
 					options->disp_y--;
 					sprintf(options->y_buffer, "%d", options->disp_y);
 				}
 			}
-			else if((cursor_pos[0] <= options->number_changers.positions[2] + 16) && (cursor_pos[1] <= options->number_changers.positions[3] + 9)
-					&& cursor_pos[0] >= options->number_changers.positions[2] && cursor_pos[1] >= options->number_changers.positions[3]){	//Incrementer X
+			else if((cursor_pos[0] <= options->number_changers.pos[2] + 16) && (cursor_pos[1] <= options->number_changers.pos[3] + 9)
+					&& cursor_pos[0] >= options->number_changers.pos[2] && cursor_pos[1] >= options->number_changers.pos[3]){	//Incrementer X
 				if(options->disp_x < 38){
 					options->disp_x++;
 					sprintf(options->x_buffer, "%d", options->disp_x);
 				}
 			}
-			else if((cursor_pos[0] <= options->number_changers.positions[2] + 16) && (cursor_pos[1] <= options->number_changers.positions[3] + 19)
-					&& cursor_pos[0] >= options->number_changers.positions[2] && cursor_pos[1] >= options->number_changers.positions[3] + 10){	//Decrementer X
+			else if((cursor_pos[0] <= options->number_changers.pos[2] + 16) && (cursor_pos[1] <= options->number_changers.pos[3] + 19)
+					&& cursor_pos[0] >= options->number_changers.pos[2] && cursor_pos[1] >= options->number_changers.pos[3] + 10){	//Decrementer X
 				if(options->disp_x > 9){
 					options->disp_x--;
 					sprintf(options->x_buffer, "%d", options->disp_x);
 				}
 			}
-			else if((cursor_pos[0] <= options->number_changers.positions[4] + 16) && (cursor_pos[1] <= options->number_changers.positions[5] + 9)
-					&& cursor_pos[0] >= options->number_changers.positions[4] && cursor_pos[1] >= options->number_changers.positions[5]){	//Incrementer Num Mines
+			else if((cursor_pos[0] <= options->number_changers.pos[4] + 16) && (cursor_pos[1] <= options->number_changers.pos[5] + 9)
+					&& cursor_pos[0] >= options->number_changers.pos[4] && cursor_pos[1] >= options->number_changers.pos[5]){	//Incrementer Num Mines
 				if(options->disp_mines < (options->disp_x - 1) * (options->disp_y - 1)){
 					options->disp_mines++;
 				}
@@ -745,61 +745,61 @@ uint8_t button_press_logic_buttons(MinesweeperGrid_t * grid, MinesweeperOptions_
 				}
 				sprintf(options->m_buffer, "%d", options->disp_mines);
 			}
-			else if((cursor_pos[0] <= options->number_changers.positions[4] + 16) && (cursor_pos[1] <= options->number_changers.positions[5] + 19)
-					&& cursor_pos[0] >= options->number_changers.positions[4] && cursor_pos[1] >= options->number_changers.positions[5] + 10){	//Decrementer Num Mines
+			else if((cursor_pos[0] <= options->number_changers.pos[4] + 16) && (cursor_pos[1] <= options->number_changers.pos[5] + 19)
+					&& cursor_pos[0] >= options->number_changers.pos[4] && cursor_pos[1] >= options->number_changers.pos[5] + 10){	//Decrementer Num Mines
 				if(options->disp_mines > 10){
 					options->disp_mines--;
 					sprintf(options->m_buffer, "%d", options->disp_mines);
 				}
 			}
-			else if((cursor_pos[0] <= options->buttons.positions[0] + 75) && (cursor_pos[1] <= options->buttons.positions[1] + 23)
-					&& cursor_pos[0] >= options->buttons.positions[0] && cursor_pos[1] >= options->buttons.positions[1]){	//Beginner
+			else if((cursor_pos[0] <= options->buttons.pos[0] + 75) && (cursor_pos[1] <= options->buttons.pos[1] + 23)
+					&& cursor_pos[0] >= options->buttons.pos[0] && cursor_pos[1] >= options->buttons.pos[1]){	//Beginner
 				sprintf(options->x_buffer, "%d", options->disp_x);
 				sprintf(options->y_buffer, "%d", options->disp_y);
 				sprintf(options->m_buffer, "%d", options->disp_mines);
 				reset_grid(grid, options, 9, 9, 10);
-				face->frame_coord_keys[0] = 0;	//Reset the face
+				face->frame_coord_key[0] = 0;	//Reset the face
 			}
-			else if((cursor_pos[0] <= options->buttons.positions[2] + 75) && (cursor_pos[1] <= options->buttons.positions[3] + 23)
-					&& cursor_pos[0] >= options->buttons.positions[2] && cursor_pos[1] >= options->buttons.positions[3]){	//Intermediate
+			else if((cursor_pos[0] <= options->buttons.pos[2] + 75) && (cursor_pos[1] <= options->buttons.pos[3] + 23)
+					&& cursor_pos[0] >= options->buttons.pos[2] && cursor_pos[1] >= options->buttons.pos[3]){	//Intermediate
 				sprintf(options->x_buffer, "%d", options->disp_x);
 				sprintf(options->y_buffer, "%d", options->disp_y);
 				sprintf(options->m_buffer, "%d", options->disp_mines);
 				reset_grid(grid, options, 16, 16, 40);
-				face->frame_coord_keys[0] = 0;
+				face->frame_coord_key[0] = 0;
 			}
-			else if((cursor_pos[0] <= options->buttons.positions[4] + 75) && (cursor_pos[1] <= options->buttons.positions[5] + 23)
-					&& cursor_pos[0] >= options->buttons.positions[4] && cursor_pos[1] >= options->buttons.positions[5]){	//Expert
+			else if((cursor_pos[0] <= options->buttons.pos[4] + 75) && (cursor_pos[1] <= options->buttons.pos[5] + 23)
+					&& cursor_pos[0] >= options->buttons.pos[4] && cursor_pos[1] >= options->buttons.pos[5]){	//Expert
 				sprintf(options->x_buffer, "%d", options->disp_x);
 				sprintf(options->y_buffer, "%d", options->disp_y);
 				sprintf(options->m_buffer, "%d", options->disp_mines);
 				reset_grid(grid, options, 30, 16, 99);
-				face->frame_coord_keys[0] = 0;
+				face->frame_coord_key[0] = 0;
 			}
-			else if((cursor_pos[0] <= options->buttons.positions[6] + 75) && (cursor_pos[1] <= options->buttons.positions[7] + 23)
-					&& cursor_pos[0] >= options->buttons.positions[6] && cursor_pos[1] >= options->buttons.positions[7]){	//Save to VMU
+			else if((cursor_pos[0] <= options->buttons.pos[6] + 75) && (cursor_pos[1] <= options->buttons.pos[7] + 23)
+					&& cursor_pos[0] >= options->buttons.pos[6] && cursor_pos[1] >= options->buttons.pos[7]){	//Save to VMU
 				options->savefile.options = options->question_enabled + (options->sound_enabled << 1)
 					+ (options->operating_system << 2) + (options->language << 3) + (options->htz << 4);
 				crayon_savefile_save(&options->savefile_details);
 			}
-			else if((cursor_pos[0] <= options->buttons.positions[8] + 75) && (cursor_pos[1] <= options->buttons.positions[9] + 23)
-					&& cursor_pos[0] >= options->buttons.positions[8] && cursor_pos[1] >= options->buttons.positions[9]){	//Apply
+			else if((cursor_pos[0] <= options->buttons.pos[8] + 75) && (cursor_pos[1] <= options->buttons.pos[9] + 23)
+					&& cursor_pos[0] >= options->buttons.pos[8] && cursor_pos[1] >= options->buttons.pos[9]){	//Apply
 				if(options->disp_mines > (options->disp_x - 1) * (options->disp_y - 1)){
 					options->disp_mines = (options->disp_x - 1) * (options->disp_y - 1);
 					sprintf(options->m_buffer, "%d", options->disp_mines);
 				}
 				reset_grid(grid, options, options->disp_x, options->disp_y, options->disp_mines);
-				face->frame_coord_keys[0] = 0;
+				face->frame_coord_key[0] = 0;
 			}
-			else if((cursor_pos[0] <= options->checkers.positions[0] + 13) && (cursor_pos[1] <= options->checkers.positions[1] + 13)
-					&& cursor_pos[0] >= options->checkers.positions[0] && cursor_pos[1] >= options->checkers.positions[1]){	//Sound checker
+			else if((cursor_pos[0] <= options->checkers.pos[0] + 13) && (cursor_pos[1] <= options->checkers.pos[1] + 13)
+					&& cursor_pos[0] >= options->checkers.pos[0] && cursor_pos[1] >= options->checkers.pos[1]){	//Sound checker
 				options->sound_enabled = !options->sound_enabled;
-				options->checkers.frame_coord_keys[0] = options->sound_enabled;	//Update to show the right frame
+				options->checkers.frame_coord_key[0] = options->sound_enabled;	//Update to show the right frame
 			}
-			else if((cursor_pos[0] <= options->checkers.positions[2] + 13) && (cursor_pos[1] <= options->checkers.positions[3] + 13)
-					&& cursor_pos[0] >= options->checkers.positions[2] && cursor_pos[1] >= options->checkers.positions[3]){	//Question mark checker
+			else if((cursor_pos[0] <= options->checkers.pos[2] + 13) && (cursor_pos[1] <= options->checkers.pos[3] + 13)
+					&& cursor_pos[0] >= options->checkers.pos[2] && cursor_pos[1] >= options->checkers.pos[3]){	//Question mark checker
 				options->question_enabled = !options->question_enabled;
-				options->checkers.frame_coord_keys[1] = options->question_enabled;	//Update to show the right frame
+				options->checkers.frame_coord_key[1] = options->question_enabled;	//Update to show the right frame
 			}
 		}
 	}
@@ -844,9 +844,9 @@ uint8_t button_hover(float cursor_x, float cursor_y, MinesweeperOS_t * os, Mines
 //switches you between English and Italian modes
 	//Maybe make this a part of button_press_logic?
 void language_swap(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, MinesweeperOS_t * os, float * cursor_pos, uint8_t a_press){
-	if(cursor_pos[0] > os->assets[os->lang_id]->positions[0] && cursor_pos[1] > os->assets[os->lang_id]->positions[1] &&
-		cursor_pos[0] < os->assets[os->lang_id]->positions[0] + os->assets[os->lang_id]->animation->frame_width &&
-		cursor_pos[1] < os->assets[os->lang_id]->positions[1] + os->assets[os->lang_id]->animation->frame_height &&
+	if(cursor_pos[0] > os->assets[os->lang_id]->pos[0] && cursor_pos[1] > os->assets[os->lang_id]->pos[1] &&
+		cursor_pos[0] < os->assets[os->lang_id]->pos[0] + os->assets[os->lang_id]->animation->frame_width &&
+		cursor_pos[1] < os->assets[os->lang_id]->pos[1] + os->assets[os->lang_id]->animation->frame_height &&
 		a_press){
 		options->language = !options->language;
 
@@ -863,13 +863,13 @@ void language_swap(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, Min
 
 		//Swap out grid frame coords
 		uint8_t i;
-		for(i = 0; i < grid->draw_grid.unique_frames; i++){
+		for(i = 0; i < grid->draw_grid.frames_used; i++){
 			crayon_graphics_frame_coordinates(grid->draw_grid.animation, grid->draw_grid.frame_coord_map + (2 * i), grid->draw_grid.frame_coord_map + (2 * i) + 1, i);
 		}
 		//Use alternative frame coords for OS assets
 		for(i = 0; i < os->num_assets; i++){
-			if(os->assets[i]->unique_frames > 1){
-				os->assets[i]->frame_coord_keys[0] = options->language;
+			if(os->assets[i]->frames_used > 1){
+				os->assets[i]->frame_coord_key[0] = options->language;
 			}
 		}
 
@@ -1228,23 +1228,23 @@ int main(){
 	//Indent draw list
 	crayon_sprite_array_t indented_tiles;
 	crayon_memory_init_sprite_array(&indented_tiles, 8 * 4, 2, 0, 1, 0, 0, 0, 0, 0, MS_grid.alt_ss, MS_grid.alt_anim, MS_grid.alt_pal);
-	indented_tiles.draw_z[0] = 18;
-	indented_tiles.scales[0] = 1;
-	indented_tiles.scales[1] = 1;
-	indented_tiles.flips[0] = 0;
-	indented_tiles.rotations[0] = 0;
-	indented_tiles.colours[0] = 0;
+	indented_tiles.layer[0] = 18;
+	indented_tiles.scale[0] = 1;
+	indented_tiles.scale[1] = 1;
+	indented_tiles.flip[0] = 0;
+	indented_tiles.rotation[0] = 0;
+	indented_tiles.colour[0] = 0;
 	crayon_graphics_frame_coordinates(indented_tiles.animation, indented_tiles.frame_coord_map + 0, indented_tiles.frame_coord_map + 1, 6);	//Indent question
 	crayon_graphics_frame_coordinates(indented_tiles.animation, indented_tiles.frame_coord_map + 2, indented_tiles.frame_coord_map + 3, 7);	//Indent blank
 
 	//Setting defaults for the grid (These won't ever change again)
-	MS_grid.draw_grid.draw_z[0] = 17;
-	MS_grid.draw_grid.scales[0] = 1;
-	MS_grid.draw_grid.scales[1] = 1;
-	MS_grid.draw_grid.flips[0] = 0;
-	MS_grid.draw_grid.rotations[0] = 0;
-	MS_grid.draw_grid.colours[0] = 0;
-	for(iter = 0; iter < MS_grid.draw_grid.unique_frames; iter++){
+	MS_grid.draw_grid.layer[0] = 17;
+	MS_grid.draw_grid.scale[0] = 1;
+	MS_grid.draw_grid.scale[1] = 1;
+	MS_grid.draw_grid.flip[0] = 0;
+	MS_grid.draw_grid.rotation[0] = 0;
+	MS_grid.draw_grid.colour[0] = 0;
+	for(iter = 0; iter < MS_grid.draw_grid.frames_used; iter++){
 		crayon_graphics_frame_coordinates(MS_grid.draw_grid.animation, MS_grid.draw_grid.frame_coord_map + (2 * iter),
 			MS_grid.draw_grid.frame_coord_map + (2 * iter) + 1, iter);
 	}
@@ -1276,120 +1276,120 @@ int main(){
 	//Controller pixel art on the 
 	crayon_sprite_array_t devices;
 	crayon_memory_init_sprite_array(&devices, 2, 2, 0, 1, 0, 0, 0, 0, 0, &Controllers, &Controllers.animation_array[0], &Controllers_P);
-	devices.scales[0] = 1;
-	devices.scales[1] = 1;
-	devices.flips[0] = 0;
-	devices.rotations[0] = 0;
-	devices.colours[0] = 0;
-	devices.positions[0] = 40;
-	devices.positions[1] = 108;
-	devices.positions[2] = 640 - 256 - 20;
-	devices.positions[3] = devices.positions[1];
-	devices.draw_z[0] = 31;
-	devices.frame_coord_keys[0] = 0;
-	devices.frame_coord_keys[1] = 1;
+	devices.scale[0] = 1;
+	devices.scale[1] = 1;
+	devices.flip[0] = 0;
+	devices.rotation[0] = 0;
+	devices.colour[0] = 0;
+	devices.pos[0] = 40;
+	devices.pos[1] = 108;
+	devices.pos[2] = 640 - 256 - 20;
+	devices.pos[3] = devices.pos[1];
+	devices.layer[0] = 31;
+	devices.frame_coord_key[0] = 0;
+	devices.frame_coord_key[1] = 1;
 	crayon_graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 0, devices.frame_coord_map + 1, 0);
 	crayon_graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 2, devices.frame_coord_map + 3, 1);
 
 	//Dot for legend numbers (5 for gamepad and 3 for mouse legend, 1 for face, 11 in the legend)
 	crayon_sprite_array_t legend_dot;
 	crayon_memory_init_sprite_array(&legend_dot, 20, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.animation_array[1], &Controllers_P);
-	legend_dot.scales[0] = 1;
-	legend_dot.scales[1] = 1;
-	legend_dot.flips[0] = 0;
-	legend_dot.rotations[0] = 0;
-	legend_dot.colours[0] = 0;
+	legend_dot.scale[0] = 1;
+	legend_dot.scale[1] = 1;
+	legend_dot.flip[0] = 0;
+	legend_dot.rotation[0] = 0;
+	legend_dot.colour[0] = 0;
 
 	//Mouse
-	legend_dot.positions[0] = 380;
-	legend_dot.positions[1] = 140;
-	legend_dot.positions[2] = 588;
-	legend_dot.positions[3] = 140;
-	legend_dot.positions[4] = 380;
-	legend_dot.positions[5] = 182;
+	legend_dot.pos[0] = 380;
+	legend_dot.pos[1] = 140;
+	legend_dot.pos[2] = 588;
+	legend_dot.pos[3] = 140;
+	legend_dot.pos[4] = 380;
+	legend_dot.pos[5] = 182;
 
 	//Controller
-	legend_dot.positions[6] = 320;
-	legend_dot.positions[7] = 182;
-	legend_dot.positions[8] = legend_dot.positions[6];
-	legend_dot.positions[9] = legend_dot.positions[7] + 21;
-	legend_dot.positions[10] = legend_dot.positions[6];
-	legend_dot.positions[11] = legend_dot.positions[7] + 41;
-	legend_dot.positions[12] = legend_dot.positions[6];
-	legend_dot.positions[13] = legend_dot.positions[7] + 61;
-	legend_dot.positions[14] = 161;
-	legend_dot.positions[15] = legend_dot.positions[6] - 2;
+	legend_dot.pos[6] = 320;
+	legend_dot.pos[7] = 182;
+	legend_dot.pos[8] = legend_dot.pos[6];
+	legend_dot.pos[9] = legend_dot.pos[7] + 21;
+	legend_dot.pos[10] = legend_dot.pos[6];
+	legend_dot.pos[11] = legend_dot.pos[7] + 41;
+	legend_dot.pos[12] = legend_dot.pos[6];
+	legend_dot.pos[13] = legend_dot.pos[7] + 61;
+	legend_dot.pos[14] = 161;
+	legend_dot.pos[15] = legend_dot.pos[6] - 2;
 
 	//Face
-	legend_dot.positions[16] = 344;
-	legend_dot.positions[17] = 70;
+	legend_dot.pos[16] = 344;
+	legend_dot.pos[17] = 70;
 
 	//Legend
-	legend_dot.positions[18] = 200;
-	legend_dot.positions[19] = 366;
-	legend_dot.positions[20] = legend_dot.positions[18] + 23;
-	legend_dot.positions[21] = legend_dot.positions[19];
+	legend_dot.pos[18] = 200;
+	legend_dot.pos[19] = 366;
+	legend_dot.pos[20] = legend_dot.pos[18] + 23;
+	legend_dot.pos[21] = legend_dot.pos[19];
 
-	legend_dot.positions[22] = legend_dot.positions[18];
-	legend_dot.positions[23] = legend_dot.positions[19] + 16;
-	legend_dot.positions[24] = legend_dot.positions[18] + 23;
-	legend_dot.positions[25] = legend_dot.positions[19] + 16;
+	legend_dot.pos[22] = legend_dot.pos[18];
+	legend_dot.pos[23] = legend_dot.pos[19] + 16;
+	legend_dot.pos[24] = legend_dot.pos[18] + 23;
+	legend_dot.pos[25] = legend_dot.pos[19] + 16;
 
-	legend_dot.positions[26] = legend_dot.positions[18];
-	legend_dot.positions[27] = legend_dot.positions[19] + 32;
-	legend_dot.positions[28] = legend_dot.positions[18] + 23;
-	legend_dot.positions[29] = legend_dot.positions[19] + 32;
-	legend_dot.positions[30] = legend_dot.positions[18] + 23 + 23 + 6;
-	legend_dot.positions[31] = legend_dot.positions[19] + 32;
-	legend_dot.positions[32] = legend_dot.positions[18] + 23 + 23 + 6 + 23 + 7;
-	legend_dot.positions[33] = legend_dot.positions[19] + 32;
+	legend_dot.pos[26] = legend_dot.pos[18];
+	legend_dot.pos[27] = legend_dot.pos[19] + 32;
+	legend_dot.pos[28] = legend_dot.pos[18] + 23;
+	legend_dot.pos[29] = legend_dot.pos[19] + 32;
+	legend_dot.pos[30] = legend_dot.pos[18] + 23 + 23 + 6;
+	legend_dot.pos[31] = legend_dot.pos[19] + 32;
+	legend_dot.pos[32] = legend_dot.pos[18] + 23 + 23 + 6 + 23 + 7;
+	legend_dot.pos[33] = legend_dot.pos[19] + 32;
 
-	legend_dot.positions[34] = legend_dot.positions[18];
-	legend_dot.positions[35] = legend_dot.positions[19] + 48;
+	legend_dot.pos[34] = legend_dot.pos[18];
+	legend_dot.pos[35] = legend_dot.pos[19] + 48;
 
-	legend_dot.positions[36] = legend_dot.positions[18];
-	legend_dot.positions[37] = legend_dot.positions[19] + 64;
-	legend_dot.positions[38] = legend_dot.positions[18] + 23;
-	legend_dot.positions[39] = legend_dot.positions[19] + 64;
+	legend_dot.pos[36] = legend_dot.pos[18];
+	legend_dot.pos[37] = legend_dot.pos[19] + 64;
+	legend_dot.pos[38] = legend_dot.pos[18] + 23;
+	legend_dot.pos[39] = legend_dot.pos[19] + 64;
 
-	legend_dot.draw_z[0] = 33;
-	legend_dot.frame_coord_keys[0] = 0;
+	legend_dot.layer[0] = 33;
+	legend_dot.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(legend_dot.animation, legend_dot.frame_coord_map + 0, legend_dot.frame_coord_map + 1, 0);
 
 	//Controller swirl
 	crayon_sprite_array_t cont_swirl;
 	crayon_memory_init_sprite_array(&cont_swirl, 1, 1, 0, 0, 0, 0, 0, 0, 0, &Controllers, &Controllers.animation_array[2], &Controllers_P);
-	cont_swirl.scales[0] = 1;
-	cont_swirl.scales[1] = 1;
-	cont_swirl.flips[0] = 0;
-	cont_swirl.rotations[0] = 0;
-	cont_swirl.colours[0] = 0;
-	cont_swirl.positions[0] = devices.positions[0] + 118;
-	cont_swirl.positions[1] = devices.positions[1] + 10;
-	cont_swirl.draw_z[0] = 32;
-	cont_swirl.frame_coord_keys[0] = 0;
+	cont_swirl.scale[0] = 1;
+	cont_swirl.scale[1] = 1;
+	cont_swirl.flip[0] = 0;
+	cont_swirl.rotation[0] = 0;
+	cont_swirl.colour[0] = 0;
+	cont_swirl.pos[0] = devices.pos[0] + 118;
+	cont_swirl.pos[1] = devices.pos[1] + 10;
+	cont_swirl.layer[0] = 32;
+	cont_swirl.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(cont_swirl.animation, cont_swirl.frame_coord_map + 0, cont_swirl.frame_coord_map + 1, region);
 
 	crayon_sprite_array_t digit_display;
 	crayon_memory_init_sprite_array(&digit_display, 6, 11, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.animation_array[1], &Board_P);
-	digit_display.scales[0] = 1;
-	digit_display.scales[1] = 1;
-	digit_display.flips[0] = 0;
-	digit_display.rotations[0] = 0;
-	digit_display.colours[0] = 0;
-	digit_display.positions[0] = 20;
-	digit_display.positions[1] = 65;
-	digit_display.positions[2] = digit_display.positions[0] + digit_display.animation->frame_width;
-	digit_display.positions[3] = digit_display.positions[1];
-	digit_display.positions[4] = digit_display.positions[2] + digit_display.animation->frame_width;
-	digit_display.positions[5] = digit_display.positions[1];
-	digit_display.positions[6] = 581;
-	digit_display.positions[7] = digit_display.positions[1];
-	digit_display.positions[8] = digit_display.positions[6] + digit_display.animation->frame_width;
-	digit_display.positions[9] = digit_display.positions[1];
-	digit_display.positions[10] = digit_display.positions[8] + digit_display.animation->frame_width;
-	digit_display.positions[11] = digit_display.positions[1];
-	digit_display.draw_z[0] = 17;
+	digit_display.scale[0] = 1;
+	digit_display.scale[1] = 1;
+	digit_display.flip[0] = 0;
+	digit_display.rotation[0] = 0;
+	digit_display.colour[0] = 0;
+	digit_display.pos[0] = 20;
+	digit_display.pos[1] = 65;
+	digit_display.pos[2] = digit_display.pos[0] + digit_display.animation->frame_width;
+	digit_display.pos[3] = digit_display.pos[1];
+	digit_display.pos[4] = digit_display.pos[2] + digit_display.animation->frame_width;
+	digit_display.pos[5] = digit_display.pos[1];
+	digit_display.pos[6] = 581;
+	digit_display.pos[7] = digit_display.pos[1];
+	digit_display.pos[8] = digit_display.pos[6] + digit_display.animation->frame_width;
+	digit_display.pos[9] = digit_display.pos[1];
+	digit_display.pos[10] = digit_display.pos[8] + digit_display.animation->frame_width;
+	digit_display.pos[11] = digit_display.pos[1];
+	digit_display.layer[0] = 17;
 	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 0, digit_display.frame_coord_map + 1, 0);
 	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 2, digit_display.frame_coord_map + 3, 1);
 	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 4, digit_display.frame_coord_map + 5, 2);
@@ -1404,15 +1404,15 @@ int main(){
 
 	crayon_sprite_array_t face;
 	crayon_memory_init_sprite_array(&face, 1, 5, 0, 1, 0, 0, 0, 0, 0, &Board, &Board.animation_array[0], &Board_P);
-	face.scales[0] = 1;
-	face.scales[1] = 1;
-	face.flips[0] = 0;
-	face.rotations[0] = 0;
-	face.colours[0] = 0;
-	face.positions[0] = 307;
-	face.positions[1] = 64;
-	face.draw_z[0] = 16;
-	face.frame_coord_keys[0] = 0;	//Neutral face
+	face.scale[0] = 1;
+	face.scale[1] = 1;
+	face.flip[0] = 0;
+	face.rotation[0] = 0;
+	face.colour[0] = 0;
+	face.pos[0] = 307;
+	face.pos[1] = 64;
+	face.layer[0] = 16;
+	face.frame_coord_key[0] = 0;	//Neutral face
 	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 0, face.frame_coord_map + 1, 0);
 	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 2, face.frame_coord_map + 3, 1);
 	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 4, face.frame_coord_map + 5, 2);
@@ -1423,41 +1423,41 @@ int main(){
 
 	//26 letters, 16 for the extra chars
 	crayon_memory_init_sprite_array(&MS_keyboard.mini_buttons, 26 + 16, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.animation_array[miniButton_id], &Windows_P);
-	MS_keyboard.mini_buttons.scales[0] = 1;
-	MS_keyboard.mini_buttons.scales[1] = 1;
-	MS_keyboard.mini_buttons.flips[0] = 0;
-	MS_keyboard.mini_buttons.rotations[0] = 0;
-	MS_keyboard.mini_buttons.colours[0] = 0;
-	MS_keyboard.mini_buttons.draw_z[0] = 30;
-	MS_keyboard.mini_buttons.frame_coord_keys[0] = 0;
+	MS_keyboard.mini_buttons.scale[0] = 1;
+	MS_keyboard.mini_buttons.scale[1] = 1;
+	MS_keyboard.mini_buttons.flip[0] = 0;
+	MS_keyboard.mini_buttons.rotation[0] = 0;
+	MS_keyboard.mini_buttons.colour[0] = 0;
+	MS_keyboard.mini_buttons.layer[0] = 30;
+	MS_keyboard.mini_buttons.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(MS_keyboard.mini_buttons.animation, MS_keyboard.mini_buttons.frame_coord_map, MS_keyboard.mini_buttons.frame_coord_map + 1, 0);
 
 	//Medium
 	crayon_memory_init_sprite_array(&MS_keyboard.medium_buttons, 5, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.animation_array[mediumButton_id], &Windows_P);
-	MS_keyboard.medium_buttons.scales[0] = 1;
-	MS_keyboard.medium_buttons.scales[1] = 1;
-	MS_keyboard.medium_buttons.flips[0] = 0;
-	MS_keyboard.medium_buttons.rotations[0] = 0;
-	MS_keyboard.medium_buttons.colours[0] = 0;
-	MS_keyboard.medium_buttons.draw_z[0] = 30;
-	MS_keyboard.medium_buttons.frame_coord_keys[0] = 0;
+	MS_keyboard.medium_buttons.scale[0] = 1;
+	MS_keyboard.medium_buttons.scale[1] = 1;
+	MS_keyboard.medium_buttons.flip[0] = 0;
+	MS_keyboard.medium_buttons.rotation[0] = 0;
+	MS_keyboard.medium_buttons.colour[0] = 0;
+	MS_keyboard.medium_buttons.layer[0] = 30;
+	MS_keyboard.medium_buttons.frame_coord_key[0] = 0;
 
-	MS_keyboard.medium_buttons.positions[6] = 0;
-	MS_keyboard.medium_buttons.positions[7] = 0;
-	MS_keyboard.medium_buttons.positions[8] = 0;
-	MS_keyboard.medium_buttons.positions[9] = 0;
+	MS_keyboard.medium_buttons.pos[6] = 0;
+	MS_keyboard.medium_buttons.pos[7] = 0;
+	MS_keyboard.medium_buttons.pos[8] = 0;
+	MS_keyboard.medium_buttons.pos[9] = 0;
 
 	crayon_graphics_frame_coordinates(MS_keyboard.medium_buttons.animation, MS_keyboard.medium_buttons.frame_coord_map, MS_keyboard.medium_buttons.frame_coord_map + 1, 0);
 
 	//Space and Enter
 	crayon_memory_init_sprite_array(&MS_keyboard.big_buttons, 2, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.animation_array[bigButton_id], &Windows_P);
-	MS_keyboard.big_buttons.scales[0] = 1;
-	MS_keyboard.big_buttons.scales[1] = 1;
-	MS_keyboard.big_buttons.flips[0] = 0;
-	MS_keyboard.big_buttons.rotations[0] = 0;
-	MS_keyboard.big_buttons.colours[0] = 0;
-	MS_keyboard.big_buttons.draw_z[0] = 30;
-	MS_keyboard.big_buttons.frame_coord_keys[0] = 0;
+	MS_keyboard.big_buttons.scale[0] = 1;
+	MS_keyboard.big_buttons.scale[1] = 1;
+	MS_keyboard.big_buttons.flip[0] = 0;
+	MS_keyboard.big_buttons.rotation[0] = 0;
+	MS_keyboard.big_buttons.colour[0] = 0;
+	MS_keyboard.big_buttons.layer[0] = 30;
+	MS_keyboard.big_buttons.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(MS_keyboard.big_buttons.animation, MS_keyboard.big_buttons.frame_coord_map, MS_keyboard.big_buttons.frame_coord_map + 1, 0);
 
 	uint8_t mini_button_width = Windows.animation_array[miniButton_id].frame_width;
@@ -1471,8 +1471,8 @@ int main(){
 	uint16_t key_x_distance = MS_keyboard.keyboard_start_x + 2;	//Line 1's offset
 	for(iter = 0; iter < 26 + 16; iter++){
 		if(iter == 10){	//Back
-			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
-			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
+			MS_keyboard.medium_buttons.pos[2 * kb_medium_id] = key_x_distance;
+			MS_keyboard.medium_buttons.pos[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
 			kb_medium_id++;
 
 			kb_row++;
@@ -1480,22 +1480,22 @@ int main(){
 			key_x_distance = MS_keyboard.keyboard_start_x + 4;	//Line 2's offset
 		}
 		else if(iter == 19){	//Enter and Caps1
-			MS_keyboard.big_buttons.positions[2 * kb_big_id] = key_x_distance;
-			MS_keyboard.big_buttons.positions[(2 * kb_big_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
+			MS_keyboard.big_buttons.pos[2 * kb_big_id] = key_x_distance;
+			MS_keyboard.big_buttons.pos[(2 * kb_big_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
 			kb_big_id++;
 
 			kb_row++;
 			kb_row_id = 0;
 			key_x_distance = MS_keyboard.keyboard_start_x + 19;	//Line 3's offset
 
-			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
-			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
+			MS_keyboard.medium_buttons.pos[2 * kb_medium_id] = key_x_distance;
+			MS_keyboard.medium_buttons.pos[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
 			kb_medium_id++;
 			key_x_distance += medium_button_width + 7;
 		}
 		else if(iter == 26){	//Caps2
-			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
-			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
+			MS_keyboard.medium_buttons.pos[2 * kb_medium_id] = key_x_distance;
+			MS_keyboard.medium_buttons.pos[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
 			kb_medium_id++;
 
 			kb_row++;
@@ -1507,24 +1507,24 @@ int main(){
 			kb_row_id = 0;
 			key_x_distance = MS_keyboard.keyboard_start_x + 23;	//Line 5's offset
 
-			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
-			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
+			MS_keyboard.medium_buttons.pos[2 * kb_medium_id] = key_x_distance;
+			MS_keyboard.medium_buttons.pos[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
 			kb_medium_id++;
 			key_x_distance += medium_button_width + 7;
 		}
 		else if(iter == 40){
-			MS_keyboard.big_buttons.positions[2] = key_x_distance;	//Space's X
+			MS_keyboard.big_buttons.pos[2] = key_x_distance;	//Space's X
 			key_x_distance += Windows.animation_array[bigButton_id].frame_width + 7;	//Make room for the space
 		}
 
-		MS_keyboard.mini_buttons.positions[2 * iter] = key_x_distance;
-		MS_keyboard.mini_buttons.positions[(2 * iter) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
+		MS_keyboard.mini_buttons.pos[2 * iter] = key_x_distance;
+		MS_keyboard.mini_buttons.pos[(2 * iter) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
 		key_x_distance += mini_button_width + 7;
 		kb_row_id++;
 
 		if(iter == 41){	//Spec2
-			MS_keyboard.medium_buttons.positions[2 * kb_medium_id] = key_x_distance;
-			MS_keyboard.medium_buttons.positions[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
+			MS_keyboard.medium_buttons.pos[2 * kb_medium_id] = key_x_distance;
+			MS_keyboard.medium_buttons.pos[(2 * kb_medium_id) + 1] = MS_keyboard.keyboard_start_y + (kb_row * (30 - 3));
 			kb_medium_id++;
 		}
 	}
@@ -1538,55 +1538,55 @@ int main(){
 	crayon_memory_init_sprite_array(&MS_options.number_changers, 3, 1, 0, 0, 0, 0, 0, 0, 0, &Windows, &Windows.animation_array[num_changer_id], &Windows_P);
 
 	//Buttons
-	MS_options.buttons.draw_z[0] = 30;
-	MS_options.buttons.scales[0] = 1;
-	MS_options.buttons.scales[1] = 1;
-	MS_options.buttons.flips[0] = 0;
-	MS_options.buttons.rotations[0] = 0;
-	MS_options.buttons.colours[0] = 0;
-	MS_options.buttons.positions[0] = 408;	//Beginner
-	MS_options.buttons.positions[1] = 113 + (2 * MS_options.operating_system);
-	MS_options.buttons.positions[2] = MS_options.buttons.positions[0];			//Intermediate
-	MS_options.buttons.positions[3] = MS_options.buttons.positions[1] + 50;
-	MS_options.buttons.positions[4] = MS_options.buttons.positions[0];			//Expert
-	MS_options.buttons.positions[5] = MS_options.buttons.positions[3] + 50;
-	MS_options.buttons.positions[6] = MS_options.buttons.positions[0] - 247;	//Save to VMU
-	MS_options.buttons.positions[7] = 185;
-	MS_options.buttons.positions[8] = MS_options.buttons.positions[6];			//Update Grid
-	MS_options.buttons.positions[9] = MS_options.buttons.positions[7] + 30;
-	MS_options.buttons.frame_coord_keys[0] = 0;
+	MS_options.buttons.layer[0] = 30;
+	MS_options.buttons.scale[0] = 1;
+	MS_options.buttons.scale[1] = 1;
+	MS_options.buttons.flip[0] = 0;
+	MS_options.buttons.rotation[0] = 0;
+	MS_options.buttons.colour[0] = 0;
+	MS_options.buttons.pos[0] = 408;	//Beginner
+	MS_options.buttons.pos[1] = 113 + (2 * MS_options.operating_system);
+	MS_options.buttons.pos[2] = MS_options.buttons.pos[0];			//Intermediate
+	MS_options.buttons.pos[3] = MS_options.buttons.pos[1] + 50;
+	MS_options.buttons.pos[4] = MS_options.buttons.pos[0];			//Expert
+	MS_options.buttons.pos[5] = MS_options.buttons.pos[3] + 50;
+	MS_options.buttons.pos[6] = MS_options.buttons.pos[0] - 247;	//Save to VMU
+	MS_options.buttons.pos[7] = 185;
+	MS_options.buttons.pos[8] = MS_options.buttons.pos[6];			//Update Grid
+	MS_options.buttons.pos[9] = MS_options.buttons.pos[7] + 30;
+	MS_options.buttons.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(MS_options.buttons.animation, MS_options.buttons.frame_coord_map, MS_options.buttons.frame_coord_map + 1, 0);
 
 	//Checkers
-	MS_options.checkers.draw_z[0] = 30;
-	MS_options.checkers.scales[0] = 1;
-	MS_options.checkers.scales[1] = 1;
-	MS_options.checkers.flips[0] = 0;
-	MS_options.checkers.rotations[0] = 0;
-	MS_options.checkers.colours[0] = 0;
-	MS_options.checkers.positions[0] = MS_options.buttons.positions[6] + 60;	//Sound
-	MS_options.checkers.positions[1] = MS_options.buttons.positions[7] - 66;
-	MS_options.checkers.positions[2] = MS_options.checkers.positions[0];		//Questions
-	MS_options.checkers.positions[3] = MS_options.checkers.positions[1] + 40;
-	MS_options.checkers.frame_coord_keys[0] = MS_options.sound_enabled;
-	MS_options.checkers.frame_coord_keys[1] = MS_options.question_enabled;
+	MS_options.checkers.layer[0] = 30;
+	MS_options.checkers.scale[0] = 1;
+	MS_options.checkers.scale[1] = 1;
+	MS_options.checkers.flip[0] = 0;
+	MS_options.checkers.rotation[0] = 0;
+	MS_options.checkers.colour[0] = 0;
+	MS_options.checkers.pos[0] = MS_options.buttons.pos[6] + 60;	//Sound
+	MS_options.checkers.pos[1] = MS_options.buttons.pos[7] - 66;
+	MS_options.checkers.pos[2] = MS_options.checkers.pos[0];		//Questions
+	MS_options.checkers.pos[3] = MS_options.checkers.pos[1] + 40;
+	MS_options.checkers.frame_coord_key[0] = MS_options.sound_enabled;
+	MS_options.checkers.frame_coord_key[1] = MS_options.question_enabled;
 	crayon_graphics_frame_coordinates(MS_options.checkers.animation, MS_options.checkers.frame_coord_map, MS_options.checkers.frame_coord_map + 1, 0);
 	crayon_graphics_frame_coordinates(MS_options.checkers.animation, MS_options.checkers.frame_coord_map + 2, MS_options.checkers.frame_coord_map + 3, 1);
 
 	//Number_changers
-	MS_options.number_changers.draw_z[0] = 30;
-	MS_options.number_changers.scales[0] = 1;
-	MS_options.number_changers.scales[1] = 1;
-	MS_options.number_changers.flips[0] = 0;
-	MS_options.number_changers.rotations[0] = 0;
-	MS_options.number_changers.colours[0] = 0;
-	MS_options.number_changers.positions[0] = MS_options.checkers.positions[0] + 128;	//Height
-	MS_options.number_changers.positions[1] = MS_options.buttons.positions[1] + 2;
-	MS_options.number_changers.positions[2] = MS_options.number_changers.positions[0];	//Width
-	MS_options.number_changers.positions[3] = MS_options.number_changers.positions[1] + 50;
-	MS_options.number_changers.positions[4] = MS_options.number_changers.positions[0];	//Mines
-	MS_options.number_changers.positions[5] = MS_options.number_changers.positions[1] + 100;
-	MS_options.number_changers.frame_coord_keys[0] = 0;
+	MS_options.number_changers.layer[0] = 30;
+	MS_options.number_changers.scale[0] = 1;
+	MS_options.number_changers.scale[1] = 1;
+	MS_options.number_changers.flip[0] = 0;
+	MS_options.number_changers.rotation[0] = 0;
+	MS_options.number_changers.colour[0] = 0;
+	MS_options.number_changers.pos[0] = MS_options.checkers.pos[0] + 128;	//Height
+	MS_options.number_changers.pos[1] = MS_options.buttons.pos[1] + 2;
+	MS_options.number_changers.pos[2] = MS_options.number_changers.pos[0];	//Width
+	MS_options.number_changers.pos[3] = MS_options.number_changers.pos[1] + 50;
+	MS_options.number_changers.pos[4] = MS_options.number_changers.pos[0];	//Mines
+	MS_options.number_changers.pos[5] = MS_options.number_changers.pos[1] + 100;
+	MS_options.number_changers.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(MS_options.number_changers.animation, MS_options.number_changers.frame_coord_map, MS_options.number_changers.frame_coord_map + 1, 0);
 
 	MS_grid.logic_grid = NULL;
@@ -1877,13 +1877,13 @@ int main(){
 
 		//X101 0000 (Where every controller is doing an impure press)
 		if((start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
-			face.frame_coord_keys[0] = 4;
+			face.frame_coord_key[0] = 4;
 		}
 
 		//XX01 XXXX (Where every controller is doing an impure press)
 		if(!(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && (start_primed % (1 << 4))){
 			start_primed |= (1 << 5);	//Now an invalid press
-			face.frame_coord_keys[0] = 0;
+			face.frame_coord_key[0] = 0;
 		}
 
 		//X011 0000 (Start is released, but it was invalid)
@@ -1895,7 +1895,7 @@ int main(){
 		if(!(start_primed & (1 << 6)) && !(start_primed & (1 << 5)) && (start_primed & (1 << 4)) && !(start_primed % (1 << 4))){
 			clear_grid(&MS_grid);
 			start_primed = 0;
-			face.frame_coord_keys[0] = 0;
+			face.frame_coord_key[0] = 0;
 		}
 
 		start_primed = start_primed & ((1 << 5) + (1 << 4));	//Clears all bits except active and invalidness
@@ -1912,7 +1912,7 @@ int main(){
 				if(MS_options.sound_enabled){ //play "won" sound
 					snd_sfx_play(Sound_Win, 192, 128);	//Right now this can play when dead
 				}
-				face.frame_coord_keys[0] = 3;
+				face.frame_coord_key[0] = 3;
 			}
 			else{	//Tiles are left, you must have been blown up
 				MS_grid.over_mode = 2;
@@ -1924,17 +1924,17 @@ int main(){
 						snd_sfx_play(Sound_Death, 192, 128);
 					}
 				}
-				face.frame_coord_keys[0] = 2;
+				face.frame_coord_key[0] = 2;
 			}
 		}
 
 		//When releasing a start press (Or it becomes impure), we want to revert back to the gameover faced instead of the normal face
-		if(MS_grid.over_mode && face.frame_coord_keys[0] != 4){
+		if(MS_grid.over_mode && face.frame_coord_key[0] != 4){
 			if(MS_grid.non_mines_left == 0){
-				face.frame_coord_keys[0] = 3;
+				face.frame_coord_key[0] = 3;
 			}
 			else{
-				face.frame_coord_keys[0] = 2;
+				face.frame_coord_key[0] = 2;
 			}
 		}
 
@@ -1975,23 +1975,23 @@ int main(){
 						if(!neightbours_to_adjustments(&tile_offset_x, &tile_offset_y, valids, jiter)){
 							uint16_t ele_offset = ele + tile_offset_x + (tile_offset_y * MS_grid.x);
 							if(!(MS_grid.logic_grid[ele_offset] & ((1 << 7) + (1 << 6)))){
-								indented_tiles.frame_coord_keys[indent_count] = MS_grid.logic_grid[ele_offset] & (1 << 5) ? 0: 1;
-								indented_tiles.positions[(2 * indent_count)] = MS_grid.start_x + (16 * (press_data[(3 * iter) + 1] + tile_offset_x));
-								indented_tiles.positions[(2 * indent_count) + 1] = MS_grid.start_y + (16 * (press_data[(3 * iter) + 2] + tile_offset_y));
+								indented_tiles.frame_coord_key[indent_count] = MS_grid.logic_grid[ele_offset] & (1 << 5) ? 0: 1;
+								indented_tiles.pos[(2 * indent_count)] = MS_grid.start_x + (16 * (press_data[(3 * iter) + 1] + tile_offset_x));
+								indented_tiles.pos[(2 * indent_count) + 1] = MS_grid.start_y + (16 * (press_data[(3 * iter) + 2] + tile_offset_y));
 								indent_count++;
 							}
 						}
 					}
 				}
 				if(!(MS_grid.logic_grid[ele] & ((1 << 7) + (1 << 6)))){	//Is unreleaved and not flagged
-					indented_tiles.frame_coord_keys[indent_count] = MS_grid.logic_grid[ele] & (1 << 5) ? 0: 1;
-					indented_tiles.positions[(2 * indent_count)] = MS_grid.start_x + (16 * press_data[(3 * iter) + 1]);
-					indented_tiles.positions[(2 * indent_count) + 1] = MS_grid.start_y + (16 * press_data[(3 * iter) + 2]);
+					indented_tiles.frame_coord_key[indent_count] = MS_grid.logic_grid[ele] & (1 << 5) ? 0: 1;
+					indented_tiles.pos[(2 * indent_count)] = MS_grid.start_x + (16 * press_data[(3 * iter) + 1]);
+					indented_tiles.pos[(2 * indent_count) + 1] = MS_grid.start_y + (16 * press_data[(3 * iter) + 2]);
 					indent_count++;
 				}
 			}
 		}
-		indented_tiles.num_sprites = indent_count;	//So we don't display "Garbage info"
+		indented_tiles.list_size = indent_count;	//So we don't display "Garbage info"
 
 		timer_ms_gettime(&current_time, &current_ms_time);
 		if(MS_grid.game_live && MS_grid.time_sec < 999){	//Prevent timer overflows
@@ -2155,7 +2155,7 @@ int main(){
 
 				char key_buffer[2];
 				key_buffer[1] = '\0';
-				for(iter = 0; iter < MS_keyboard.mini_buttons.num_sprites; iter++){
+				for(iter = 0; iter < MS_keyboard.mini_buttons.list_size; iter++){
 					if(MS_keyboard.special){
 						key_buffer[0] = MS_keyboard.special_keys[iter];
 					}
@@ -2166,38 +2166,38 @@ int main(){
 						key_buffer[0] = MS_keyboard.lower_keys[iter];
 					}
 
-					crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.positions[(2 * iter)] + 6, MS_keyboard.mini_buttons.positions[(2 * iter) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, key_buffer);
+					crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.mini_buttons.pos[(2 * iter)] + 6, MS_keyboard.mini_buttons.pos[(2 * iter) + 1] + 5, 31, 1, 1, Tahoma_P.palette_id, key_buffer);
 				}
 
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.big_buttons.positions[0] + 24, MS_keyboard.big_buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Enter\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.big_buttons.positions[2] + 23, MS_keyboard.big_buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.big_buttons.pos[0] + 24, MS_keyboard.big_buttons.pos[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Enter\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.big_buttons.pos[2] + 23, MS_keyboard.big_buttons.pos[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Space\0");
 
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[0] + 13, MS_keyboard.medium_buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Back\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[2] + 12, MS_keyboard.medium_buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Caps\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[4] + 12, MS_keyboard.medium_buttons.positions[5] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Caps\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[6] + 8, MS_keyboard.medium_buttons.positions[7] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Special\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.positions[8] + 8, MS_keyboard.medium_buttons.positions[9] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Special\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.pos[0] + 13, MS_keyboard.medium_buttons.pos[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Back\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.pos[2] + 12, MS_keyboard.medium_buttons.pos[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Caps\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.pos[4] + 12, MS_keyboard.medium_buttons.pos[5] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Caps\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.pos[6] + 8, MS_keyboard.medium_buttons.pos[7] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Special\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.medium_buttons.pos[8] + 8, MS_keyboard.medium_buttons.pos[9] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Special\0");
 
 				//The text the user types
 				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_keyboard.type_box_x + 6, MS_keyboard.type_box_y + 5, 31, 1, 1, Tahoma_P.palette_id, MS_keyboard.type_buffer);
 			}
 			else if(MS_options.focus == 2){
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[0] - 56, MS_options.checkers.positions[1] + 1, 31, 1, 1, Tahoma_P.palette_id, "Sound\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.positions[2] - 56, MS_options.checkers.positions[3] + 1, 31, 1, 1, Tahoma_P.palette_id, "Marks (?)\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.pos[0] - 56, MS_options.checkers.pos[1] + 1, 31, 1, 1, Tahoma_P.palette_id, "Sound\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.checkers.pos[2] - 56, MS_options.checkers.pos[3] + 1, 31, 1, 1, Tahoma_P.palette_id, "Marks (?)\0");
 
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[0] + 15, MS_options.buttons.positions[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[2] + 7, MS_options.buttons.positions[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Intermediate\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[4] + 22, MS_options.buttons.positions[5] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[6] + 7, MS_options.buttons.positions[7] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Save to VMU\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.positions[8] + 9, MS_options.buttons.positions[9] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Update Grid\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.pos[0] + 15, MS_options.buttons.pos[1] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Beginner\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.pos[2] + 7, MS_options.buttons.pos[3] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Intermediate\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.pos[4] + 22, MS_options.buttons.pos[5] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Expert\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.pos[6] + 7, MS_options.buttons.pos[7] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Save to VMU\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.buttons.pos[8] + 9, MS_options.buttons.pos[9] + 5 + MS_options.operating_system, 31, 1, 1, Tahoma_P.palette_id, "Update Grid\0");
 
 				//Draw the numbers for x, y and num_mines displays
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[0] - 70, MS_options.number_changers.positions[1] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Height:\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[0] - 21, MS_options.number_changers.positions[1] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.y_buffer);
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[2] - 70, MS_options.number_changers.positions[3] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Width:\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[2] - 21, MS_options.number_changers.positions[3] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.x_buffer);
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[4] - 70, MS_options.number_changers.positions[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Mines:\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.positions[4] - 21, MS_options.number_changers.positions[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.m_buffer);
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.pos[0] - 70, MS_options.number_changers.pos[1] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Height:\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.pos[0] - 21, MS_options.number_changers.pos[1] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.y_buffer);
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.pos[2] - 70, MS_options.number_changers.pos[3] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Width:\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.pos[2] - 21, MS_options.number_changers.pos[3] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.x_buffer);
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.pos[4] - 70, MS_options.number_changers.pos[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, "Mines:\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, MS_options.number_changers.pos[4] - 21, MS_options.number_changers.pos[5] + 5 - (2 * MS_options.operating_system), 31, 1, 1, Tahoma_P.palette_id, MS_options.m_buffer);
 			}
 			else if(MS_options.focus == 3){
 
@@ -2225,38 +2225,38 @@ int main(){
 
 				//Draw legend dot stuff
 				crayon_graphics_draw_sprites(&legend_dot, PVR_LIST_PT_POLY);
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[0] + 5, legend_dot.positions[1] + 3, 34, 1, 1, 61, "6\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[2] + 5, legend_dot.positions[3] + 3, 34, 1, 1, 61, "7\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[4] + 5, legend_dot.positions[5] + 3, 34, 1, 1, 61, "8\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[6] + 5, legend_dot.positions[7] + 3, 34, 1, 1, 61, "4\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[8] + 5, legend_dot.positions[9] + 3, 34, 1, 1, 61, "2\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[10] + 5, legend_dot.positions[11] + 3, 34, 1, 1, 61, "1\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[12] + 5, legend_dot.positions[13] + 3, 34, 1, 1, 61, "3\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[14] + 5, legend_dot.positions[15] + 3, 34, 1, 1, 61, "5\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[16] + 5, legend_dot.positions[17] + 3, 34, 1, 1, 61, "9\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[0] + 5, legend_dot.pos[1] + 3, 34, 1, 1, 61, "6\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[2] + 5, legend_dot.pos[3] + 3, 34, 1, 1, 61, "7\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[4] + 5, legend_dot.pos[5] + 3, 34, 1, 1, 61, "8\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[6] + 5, legend_dot.pos[7] + 3, 34, 1, 1, 61, "4\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[8] + 5, legend_dot.pos[9] + 3, 34, 1, 1, 61, "2\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[10] + 5, legend_dot.pos[11] + 3, 34, 1, 1, 61, "1\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[12] + 5, legend_dot.pos[13] + 3, 34, 1, 1, 61, "3\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[14] + 5, legend_dot.pos[15] + 3, 34, 1, 1, 61, "5\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[16] + 5, legend_dot.pos[17] + 3, 34, 1, 1, 61, "9\0");
 
 				//Legend part
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[18] + 5, legend_dot.positions[19] + 3, 34, 1, 1, 61, "1\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] - 6, legend_dot.positions[21] + 3, 34, 1, 1, 62, ",\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 5, legend_dot.positions[21] + 3, 34, 1, 1, 61, "6\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[20] + 18, legend_dot.positions[21] + 3, 34, 1, 1, 62, "Reveal a tile\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[22] + 5, legend_dot.positions[23] + 3, 34, 1, 1, 61, "2\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] - 6, legend_dot.positions[25] + 3, 34, 1, 1, 62, ",\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 5, legend_dot.positions[25] + 3, 34, 1, 1, 61, "7\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[24] + 18, legend_dot.positions[25] + 3, 34, 1, 1, 62, "Mark a tile\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[26] + 5, legend_dot.positions[27] + 3, 34, 1, 1, 61, "3\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[28] - 6, legend_dot.positions[29] + 3, 34, 1, 1, 62, ",\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[28] + 5, legend_dot.positions[29] + 3, 34, 1, 1, 61, "8\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[28] + 17, legend_dot.positions[29] + 3, 34, 1, 1, 62, ", (       +       )\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[30] + 5, legend_dot.positions[31] + 3, 34, 1, 1, 61, "6\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[32] + 5, legend_dot.positions[33] + 3, 34, 1, 1, 61, "7\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[32] + 24, legend_dot.positions[33] + 3, 34, 1, 1, 62, "Reveal neighbouring tiles\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[34] + 5, legend_dot.positions[35] + 3, 34, 1, 1, 61, "4\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[34] + 18, legend_dot.positions[35] + 3, 34, 1, 1, 62, "Swap between thumbstick and D-pad controls\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[36] + 5, legend_dot.positions[37] + 3, 34, 1, 1, 61, "5\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[38] - 6, legend_dot.positions[39] + 3, 34, 1, 1, 62, ",\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[38] + 5, legend_dot.positions[39] + 3, 34, 1, 1, 61, "9\0");
-				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.positions[38] + 18, legend_dot.positions[39] + 3, 34, 1, 1, 62, "Shortcut to reset the grid\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[18] + 5, legend_dot.pos[19] + 3, 34, 1, 1, 61, "1\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[20] - 6, legend_dot.pos[21] + 3, 34, 1, 1, 62, ",\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[20] + 5, legend_dot.pos[21] + 3, 34, 1, 1, 61, "6\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[20] + 18, legend_dot.pos[21] + 3, 34, 1, 1, 62, "Reveal a tile\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[22] + 5, legend_dot.pos[23] + 3, 34, 1, 1, 61, "2\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[24] - 6, legend_dot.pos[25] + 3, 34, 1, 1, 62, ",\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[24] + 5, legend_dot.pos[25] + 3, 34, 1, 1, 61, "7\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[24] + 18, legend_dot.pos[25] + 3, 34, 1, 1, 62, "Mark a tile\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[26] + 5, legend_dot.pos[27] + 3, 34, 1, 1, 61, "3\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[28] - 6, legend_dot.pos[29] + 3, 34, 1, 1, 62, ",\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[28] + 5, legend_dot.pos[29] + 3, 34, 1, 1, 61, "8\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[28] + 17, legend_dot.pos[29] + 3, 34, 1, 1, 62, ", (       +       )\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[30] + 5, legend_dot.pos[31] + 3, 34, 1, 1, 61, "6\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[32] + 5, legend_dot.pos[33] + 3, 34, 1, 1, 61, "7\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[32] + 24, legend_dot.pos[33] + 3, 34, 1, 1, 62, "Reveal neighbouring tiles\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[34] + 5, legend_dot.pos[35] + 3, 34, 1, 1, 61, "4\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[34] + 18, legend_dot.pos[35] + 3, 34, 1, 1, 62, "Swap between thumbstick and D-pad controls\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[36] + 5, legend_dot.pos[37] + 3, 34, 1, 1, 61, "5\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[38] - 6, legend_dot.pos[39] + 3, 34, 1, 1, 62, ",\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[38] + 5, legend_dot.pos[39] + 3, 34, 1, 1, 61, "9\0");
+				crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, legend_dot.pos[38] + 18, legend_dot.pos[39] + 3, 34, 1, 1, 62, "Shortcut to reset the grid\0");
 
 			}
 			else if(MS_options.focus == 5){
@@ -2382,8 +2382,8 @@ int main(){
 		pvr_scene_finish();
 
 		//Update the face for the new frame (Unless the game is over)
-		if(face.frame_coord_keys[0] != 2 && face.frame_coord_keys[0] != 3){
-			face.frame_coord_keys[0] = 0;
+		if(face.frame_coord_key[0] != 2 && face.frame_coord_key[0] != 3){
+			face.frame_coord_key[0] = 0;
 		}
 	}
 
