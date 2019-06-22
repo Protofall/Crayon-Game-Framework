@@ -3,10 +3,8 @@
 
 #include "texture_structs.h"  //For the spritehseet and anim structs
 
-/*
-This is designed for the multi-draw functions. If you want to draw a single thing with this struct
-then I you'll still need to go through the multi-draw. It shouldn't be too much slower if any.
-*/
+//This is designed for the multi-draw functions. If you want to draw a single thing with this struct
+//then I you'll still need to go through the multi-draw. It shouldn't be too much slower if any.
 
 //Sprite mode is complete (I hope), poly mode is missing colour and true rotation support
 typedef struct crayon_sprite_array{
@@ -54,7 +52,9 @@ typedef struct crayon_untextured_array{
 	uint16_t *dimensions;		//The x and y dims of each poly
 	float *rotation;			//Poly uses angles to rotate on Z axis (CURRENTLY UNUSED)
 	uint16_t list_size;
-	uint8_t options;			//---- ZCDR. If Z,C,D,R is 1, then we use all elements in their lists. If 0 then we only use the first element.
+	uint8_t options;			//--CR -D-Z. If Z,C,D,R is 1, then we use all elements in their lists.
+								//If 0 then we only use the first element.
+								//Places of the bits in the var are so to mimic the sprite's option's layout
 } crayon_untextured_array_t;
 
 #endif

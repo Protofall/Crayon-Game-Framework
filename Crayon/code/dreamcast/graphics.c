@@ -88,10 +88,11 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
-	// uint8_t multiple_rotation = !!(poly_array->options & (1 << 0));	//Unused
-	uint8_t multiple_dims = !!(poly_array->options & (1 << 1));
-	uint8_t multiple_colour = !!(poly_array->options & (1 << 2));
-	uint8_t multiple_z = !!(poly_array->options & (1 << 3));
+	//--CR -D-Z
+	// uint8_t multiple_rotation = (poly_array->options >> 4) & 1;	//Unused
+	uint8_t multiple_dims = (poly_array->options >> 2) & 1;
+	uint8_t multiple_colour = (poly_array->options >> 5) & 1;
+	uint8_t multiple_z = poly_array->options & 1;
 
 	int i;
 	for(i = 0; i < poly_array->list_size; i++){

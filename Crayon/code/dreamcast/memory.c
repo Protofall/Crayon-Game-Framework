@@ -411,7 +411,7 @@ extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palet
 extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
 	crayon_animation_t *anim, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
 	uint8_t filter){
-	
+
 	sprite_array->spritesheet = ss;
 	sprite_array->animation = anim;
 	sprite_array->list_size = list_size;
@@ -441,17 +441,15 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 	return;
 }
 
-extern void crayon_memory_init_untextered_array(crayon_untextured_array_t *poly_array, uint16_t list_size, uint8_t multi_layer,
-	uint8_t multi_colour, uint8_t multi_dimensions, uint8_t multi_rotation){
+extern void crayon_memory_init_untextered_array(crayon_untextured_array_t *poly_array, uint16_t list_size, uint8_t options){
 	poly_array->list_size = list_size;
-	poly_array->options =  (multi_layer << 3) + (multi_colour << 2) + (multi_dimensions << 1) +
-		(multi_rotation << 0);
+	poly_array->options = options;
 
 	poly_array->pos = (float *) malloc(list_size * 2 * sizeof(float));
-	poly_array->layer = (uint8_t *) malloc((multi_layer ? list_size: 1) * sizeof(uint8_t));
-	poly_array->dimensions = (uint16_t *) malloc((multi_dimensions ? 2 * list_size: 2) * sizeof(uint16_t));
-	poly_array->rotation = (float *) malloc((multi_rotation ? list_size: 1) * sizeof(float));
-	poly_array->colour = (uint32_t *) malloc((multi_colour ? list_size: 1) * sizeof(uint32_t));
+	poly_array->layer = (uint8_t *) malloc((options & 1 ? list_size: 1) * sizeof(uint8_t));
+	poly_array->dimensions = (uint16_t *) malloc(((options >> 2) & 1 ? 2 * list_size: 2) * sizeof(uint16_t));
+	poly_array->rotation = (float *) malloc(((options >> 4) & 1 ? list_size: 1) * sizeof(float));
+	poly_array->colour = (uint32_t *) malloc(((options >> 5) & 1 ? list_size: 1) * sizeof(uint32_t));
 
 	return;
 }

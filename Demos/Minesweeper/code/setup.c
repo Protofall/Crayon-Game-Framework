@@ -278,17 +278,8 @@ void setup_free_OS_struct(MinesweeperOS_t *os){
 }
 
 void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t sd){
-	Bg->list_size = 3;
-	if(!os){
-		Bg->list_size += 4;	//Windows 2000 has a few extra polys
-	}
-	Bg->pos = (float *) malloc(2 * Bg->list_size * sizeof(float));
-	Bg->layer = (uint8_t *) malloc(Bg->list_size * sizeof(uint8_t));
-	Bg->colour = (uint32_t *) malloc(Bg->list_size * sizeof(uint32_t));
-	Bg->dimensions = (uint16_t *) malloc(2 * Bg->list_size * sizeof(uint16_t));
-	Bg->rotation = (float *) malloc(sizeof(float));
+	crayon_memory_init_untextered_array(Bg, os == 0 ? 7: 3, 1 + (1 << 2) + (1 << 5));
 	Bg->rotation[0] = 0;
-	Bg->options = (1 << 1) + (1 << 2) + (1 << 3);	//Z, C and D enabled
 
 	//Grey box
 	Bg->pos[0] = 6;
@@ -368,19 +359,8 @@ void setup_bg_untextured_poly(crayon_untextured_array_t *Bg, uint8_t os, uint8_t
 }
 
 void setup_option_untextured_poly(crayon_untextured_array_t *Options, crayon_sprite_array_t * num_changers, uint8_t os){
-	if(!os){
-		Options->list_size = 15;	//Windows 2000 has a extra polys
-	}
-	else{
-		Options->list_size = 6;	//XP mode (XP not drawing all of the polys?)
-	}
-	Options->pos = (float *) malloc(2 * Options->list_size * sizeof(float));
-	Options->layer = (uint8_t *) malloc(Options->list_size * sizeof(uint8_t));
-	Options->colour = (uint32_t *) malloc(Options->list_size * sizeof(uint32_t));
-	Options->dimensions = (uint16_t *) malloc(2 * Options->list_size * sizeof(uint16_t));
-	Options->rotation = (float *) malloc(sizeof(float));
+	crayon_memory_init_untextered_array(Options, os == 0 ? 15: 6, 1 + (1 << 2) + (1 << 5));
 	Options->rotation[0] = 0;
-	Options->options = (1 << 1) + (1 << 2) + (1 << 3);	//Z, C and D enabled
 
 	uint16_t x, y[3];
 	x = num_changers->pos[0] - 25; y[0] = num_changers->pos[1] - (2 * os);
