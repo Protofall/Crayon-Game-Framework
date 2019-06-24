@@ -406,6 +406,7 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 	uint8_t multi_scale = !!(sprite_array->options & (1 << 2));
 	uint16_t zero = 0;
 	float rotation_under_360;
+	float mid_x, mid_y;
 
 	uint16_t i, j;	//Indexes
 	if(sprite_array->options & (1 << 0)){z_index = &i;}
@@ -484,40 +485,6 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 			vert[0].oargb = (a << 24) + (r << 16) + (g << 8) + b;
 		}
 
-		// if(*rotation_index == i && 0){	//rotation
-		// 	//No change is required for a 0 degree angle
-		// 	if(sprite_array->rotation){
-		// 		rotation_under_360 = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
-		// 		if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
-
-		// 		//For sprite mode we can't simply "rotate" the verts, instead we need to change the uv
-		// 		if(crayon_graphics_almost_equals(rotation_under_360, 90.0, 45.0)){
-		// 			vert.cuv = vert.buv;
-		// 			vert.buv = vert.auv;
-		// 			vert.auv = duv;
-
-		// 			goto verts_rotated;
-		// 		}
-		// 		else if(crayon_graphics_almost_equals(rotation_under_360, 180.0, 45.0)){
-		// 			vert.buv = duv;
-		// 			duv = vert.auv;
-		// 			vert.auv = vert.cuv;
-		// 			vert.cuv = duv;
-		// 		}
-		// 		else if(crayon_graphics_almost_equals(rotation_under_360, 270.0, 45.0)){
-		// 			vert.auv = vert.buv;
-		// 			vert.buv = vert.cuv;
-		// 			vert.cuv = duv;
-
-		// 			goto verts_rotated;
-		// 		}
-		// 	}
-		// }
-
-		//Imagine a "goto verts_normal;" for this little bit
-			//I couldn't actually do that since the verts wouldn't be set if the rotation aren't checked
-			//Hence it just flows here naturally
-
 		vert[0].x = trunc(sprite_array->pos[2 * i]);
 		vert[0].y = trunc(sprite_array->pos[(2 * i) + 1]);
 		vert[1].x = vert[0].x + trunc(sprite_array->animation->frame_width * sprite_array->scale[2 * i * multi_scale]);
@@ -527,26 +494,24 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
 
+		//Update rotation part if needed
+		if(*rotation_index == i){
+			rotation_under_360 = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
+			if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
+		}
 
-		//For 90 and 270 modes we need different vert positions aswell
-			//for cases where frame width != frame height
-		// if(0){
-		// 	verts_rotated:	;	//The semi-colon is there because a label can't be followed by a declaration (Compiler thing)
-		// 						//So instead we trick it and give an empty statement :P
+		//If we don't want to do rotations (Rotation == 0.0), then skip it
+		if(sprite_array->rotation[*rotation_index] != 0.0f){
+			//Calculate rotations
 
-		// 	//Both vars are uint16_t and lengths can't be negative or more than 1024 (Largest texture size for DC)
-		// 		//Therfore storing the result in a int16_t is perfectly fine
-		// 	int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
+			//Getting the mid-point x and y coordinates
+			mid_x = (vert[1].x - vert[0].x)/2.0f;
+			mid_y = (vert[2].y - vert[0].y)/2.0f;
 
-		// 	vert.ax = trunc(sprite_array->pos[2 * i]) + ((sprite_array->scale[(2 * i * multi_scale) + 1] * diff) / 2);
-		// 	vert.ay = trunc(sprite_array->pos[(2 * i) + 1]) - ((sprite_array->scale[(2 * i * multi_scale)] * diff) / 2);
-		// 	vert.bx = vert.ax + trunc(sprite_array->animation->frame_height * sprite_array->scale[(2 * i * multi_scale) + 1]);
-		// 	vert.by = vert.ay;
-		// 	vert.cx = vert.bx;
-		// 	vert.cy = vert.ay + trunc(sprite_array->animation->frame_width * sprite_array->scale[(2 * i * multi_scale)]);
-		// 	vert.dx = vert.ax;
-		// 	vert.dy = vert.cy;
-		// }
+			//Now, use the rotations to rotate all 4 verts around (mid_x, mid_y)
+				//Note that the distance between the each vert and this point should
+				//be sqrt(square(vert[0].x - mid_x) + square(vert[0].y - mid_y))
+		}
 
 		//Apply these to all verts
 		for(j = 1; j < 4; j++){

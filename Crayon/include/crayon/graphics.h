@@ -48,7 +48,7 @@ extern uint8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array,
 
 //The version with polygons (Use this if your spritesheet is bigger than 256 by 256)
 	//For DC this uses "poly mode"
-extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);	//UNIMPLEMENTED
+extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
 
 //------------------Rotation Stuff------------------//
 
