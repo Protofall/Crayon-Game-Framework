@@ -117,6 +117,9 @@ int main(){
 	crayon_sprite_array_t Man_Draw, Opaque_Blend_Draw, Opaque_Add_Draw;
 	crayon_palette_t Man_P;
 
+	crayon_font_mono_t BIOS;
+	crayon_palette_t BIOS_P;
+
 	crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
 
 	//Load the logo
@@ -133,6 +136,7 @@ int main(){
 	//Load the asset
 	crayon_memory_load_spritesheet(&Man, &Man_P, 0, "/files/Man.dtex");
 	crayon_memory_load_spritesheet(&Opaque, NULL, -1, "/files/Opaque.dtex");
+	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 6, "/files/Fonts/BIOS_font.dtex");	//REMOVE LATER
 
 	fs_romdisk_unmount("/files");
 
@@ -141,11 +145,11 @@ int main(){
 	#endif
 
 	crayon_memory_init_sprite_array(&Man_Draw, &Man, &Man.animation_array[0], &Man_P, 1, 1, 0, 0);
-	Man_Draw.pos[0] = 300;
-	Man_Draw.pos[1] = 0;
 	Man_Draw.layer[0] = 2;
 	Man_Draw.scale[0] = 7;
 	Man_Draw.scale[1] = 7;
+	Man_Draw.pos[0] = (640 - (Man.animation_array[0].frame_width * Man_Draw.scale[0])) / 2.0f;
+	Man_Draw.pos[1] = (480 - (Man.animation_array[1].frame_width * Man_Draw.scale[1])) / 2.0f;;
 	Man_Draw.flip[0] = 1;
 	Man_Draw.rotation[0] = 0;
 	Man_Draw.colour[0] = 0xFF0000FF;
@@ -186,24 +190,39 @@ int main(){
 	Opaque_Add_Draw.fade[1] = 255;
 	Opaque_Add_Draw.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(Opaque_Add_Draw.animation, Opaque_Add_Draw.frame_coord_map + 0, Opaque_Add_Draw.frame_coord_map + 1, 0);
+
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
+	char buffer[10];
+	Opaque_Blend_Draw.list_size = 1;
+
 	while(1){
 		pvr_wait_ready();
 
 		crayon_graphics_setup_palette(&Man_P);
+		crayon_graphics_setup_palette(&BIOS_P);
+
+		sprintf(buffer, "%d", (int)Man_Draw.rotation[0]);
 
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 			crayon_graphics_draw(&Opaque_Blend_Draw, PVR_LIST_OP_POLY, 1);
-			crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
+			// crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
+			// crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_OP_POLY, 300, 460, 30, 1, 1, BIOS_P.palette_id, buffer);
+			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_OP_POLY, 20, 460, 31, 1, 1, BIOS_P.palette_id, buffer_DELETE_ME);
 		pvr_list_finish();
 
-		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw(&Man_Draw, PVR_LIST_PT_POLY, 1);
-		pvr_list_finish();
+		// pvr_list_begin(PVR_LIST_PT_POLY);
+			// crayon_graphics_draw(&Man_Draw, PVR_LIST_PT_POLY, 1);
+		// pvr_list_finish();
 
 		pvr_scene_finish();
+
+		//Rotate the man and keep it within the 0 - 360 range
+		// Man_Draw.rotation[0]++;
+		if(Man_Draw.rotation[0] > 360){
+			Man_Draw.rotation[0] -= 360;
+		}
 	}
 
 	//Also frees the spritesheet and palette

@@ -405,7 +405,10 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 	uint16_t *rotation_index, *flip_index, *frame_index, *z_index, *colour_index;
 	uint8_t multi_scale = !!(sprite_array->options & (1 << 2));
 	uint16_t zero = 0;
-	float rotation_under_360;
+	float rotation_under_360 = 0;
+	float angleradians = 0;
+	float cos_theta = 0;
+	float sin_theta = 0;
 	float mid_x, mid_y;
 
 	uint16_t i, j;	//Indexes
@@ -498,20 +501,63 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 		if(*rotation_index == i){
 			rotation_under_360 = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
 			if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
+			angleradians = (rotation_under_360 * M_PI) / 180.0f;
+			cos_theta = cos(angleradians);
+			sin_theta = sin(angleradians);
+			// if(cos_theta == 1 && sin_theta == 0){error_freeze();}	For unrotated polys, this remains true
 		}
 
 		//If we don't want to do rotations (Rotation == 0.0), then skip it
-		if(sprite_array->rotation[*rotation_index] != 0.0f){
-			//Calculate rotations
+			//Whatever is happening in here, it destroys the verts, even whe rotation == 0
 
+			//For the top left coloured square
+			//x0 = 0, x1 = 96
+			//y0 = 0, y2 = 96
+			//mid_x = 48, mid_y = 48
+			//vert[0].x = 0, vert[0].y = 96?
+			//vert[1].x = ?, vert[1].y = ?
+			//vert[2].x = ?, vert[2].y = ?
+			//vert[3].x = ?, vert[3].y = ?
+		if(1 || sprite_array->rotation[*rotation_index] != 0.0f){
+			//Calculate rotations
+			// error_freeze("tes");
 			//Getting the mid-point x and y coordinates
-			mid_x = (vert[1].x - vert[0].x)/2.0f;
-			mid_y = (vert[2].y - vert[0].y)/2.0f;
+			//This just gets the width/height of the poly...
+			// mid_x = (vert[1].x - vert[0].x)/2.0f;
+			// mid_y = (vert[2].y - vert[0].y)/2.0f;
+
+			//Gets the true midpoint
+			mid_x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
+			mid_y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
+
+			// if(mid_x == 48 && mid_y == 48){error_freeze("TE");}	//For the squares, this remains true
 
 			//Now, use the rotations to rotate all 4 verts around (mid_x, mid_y)
 				//Note that the distance between the each vert and this point should
-				//be sqrt(square(vert[0].x - mid_x) + square(vert[0].y - mid_y))
+				//be sqrt(square(mid_x - vert[0].x) + square(mid_y - vert[0].y))
+			//Loop over each vert
+			for(j = 0; j < 4; j++){
+				//Seems the points are flipped along y axis
+				vert[j].x = (cos_theta * (vert[j].x - mid_x)) - (sin_theta * (vert[j].y - mid_y)) + mid_x;
+				vert[j].y = (sin_theta * (vert[j].x - mid_x)) - (cos_theta * (vert[j].y - mid_y)) + mid_y;
+
+
+				// if(vert[j].x == (cos_theta * (vert[j].x - mid_x)) - (sin_theta * (vert[j].y - mid_y)) + mid_x){
+					// error_freeze("Test");
+				// }
+				// if(vert[j].y == (sin_theta * (vert[j].x - mid_x)) - (cos_theta * (vert[j].y - mid_y)) + mid_y){
+					// error_freeze("Test");
+				// }
+			}
+
+			//Use lxdream or hardware to test what this outputs
+
+			// printf("Angle: %.02f %.02f", rotation_under_360, angleradians);
+			// printf("Verts: %d %d %d %d %d %d %d %d\n",(int)vert[0].x,(int)vert[0].y,(int)vert[1].x,(int)vert[1].y,
+			// 	(int)vert[2].x,(int)vert[2].y,(int)vert[3].x,(int)vert[3].y);
 		}
+		sprintf(buffer_DELETE_ME,"%d, %d, %d, %d, %d, %d, %d, %d",(int)vert[0].x,(int)vert[0].y,(int)vert[1].x,(int)vert[1].y,
+				(int)vert[2].x,(int)vert[2].y,(int)vert[3].x,(int)vert[3].y);
 
 		//Apply these to all verts
 		for(j = 1; j < 4; j++){

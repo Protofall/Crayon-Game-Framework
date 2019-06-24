@@ -8,6 +8,8 @@
 #include <string.h>	//For length of string
 #include <math.h>
 
+char buffer_DELETE_ME[100];
+
 //Sets a palette for a spritesheet
 extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
 
