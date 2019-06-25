@@ -50,7 +50,7 @@ typedef struct crayon_untextured_array{
 	uint8_t *layer;				//The layer to help deal with overlapping sprites/polys
 	uint32_t *colour;			//Dictates the rgb and alpha of a polygon
 	uint16_t *dimensions;		//The x and y dims of each poly
-	float *rotation;			//Poly uses angles to rotate on Z axis (CURRENTLY UNUSED)
+	float *rotation;			//Poly uses angles to rotate on Z axis
 	uint16_t list_size;
 	uint8_t options;			//--CR -D-Z. If Z,C,D,R is 1, then we use all elements in their lists.
 								//If 0 then we only use the first element.

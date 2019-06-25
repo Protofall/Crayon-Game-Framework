@@ -196,33 +196,31 @@ int main(){
 	crayon_graphics_frame_coordinates(Opaque_Add_Draw.animation, Opaque_Add_Draw.frame_coord_map + 0, Opaque_Add_Draw.frame_coord_map + 1, 0);
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
-	char buffer[10];
-	// Man_Draw.rotation[0] = 45;
+	char buffer[15];
 
 	while(1){
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 			//If any button is pressed, start the game (Doesn't check thumbstick)
-			if(st->buttons & (CONT_DPAD_RIGHT)){
-				Man_Draw.rotation[0]++;
-			}
-			if(st->buttons & (CONT_DPAD_LEFT)){
-				Man_Draw.rotation[0]--;
-			}
+			// if(st->buttons & (CONT_DPAD_RIGHT)){
+			// 	Man_Draw.rotation[0]++;
+			// }
+			// if(st->buttons & (CONT_DPAD_LEFT)){
+			// 	Man_Draw.rotation[0]--;
+			// }
 		MAPLE_FOREACH_END()
 
 		crayon_graphics_setup_palette(&Man_P);
 		crayon_graphics_setup_palette(&BIOS_P);
 
-		sprintf(buffer, "%d", (int)Man_Draw.rotation[0]);
+		sprintf(buffer, "Angle: %d", (int)Man_Draw.rotation[0]);
 
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 			crayon_graphics_draw(&Opaque_Blend_Draw, PVR_LIST_OP_POLY, 1);
 			crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
-			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_OP_POLY, 300, 360, 30, 1, 1, BIOS_P.palette_id, buffer);
-			// crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_OP_POLY, 20, 460, 31, 1, 1, BIOS_P.palette_id, buffer_DELETE_ME);
+			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_OP_POLY, 280, 360, 30, 1, 1, BIOS_P.palette_id, buffer);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
@@ -232,7 +230,7 @@ int main(){
 		pvr_scene_finish();
 
 		//Rotate the man and keep it within the 0 - 360 range
-		// Man_Draw.rotation[0]++;
+		Man_Draw.rotation[0]++;
 		if(Man_Draw.rotation[0] > 360){
 			Man_Draw.rotation[0] -= 360;
 		}

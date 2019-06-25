@@ -94,16 +94,17 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 	uint8_t multiple_colour = (poly_array->options >> 5) && 1;
 	uint8_t multiple_z = poly_array->options && 1;
 
+	//All this just for rotations
 	uint16_t *rotation_index;
 	uint16_t zero = 0;
-	float rotation_under_360 = 0;
-	float angleradians = 0;
+	float angle = 0;
 	float cos_theta = 0;
 	float sin_theta = 0;
 	float mid_x = 0;
 	float mid_y = 0;
+	float new_x;
 
-	int i, j;
+	uint16_t i, j;
 	if(multiple_rotation){rotation_index = &i;}
 	else{rotation_index = &zero;}
 
@@ -128,23 +129,24 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 
 		//Update rotation part if needed
 		if(*rotation_index == i){
-			rotation_under_360 = fmod(poly_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
-			if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
-			angleradians = (rotation_under_360 * M_PI) / 180.0f;
-			cos_theta = cos(angleradians);
-			sin_theta = sin(angleradians);
+			angle = fmod(poly_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
+			if(angle < 0){angle += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
+			angle = (angle * M_PI) / 180.0f;	//Convert from degrees to ratians
+			cos_theta = cos(angle);
+			sin_theta = sin(angle);
 		}
 
-		//WIP, may not work right
+		//Rotate the poly
 		if(poly_array->rotation[*rotation_index] != 0.0f){
-			//Gets the true midpoint
+			//Gets the midpoint
 			mid_x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
 			mid_y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
 
 			//Rotate the verts around the midpoint
 			for(j = 0; j < 4; j++){
-				vert[j].x = (cos_theta * (vert[j].x - mid_x)) - (sin_theta * (vert[j].y - mid_y)) + mid_x;
+				new_x = (cos_theta * (vert[j].x - mid_x)) - (sin_theta * (vert[j].y - mid_y)) + mid_x;
 				vert[j].y = (sin_theta * (vert[j].x - mid_x)) + (cos_theta * (vert[j].y - mid_y)) + mid_y;
+				vert[j].x = new_x;
 			}
 		}
 
@@ -440,11 +442,12 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 	uint16_t *rotation_index, *flip_index, *frame_index, *z_index, *colour_index;
 	uint8_t multi_scale = !!(sprite_array->options & (1 << 2));
 	uint16_t zero = 0;
-	float rotation_under_360 = 0;
-	float angleradians = 0;
+	float angle = 0;
 	float cos_theta = 0;
 	float sin_theta = 0;
-	float mid_x, mid_y;
+	float new_x = 0;	//Used to hold the new x vert pos while calculating the new y vert pos
+	float mid_x = 0;
+	float mid_y = 0;
 
 	uint16_t i, j;	//Indexes
 	if(sprite_array->options & (1 << 0)){z_index = &i;}
@@ -534,42 +537,27 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 
 		//Update rotation part if needed
 		if(*rotation_index == i){
-			rotation_under_360 = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
-			if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
-			angleradians = (rotation_under_360 * M_PI) / 180.0f;
-			cos_theta = cos(angleradians);
-			sin_theta = sin(angleradians);
+			angle = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
+			if(angle < 0){angle += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
+			angle = (angle * M_PI) / 180.0f;
+			cos_theta = cos(angle);
+			sin_theta = sin(angle);
 		}
 
 		//If we don't want to do rotations (Rotation == 0.0), then skip it
-			//Whatever is happening in here, it destroys the verts, even whe rotation == 0
 		if(sprite_array->rotation[*rotation_index] != 0.0f){
-			//Getting the mid-point x and y coordinates
-			//This just gets the width/height of the poly...
-			// mid_x = (vert[1].x - vert[0].x)/2.0f;
-			// mid_y = (vert[2].y - vert[0].y)/2.0f;
 
 			//Gets the true midpoint
 			mid_x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
 			mid_y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
 
-			//Now, use the rotations to rotate all 4 verts around (mid_x, mid_y)
-				//Note that the distance between the each vert and this point should
-				//be sqrt(square(mid_x - vert[0].x) + square(mid_y - vert[0].y))
-			//Loop over each vert
+			//Update the vert x and y positions
 			for(j = 0; j < 4; j++){
-				vert[j].x = (cos_theta * (vert[j].x - mid_x)) - (sin_theta * (vert[j].y - mid_y)) + mid_x;
+				new_x = (cos_theta * (vert[j].x - mid_x)) - (sin_theta * (vert[j].y - mid_y)) + mid_x;
 				vert[j].y = (sin_theta * (vert[j].x - mid_x)) + (cos_theta * (vert[j].y - mid_y)) + mid_y;
+				vert[j].x = new_x;
 			}
-
-			//Use lxdream or hardware to test what this outputs
-
-			// printf("Angle: %.02f %.02f", rotation_under_360, angleradians);
-			// printf("Verts: %d %d %d %d %d %d %d %d\n",(int)vert[0].x,(int)vert[0].y,(int)vert[1].x,(int)vert[1].y,
-			// 	(int)vert[2].x,(int)vert[2].y,(int)vert[3].x,(int)vert[3].y);
 		}
-		sprintf(buffer_DELETE_ME,"%f, %f, %d, %d, %d, %d, %d, %d, %d, %d, %f, %f, %f",mid_x,mid_y,(int)vert[0].x,(int)vert[0].y,(int)vert[1].x,(int)vert[1].y,
-				(int)vert[2].x,(int)vert[2].y,(int)vert[3].x,(int)vert[3].y, sprite_array->rotation[*rotation_index], cos_theta, sin_theta);
 
 		//Apply these to all verts
 		for(j = 1; j < 4; j++){
