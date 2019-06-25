@@ -82,44 +82,79 @@ extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uin
 extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *poly_array, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
-	pvr_vertex_t vert;
+	pvr_vertex_t vert[4];
 
 	pvr_poly_cxt_col(&cxt, poly_list_mode);
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
 	//--CR -D-Z
-	// uint8_t multiple_rotation = (poly_array->options >> 4) && 1;	//Unused
+	uint8_t multiple_rotation = (poly_array->options >> 4) && 1;
 	uint8_t multiple_dims = (poly_array->options >> 2) && 1;
 	uint8_t multiple_colour = (poly_array->options >> 5) && 1;
 	uint8_t multiple_z = poly_array->options && 1;
 
-	int i;
+	uint16_t *rotation_index;
+	uint16_t zero = 0;
+	float rotation_under_360 = 0;
+	float angleradians = 0;
+	float cos_theta = 0;
+	float sin_theta = 0;
+	float mid_x = 0;
+	float mid_y = 0;
+
+	int i, j;
+	if(multiple_rotation){rotation_index = &i;}
+	else{rotation_index = &zero;}
+
+	for(i = 0; i < 3; i++){
+		vert[i].flags = PVR_CMD_VERTEX;
+	}
+	vert[3].flags = PVR_CMD_VERTEX_EOL;
+
 	for(i = 0; i < poly_array->list_size; i++){
-		vert.argb = poly_array->colour[multiple_colour * i];	//If only one colour, this is forced to colour zero
-		vert.oargb = 0;
-		vert.flags = PVR_CMD_VERTEX;
+		vert[0].argb = poly_array->colour[multiple_colour * i];	//If only one colour, this is forced to colour zero
+		vert[0].oargb = 0;
+		vert[0].z = poly_array->layer[multiple_z * i];
 
-		vert.x = trunc(poly_array->pos[2 * i]);
-		vert.y = trunc(poly_array->pos[(2 * i) + 1]);
-		vert.z = poly_array->layer[multiple_z * i];
-		pvr_prim(&vert, sizeof(vert));
+		vert[0].x = trunc(poly_array->pos[2 * i]);
+		vert[0].y = trunc(poly_array->pos[(2 * i) + 1]);
+		vert[1].x = trunc(poly_array->pos[2 * i] + poly_array->dimensions[multiple_dims * 2 * i]);	//If using one dim, multiple dims reduces it to the first value
+		vert[1].y = vert[0].y;
+		vert[2].x = vert[0].x;
+		vert[2].y = trunc(poly_array->pos[(2 * i) + 1] + poly_array->dimensions[(multiple_dims * 2 * i) + 1]);
+		vert[3].x = vert[1].x;
+		vert[3].y = vert[2].y;
 
-		vert.x = trunc(poly_array->pos[2 * i] + poly_array->dimensions[multiple_dims * 2 * i]);	//If using one dim, multiple dims reduces it to the first value
-		// vert.y = trunc(poly_array->pos[(2 * i) + 1]);
-		// vert.z = poly_array->layer[multiple_z * i];
-		pvr_prim(&vert, sizeof(vert));
+		//Update rotation part if needed
+		if(*rotation_index == i){
+			rotation_under_360 = fmod(poly_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
+			if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
+			angleradians = (rotation_under_360 * M_PI) / 180.0f;
+			cos_theta = cos(angleradians);
+			sin_theta = sin(angleradians);
+		}
 
-		vert.x = trunc(poly_array->pos[2 * i]);
-		vert.y = trunc(poly_array->pos[(2 * i) + 1] + poly_array->dimensions[(multiple_dims * 2 * i) + 1]);
-		// vert.z = poly_array->layer[multiple_z * i];
-		pvr_prim(&vert, sizeof(vert));
+		//WIP, may not work right
+		if(poly_array->rotation[*rotation_index] != 0.0f){
+			//Gets the true midpoint
+			mid_x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
+			mid_y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
 
-		vert.x = trunc(poly_array->pos[2 * i] + poly_array->dimensions[multiple_dims * 2 * i]);
-		// vert.y = trunc(poly_array->pos[(2 * i) + 1] + poly_array->dimensions[(multiple_dims * 2 * i) + 1]);
-		// vert.z = poly_array->layer[multiple_z * i];
-		vert.flags = PVR_CMD_VERTEX_EOL;
-		pvr_prim(&vert, sizeof(vert));
+			//Rotate the verts around the midpoint
+			for(j = 0; j < 4; j++){
+				vert[j].x = (cos_theta * (vert[j].x - mid_x)) - (sin_theta * (vert[j].y - mid_y)) + mid_x;
+				vert[j].y = (sin_theta * (vert[j].x - mid_x)) + (cos_theta * (vert[j].y - mid_y)) + mid_y;
+			}
+		}
+
+		for(j = 1; j < 4; j++){
+			vert[j].z = vert[0].z;
+			vert[j].argb = vert[0].argb;
+			vert[j].oargb = vert[0].oargb;
+		}
+
+		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
 	}
 	return;
 }
@@ -504,23 +539,11 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 			angleradians = (rotation_under_360 * M_PI) / 180.0f;
 			cos_theta = cos(angleradians);
 			sin_theta = sin(angleradians);
-			// if(cos_theta == 1 && sin_theta == 0){error_freeze();}	For unrotated polys, this remains true
 		}
 
 		//If we don't want to do rotations (Rotation == 0.0), then skip it
 			//Whatever is happening in here, it destroys the verts, even whe rotation == 0
-
-			//For the top left coloured square
-			//x0 = 0, x1 = 96
-			//y0 = 0, y2 = 96
-			//mid_x = 48, mid_y = 48
-			//vert[0].x = 0, vert[0].y = 96?
-			//vert[1].x = ?, vert[1].y = ?
-			//vert[2].x = ?, vert[2].y = ?
-			//vert[3].x = ?, vert[3].y = ?
-		if(1 || sprite_array->rotation[*rotation_index] != 0.0f){
-			//Calculate rotations
-			// error_freeze("tes");
+		if(sprite_array->rotation[*rotation_index] != 0.0f){
 			//Getting the mid-point x and y coordinates
 			//This just gets the width/height of the poly...
 			// mid_x = (vert[1].x - vert[0].x)/2.0f;
@@ -530,24 +553,13 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 			mid_x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
 			mid_y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
 
-			// if(mid_x == 48 && mid_y == 48){error_freeze("TE");}	//For the squares, this remains true
-
 			//Now, use the rotations to rotate all 4 verts around (mid_x, mid_y)
 				//Note that the distance between the each vert and this point should
 				//be sqrt(square(mid_x - vert[0].x) + square(mid_y - vert[0].y))
 			//Loop over each vert
 			for(j = 0; j < 4; j++){
-				//Seems the points are flipped along y axis
 				vert[j].x = (cos_theta * (vert[j].x - mid_x)) - (sin_theta * (vert[j].y - mid_y)) + mid_x;
-				vert[j].y = (sin_theta * (vert[j].x - mid_x)) - (cos_theta * (vert[j].y - mid_y)) + mid_y;
-
-
-				// if(vert[j].x == (cos_theta * (vert[j].x - mid_x)) - (sin_theta * (vert[j].y - mid_y)) + mid_x){
-					// error_freeze("Test");
-				// }
-				// if(vert[j].y == (sin_theta * (vert[j].x - mid_x)) - (cos_theta * (vert[j].y - mid_y)) + mid_y){
-					// error_freeze("Test");
-				// }
+				vert[j].y = (sin_theta * (vert[j].x - mid_x)) + (cos_theta * (vert[j].y - mid_y)) + mid_y;
 			}
 
 			//Use lxdream or hardware to test what this outputs
@@ -556,8 +568,8 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 			// printf("Verts: %d %d %d %d %d %d %d %d\n",(int)vert[0].x,(int)vert[0].y,(int)vert[1].x,(int)vert[1].y,
 			// 	(int)vert[2].x,(int)vert[2].y,(int)vert[3].x,(int)vert[3].y);
 		}
-		sprintf(buffer_DELETE_ME,"%d, %d, %d, %d, %d, %d, %d, %d",(int)vert[0].x,(int)vert[0].y,(int)vert[1].x,(int)vert[1].y,
-				(int)vert[2].x,(int)vert[2].y,(int)vert[3].x,(int)vert[3].y);
+		sprintf(buffer_DELETE_ME,"%f, %f, %d, %d, %d, %d, %d, %d, %d, %d, %f, %f, %f",mid_x,mid_y,(int)vert[0].x,(int)vert[0].y,(int)vert[1].x,(int)vert[1].y,
+				(int)vert[2].x,(int)vert[2].y,(int)vert[3].x,(int)vert[3].y, sprite_array->rotation[*rotation_index], cos_theta, sin_theta);
 
 		//Apply these to all verts
 		for(j = 1; j < 4; j++){

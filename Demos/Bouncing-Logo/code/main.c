@@ -5,7 +5,7 @@
 //For region and htz stuff
 #include <dc/flashrom.h>
 
-//For the controller and mouse
+//For the controller
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
 

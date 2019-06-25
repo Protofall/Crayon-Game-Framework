@@ -5,6 +5,10 @@
 //For region and htz stuff
 #include <dc/flashrom.h>
 
+//For the controller
+#include <dc/maple.h>
+#include <dc/maple/controller.h>
+
 #if CRAYON_BOOT_MODE == 1
 	//For mounting the sd dir
 	#include <dc/sd.h>
@@ -149,7 +153,7 @@ int main(){
 	Man_Draw.scale[0] = 7;
 	Man_Draw.scale[1] = 7;
 	Man_Draw.pos[0] = (640 - (Man.animation_array[0].frame_width * Man_Draw.scale[0])) / 2.0f;
-	Man_Draw.pos[1] = (480 - (Man.animation_array[1].frame_width * Man_Draw.scale[1])) / 2.0f;;
+	Man_Draw.pos[1] = (480 - (Man.animation_array[0].frame_height * Man_Draw.scale[1])) / 2.0f;;
 	Man_Draw.flip[0] = 1;
 	Man_Draw.rotation[0] = 0;
 	Man_Draw.colour[0] = 0xFF0000FF;
@@ -193,10 +197,19 @@ int main(){
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 	char buffer[10];
-	Opaque_Blend_Draw.list_size = 1;
+	// Man_Draw.rotation[0] = 45;
 
 	while(1){
 		pvr_wait_ready();
+		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
+			//If any button is pressed, start the game (Doesn't check thumbstick)
+			if(st->buttons & (CONT_DPAD_RIGHT)){
+				Man_Draw.rotation[0]++;
+			}
+			if(st->buttons & (CONT_DPAD_LEFT)){
+				Man_Draw.rotation[0]--;
+			}
+		MAPLE_FOREACH_END()
 
 		crayon_graphics_setup_palette(&Man_P);
 		crayon_graphics_setup_palette(&BIOS_P);
@@ -207,14 +220,14 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 			crayon_graphics_draw(&Opaque_Blend_Draw, PVR_LIST_OP_POLY, 1);
-			// crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
-			// crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_OP_POLY, 300, 460, 30, 1, 1, BIOS_P.palette_id, buffer);
-			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_OP_POLY, 20, 460, 31, 1, 1, BIOS_P.palette_id, buffer_DELETE_ME);
+			crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
+			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_OP_POLY, 300, 360, 30, 1, 1, BIOS_P.palette_id, buffer);
+			// crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_OP_POLY, 20, 460, 31, 1, 1, BIOS_P.palette_id, buffer_DELETE_ME);
 		pvr_list_finish();
 
-		// pvr_list_begin(PVR_LIST_PT_POLY);
-			// crayon_graphics_draw(&Man_Draw, PVR_LIST_PT_POLY, 1);
-		// pvr_list_finish();
+		pvr_list_begin(PVR_LIST_PT_POLY);
+			crayon_graphics_draw(&Man_Draw, PVR_LIST_PT_POLY, 1);
+		pvr_list_finish();
 
 		pvr_scene_finish();
 
