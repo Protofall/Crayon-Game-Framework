@@ -117,11 +117,12 @@ int main(){
 	float htz_adjustment;
 	set_screen(&htz_adjustment);
 
-	srand(time(0));	//Set the seed for rand()
+	crayon_spritesheet_t Man, Opaque;
+	crayon_sprite_array_t Man_Draw, Opaque_Blend_Draw, Opaque_Add_Draw;
+	crayon_palette_t Man_P;
 
-	crayon_spritesheet_t Logo;
-	crayon_sprite_array_t Logo_Draw;
-	crayon_palette_t Logo_P;
+	crayon_font_mono_t BIOS;
+	crayon_palette_t BIOS_P;
 
 	crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
 
@@ -137,7 +138,9 @@ int main(){
 	#endif
 
 	//Load the asset
-	crayon_memory_load_spritesheet(&Logo, &Logo_P, 0, "/files/logo.dtex");
+	crayon_memory_load_spritesheet(&Man, &Man_P, 0, "/files/Man.dtex");
+	crayon_memory_load_spritesheet(&Opaque, NULL, -1, "/files/Opaque.dtex");
+	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 6, "/files/Fonts/BIOS_font.dtex");	//REMOVE LATER
 
 	fs_romdisk_unmount("/files");
 
@@ -145,104 +148,98 @@ int main(){
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
-	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	crayon_memory_init_sprite_array(&Logo_Draw, &Logo, &Logo.animation_array[0], &Logo_P, 1, 1, 0, 0);
-	Logo_Draw.pos[0] = (640 - Logo.animation_array[0].frame_width) / 2;
-	Logo_Draw.pos[1] = (480 - Logo.animation_array[0].frame_height) / 2;
-	Logo_Draw.layer[0] = 2;
-	Logo_Draw.scale[0] = 1;
-	Logo_Draw.scale[1] = 1;
-	Logo_Draw.flip[0] = 0;
-	Logo_Draw.rotation[0] = 0;
-	Logo_Draw.colour[0] = 0;
-	Logo_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(Logo_Draw.animation, Logo_Draw.frame_coord_map + 0, Logo_Draw.frame_coord_map + 1, 0);
+	crayon_memory_init_sprite_array(&Man_Draw, &Man, &Man.animation_array[0], &Man_P, 1, 1, 0, 0);
+	Man_Draw.layer[0] = 2;
+	Man_Draw.scale[0] = 7;
+	Man_Draw.scale[1] = 7;
+	Man_Draw.pos[0] = (640 - (Man.animation_array[0].frame_width * Man_Draw.scale[0])) / 2.0f;
+	Man_Draw.pos[1] = (480 - (Man.animation_array[0].frame_height * Man_Draw.scale[1])) / 2.0f;;
+	Man_Draw.flip[0] = 1;
+	Man_Draw.rotation[0] = 0;
+	Man_Draw.colour[0] = 0xFF0000FF;
+	Man_Draw.fade[0] = 255;
+	Man_Draw.frame_coord_key[0] = 0;
+	crayon_graphics_frame_coordinates(Man_Draw.animation, Man_Draw.frame_coord_map + 0, Man_Draw.frame_coord_map + 1, 0);
 
-	uint32_t colours[5];
-	colours[0] = Logo_P.palette[1];	//Orange
-	colours[1] = 0xFF002FFF;	//Blue
-	colours[2] = 0xFFCE21FF;	//Purple
-	colours[3] = 0xFFFF228D;	//Pink
-	colours[4] = 0xFFFFED00;	//Yellow
+	crayon_memory_init_sprite_array(&Opaque_Blend_Draw, &Opaque, &Opaque.animation_array[0], NULL, 2, 1, (1 << 5), 0);
+	Opaque_Blend_Draw.pos[0] = 0;
+	Opaque_Blend_Draw.pos[1] = 0;
+	Opaque_Blend_Draw.pos[2] = 100;
+	Opaque_Blend_Draw.pos[3] = 0;
+	Opaque_Blend_Draw.layer[0] = 1;
+	Opaque_Blend_Draw.scale[0] = 12;
+	Opaque_Blend_Draw.scale[1] = 12;
+	Opaque_Blend_Draw.flip[0] = 0;
+	Opaque_Blend_Draw.rotation[0] = 0;
+	Opaque_Blend_Draw.colour[0] = 0xFF00FF00;
+	Opaque_Blend_Draw.colour[1] = 0xFFFF0000;
+	Opaque_Blend_Draw.fade[0] = 255;
+	Opaque_Blend_Draw.fade[1] = 255;
+	Opaque_Blend_Draw.frame_coord_key[0] = 0;
+	crayon_graphics_frame_coordinates(Opaque_Blend_Draw.animation, Opaque_Blend_Draw.frame_coord_map + 0, Opaque_Blend_Draw.frame_coord_map + 1, 0);
 
-	uint8_t begin = 0;
-	uint8_t moving = 0;
-	float shrink_time = 2.5 * 60;	//Time it takes to shrink (In seconds, htz_adjust fixes for 50Hz)
+	crayon_memory_init_sprite_array(&Opaque_Add_Draw, &Opaque, &Opaque.animation_array[0], NULL, 2, 1, (1 << 5) + (1 << 6), 0);
+	Opaque_Add_Draw.pos[0] = 0;
+	Opaque_Add_Draw.pos[1] = 100;
+	Opaque_Add_Draw.pos[2] = 100;
+	Opaque_Add_Draw.pos[3] = 100;
+	Opaque_Add_Draw.layer[0] = 1;
+	Opaque_Add_Draw.scale[0] = 12;
+	Opaque_Add_Draw.scale[1] = 12;
+	Opaque_Add_Draw.flip[0] = 0;
+	Opaque_Add_Draw.rotation[0] = 0;
+	Opaque_Add_Draw.colour[0] = 0xFF00FF00;
+	Opaque_Add_Draw.colour[1] = 0xFFFF0000;
+	Opaque_Add_Draw.fade[0] = 255;
+	Opaque_Add_Draw.fade[1] = 255;
+	Opaque_Add_Draw.frame_coord_key[0] = 0;
+	crayon_graphics_frame_coordinates(Opaque_Add_Draw.animation, Opaque_Add_Draw.frame_coord_map + 0, Opaque_Add_Draw.frame_coord_map + 1, 0);
 
-	//Positive is bottom right, negative is top left
-	int8_t x_dir = rand() % 2;
-	if(!x_dir){x_dir = -1;}
-	int8_t y_dir = rand() % 2;
-	if(!y_dir){y_dir = -1;}
-
-	//Once shrunk, this will be the new width/height
-	float new_width = Logo.animation_array[0].frame_width;
-	float new_height = Logo.animation_array[0].frame_height;
+	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
+	char buffer[15];
 
 	while(1){
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 			//If any button is pressed, start the game (Doesn't check thumbstick)
-			if(st->buttons || st->ltrig > 255 * 0.1 || st->rtrig > 255 * 0.1){
-				begin = 1;
-			}
+			// if(st->buttons & (CONT_DPAD_RIGHT)){
+			// 	Man_Draw.rotation[0]++;
+			// }
+			// if(st->buttons & (CONT_DPAD_LEFT)){
+			// 	Man_Draw.rotation[0]--;
+			// }
 		MAPLE_FOREACH_END()
 
-		//Make the object bounce around
-		if(moving){
-			//Collision detection
-			if(Logo_Draw.pos[0] < 0){	//Off left side
-				x_dir = 1;
-				Logo_P.palette[1] = colours[rand() % 5];
-			} 
-			if(Logo_Draw.pos[1] < 0){	//Off top side
-				y_dir = 1;
-				Logo_P.palette[1] = colours[rand() % 5];
-			}
-			if(Logo_Draw.pos[0] + new_width > 640){	//Off right side
-				x_dir = -1;
-				Logo_P.palette[1] = colours[rand() % 5];
-			}
-			if(Logo_Draw.pos[1] + new_height > 480){	//Off bottom side
-				y_dir = -1;
-				Logo_P.palette[1] = colours[rand() % 5];
-			}
+		crayon_graphics_setup_palette(&Man_P);
+		crayon_graphics_setup_palette(&BIOS_P);
 
-			//colours Dark Blue, Purple, Pink, Orange, vright Green, Yellow
-
-			//Movement
-			Logo_Draw.pos[0] += 1.5 * htz_adjustment * x_dir;
-			Logo_Draw.pos[1] += 1.5 * htz_adjustment * y_dir;
-		}
-
-		//Shrinking process
-		if(begin && Logo_Draw.scale[0] > 0.4 && Logo_Draw.scale[1] > 0.3){
-			Logo_Draw.scale[0] -= (0.6/shrink_time) * htz_adjustment;
-			Logo_Draw.scale[1] -= (0.7/shrink_time) * htz_adjustment;
-			new_width = Logo.animation_array[0].frame_width * Logo_Draw.scale[0];
-			new_height = Logo.animation_array[0].frame_height * Logo_Draw.scale[1];
-			Logo_Draw.pos[0] = (640 - new_width) / 2;
-			Logo_Draw.pos[1] = (480 - new_height) / 2;
-		}
-		else{
-			if(begin){
-				moving = 1;
-			}
-		}
-
-		crayon_graphics_setup_palette(&Logo_P);	//Could live outside the loop, but later we will change the palette when it hits the corners
+		sprintf(buffer, "Angle: %d", (int)Man_Draw.rotation[0]);
 
 		pvr_scene_begin();
 
+		pvr_list_begin(PVR_LIST_OP_POLY);
+			crayon_graphics_draw(&Opaque_Blend_Draw, PVR_LIST_OP_POLY, 1);
+			crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
+			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_OP_POLY, 280, 360, 30, 1, 1, BIOS_P.palette_id, buffer);
+		pvr_list_finish();
+
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw_sprites(&Logo_Draw, PVR_LIST_PT_POLY);
+			crayon_graphics_draw(&Man_Draw, PVR_LIST_PT_POLY, 1);
 		pvr_list_finish();
 
 		pvr_scene_finish();
+
+		//Rotate the man and keep it within the 0 - 360 range
+		Man_Draw.rotation[0]++;
+		if(Man_Draw.rotation[0] > 360){
+			Man_Draw.rotation[0] -= 360;
+		}
 	}
 
 	//Also frees the spritesheet and palette
-	crayon_memory_free_sprite_array(&Logo_Draw, 1, 1);
+	crayon_memory_free_sprite_array(&Man_Draw, 1, 1);
+	crayon_memory_free_sprite_array(&Opaque_Blend_Draw, 0, 0);	//Won't free ss
+	crayon_memory_free_sprite_array(&Opaque_Add_Draw, 1, 0);	//But this one will
 
 	return 0;
 }
