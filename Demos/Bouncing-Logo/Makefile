@@ -9,6 +9,7 @@ CRAYON_PROJ_NAME   := $(notdir $(shell pwd))
 CRAYON_PROJ_LIBS   := -lkosext2fs -lz
 CRAYON_PROJ_SRC_C  := $(shell find code -type f -name "*.c")
 CRAYON_BUILD_DIR   := build
+CRAYON_IP_BIN      := $(shell pwd)/IP.BIN
 
 ### TODO: Write a cleaner set of shortcut rules in this example makefile.
 ###     The following rules emulate the previous version of this makefile.

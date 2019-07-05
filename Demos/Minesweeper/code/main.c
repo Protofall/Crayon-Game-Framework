@@ -2009,21 +2009,21 @@ int main(){
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
 			//DEBUG
-			char snum[32];
-			sprintf(snum, "Valid: VMUs %d\n", MS_options.savefile_details.valid_memcards);
-			OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
-			sprintf(snum, "Screens: %d\n", MS_options.savefile_details.valid_vmu_screens);
-			OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 12, 50, 1, 1, 62, snum);
-			sprintf(snum, "New saves: %d\n", MS_options.savefile_details.valid_saves);
-			OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 24, 50, 1, 1, 62, snum);
-			sprintf(snum, "Old saves: %d\n", old_saves);
-			OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 36, 50, 1, 1, 62, snum);
-			sprintf(snum, "P: %d, S: %d\n", MS_options.savefile_details.savefile_port, MS_options.savefile_details.savefile_slot);
-			OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
-			sprintf(snum, "Hacked save: %d\n", hacker);
-			OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
-			sprintf(snum, "Htz: %d, VGA: %d\n", MS_options.htz, vid_check_cable());
-			OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 72, 50, 1, 1, 62, snum);
+			// char snum[32];
+			// sprintf(snum, "Valid: VMUs %d\n", MS_options.savefile_details.valid_memcards);
+			// OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100, 50, 1, 1, 62, snum);
+			// sprintf(snum, "Screens: %d\n", MS_options.savefile_details.valid_vmu_screens);
+			// OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 12, 50, 1, 1, 62, snum);
+			// sprintf(snum, "New saves: %d\n", MS_options.savefile_details.valid_saves);
+			// OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 24, 50, 1, 1, 62, snum);
+			// sprintf(snum, "Old saves: %d\n", old_saves);
+			// OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 36, 50, 1, 1, 62, snum);
+			// sprintf(snum, "P: %d, S: %d\n", MS_options.savefile_details.savefile_port, MS_options.savefile_details.savefile_slot);
+			// OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
+			// sprintf(snum, "Hacked save: %d\n", hacker);
+			// OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
+			// sprintf(snum, "Htz: %d, VGA: %d\n", MS_options.htz, vid_check_cable());
+			// OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 72, 50, 1, 1, 62, snum);
 
 			//Draw windows assets
 			for(iter = 0; iter < os.num_assets; iter++){

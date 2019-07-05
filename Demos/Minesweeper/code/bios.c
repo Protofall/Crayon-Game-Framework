@@ -2,7 +2,7 @@
 
 void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_init_params_t * pvr_params, uint8_t region, uint8_t first_time){
 	//MS_options->htz is always set no matter what
-		//Redream uses a vga cable
+		//Redream uses a vga cable, lxdream doesn't
 	uint8_t vga_enabled = (vid_check_cable() == CT_VGA);
 	if(vga_enabled){	//If we have a VGA cable, use VGA
 		vid_set_mode(DM_640x480_VGA, PM_RGB565);
@@ -12,19 +12,18 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 		if(first_time){
 			if(region != FLASHROM_REGION_EUROPE){
 				vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
+				MS_options->htz = 1;
 			}
 			else{
 				vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
-				MS_options->htz = 0;	//50Hz
+				MS_options->htz = 0;
 			}
 		}
+		else if(MS_options->htz){
+			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
+		}
 		else{
-			if(MS_options->htz){
-				vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
-			}
-			else{
-				vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
-			}
+			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
 		}
 	}
 
@@ -84,15 +83,20 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 	crayon_graphics_setup_palette(&BIOS_P);			//0
 	crayon_graphics_setup_palette(&BIOS_invert_P);	//1
 
-	uint16_t os_head_x = (640-(1.5*crayon_graphics_string_get_length_mono(&BIOS_font, "Operating System", 0)))/2;
-	uint16_t os_head_y = 70;
-	uint16_t os_option_y = os_head_y + (BIOS_font.char_height * 1.5) + 40;
+	uint16_t os_head_x = (640 - (2 * crayon_graphics_string_get_length_mono(&BIOS_font, "Operating System", 0))) / 2;
+	uint16_t os_head_y = 67;
+	uint16_t os_option_y = os_head_y + (BIOS_font.char_height * 2) + 67;
 
-	uint16_t htz_head_x = (640-(1.5*crayon_graphics_string_get_length_mono(&BIOS_font, "Refresh Rate", 0)))/2;
-	uint16_t htz_head_y = 30 + os_option_y + (BIOS_font.char_height * 1.5) + 70;
-	uint16_t htz_option_y = htz_head_y + (BIOS_font.char_height * 1.5) + 40;
+	uint16_t htz_head_x = (640 - (2 * crayon_graphics_string_get_length_mono(&BIOS_font, "Refresh Rate", 0))) / 2;
+	uint16_t htz_head_y = os_option_y + (BIOS_font.char_height * 2) + 67;
+	uint16_t htz_option_y = htz_head_y + (BIOS_font.char_height * 1.5) + 67;
 
-	uint16_t cursor_y = os_option_y;
+	//x is text height, y is gap between texts
+	//(4 * x) + (5 * y) + (1 * 16) = 480
+	//(4 * 32) + (5 * y) = 464
+	//5 * y = 464 - 128 = 336
+	//y = 67.2 or 67
+
 
 	//Set the palettes for each option
 	int8_t * palette_2000,* palette_XP,* palette_50htz,* palette_60htz;
@@ -114,22 +118,21 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 		palette_60htz = &BIOS_invert_P.palette_id;
 	}
 
-	//464 height, 4 evenly spaced rows. Each thing is 24 tall.
-	//24 * 4 = 96. 464 - 96 = 368
-	//Giving gaps of 73.6
-
-
-	//Currently disabled cause redream
 	if(vga_enabled){
-		//os_head_y = 320 - (1.5 * BIOS_font.char_height/2);	//Fix
-		//os_option_y = os_head_y + (BIOS_font.char_height * 1.5) + 30;
+		os_head_y = 133;
+		os_option_y = os_head_y + (BIOS_font.char_height * 2) + 133;
+
+		//(2 * x) + (3 * y) = 464
+		//3 * y = 464 - 64
+		//y = 400/3 = 133.3 or 133
 	}
+	uint16_t cursor_y = os_option_y;
 
 	uint8_t current_option = 0;	//0 is OS, 1 is refresh
 	uint8_t htz = (MS_options->htz ? 60 : 50);
 	int16_t counter = (htz * 10) - 1;	//Set this to 10 secs (So current fps * 10)
 	char countdown_buffer[16];
-	while(counter >= 0){
+	while(counter > 0){
 		counter--;
 
 		pvr_wait_ready();	//Need vblank for inputs
@@ -137,31 +140,27 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 		if(st->buttons & CONT_DPAD_LEFT){
 			if(current_option == 0){
-				// MS_options->operating_system = 0;	//0 is 2000
-				palette_2000 = &BIOS_invert_P.palette_id;
+				palette_2000 = &BIOS_invert_P.palette_id;	//0 is 2000
 				palette_XP = &BIOS_P.palette_id;
 			}
 			else{
-				// MS_options->htz = 0;	//0 is 50 Htz
-				palette_50htz = &BIOS_invert_P.palette_id;
+				palette_50htz = &BIOS_invert_P.palette_id;	//0 is 50 Htz
 				palette_60htz = &BIOS_P.palette_id;
 			}
 		}
 		else if(st->buttons & CONT_DPAD_RIGHT){
 			if(current_option == 0){
-				// MS_options->operating_system = 1;	//1 is XP
-				palette_2000 = &BIOS_P.palette_id;
+				palette_2000 = &BIOS_P.palette_id;	//1 is XP
 				palette_XP = &BIOS_invert_P.palette_id;
 			}
 			else{
-				// MS_options->htz = 1;	//1 is 60 Htz
-				palette_50htz = &BIOS_P.palette_id;
+				palette_50htz = &BIOS_P.palette_id;	//1 is 60 Htz
 				palette_60htz = &BIOS_invert_P.palette_id;
 			}
 		}
 
 		//Chose the option, but don't let this happen if we have a VGA cable
-		if(!vga_enabled || 1){	//COME BACK HERE LATER
+		if(!vga_enabled){
 			if((st->buttons & CONT_DPAD_UP) && current_option != 0){
 				current_option--;
 				cursor_y = os_option_y;
@@ -172,7 +171,8 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 			}
 		}
 
-		if(st->buttons & CONT_START){
+		//Press A or Start to skip the countdown
+		if((st->buttons & CONT_START) || (st->buttons & CONT_A)){
 			counter = 0;
 		}
 
@@ -181,16 +181,17 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
-			//Scaled *1.5, each char becomes 12 wide and 24 tall
-			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, os_head_x, os_head_y, 50, 1.5, 1.5, BIOS_P.palette_id, "Operating System");
-			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 70, os_option_y, 50, 1.5, 1.5, *palette_2000, "Windows 2000");
-			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 500, os_option_y, 50, 1.5, 1.5, *palette_XP, "Windows XP");
+			//Scaled *2, each char becomes 16 wide and 32 tall
+			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, os_head_x, os_head_y, 50, 2, 2, BIOS_P.palette_id, "Operating System");
+			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 50, os_option_y, 50, 2, 2, *palette_2000, "Windows 2000");
+			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 450, os_option_y, 50, 2, 2, *palette_XP, "Windows XP");
 
-			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, htz_head_x, htz_head_y, 50, 1.5, 1.5, BIOS_P.palette_id, "Refresh Rate");
-			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 70, htz_option_y, 50, 1.5, 1.5, *palette_50htz, "50 Htz");
-			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 500, htz_option_y, 50, 1.5, 1.5, *palette_60htz, "60 Htz");
-
-			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 70 - 36, cursor_y, 50, 1.5, 1.5, BIOS_P.palette_id, ">");
+			if(!vga_enabled){
+				OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, htz_head_x, htz_head_y, 50, 2, 2, BIOS_P.palette_id, "Refresh Rate");
+				OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 80, htz_option_y, 50, 2, 2, *palette_50htz, "50 Htz");
+				OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 480, htz_option_y, 50, 2, 2, *palette_60htz, "60 Htz");
+			}
+			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 50 - 36, cursor_y, 50, 2, 2, BIOS_P.palette_id, ">");
 
 			sprintf(countdown_buffer, "Booting in %ds", counter/htz);
 			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 640 - crayon_graphics_string_get_length_mono(&BIOS_font, countdown_buffer, 0),
@@ -210,22 +211,17 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 	}
 
 	if(*palette_50htz){
-		if(!vga_enabled){	//REMOVE THIS IF CHECK LATER ONCE VGA MODE IS PROPERLY HANDLED
-			//Set refresh to 50
-			*htz_adjustment = 1.2;
-			MS_options->htz = 0;
-			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);
-		}
+		//Set refresh to 50
+		*htz_adjustment = 1.2;
+		MS_options->htz = 0;
+		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);	//Note its impossible to choose 50htz with VGA
 	}
 	else{
 		//set refresh to 60
 		*htz_adjustment = 1;
 		MS_options->htz = 1;
-		if(!vga_enabled){	//VGA is 60Htz, but not interlaced
-			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
-		}
-		else{	//If we have a VGA cable, use VGA
-			vid_set_mode(DM_640x480_VGA, PM_RGB565);	//MIGHT BE REDUNDANT
+		if(!vga_enabled){
+			vid_set_mode(DM_640x480_VGA, PM_RGB565);
 		}
 	}
 
