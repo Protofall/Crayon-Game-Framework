@@ -1,6 +1,11 @@
 #include "bios.h"
 
 void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_init_params_t * pvr_params, uint8_t region, uint8_t first_time){
+
+	//For debug
+	uint8_t original_htz = MS_options->htz;
+	uint8_t original_os = MS_options->operating_system;
+
 	//MS_options->htz is always set no matter what
 		//Redream uses a vga cable, lxdream doesn't
 	uint8_t vga_enabled = (vid_check_cable() == CT_VGA);
@@ -201,12 +206,37 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 		pvr_scene_finish();
 	}
 
+	//Free up PVR memory
+	crayon_memory_free_mono_font_sheet(&BIOS_font);
+	crayon_memory_free_palette(&BIOS_P);
+	crayon_memory_free_palette(&BIOS_invert_P);
+
+	//If you're changing refresh rate
+//	if(*palette_50htz == 0 && original_htz != 0){	//Going to 50Htz
+//		MS_options->htz = 0;
+//		//Shutdown pvr
+//		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);	//Set vid mode
+//		//Re-init pvr
+//	}
+//	else if(*palette_60htz == 1 && original_htz != 1){	//Going to 60Htz
+//		MS_options->htz = 1;
+//		//Shutdown pvr
+//		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//Set vid mode
+//		//Re-init pvr
+//	}
+//
+//	if(MS_options->htz == 0){
+//		*htz_adjustment = 1.2;
+//	}
+//	else{
+//		*htz_adjustment = 1;
+	}
+
+	//Set the OS
 	if(*palette_2000){
-		//Set OS to 2000
 		MS_options->operating_system = 0;
 	}
 	else{
-		//set OS to XP
 		MS_options->operating_system = 1;
 	}
 
@@ -221,11 +251,8 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 		*htz_adjustment = 1;
 		MS_options->htz = 1;
 		if(!vga_enabled){
-			vid_set_mode(DM_640x480_VGA, PM_RGB565);
+			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
 		}
 	}
 
-	crayon_memory_free_mono_font_sheet(&BIOS_font);
-	crayon_memory_free_palette(&BIOS_P);
-	crayon_memory_free_palette(&BIOS_invert_P);
 }
