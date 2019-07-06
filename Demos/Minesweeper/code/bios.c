@@ -212,24 +212,25 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 	crayon_memory_free_palette(&BIOS_invert_P);
 
 	//If you're changing refresh rate
-//	if(*palette_50htz == 0 && original_htz != 0){	//Going to 50Htz
-//		MS_options->htz = 0;
-//		//Shutdown pvr
-//		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);	//Set vid mode
-//		//Re-init pvr
-//	}
-//	else if(*palette_60htz == 1 && original_htz != 1){	//Going to 60Htz
-//		MS_options->htz = 1;
-//		//Shutdown pvr
-//		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//Set vid mode
-//		//Re-init pvr
-//	}
-//
-//	if(MS_options->htz == 0){
-//		*htz_adjustment = 1.2;
-//	}
-//	else{
-//		*htz_adjustment = 1;
+	if(original_htz == 1 && *palette_50htz == 0){	//Changing to 50Htz
+		MS_options->htz = 0;
+		//Shutdown pvr
+		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);	//Set vid mode
+		//Re-init pvr
+	}
+	else if(original_htz == 0 && *palette_60htz == 1){	//Changing to 60Htz
+		MS_options->htz = 1;
+		//Shutdown pvr
+		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//Set vid mode
+		//Re-init pvr
+	}
+
+	//Set the adjustment
+	if(MS_options->htz == 0){
+		*htz_adjustment = 1.2;
+	}
+	else{
+		*htz_adjustment = 1;
 	}
 
 	//Set the OS
@@ -239,20 +240,4 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 	else{
 		MS_options->operating_system = 1;
 	}
-
-	if(*palette_50htz){
-		//Set refresh to 50
-		*htz_adjustment = 1.2;
-		MS_options->htz = 0;
-		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);	//Note its impossible to choose 50htz with VGA
-	}
-	else{
-		//set refresh to 60
-		*htz_adjustment = 1;
-		MS_options->htz = 1;
-		if(!vga_enabled){
-			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
-		}
-	}
-
 }
