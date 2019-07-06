@@ -4,7 +4,7 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 
 	//For debug
 	uint8_t original_htz = MS_options->htz;
-	uint8_t original_os = MS_options->operating_system;
+	// uint8_t original_os = MS_options->operating_system;
 
 	//MS_options->htz is always set no matter what
 		//Redream uses a vga cable, lxdream doesn't
@@ -24,7 +24,7 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 				MS_options->htz = 0;
 			}
 		}
-		else if(MS_options->htz){
+		else if(MS_options->htz == 1){
 			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
 		}
 		else{
@@ -137,6 +137,8 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 	uint8_t htz = (MS_options->htz ? 60 : 50);
 	int16_t counter = (htz * 10) - 1;	//Set this to 10 secs (So current fps * 10)
 	char countdown_buffer[16];
+
+	// char buffer_debug[40];
 	while(counter > 0){
 		counter--;
 
@@ -201,6 +203,10 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 			sprintf(countdown_buffer, "Booting in %ds", counter/htz);
 			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 640 - crayon_graphics_string_get_length_mono(&BIOS_font, countdown_buffer, 0),
 				480 - 24, 50, 1, 1, BIOS_P.palette_id, countdown_buffer);
+
+			//Debug
+			// sprintf(buffer_debug, "Original htz: %d , os: %d", original_htz, original_os);
+			// OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 0, 480 - 24, 50, 1, 1, BIOS_P.palette_id, buffer_debug);
 		pvr_list_finish();
 
 		pvr_scene_finish();
@@ -212,7 +218,7 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 	crayon_memory_free_palette(&BIOS_invert_P);
 
 	//If you're changing refresh rate
-	if(original_htz == 1 && *palette_50htz == 0){	//Changing to 50Htz
+	if(original_htz == 1 && *palette_50htz == 1){	//Changing to 50Htz
 		MS_options->htz = 0;
 		//Shutdown pvr
 		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);	//Set vid mode
