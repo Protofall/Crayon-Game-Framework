@@ -36,6 +36,14 @@ extern void crayon_graphics_frame_coordinates(const crayon_sprite_array_t *draw_
 	return;
 }
 
+extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *draw_list, uint8_t id){
+	return draw_list->animation->frame_width * draw_list->scale[id * 2];
+}
+
+extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *draw_list, uint8_t id){
+	return draw_list->animation->frame_height * draw_list->scale[(id * 2) + 1];
+}
+
 extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uint8_t layer, uint16_t dim_x,
   uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;

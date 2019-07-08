@@ -14,6 +14,11 @@ extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
 //Give a remder struct, list index, and frame and it will populate the coordinates
 extern void crayon_graphics_frame_coordinates(const crayon_sprite_array_t *draw_list, uint8_t index, uint8_t frame);
 
+//This will get the size of the draw element as it appears on screen. It takes scale into consideration
+	//Later might want to trunc it and also add viewport support when that happens
+extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *draw_list, uint8_t id);
+extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *draw_list, uint8_t id);
+
 
 //------------------Drawing Untextured polys------------------//
 

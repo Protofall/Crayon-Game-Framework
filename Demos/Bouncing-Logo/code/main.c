@@ -176,8 +176,8 @@ int main(){
 	if(!y_dir){y_dir = -1;}
 
 	//Once shrunk, this will be the new width/height
-	float new_width = Logo.animation_array[0].frame_width;
-	float new_height = Logo.animation_array[0].frame_height;
+	float new_width = crayon_graphics_get_draw_element_width(&Logo_Draw, 0);
+	float new_height = crayon_graphics_get_draw_element_height(&Logo_Draw, 0);
 
 	while(1){
 		pvr_wait_ready();
@@ -219,8 +219,8 @@ int main(){
 		if(begin && Logo_Draw.scale[0] > 0.4 && Logo_Draw.scale[1] > 0.3){
 			Logo_Draw.scale[0] -= (0.6/shrink_time) * htz_adjustment;
 			Logo_Draw.scale[1] -= (0.7/shrink_time) * htz_adjustment;
-			new_width = Logo.animation_array[0].frame_width * Logo_Draw.scale[0];
-			new_height = Logo.animation_array[0].frame_height * Logo_Draw.scale[1];
+			new_width = crayon_graphics_get_draw_element_width(&Logo_Draw, 0);
+			new_height = crayon_graphics_get_draw_element_height(&Logo_Draw, 0);
 			Logo_Draw.pos[0] = (640 - new_width) / 2;
 			Logo_Draw.pos[1] = (480 - new_height) / 2;
 		}
