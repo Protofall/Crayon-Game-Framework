@@ -30,6 +30,9 @@ extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uin
 //Draw all coloured polys in the struct's list
 extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *poly_array, uint8_t poly_list_mode);
 
+extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t layer, uint32_t colour,
+	uint8_t poly_list_mode);
+
 
 //------------------Drawing Sprites from Spritesheets------------------//
 

@@ -169,6 +169,77 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 	return;
 }
 
+extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t layer, uint32_t colour,
+	uint8_t poly_list_mode){
+
+	pvr_poly_cxt_t cxt;
+	pvr_poly_hdr_t hdr;
+	pvr_vertex_t vert[4];
+
+	pvr_poly_cxt_col(&cxt, poly_list_mode);
+	pvr_poly_compile(&hdr, &cxt);
+	pvr_prim(&hdr, sizeof(hdr));
+
+	uint8_t i;
+	for(i = 0; i < 4; i++){
+		vert[i].argb = colour;
+		vert[i].oargb = 0;
+		vert[i].z = layer;
+		vert[i].flags = PVR_CMD_VERTEX;
+	}
+	vert[3].flags = PVR_CMD_VERTEX_EOL;
+
+	//N, NW, W and SW...feels ghetto...
+	if(x1 > x2 || (x1 == x2 && y1 > y2)){
+		uint16_t temp = x2;
+		x2 = x1;
+		x1 = temp;
+
+		temp = y2;
+		y2 = y1;
+		y1 = temp;
+	}
+
+	// Top left
+	vert[0].x = x1;
+	vert[0].y = y1;
+
+	int16_t y_diff = y2 - y1;
+	int16_t x_diff = x2 - x1;
+
+	//Absolute them
+	if(y_diff < 0){y_diff *= -1;}
+	if(x_diff < 0){x_diff *= -1;}
+
+	if(x_diff > y_diff){	//Wider than taller
+		//Top right
+		vert[1].x = x2 + 1;
+		vert[1].y = y2;
+
+		//Bottom left
+		vert[2].x = x1;
+		vert[2].y = y1 + 1;
+
+		//Bottom right
+		vert[3].x = x2 + 1;
+		vert[3].y = y2 + 1;
+
+	}
+	else{	//taller than wider
+		vert[1].x = x1 + 1;
+		vert[1].y = y1;
+
+		vert[2].x = x2;
+		vert[2].y = y2 + 1;
+
+		vert[3].x = x2 + 1;
+		vert[3].y = y2 + 1;
+	}
+
+	pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
+
+	return;
+}
 
 extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
 	const struct crayon_animation *anim, float draw_x, float draw_y, uint8_t layer,
