@@ -1,5 +1,14 @@
 #include "assist.h"
 
+extern char * crayon_get_version(){
+	char * version = malloc(sizeof(char) * 10);
+	if(version == NULL){
+		return NULL;
+	}
+	sprintf(version, "%d.%d.%d", CRAYON_MAJOR_NUMBER, CRAYON_MINOR_NUMBER, CRAYON_PATCH_NUMBER);
+	return version;
+}
+
 extern uint8_t crayon_assist_append_extension(char ** dest, char * source1, char * source2){
 	if(!source1 || !source2){
 		return 1;

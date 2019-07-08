@@ -6,6 +6,13 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#define CRAYON_MAJOR_NUMBER 0
+#define CRAYON_MINOR_NUMBER 0
+#define CRAYON_PATCH_NUMBER 0
+
+//Gets the crayon version number in form MAJOR.MINOR.PATCH
+extern char * crayon_get_version();
+
 //Takes two strings and returns a string which is source2 appended to source1
 extern uint8_t crayon_assist_append_extension(char ** dest, char * source1, char * source2);
 
