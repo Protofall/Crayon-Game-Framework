@@ -59,7 +59,19 @@ int main(){
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
+	uint16_t angle = 0;
+	float radians;
+	float cos_theta, sin_theta;
+	uint16_t x2, y2;
 	while(1){
+		radians = (angle * M_PI) / 180.0f;
+		sin_theta = sin(radians);
+		cos_theta = cos(radians);
+
+		//Rotating (320,50) around (320,240)
+		x2 = (cos_theta * (320 - 320)) - (sin_theta * (50 - 240)) + 320;
+		y2 = (sin_theta * (320 - 320)) + (cos_theta * (50 - 240)) + 240;
+
 		pvr_wait_ready();
 		
 		pvr_scene_begin();
@@ -76,9 +88,13 @@ int main(){
 			crayon_graphics_draw_line(320, 240, 640, 480, 10, 0xFFFFFFFF, PVR_LIST_OP_POLY);	//South East
 			crayon_graphics_draw_line(320, 240, 320, 480, 10, 0xFFFFFFFF, PVR_LIST_OP_POLY);	//South
 
+			crayon_graphics_draw_line(320, 240, x2, y2, 11, 0xFFFF0000, PVR_LIST_OP_POLY);	//Rotater
+
 		pvr_list_finish();
 
 		pvr_scene_finish();
+		angle++;
+		if(angle >= 360){angle -= 360;}
 	}
 
 	return 0;

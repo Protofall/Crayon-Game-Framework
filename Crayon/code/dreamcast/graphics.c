@@ -189,8 +189,16 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 	}
 	vert[3].flags = PVR_CMD_VERTEX_EOL;
 
-	//N, NW, W and SW...feels ghetto...
-	if(x1 > x2 || (x1 == x2 && y1 > y2)){
+	int16_t y_diff = y2 - y1;
+	int16_t x_diff = x2 - x1;
+
+	//Absolute them
+	if(y_diff < 0){y_diff *= -1;}
+	if(x_diff < 0){x_diff *= -1;}
+
+	//We flip them if its in between SW and NE (Going clockwise)
+
+	if((x1 > x2 && x_diff > y_diff) || (y1 > y2 && x_diff < y_diff)){
 		uint16_t temp = x2;
 		x2 = x1;
 		x1 = temp;
@@ -203,13 +211,6 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 	// Top left
 	vert[0].x = x1;
 	vert[0].y = y1;
-
-	int16_t y_diff = y2 - y1;
-	int16_t x_diff = x2 - x1;
-
-	//Absolute them
-	if(y_diff < 0){y_diff *= -1;}
-	if(x_diff < 0){x_diff *= -1;}
 
 	if(x_diff > y_diff){	//Wider than taller
 		//Top right

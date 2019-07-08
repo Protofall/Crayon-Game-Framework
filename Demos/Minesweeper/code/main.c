@@ -2259,20 +2259,20 @@ int main(){
 				crayon_graphics_draw_sprites(&MS_options.number_changers, PVR_LIST_OP_POLY);
 			}
 			else if(MS_options.focus == 4){
-				custom_draw_line(261, 189, 318, 189, 33);	//Controller 4
-				custom_draw_line(283, 210, 318, 210, 33);	//Controller 2
-				custom_draw_line(261, 230, 318, 230, 33);	//Controller 1
-				custom_draw_line(228, 222, 234, 250, 33);	//Controller 3 diag
-				custom_draw_line(234, 250, 318, 250, 33);	//Controller 3
-				custom_draw_line(168, 302, 168, 316, 33);	//Controller 5
+				crayon_graphics_draw_line(261, 189, 318, 189, 33, 255 << 24, PVR_LIST_OP_POLY);	//Controller 4
+				crayon_graphics_draw_line(283, 210, 318, 210, 33, 255 << 24, PVR_LIST_OP_POLY);	//Controller 2
+				crayon_graphics_draw_line(261, 230, 318, 230, 33, 255 << 24, PVR_LIST_OP_POLY);	//Controller 1
+				crayon_graphics_draw_line(228, 222, 234, 250, 33, 255 << 24, PVR_LIST_OP_POLY);	//Controller 3 diag
+				crayon_graphics_draw_line(234, 250, 318, 250, 33, 255 << 24, PVR_LIST_OP_POLY);	//Controller 3
+				crayon_graphics_draw_line(168, 302, 168, 316, 33, 255 << 24, PVR_LIST_OP_POLY);	//Controller 5
 
-				custom_draw_line(387, 156, 394, 168, 33);	//Mouse 1 diag
-				custom_draw_line(394, 168, 464, 168, 33);	//Mouse 1
-				custom_draw_line(595, 156, 588, 168, 33);	//Mouse 2 diag
-				custom_draw_line(518, 168, 588, 168, 33);	//Mouse 2
-				custom_draw_line(396, 189, 419, 189, 33);	//Mouse 3
+				crayon_graphics_draw_line(387, 156, 394, 168, 33, 255 << 24, PVR_LIST_OP_POLY);	//Mouse 1 diag
+				crayon_graphics_draw_line(394, 168, 464, 168, 33, 255 << 24, PVR_LIST_OP_POLY);	//Mouse 1
+				crayon_graphics_draw_line(595, 156, 588, 168, 33, 255 << 24, PVR_LIST_OP_POLY);	//Mouse 2 diag
+				crayon_graphics_draw_line(518, 168, 588, 168, 33, 255 << 24, PVR_LIST_OP_POLY);	//Mouse 2
+				crayon_graphics_draw_line(396, 189, 419, 189, 33, 255 << 24, PVR_LIST_OP_POLY);	//Mouse 3
 
-				custom_draw_line(334, 77, 342, 77, 33);		//Face 5
+				crayon_graphics_draw_line(334, 77, 342, 77, 33, 255 << 24, PVR_LIST_OP_POLY);	//Face 5
 			}
 
 			//Draw the flag count and timer digit displays

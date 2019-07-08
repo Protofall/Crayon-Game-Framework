@@ -71,6 +71,7 @@ packerSheet () {
 
 #Parameters: $1 is asset, $2 is projectRoot/cdfs, $3 is the "noRM" flag
 build () {
+
 	cd "$1"
 	ls "$PWD" | while read x; do
 
@@ -209,6 +210,11 @@ noRM=0	#0 means it will remove temp files, 1 means it won't remove them
 assets="assets"
 cdfs="cdfs"
 projectRoot="$PWD"	#Make sure bash script is called from the real project root
+
+# If the assets folder DNE, then don't bother preprocessing
+if [ ! -d "$assets" ]; then
+	exit 0
+fi
 
 while test ${#} -gt 0
 do
