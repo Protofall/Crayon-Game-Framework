@@ -220,7 +220,7 @@ int main(){
 		pvr_list_begin(PVR_LIST_OP_POLY);
 			crayon_graphics_draw(&Opaque_Blend_Draw, PVR_LIST_OP_POLY, 1);
 			crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
-			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_OP_POLY, 280, 360, 30, 1, 1, BIOS_P.palette_id, buffer);
+			crayon_graphics_draw_text_mono(buffer, &BIOS, PVR_LIST_OP_POLY, 280, 360, 30, 1, 1, BIOS_P.palette_id);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);

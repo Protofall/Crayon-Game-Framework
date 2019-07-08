@@ -60,12 +60,12 @@ extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
 
 
 //Draw string using mono font (string must be null-terminated)
-extern uint8_t crayon_graphics_draw_text_mono(const crayon_font_mono_t *fm, uint8_t poly_list_mode, float draw_x,
-	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number, char * string);
+extern uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_mono_t *fm, uint8_t poly_list_mode, float draw_x,
+	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number);
 
 //Draw string using propertional font (string must be null-terminated)
-extern uint8_t crayon_graphics_draw_text_prop(const crayon_font_prop_t *fp, uint8_t poly_list_mode, float draw_x,
-	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number, char * string);
+extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_prop_t *fp, uint8_t poly_list_mode, float draw_x,
+	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number);
 
 
 //------------------String info------------------//

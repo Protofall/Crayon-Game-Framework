@@ -576,8 +576,8 @@ extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){
 	return fabs(a-b) < epsilon;
 }
 
-extern uint8_t crayon_graphics_draw_text_mono(const struct crayon_font_mono *fm, uint8_t poly_list_mode, float draw_x,
-	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number, char * string){
+extern uint8_t crayon_graphics_draw_text_mono(char * string, const struct crayon_font_mono *fm, uint8_t poly_list_mode,
+	float draw_x, float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number){
 
 	float x0 = trunc(draw_x);
 	float y0 = trunc(draw_y);
@@ -649,8 +649,8 @@ extern uint8_t crayon_graphics_draw_text_mono(const struct crayon_font_mono *fm,
 	return 0;
 }
 
-extern uint8_t crayon_graphics_draw_text_prop(const struct crayon_font_prop *fp, uint8_t poly_list_mode, float draw_x,
-	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number, char * string){
+extern uint8_t crayon_graphics_draw_text_prop(char * string, const struct crayon_font_prop *fp, uint8_t poly_list_mode,
+	float draw_x, float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number){
 
 	float x0 = trunc(draw_x);
 	float y0 = trunc(draw_y);

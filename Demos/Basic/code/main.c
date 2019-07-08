@@ -300,26 +300,30 @@ int main(){
 			crayon_graphics_draw_sprites(&Red_Man_Draw, PVR_LIST_PT_POLY);
 			crayon_graphics_draw_sprites(&Green_Man_Draw, PVR_LIST_PT_POLY);
 
-			crayon_graphics_draw_text_prop(&Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id, "Tahoma\0");
-			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, 120, 40, 30, 1, 1, BIOS_P.palette_id, "BIOS\0");
+			crayon_graphics_draw_text_prop("Tahoma\0", &Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id);
+			crayon_graphics_draw_text_mono("BIOS\0", &BIOS, PVR_LIST_PT_POLY, 120, 40, 30, 1, 1, BIOS_P.palette_id);
 
-			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, Rainbow_Draw.pos[8] + (8 * Rainbow_Draw.animation[0].frame_width) + 10,
-				Rainbow_Draw.pos[1] + 24, 30, 1, 1, BIOS_P.palette_id, "Rotation: 0 Degrees\0");
+			crayon_graphics_draw_text_mono("Rotation: 0 Degrees\0", &BIOS, PVR_LIST_PT_POLY,
+				Rainbow_Draw.pos[8] + (8 * Rainbow_Draw.animation[0].frame_width) + 10,
+				Rainbow_Draw.pos[1] + 24, 30, 1, 1, BIOS_P.palette_id);
 
-			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, Rainbow_Draw.pos[8] + (8 * Rainbow_Draw.animation[0].frame_width) + 10,
-				Rainbow_Draw.pos[3] + 24, 30, 1, 1, BIOS_P.palette_id, "Rotation: 90 Degrees\0");
+			crayon_graphics_draw_text_mono("Rotation: 90 Degrees\0", &BIOS, PVR_LIST_PT_POLY,
+				Rainbow_Draw.pos[8] + (8 * Rainbow_Draw.animation[0].frame_width) + 10,
+				Rainbow_Draw.pos[3] + 24, 30, 1, 1, BIOS_P.palette_id);
 
-			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, Rainbow_Draw.pos[8] + (8 * Rainbow_Draw.animation[0].frame_width) + 10,
-				Rainbow_Draw.pos[5] + 24, 30, 1, 1, BIOS_P.palette_id, "Rotation: 180 Degrees\0");
+			crayon_graphics_draw_text_mono("Rotation: 180 Degrees\0", &BIOS, PVR_LIST_PT_POLY,
+				Rainbow_Draw.pos[8] + (8 * Rainbow_Draw.animation[0].frame_width) + 10,
+				Rainbow_Draw.pos[5] + 24, 30, 1, 1, BIOS_P.palette_id);
 
-			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, Rainbow_Draw.pos[8] + (8 * Rainbow_Draw.animation[0].frame_width) + 10,
-				Rainbow_Draw.pos[7] + 24, 30, 1, 1, BIOS_P.palette_id, "Rotation: 270 Degrees\0");
+			crayon_graphics_draw_text_mono("Rotation: 270 Degrees\0", &BIOS, PVR_LIST_PT_POLY,
+				Rainbow_Draw.pos[8] + (8 * Rainbow_Draw.animation[0].frame_width) + 10,
+				Rainbow_Draw.pos[7] + 24, 30, 1, 1, BIOS_P.palette_id);
 
 
-			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, Rainbow_Draw.pos[0],
-				Rainbow_Draw.pos[7] + (8 * Rainbow_Draw.animation[0].frame_height) + 10, 30, 1, 1, BIOS_P.palette_id, "Normal\0");
-			crayon_graphics_draw_text_mono(&BIOS, PVR_LIST_PT_POLY, Rainbow_Draw.pos[8],
-				Rainbow_Draw.pos[7] + (8 * Rainbow_Draw.animation[0].frame_height) + 10, 30, 1, 1, BIOS_P.palette_id, "Flipped\0");
+			crayon_graphics_draw_text_mono("Normal\0", &BIOS, PVR_LIST_PT_POLY, Rainbow_Draw.pos[0],
+				Rainbow_Draw.pos[7] + (8 * Rainbow_Draw.animation[0].frame_height) + 10, 30, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono("Flipped\0", &BIOS, PVR_LIST_PT_POLY, Rainbow_Draw.pos[8],
+				Rainbow_Draw.pos[7] + (8 * Rainbow_Draw.animation[0].frame_height) + 10, 30, 1, 1, BIOS_P.palette_id);
 
 		pvr_list_finish();
 
