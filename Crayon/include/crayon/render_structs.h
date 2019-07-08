@@ -1,7 +1,7 @@
 #ifndef RENDER_STRUCTS_CRAYON_H
 #define RENDER_STRUCTS_CRAYON_H
 
-#include "texture_structs.h"  //For the spritehseet and anim structs
+#include "texture_structs.h"  //For the spritesheet and anim structs
 
 //This is designed for the multi-draw functions. If you want to draw a single thing with this struct
 //then I you'll still need to go through the multi-draw. It shouldn't be too much slower if any.
@@ -56,5 +56,17 @@ typedef struct crayon_untextured_array{
 								//If 0 then we only use the first element.
 								//Places of the bits in the var are so to mimic the sprite's option's layout
 } crayon_untextured_array_t;
+
+
+// //Getters, for ease of use, you can access the array directly if you want
+// float crayon_get_pos_x(crayon_sprite_array_t * struct, uint16_t index);
+// float crayon_get_pos_y(crayon_sprite_array_t * struct, uint16_t index);
+// uint32_t crayon_get_colour(crayon_sprite_array_t * struct, uint16_t index);
+// uint8_t crayon_get_fade(crayon_sprite_array_t * struct, uint16_t index);
+// float crayon_get_scale_x(crayon_sprite_array_t * struct, uint16_t index);
+// float crayon_get_scale_y(crayon_sprite_array_t * struct, uint16_t index);
+// uint8_t crayon_get_flip(crayon_sprite_array_t * struct, uint16_t index);
+// float crayon_get_rotation(crayon_sprite_array_t * struct, uint16_t index);
+// uint8_t crayon_get_layer(crayon_sprite_array_t * struct, uint16_t index);
 
 #endif

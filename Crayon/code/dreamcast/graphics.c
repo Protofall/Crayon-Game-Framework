@@ -5,7 +5,7 @@ extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
 	if(cp->palette_id < 0 || cp->bpp < 0 || cp->bpp * cp->palette_id >= 1024){	//Invalid format/palette not properly set
 		return 1;
 	}
-	int entries;
+	uint16_t entries;
 	if(cp->bpp == 4){
 		entries = 16;
 	}
@@ -25,14 +25,14 @@ extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
 	return 0;
 }
 
-extern void crayon_graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x, uint16_t *frame_y, uint8_t frame){
-	int framesPerRow = anim->sheet_width / anim->frame_width;
-	int colNum = frame%framesPerRow; //Gets the column (Zero indexed)
-	int rowNum = frame/framesPerRow;  //Gets the row (Zero indexed)
+extern void crayon_graphics_frame_coordinates(const crayon_sprite_array_t *draw_list, uint8_t index, uint8_t frame){
+	crayon_animation_t * anim = draw_list->animation;
+	uint8_t frames_per_row = anim->sheet_width / anim->frame_width;
+	uint8_t column_number = frame % frames_per_row;
+	uint8_t row_number = frame / frames_per_row;
 
-	*frame_x = anim->x + (colNum) * anim->frame_width;
-	*frame_y = anim->y + (rowNum) * anim->frame_height;
-
+	draw_list->frame_coord_map[index * 2] = anim->x + (column_number * anim->frame_width);
+	draw_list->frame_coord_map[(index * 2) + 1] = anim->y + (row_number * anim->frame_height);
 	return;
 }
 

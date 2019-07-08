@@ -145,18 +145,10 @@ int main(){
 	Frames_Draw.frame_coord_key[1] = 1;
 	Frames_Draw.frame_coord_key[2] = 2;
 	Frames_Draw.frame_coord_key[3] = 3;
-	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 0, Frames_Draw.frame_coord_map + 1, 0);
-	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 2, Frames_Draw.frame_coord_map + 3, 1);
-	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 4, Frames_Draw.frame_coord_map + 5, 2);
-	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 6, Frames_Draw.frame_coord_map + 7, 3);
-	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 8, Frames_Draw.frame_coord_map + 9, 4);
-	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 10, Frames_Draw.frame_coord_map + 11, 5);
-	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 12, Frames_Draw.frame_coord_map + 13, 6);
-	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 14, Frames_Draw.frame_coord_map + 15, 7);
-	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 16, Frames_Draw.frame_coord_map + 17, 8);
-	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 18, Frames_Draw.frame_coord_map + 19, 9);
-	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 20, Frames_Draw.frame_coord_map + 21, 10);
-	crayon_graphics_frame_coordinates(Frames_Draw.animation, Frames_Draw.frame_coord_map + 22, Frames_Draw.frame_coord_map + 23, 11);
+	uint8_t i;
+	for(i = 0; i < 12; i++){
+		crayon_graphics_frame_coordinates(&Frames_Draw, i, i);
+	}
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
 	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, &Dwarf.animation_array[0], NULL, 3, 1, 1 << 2, 0);
@@ -177,7 +169,7 @@ int main(){
 	Dwarf_Draw.rotation[0] = 0;
 	Dwarf_Draw.colour[0] = 0;
 	Dwarf_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(Dwarf_Draw.animation, Dwarf_Draw.frame_coord_map + 0, Dwarf_Draw.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(&Dwarf_Draw, 0, 0);
 
 	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
 	crayon_memory_init_sprite_array(&Red_Man_Draw, &Man, &Man.animation_array[0], &Red_Man_P, 1, 1, 0, 0);
@@ -190,7 +182,7 @@ int main(){
 	Red_Man_Draw.rotation[0] = 450;
 	Red_Man_Draw.colour[0] = 0;
 	Red_Man_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(Red_Man_Draw.animation, Red_Man_Draw.frame_coord_map + 0, Red_Man_Draw.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(&Red_Man_Draw, 0, 0);
 
 	//Copy the red palette over and modify red with green
 	crayon_memory_clone_palette(&Red_Man_P, &Green_Man_P, 3);
@@ -207,7 +199,7 @@ int main(){
 	Green_Man_Draw.rotation[0] = 0;
 	Green_Man_Draw.colour[0] = 0;
 	Green_Man_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(Green_Man_Draw.animation, Green_Man_Draw.frame_coord_map + 0, Green_Man_Draw.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(&Green_Man_Draw, 0, 0);
 
 	//8 sprites, 1 frame, multi rotation and flip
 	crayon_memory_init_sprite_array(&Rainbow_Draw, &Opaque, &Opaque.animation_array[1], NULL, 8, 1, (1 << 4) + (1 << 3), 0);
@@ -248,8 +240,7 @@ int main(){
 	Rainbow_Draw.rotation[7] = 270;
 	Rainbow_Draw.colour[0] = 0;
 	Rainbow_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(Rainbow_Draw.animation, Rainbow_Draw.frame_coord_map + 0, Rainbow_Draw.frame_coord_map + 1, 0);
-	//ADD "Rotation from float to flip array converter call" HERE
+	crayon_graphics_frame_coordinates(&Rainbow_Draw, 0, 0);
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 

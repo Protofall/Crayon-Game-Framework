@@ -866,7 +866,7 @@ void language_swap(MinesweeperGrid_t * grid, MinesweeperOptions_t * options, Min
 		//Swap out grid frame coords
 		uint8_t i;
 		for(i = 0; i < grid->draw_grid.frames_used; i++){
-			crayon_graphics_frame_coordinates(grid->draw_grid.animation, grid->draw_grid.frame_coord_map + (2 * i), grid->draw_grid.frame_coord_map + (2 * i) + 1, i);
+			crayon_graphics_frame_coordinates(&grid->draw_grid, i, i);
 		}
 		//Use alternative frame coords for OS assets
 		for(i = 0; i < os->num_assets; i++){
@@ -1188,8 +1188,8 @@ int main(){
 	indented_tiles.flip[0] = 0;
 	indented_tiles.rotation[0] = 0;
 	indented_tiles.colour[0] = 0;
-	crayon_graphics_frame_coordinates(indented_tiles.animation, indented_tiles.frame_coord_map + 0, indented_tiles.frame_coord_map + 1, 6);	//Indent question
-	crayon_graphics_frame_coordinates(indented_tiles.animation, indented_tiles.frame_coord_map + 2, indented_tiles.frame_coord_map + 3, 7);	//Indent blank
+	crayon_graphics_frame_coordinates(&indented_tiles, 0, 6);
+	crayon_graphics_frame_coordinates(&indented_tiles, 1, 7);
 
 	//Setting defaults for the grid (These won't ever change again)
 	MS_grid.draw_grid.layer[0] = 17;
@@ -1199,8 +1199,7 @@ int main(){
 	MS_grid.draw_grid.rotation[0] = 0;
 	MS_grid.draw_grid.colour[0] = 0;
 	for(iter = 0; iter < MS_grid.draw_grid.frames_used; iter++){
-		crayon_graphics_frame_coordinates(MS_grid.draw_grid.animation, MS_grid.draw_grid.frame_coord_map + (2 * iter),
-			MS_grid.draw_grid.frame_coord_map + (2 * iter) + 1, iter);
+		crayon_graphics_frame_coordinates(&MS_grid.draw_grid, iter, iter);
 	}
 
 	//Get the info for num_changer
@@ -1242,8 +1241,8 @@ int main(){
 	devices.layer[0] = 31;
 	devices.frame_coord_key[0] = 0;
 	devices.frame_coord_key[1] = 1;
-	crayon_graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 0, devices.frame_coord_map + 1, 0);
-	crayon_graphics_frame_coordinates(devices.animation, devices.frame_coord_map + 2, devices.frame_coord_map + 3, 1);
+	crayon_graphics_frame_coordinates(&devices, 0, 0);
+	crayon_graphics_frame_coordinates(&devices, 1, 1);
 
 	//Dot for legend numbers (5 for gamepad and 3 for mouse legend, 1 for face, 11 in the legend)
 	crayon_sprite_array_t legend_dot;
@@ -1308,7 +1307,7 @@ int main(){
 
 	legend_dot.layer[0] = 33;
 	legend_dot.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(legend_dot.animation, legend_dot.frame_coord_map + 0, legend_dot.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(&legend_dot, 0, 0);
 
 	//Controller swirl
 	crayon_sprite_array_t cont_swirl;
@@ -1322,7 +1321,7 @@ int main(){
 	cont_swirl.pos[1] = devices.pos[1] + 10;
 	cont_swirl.layer[0] = 32;
 	cont_swirl.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(cont_swirl.animation, cont_swirl.frame_coord_map + 0, cont_swirl.frame_coord_map + 1, region);
+	crayon_graphics_frame_coordinates(&cont_swirl, 0, region);
 
 	crayon_sprite_array_t digit_display;
 	crayon_memory_init_sprite_array(&digit_display, &Board, &Board.animation_array[1], &Board_P, 6, 11, 1 << 1, 0);
@@ -1344,17 +1343,9 @@ int main(){
 	digit_display.pos[10] = digit_display.pos[8] + digit_display.animation->frame_width;
 	digit_display.pos[11] = digit_display.pos[1];
 	digit_display.layer[0] = 17;
-	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 0, digit_display.frame_coord_map + 1, 0);
-	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 2, digit_display.frame_coord_map + 3, 1);
-	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 4, digit_display.frame_coord_map + 5, 2);
-	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 6, digit_display.frame_coord_map + 7, 3);
-	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 8, digit_display.frame_coord_map + 9, 4);
-	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 10, digit_display.frame_coord_map + 11, 5);
-	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 12, digit_display.frame_coord_map + 13, 6);
-	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 14, digit_display.frame_coord_map + 15, 7);
-	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 16, digit_display.frame_coord_map + 17, 8);
-	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 18, digit_display.frame_coord_map + 19, 9);
-	crayon_graphics_frame_coordinates(digit_display.animation, digit_display.frame_coord_map + 20, digit_display.frame_coord_map + 21, 10);
+	for(iter = 0; iter < 11; iter++){
+		crayon_graphics_frame_coordinates(&digit_display, iter, iter);
+	}
 
 	crayon_sprite_array_t face;
 	crayon_memory_init_sprite_array(&face, &Board, &Board.animation_array[0], &Board_P, 1, 5, 1 << 1, 0);
@@ -1367,11 +1358,9 @@ int main(){
 	face.pos[1] = 64;
 	face.layer[0] = 16;
 	face.frame_coord_key[0] = 0;	//Neutral face
-	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 0, face.frame_coord_map + 1, 0);
-	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 2, face.frame_coord_map + 3, 1);
-	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 4, face.frame_coord_map + 5, 2);
-	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 6, face.frame_coord_map + 7, 3);
-	crayon_graphics_frame_coordinates(face.animation, face.frame_coord_map + 8, face.frame_coord_map + 9, 4);
+	for(iter = 0; iter < 11; iter++){
+		crayon_graphics_frame_coordinates(&face, iter, iter);
+	}
 
 	setup_keys(&MS_keyboard, &Tahoma_font);
 
@@ -1384,7 +1373,7 @@ int main(){
 	MS_keyboard.mini_buttons.colour[0] = 0;
 	MS_keyboard.mini_buttons.layer[0] = 30;
 	MS_keyboard.mini_buttons.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(MS_keyboard.mini_buttons.animation, MS_keyboard.mini_buttons.frame_coord_map, MS_keyboard.mini_buttons.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(&MS_keyboard.mini_buttons, 0, 0);
 
 	//Medium
 	crayon_memory_init_sprite_array(&MS_keyboard.medium_buttons, &Windows, &Windows.animation_array[mediumButton_id], &Windows_P, 5, 1, 0, 0);
@@ -1401,7 +1390,7 @@ int main(){
 	MS_keyboard.medium_buttons.pos[8] = 0;
 	MS_keyboard.medium_buttons.pos[9] = 0;
 
-	crayon_graphics_frame_coordinates(MS_keyboard.medium_buttons.animation, MS_keyboard.medium_buttons.frame_coord_map, MS_keyboard.medium_buttons.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(&MS_keyboard.medium_buttons, 0, 0);
 
 	//Space and Enter
 	crayon_memory_init_sprite_array(&MS_keyboard.big_buttons, &Windows, &Windows.animation_array[bigButton_id], &Windows_P, 2, 1, 0, 0);
@@ -1412,7 +1401,7 @@ int main(){
 	MS_keyboard.big_buttons.colour[0] = 0;
 	MS_keyboard.big_buttons.layer[0] = 30;
 	MS_keyboard.big_buttons.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(MS_keyboard.big_buttons.animation, MS_keyboard.big_buttons.frame_coord_map, MS_keyboard.big_buttons.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(&MS_keyboard.big_buttons, 0, 0);
 
 	uint8_t mini_button_width = Windows.animation_array[miniButton_id].frame_width;
 	uint8_t medium_button_width = Windows.animation_array[mediumButton_id].frame_width;
@@ -1509,7 +1498,7 @@ int main(){
 	MS_options.buttons.pos[8] = MS_options.buttons.pos[6];			//Update Grid
 	MS_options.buttons.pos[9] = MS_options.buttons.pos[7] + 30;
 	MS_options.buttons.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(MS_options.buttons.animation, MS_options.buttons.frame_coord_map, MS_options.buttons.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(&MS_options.buttons, 0, 0);
 
 	//Checkers
 	MS_options.checkers.layer[0] = 30;
@@ -1524,8 +1513,8 @@ int main(){
 	MS_options.checkers.pos[3] = MS_options.checkers.pos[1] + 40;
 	MS_options.checkers.frame_coord_key[0] = MS_options.sound_enabled;
 	MS_options.checkers.frame_coord_key[1] = MS_options.question_enabled;
-	crayon_graphics_frame_coordinates(MS_options.checkers.animation, MS_options.checkers.frame_coord_map, MS_options.checkers.frame_coord_map + 1, 0);
-	crayon_graphics_frame_coordinates(MS_options.checkers.animation, MS_options.checkers.frame_coord_map + 2, MS_options.checkers.frame_coord_map + 3, 1);
+	crayon_graphics_frame_coordinates(&MS_options.checkers, 0, 0);
+	crayon_graphics_frame_coordinates(&MS_options.checkers, 1, 1);
 
 	//Number_changers
 	MS_options.number_changers.layer[0] = 30;
@@ -1541,7 +1530,7 @@ int main(){
 	MS_options.number_changers.pos[4] = MS_options.number_changers.pos[0];	//Mines
 	MS_options.number_changers.pos[5] = MS_options.number_changers.pos[1] + 100;
 	MS_options.number_changers.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(MS_options.number_changers.animation, MS_options.number_changers.frame_coord_map, MS_options.number_changers.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(&MS_options.number_changers, 0, 0);
 
 	MS_grid.logic_grid = NULL;
 	reset_grid(&MS_grid, &MS_options, MS_options.savefile.pref_width, MS_options.savefile.pref_height,

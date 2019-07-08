@@ -11,9 +11,8 @@
 //Sets a palette for a spritesheet
 extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
 
-//Give an animation struct, frame, coordinates and frame and it will populate the coordinates
-extern void crayon_graphics_frame_coordinates(const struct crayon_animation *anim, uint16_t *frame_x,
-	uint16_t *frame_y, uint8_t frame);
+//Give a remder struct, list index, and frame and it will populate the coordinates
+extern void crayon_graphics_frame_coordinates(const crayon_sprite_array_t *draw_list, uint8_t index, uint8_t frame);
 
 
 //------------------Drawing Untextured polys------------------//

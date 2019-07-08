@@ -159,7 +159,7 @@ int main(){
 	Man_Draw.colour[0] = 0xFF0000FF;
 	Man_Draw.fade[0] = 255;
 	Man_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(Man_Draw.animation, Man_Draw.frame_coord_map + 0, Man_Draw.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(&Man_Draw, 0, 0);
 
 	crayon_memory_init_sprite_array(&Opaque_Blend_Draw, &Opaque, &Opaque.animation_array[0], NULL, 2, 1, (1 << 5), 0);
 	Opaque_Blend_Draw.pos[0] = 0;
@@ -176,7 +176,7 @@ int main(){
 	Opaque_Blend_Draw.fade[0] = 255;
 	Opaque_Blend_Draw.fade[1] = 255;
 	Opaque_Blend_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(Opaque_Blend_Draw.animation, Opaque_Blend_Draw.frame_coord_map + 0, Opaque_Blend_Draw.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(&Opaque_Blend_Draw, 0, 0);
 
 	crayon_memory_init_sprite_array(&Opaque_Add_Draw, &Opaque, &Opaque.animation_array[0], NULL, 2, 1, (1 << 5) + (1 << 6), 0);
 	Opaque_Add_Draw.pos[0] = 0;
@@ -193,7 +193,7 @@ int main(){
 	Opaque_Add_Draw.fade[0] = 255;
 	Opaque_Add_Draw.fade[1] = 255;
 	Opaque_Add_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(Opaque_Add_Draw.animation, Opaque_Add_Draw.frame_coord_map + 0, Opaque_Add_Draw.frame_coord_map + 1, 0);
+	crayon_graphics_frame_coordinates(&Opaque_Add_Draw, 0, 0);
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 	char buffer[15];
