@@ -97,10 +97,10 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 	pvr_prim(&hdr, sizeof(hdr));
 
 	//--CR -D-Z
-	uint8_t multiple_rotation = (poly_array->options >> 4) && 1;
-	uint8_t multiple_dims = (poly_array->options >> 2) && 1;
-	uint8_t multiple_colour = (poly_array->options >> 5) && 1;
-	uint8_t multiple_z = poly_array->options && 1;
+	uint8_t multiple_rotation = (poly_array->options >> 4) & 1;
+	uint8_t multiple_dims = (poly_array->options >> 2) & 1;
+	uint8_t multiple_colour = (poly_array->options >> 5) & 1;
+	uint8_t multiple_z = poly_array->options & 1;
 
 	//All this just for rotations
 	uint16_t *rotation_index;
@@ -246,8 +246,8 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 //C is for camera mode (Unimplemented)
 //M is for draw mode
 extern uint8_t crayon_graphics_draw(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode, uint8_t draw_mode){
-	if(((draw_mode >> 1) && 1) == 0){
-		if((draw_mode && 1) == 0){
+	if(((draw_mode >> 1) & 1) == 0){
+		if((draw_mode & 1) == 0){
 			return crayon_graphics_draw_sprites(sprite_array, poly_list_mode);
 		}
 		return crayon_graphics_draw_sprites_enhanced(sprite_array, poly_list_mode);
