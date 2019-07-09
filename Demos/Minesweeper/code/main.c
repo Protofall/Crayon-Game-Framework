@@ -1043,26 +1043,13 @@ int main(){
 	int8_t minute = -1;
 	char time_buffer[9];
 
-	float cursor_position[8];
-	cursor_position[0] = 100;
-	cursor_position[1] = 66;
-	cursor_position[2] = 200;
-	cursor_position[3] = 66;
-	cursor_position[4] = 414;
-	cursor_position[5] = 66;
-	cursor_position[6] = 524;
-	cursor_position[7] = 66;
-
 	crayon_spritesheet_t Board, Icons, Controllers, Windows;
 	crayon_palette_t Board_P, Icons_P, Controllers_P, Windows_P, Tahoma_P, White_Tahoma_P,
 		cursor_red, cursor_yellow, cursor_green, cursor_blue;
-	// crayon_palette_t BIOS_P;
-	// crayon_font_mono_t BIOS_font;
 	crayon_font_prop_t Tahoma_font;
 	Board.texture = NULL;
 	Icons.texture = NULL;
 	Windows.texture = NULL;
-	// BIOS_font.texture = NULL;
 	Tahoma_font.texture = NULL;
 
 	crayon_untextured_array_t Bg_polys, Option_polys;	//Contains some of the untextured polys that will be drawn.
@@ -1579,6 +1566,32 @@ int main(){
 	crayon_memory_swap_colour(&cursor_green, 0xFFFFFFFF, 0xFF008000, 0);
 	crayon_memory_swap_colour(&cursor_blue, 0xFFFFFFFF, 0xFF4D87D0, 0);
 
+	// crayon_graphics_draw_sprite(&Icons, &Icons.animation_array[0], cursor_position[2 * iter],
+	// 					cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, cursor_palette);
+
+	float cursor_position[8];
+	cursor_position[0] = 100;
+	cursor_position[1] = 66;
+	cursor_position[2] = 200;
+	cursor_position[3] = 66;
+	cursor_position[4] = 414;
+	cursor_position[5] = 66;
+	cursor_position[6] = 524;
+	cursor_position[7] = 66;
+
+	crayon_sprite_array_t cursor[4];
+	for(iter = 0; iter < 4; iter++){
+		crayon_memory_init_sprite_array(&cursor[iter], &Icons, &Icons.animation_array[0], &Icons_P, 1, 1, 0, 0);
+		//Due to old code, its easier to just use the old arrays and update before drawing
+		cursor[iter].layer[0] = 51;
+		cursor[iter].scale[0] = 1;
+		cursor[iter].scale[1] = 1;
+		cursor[iter].flip[0] = 0;
+		cursor[iter].rotation[0] = 0;
+		cursor[iter].frame_coord_key[0] = 0;
+		crayon_graphics_frame_coordinates(&cursor[iter], 0, 0);
+	}
+
 	//Setup the main palettes (Only need to call this once unless I change palettes)
 	crayon_graphics_setup_palette(&Board_P);		//0
 	crayon_graphics_setup_palette(&Icons_P);		//1
@@ -1593,7 +1606,6 @@ int main(){
 
 	crayon_graphics_setup_palette(&White_Tahoma_P);//61
 	crayon_graphics_setup_palette(&Tahoma_P);		//62
-	// crayon_graphics_setup_palette(&BIOS_P);		//63
 
 	pvr_stats_t pvr_stats;
 	while(1){
@@ -1950,6 +1962,14 @@ int main(){
 		digit_set(&digit_display, MS_grid.num_flags, 0);
 		digit_set(&digit_display, MS_grid.time_sec, 1);
 
+		//If two or more players are active, change their cursor palettes
+		if(!(player_active == 0 || player_active == (1 << 0) || player_active == (1 << 1) || player_active == (1 << 2) || player_active == (1 << 3))){
+			cursor[0].palette = &cursor_red;
+			cursor[1].palette = &cursor_yellow;
+			cursor[2].palette = &cursor_green;
+			cursor[3].palette = &cursor_blue;
+		}
+
 		time(&os_clock);	//I think this is how I populate it with the current time
 		time_struct = localtime(&os_clock);
 
@@ -1964,15 +1984,14 @@ int main(){
 			//Draw the indented tiles ontop of the grid and the cursors themselves
 			uint8_t menus_selected = 0;
 			for(iter = 0; iter < 4; iter++){
-				if(player_active & (1 << iter)){
-					//Passing coords as ints because otherwise we can get case where each pixel contains more than 1 texel
+				if(player_active & (1 << iter)){	//From right to left of var, but goes p1, p2, p3, p4...
 					//ADD A DRAW FOR THE SHADOW
-					uint8_t cursor_palette = 8 + iter;	//I should be basing this off the palettes, but I'd need to change to much
-					if(player_active == (1 << 0) || player_active == (1 << 1) || player_active == (1 << 2) || player_active == (1 << 3)){
-						cursor_palette = 1;
-					}
-					crayon_graphics_draw_sprite(&Icons, &Icons.animation_array[0], cursor_position[2 * iter],
-						cursor_position[(2 * iter) + 1], 51, 1, 1, 0, 0, cursor_palette);
+
+					//Update pos on draw array, kinda messy
+					cursor[iter].pos[0] = cursor_position[iter * 2];
+					cursor[iter].pos[1] = cursor_position[(iter * 2) + 1];
+
+					crayon_graphics_draw(&cursor[iter], PVR_LIST_TR_POLY, 0);
 
 					//Add code for checking if cursor is hovering over a button
 					menus_selected |= button_hover(cursor_position[(2 * iter)], cursor_position[(2 * iter) + 1], &os, &MS_options);
@@ -2346,6 +2365,9 @@ int main(){
 	retVal += crayon_memory_free_sprite_array(&MS_options.checkers, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.buttons, 0, 0);
 	retVal += crayon_memory_free_sprite_array(&MS_options.number_changers, 0, 0);
+	for(iter = 0; iter < 4; iter++){
+		retVal += crayon_memory_free_sprite_array(&cursor[iter], 0, 0);
+	}
 
 	retVal += crayon_memory_free_spritesheet(&Board);
 	retVal += crayon_memory_free_spritesheet(&Icons);

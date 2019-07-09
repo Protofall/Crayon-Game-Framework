@@ -1,5 +1,6 @@
-# Bouncing-Logo
+# Lines
 
-You know the bouncing DVD logo? This demo recreates that for the Dreamcast, but with a MIL-CD logo
+Unlike modern OpenGL, the dreamcast doesn't have a proper line draw function, so I've made this one instead.
 
-NOTE THAT THIS IS A WIP
+It only draws lines of 1 pixel thickness, but it could be possible to modify it to go further
+

@@ -242,53 +242,6 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 	return;
 }
 
-extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
-	const struct crayon_animation *anim, float draw_x, float draw_y, uint8_t layer,
-	float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
-	uint8_t palette_number){
-
-	//Screen coords. letter0 is top left coord, letter1 is bottom right coord. Z is depth (Layer)
-	const float x0 = trunc(draw_x);
-	const float y0 = trunc(draw_y);
-	const float x1 = x0 + (anim->frame_width) * scale_x;
-	const float y1 = y0 + (anim->frame_height) * scale_y;
-	const float z = layer;
-
-	//Texture coords. letter0 and letter1 have same logic as before (CHECK)
-	const float u0 = frame_x / (float)ss->dimensions;
-	const float v0 = frame_y / (float)ss->dimensions;
-	const float u1 = (frame_x + anim->frame_width) / (float)ss->dimensions;
-	const float v1 = (frame_y + anim->frame_height) / (float)ss->dimensions;
-
-	pvr_sprite_cxt_t context;
-	uint8_t texture_format = (((1 << 3) - 1) & (ss->texture_format >> (28 - 1)));	//Gets the Pixel format
-																													//https://github.com/tvspelsfreak/texconv
-	int textureformat = ss->texture_format;
-	if(texture_format == 5){	//4BPP
-			textureformat |= ((palette_number) << 21);	//Update the later to use KOS' macros
-	}
-	if(texture_format == 6){	//8BPP
-			textureformat |= ((palette_number) << 25);	//Update the later to use KOS' macros
-	}
-	pvr_sprite_cxt_txr(&context, PVR_LIST_TR_POLY, textureformat, ss->dimensions,
-		ss->dimensions, ss->texture, PVR_FILTER_NONE);
-
-	pvr_sprite_hdr_t header;
-	pvr_sprite_compile(&header, &context);
-	pvr_prim(&header, sizeof(header));
-
-	pvr_sprite_txr_t vert = {
-		.flags = PVR_CMD_VERTEX_EOL,
-		.ax = x0, .ay = y0, .az = z, .auv = PVR_PACK_16BIT_UV(u0, v0),
-		.bx = x1, .by = y0, .bz = z, .buv = PVR_PACK_16BIT_UV(u1, v0),
-		.cx = x1, .cy = y1, .cz = z, .cuv = PVR_PACK_16BIT_UV(u1, v1),
-		.dx = x0, .dy = y1
-	};
-	pvr_prim(&vert, sizeof(vert));
-
-	return 0;
-}
-
 //---- --CM
 //C is for camera mode (Unimplemented)
 //M is for draw mode

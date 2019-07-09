@@ -37,13 +37,8 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 //------------------Drawing Sprites from Spritesheets------------------//
 
 
-//Queue a texture to be rendered (If RGB565 or ARGB4444 then palette_number is never read)
-	//This is more so a learner function for noobies
-extern uint8_t crayon_graphics_draw_sprite(const struct crayon_spritesheet *ss,
-	const struct crayon_animation *anim, float draw_x, float draw_y, uint8_t layer,
-	float scale_x, float scale_y, uint16_t frame_x, uint16_t frame_y,
-	uint8_t palette_number);
-
+//Queue a texture to be rendered, draw mode right most bit is true for enhanced (false for non)
+//And second right most bit will later be used for camera mode control
 extern uint8_t crayon_graphics_draw(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode, uint8_t draw_mode);
 
 
