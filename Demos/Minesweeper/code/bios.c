@@ -2,10 +2,6 @@
 
 void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_init_params_t * pvr_params, uint8_t region, uint8_t first_time){
 
-	//For debug
-	uint8_t original_htz = MS_options->htz;
-	// uint8_t original_os = MS_options->operating_system;
-
 	//MS_options->htz is always set no matter what
 		//Redream uses a vga cable, lxdream doesn't
 	uint8_t vga_enabled = (vid_check_cable() == CT_VGA);
@@ -15,25 +11,22 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 	}
 	else{	//Else its RGB. This handles composite, S-video, SCART, etc
 		if(first_time){
-			if(region != FLASHROM_REGION_EUROPE){
-				vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
-				MS_options->htz = 1;
-			}
-			else{
+			if(region == FLASHROM_REGION_EUROPE){
 				vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
 				MS_options->htz = 0;
 			}
+			else{
+				vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
+				MS_options->htz = 1;
+			}
 		}
-		else if(MS_options->htz == 1){
-			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
-		}
-		else{
+		else if(MS_options->htz == 0){
 			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
 		}
+		else{
+			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
+		}
 	}
-
-
-	//What needs to happen.
 
 	//Display a screen with this kind of layout
 
@@ -58,9 +51,6 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 
 	//If VGA is detected, don't show the refresh rate option
 
-
-
-
 	pvr_init(pvr_params);
 
 	crayon_palette_t BIOS_P, BIOS_invert_P;
@@ -84,7 +74,7 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 	crayon_memory_swap_colour(&BIOS_invert_P, 0xFFAAAAAA, 0xFF000000, 0);
 	crayon_memory_swap_colour(&BIOS_invert_P, 0xFFFFFFFF, 0xFFAAAAAA, 0);
 
-	//Palettes don't change so set them up
+	//Palettes don't change so set them up now
 	crayon_graphics_setup_palette(&BIOS_P);			//0
 	crayon_graphics_setup_palette(&BIOS_invert_P);	//1
 
@@ -105,7 +95,7 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 
 	//Set the palettes for each option
 	int8_t * palette_2000,* palette_XP,* palette_50htz,* palette_60htz;
-	if(MS_options->operating_system == 0){
+	if(MS_options->operating_system == 0){	//2000 highlight
 		palette_2000 = &BIOS_invert_P.palette_id;
 		palette_XP = &BIOS_P.palette_id;
 	}
@@ -114,7 +104,7 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 		palette_XP = &BIOS_invert_P.palette_id;
 	}
 
-	if(MS_options->htz == 0){
+	if(MS_options->htz == 0){	//50Htz highlight
 		palette_50htz = &BIOS_invert_P.palette_id;
 		palette_60htz = &BIOS_P.palette_id;
 	}
@@ -204,9 +194,6 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 			OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 640 - crayon_graphics_string_get_length_mono(&BIOS_font, countdown_buffer, 0),
 				480 - 24, 50, 1, 1, BIOS_P.palette_id, countdown_buffer);
 
-			//Debug
-			// sprintf(buffer_debug, "Original htz: %d , os: %d", original_htz, original_os);
-			// OLD_crayon_graphics_draw_text_mono(&BIOS_font, PVR_LIST_OP_POLY, 0, 480 - 24, 50, 1, 1, BIOS_P.palette_id, buffer_debug);
 		pvr_list_finish();
 
 		pvr_scene_finish();
@@ -218,17 +205,15 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 	crayon_memory_free_palette(&BIOS_invert_P);
 
 	//If you're changing refresh rate
-	if(original_htz == 1 && *palette_50htz == 1){	//Changing to 50Htz
-		MS_options->htz = 0;
-		//Shutdown pvr
-		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);	//Set vid mode
-		//Re-init pvr
-	}
-	else if(original_htz == 0 && *palette_60htz == 1){	//Changing to 60Htz
-		MS_options->htz = 1;
-		//Shutdown pvr
-		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//Set vid mode
-		//Re-init pvr
+	if(!vga_enabled){
+		if(MS_options->htz == 1 && *palette_50htz == 1){	//Going from 60Htz to 50Htz
+			MS_options->htz = 0;
+			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);	//Set vid mode
+		}
+		else if(MS_options->htz == 0 && *palette_60htz == 1){	//Going from 50Htz to 60Htz
+			MS_options->htz = 1;
+			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//Set vid mode
+		}
 	}
 
 	//Set the adjustment
@@ -246,4 +231,6 @@ void BIOS_menu(MinesweeperOptions_t * MS_options, float * htz_adjustment, pvr_in
 	else{
 		MS_options->operating_system = 1;
 	}
+
+	return;
 }

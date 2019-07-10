@@ -1607,6 +1607,11 @@ int main(){
 	crayon_graphics_setup_palette(&White_Tahoma_P);//61
 	crayon_graphics_setup_palette(&Tahoma_P);		//62
 
+	//This will be for the fade-in effect for 3 seconds
+	uint8_t fade = 0xFF;
+	uint8_t fade_frame_count = 0;
+	float fade_cap = ((3 * 60) / htz_adjustment);	//3 seconds, 180 or 150 frames
+
 	pvr_stats_t pvr_stats;
 	while(1){
 		pvr_wait_ready();	//This lives up here since imput handling depends on vblanks
@@ -1981,6 +1986,12 @@ int main(){
 		//Transfer more stuff from this list into either the PT or OP lists
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
+			//Draw the fade in effect
+			if(fade){
+				crayon_graphics_draw_untextured_poly(0, 0, 255, 640, 480, fade << 24, PVR_LIST_TR_POLY);
+			}
+
+
 			//Draw the indented tiles ontop of the grid and the cursors themselves
 			uint8_t menus_selected = 0;
 			for(iter = 0; iter < 4; iter++){
@@ -2028,10 +2039,8 @@ int main(){
 			// OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 36, 50, 1, 1, 62, snum);
 			// sprintf(snum, "P: %d, S: %d\n", MS_options.savefile_details.savefile_port, MS_options.savefile_details.savefile_slot);
 			// OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 48, 50, 1, 1, 62, snum);
-			// sprintf(snum, "Hacked save: %d\n", hacker);
-			// OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
 			// sprintf(snum, "Htz: %d, VGA: %d\n", MS_options.htz, vid_check_cable());
-			// OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 72, 50, 1, 1, 62, snum);
+			// OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 5, 100 + 60, 50, 1, 1, 62, snum);
 
 			//Draw windows assets
 			for(iter = 0; iter < os.num_assets; iter++){
@@ -2091,6 +2100,10 @@ int main(){
 
 			//XP uses another palette (White text version)
 			OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, os.clock_x, os.clock_y, 20, 1, 1, os.clock_palette->palette_id, time_buffer);
+
+			if(hacker){
+				OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 10, 435, 100, 1, 1, Tahoma_P.palette_id, "Savefile has been tampered with");				
+			}
 
 			if(MS_options.focus == 1){
 
@@ -2224,7 +2237,7 @@ int main(){
 			else if(MS_options.focus == 5){
 
 				OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 120, 25, 1, 1, 62, "Microsoft (R) Minesweeper\0");	//Get the proper @R and @c symbols for XP, or not...
-				OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.3.0-dev (Build 3011: Service Pack 5)\0");
+				OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 125 + 12, 25, 1, 1, 62, "Version 1.3.0 (Build 3011: Service Pack 5)\0");
 				OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 130 + 24, 25, 1, 1, 62, "Copyright (C) 1981-2018 Microsoft Corp.\0");
 				OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 135 + 36, 25, 1, 1, 62, "by Robert Donner and Curt Johnson\0");
 				OLD_crayon_graphics_draw_text_prop(&Tahoma_font, PVR_LIST_PT_POLY, 140, 155 + 48, 25, 1, 1, 62, "This Minesweeper re-creation was made by Protofall using KallistiOS,\0");
@@ -2346,6 +2359,12 @@ int main(){
 		//Update the face for the new frame (Unless the game is over)
 		if(face.frame_coord_key[0] != 2 && face.frame_coord_key[0] != 3){
 			face.frame_coord_key[0] = 0;
+		}
+
+		//Update the fade-out effect
+		if(fade){
+			fade = 255 - (255 * (fade_frame_count / fade_cap));
+			fade_frame_count++;
 		}
 	}
 
