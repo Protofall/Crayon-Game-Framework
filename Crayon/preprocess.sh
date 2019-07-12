@@ -15,7 +15,7 @@ helpInfo () {
 	exit 0
 }
 
-#Parameters: $1 is original file name, $2 is destination path, $3 is the format (Eg. RGB565), $4 is noRM
+#Parameters: $1 is original file name, $2 is destination path, $3 is the format (Eg. RGB565), $4 is compression, $5 is noRM
 packerSheet () {
 	cd "$1"
 
@@ -39,7 +39,11 @@ packerSheet () {
 		fi
 	fi
 
-	texconv -i "$2/$name.crayon_temp.png" -o "$2/$name.dtex" -f "$3"
+	if [ "$4" = 0 ];then
+		texconv -i "$2/$name.crayon_temp.png" -o "$2/$name.dtex" -f "$3"
+	else
+		texconv -i "$2/$name.crayon_temp.png" -o "$2/$name.dtex" -f "$3" -c
+	fi
 
 	pngCount=$(wc -l "$2/$name.crayon_temp.txt" | xargs | cut -d' ' -f 1)
 	echo "$pngCount" >> "$2/$name.txt"	#Output the number of sprites on top
@@ -61,7 +65,7 @@ packerSheet () {
 	done
 
 	#We remove old packer png and txt
-	if [ "$4" = 0 ];then
+	if [ "$5" = 0 ];then
 		rm "$2/$name.crayon_temp.png"
 		rm "$2/$name.crayon_temp.txt"
 	fi
@@ -80,17 +84,19 @@ build () {
 			# 0th bit is if its gz compressed file/dir
 			# 1st bit is if its an img dir
 			# 2nd bit is if its a packer spritesheet dir
-			# 3rd bit is if its a standalone texconv request
+			# 3rd bit is if it is using a texconv texture format
+			# 4th bit is if its texconv compressed. 3rd bit must be active (UNUSED)
 
 		#What shouldn't be valid
-			# An ".img" with anything other than a gz
-			# Multiple texconv tags
+			# A "crayon_img" with anything other than a "crayon_gz"
+			# Multiple texconv texture formats (3rd bit)
 			# A packer request without a texconv request
 			# A packer sheet on a file
 
 		texconvFormat="NONE"
+		texconvCompress=0
 		#texconvFormat contains the format id
-			# None = -1
+			# NONE = -1
 			# ARGB1555 = 0
 			# RGB565 = 1
 			# ARGB4444 = 2
@@ -121,6 +127,9 @@ build () {
 				fi
 				texconvFormat="$part"
 				crayonField=$(($crayonField|$((1 << 3))))
+			elif [ "$part" = "TEXCONV_COMPRESS" ];then
+				texconvCompress=1
+				crayonField=$(($crayonField|$((1 << 4))))
 			else
 				outputName+="$part".	#Only do this on a non-crayon tag
 			fi
@@ -145,7 +154,7 @@ build () {
 					echo "	ERROR: $x doesn't have a texture tag"
 					exit 1
 				fi
-				packerSheet "$x" "$2" "$texconvFormat" "$3"	#This builds the spritesheet then converts it to a dtex
+				packerSheet "$x" "$2" "$texconvFormat" "$texconvCompress" "$3"	#This builds the spritesheet then converts it to a dtex
 			else
 				mkdir -p "$2/$outputName"
 
