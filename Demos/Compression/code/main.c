@@ -181,7 +181,7 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw_sprites(&Logo_Draw, PVR_LIST_PT_POLY);	//Broken on Redream
+			crayon_graphics_draw_sprites(&Logo_Draw, PVR_LIST_PT_POLY);	//Broken on most emulators, but not hardware
 			crayon_graphics_draw_sprites(&Logo2_Draw, PVR_LIST_PT_POLY);
 		pvr_list_finish();
 
