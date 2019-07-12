@@ -11,7 +11,7 @@
 //Sets a palette for a spritesheet
 extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
 
-//Give a remder struct, list index, and frame and it will populate the coordinates
+//Give a render struct, map index, and animation frame and it will populate the coordinates
 extern void crayon_graphics_frame_coordinates(const crayon_sprite_array_t *draw_list, uint8_t index, uint8_t frame);
 
 //This will get the size of the draw element as it appears on screen. It takes scale into consideration
