@@ -106,8 +106,6 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 	uint16_t *rotation_index;
 	uint16_t zero = 0;
 	float angle = 0;
-	float cos_theta = 0;
-	float sin_theta = 0;
 	float mid_x = 0;
 	float mid_y = 0;
 	float new_x;
@@ -140,8 +138,6 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 			angle = fmod(poly_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
 			if(angle < 0){angle += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
 			angle = (angle * M_PI) / 180.0f;	//Convert from degrees to ratians
-			cos_theta = cos(angle);
-			sin_theta = sin(angle);
 		}
 
 		//Rotate the poly
@@ -152,8 +148,8 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 
 			//Rotate the verts around the midpoint
 			for(j = 0; j < 4; j++){
-				new_x = (cos_theta * (vert[j].x - mid_x)) - (sin_theta * (vert[j].y - mid_y)) + mid_x;
-				vert[j].y = (sin_theta * (vert[j].x - mid_x)) + (cos_theta * (vert[j].y - mid_y)) + mid_y;
+				new_x = crayon_graphics_rotate_point_x(mid_x, mid_y, vert[j].x, vert[j].y, angle);
+				vert[j].y = crayon_graphics_rotate_point_y(mid_x, mid_y, vert[j].x, vert[j].y, angle);
 				vert[j].x = new_x;
 			}
 		}
@@ -476,8 +472,6 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 	uint8_t multi_scale = !!(sprite_array->options & (1 << 2));
 	uint16_t zero = 0;
 	float angle = 0;
-	float cos_theta = 0;
-	float sin_theta = 0;
 	float new_x = 0;	//Used to hold the new x vert pos while calculating the new y vert pos
 	float mid_x = 0;
 	float mid_y = 0;
@@ -573,8 +567,6 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 			angle = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
 			if(angle < 0){angle += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
 			angle = (angle * M_PI) / 180.0f;
-			cos_theta = cos(angle);
-			sin_theta = sin(angle);
 		}
 
 		//If we don't want to do rotations (Rotation == 0.0), then skip it
@@ -586,8 +578,8 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 
 			//Update the vert x and y positions
 			for(j = 0; j < 4; j++){
-				new_x = (cos_theta * (vert[j].x - mid_x)) - (sin_theta * (vert[j].y - mid_y)) + mid_x;
-				vert[j].y = (sin_theta * (vert[j].x - mid_x)) + (cos_theta * (vert[j].y - mid_y)) + mid_y;
+				new_x = crayon_graphics_rotate_point_x(mid_x, mid_y, vert[j].x, vert[j].y, angle);
+				vert[j].y = crayon_graphics_rotate_point_y(mid_x, mid_y, vert[j].x, vert[j].y, angle);
 				vert[j].x = new_x;
 			}
 		}
@@ -842,4 +834,16 @@ extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t 
 	}
 
 	return best_length;
+}
+
+extern float crayon_graphics_rotate_point_x(float center_x, float center_y, float orbit_x, float orbit_y, float radians){
+	float sin_theta = sin(radians);
+	float cos_theta = cos(radians);
+	return (cos_theta * (orbit_x - center_x)) - (sin_theta * (orbit_y - center_y)) + center_x;
+}
+
+extern float crayon_graphics_rotate_point_y(float center_x, float center_y, float orbit_x, float orbit_y, float radians){
+	float sin_theta = sin(radians);
+	float cos_theta = cos(radians);
+	return (sin_theta * (orbit_x - center_x)) + (cos_theta * (orbit_y - center_y)) + center_y;
 }
