@@ -1,11 +1,11 @@
 #include "assist.h"
 
 extern char * crayon_get_version(){
-	char * version = malloc(sizeof(char) * 10);
+	char * version = malloc(sizeof(char) * 16);
 	if(version == NULL){
 		return NULL;
 	}
-	sprintf(version, "%d.%d.%d", CRAYON_MAJOR_NUMBER, CRAYON_MINOR_NUMBER, CRAYON_PATCH_NUMBER);
+	sprintf(version, "%d.%d.%d-dev", CRAYON_MAJOR_NUMBER, CRAYON_MINOR_NUMBER, CRAYON_PATCH_NUMBER);
 	return version;
 }
 
