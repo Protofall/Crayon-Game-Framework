@@ -108,7 +108,6 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 	float angle = 0;
 	float mid_x = 0;
 	float mid_y = 0;
-	float new_x;
 
 	uint16_t i, j;
 	if(multiple_rotation){rotation_index = &i;}
@@ -148,9 +147,7 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 
 			//Rotate the verts around the midpoint
 			for(j = 0; j < 4; j++){
-				new_x = crayon_graphics_rotate_point_x(mid_x, mid_y, vert[j].x, vert[j].y, angle);
-				vert[j].y = crayon_graphics_rotate_point_y(mid_x, mid_y, vert[j].x, vert[j].y, angle);
-				vert[j].x = new_x;
+				crayon_graphics_rotate_point(mid_x, mid_y, &vert[j].x, &vert[j].y, angle);
 			}
 		}
 
@@ -250,7 +247,7 @@ extern uint8_t crayon_graphics_draw(crayon_sprite_array_t *sprite_array, uint8_t
 
 	}
 	else{
-		printf("Camera mode is't implemented yet!");
+		error_freeze("Camera mode is't implemented yet!");
 		return -1;
 	}
 }
@@ -472,7 +469,6 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 	uint8_t multi_scale = !!(sprite_array->options & (1 << 2));
 	uint16_t zero = 0;
 	float angle = 0;
-	float new_x = 0;	//Used to hold the new x vert pos while calculating the new y vert pos
 	float mid_x = 0;
 	float mid_y = 0;
 
@@ -578,9 +574,7 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 
 			//Update the vert x and y positions
 			for(j = 0; j < 4; j++){
-				new_x = crayon_graphics_rotate_point_x(mid_x, mid_y, vert[j].x, vert[j].y, angle);
-				vert[j].y = crayon_graphics_rotate_point_y(mid_x, mid_y, vert[j].x, vert[j].y, angle);
-				vert[j].x = new_x;
+				crayon_graphics_rotate_point(mid_x, mid_y, &vert[j].x, &vert[j].y, angle);
 			}
 		}
 
@@ -836,14 +830,12 @@ extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t 
 	return best_length;
 }
 
-extern float crayon_graphics_rotate_point_x(float center_x, float center_y, float orbit_x, float orbit_y, float radians){
+extern void crayon_graphics_rotate_point(float center_x, float center_y, float * orbit_x, float * orbit_y, float radians){
 	float sin_theta = sin(radians);
 	float cos_theta = cos(radians);
-	return (cos_theta * (orbit_x - center_x)) - (sin_theta * (orbit_y - center_y)) + center_x;
-}
+	float new_x = (cos_theta * (*orbit_x - center_x)) - (sin_theta * (*orbit_y - center_y)) + center_x;
+	*orbit_y = (sin_theta * (*orbit_x - center_x)) + (cos_theta * (*orbit_y - center_y)) + center_y;
+	*orbit_x = new_x;
+	return;
 
-extern float crayon_graphics_rotate_point_y(float center_x, float center_y, float orbit_x, float orbit_y, float radians){
-	float sin_theta = sin(radians);
-	float cos_theta = cos(radians);
-	return (sin_theta * (orbit_x - center_x)) + (cos_theta * (orbit_y - center_y)) + center_y;
 }

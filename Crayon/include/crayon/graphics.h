@@ -85,8 +85,6 @@ extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t 
 
 //------------------Internal graphics functions------------------//
 
-extern float crayon_graphics_rotate_point_x(float center_x, float center_y, float orbit_x, float orbit_y, float radians);
-extern float crayon_graphics_rotate_point_y(float center_x, float center_y, float orbit_x, float orbit_y, float radians);
-
+extern void crayon_graphics_rotate_point(float center_x, float center_y, float * orbit_x, float * orbit_y, float radians);
 
 #endif
