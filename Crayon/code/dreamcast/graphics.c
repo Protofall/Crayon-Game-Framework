@@ -109,6 +109,7 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 	float angle = 0;
 	float mid_x = 0;
 	float mid_y = 0;
+	uint8_t skip = 0;
 
 	uint16_t i, j;
 	if(multiple_rotation){rotation_index = &i;}
@@ -120,7 +121,10 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 	vert[3].flags = PVR_CMD_VERTEX_EOL;
 
 	for(i = 0; i < poly_array->list_size; i++){
-		if(poly_array->colour[multiple_colour * i] >> 24 == 0){continue;}	//Don't draw alpha-less stuff
+		if(poly_array->colour[multiple_colour * i] >> 24 == 0){	//Don't draw alpha-less stuff
+			if(i != 0){continue;}	//For the first element, we need to initialise our vars, otherwise we just skip to the next element
+			skip = 1;
+		}
 		vert[0].argb = poly_array->colour[multiple_colour * i];	//If only one colour, this is forced to colour zero
 		vert[0].oargb = 0;
 		vert[0].z = poly_array->layer[multiple_z * i];
@@ -159,6 +163,10 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 			vert[j].oargb = vert[0].oargb;
 		}
 
+		if(skip){
+			skip = 0;
+			continue;
+		}
 		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
 	}
 	return;
@@ -249,7 +257,6 @@ extern uint8_t crayon_graphics_draw(crayon_sprite_array_t *sprite_array, uint8_t
 
 	}
 	else{
-		error_freeze("Camera mode is't implemented yet!");
 		return -1;
 	}
 }
@@ -473,6 +480,7 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 	float angle = 0;
 	float mid_x = 0;
 	float mid_y = 0;
+	uint8_t skip = 0;
 
 	uint16_t i, j;	//Indexes
 	if(sprite_array->options & (1 << 0)){z_index = &i;}
@@ -498,7 +506,10 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 
 	uint8_t invf, f, a, r, g, b;
 	for(i = 0; i < sprite_array->list_size; i++){
-		if(sprite_array->colour[*colour_index] >> 24 == 0){continue;}	//Don't draw alpha-less stuff
+		if(sprite_array->colour[*colour_index] >> 24 == 0){	//Don't draw alpha-less stuff
+			if(i != 0){continue;}	//For the first element, we need to initialise our vars, otherwise we just skip to the next element
+			skip = 1;
+		}
 		//These if statements will trigger once if we have a single element (i == 0)
 			//and every time for a multi-list
 		if(*z_index == i){	//z
@@ -588,6 +599,10 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 			vert[j].z = vert[0].z;
 		}
 
+		if(skip){
+			skip = 0;
+			continue;
+		}
 		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
 	}
 
