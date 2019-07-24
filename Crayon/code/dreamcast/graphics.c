@@ -46,6 +46,7 @@ extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t
 
 extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uint8_t layer, uint16_t dim_x,
   uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode){
+  	if(colour >> 24 == 0){return;}	//Don't draw alpha-less stuff
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert;
@@ -119,6 +120,7 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 	vert[3].flags = PVR_CMD_VERTEX_EOL;
 
 	for(i = 0; i < poly_array->list_size; i++){
+		if(poly_array->colour[multiple_colour * i] >> 24 == 0){continue;}	//Don't draw alpha-less stuff
 		vert[0].argb = poly_array->colour[multiple_colour * i];	//If only one colour, this is forced to colour zero
 		vert[0].oargb = 0;
 		vert[0].z = poly_array->layer[multiple_z * i];
@@ -164,7 +166,7 @@ extern void crayon_graphics_draw_untextured_array(crayon_untextured_array_t *pol
 
 extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t layer, uint32_t colour,
 	uint8_t poly_list_mode){
-
+	if(colour >> 24 == 0){return;}	//Don't draw alpha-less stuff
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert[4];
@@ -496,6 +498,7 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *spri
 
 	uint8_t invf, f, a, r, g, b;
 	for(i = 0; i < sprite_array->list_size; i++){
+		if(sprite_array->colour[*colour_index] >> 24 == 0){continue;}	//Don't draw alpha-less stuff
 		//These if statements will trigger once if we have a single element (i == 0)
 			//and every time for a multi-list
 		if(*z_index == i){	//z
