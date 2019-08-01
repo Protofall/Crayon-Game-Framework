@@ -118,8 +118,8 @@ int main(){
 	set_screen(&htz_adjustment);
 
 	crayon_spritesheet_t Man, Opaque;
-	crayon_sprite_array_t Man_Draw, Opaque_Blend_Draw, Opaque_Add_Draw;
 	crayon_palette_t Man_P;
+	crayon_draw_array_t Man_Draw, Opaque_Blend_Draw, Opaque_Add_Draw;
 
 	crayon_font_mono_t BIOS;
 	crayon_palette_t BIOS_P;
@@ -148,7 +148,8 @@ int main(){
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
-	crayon_memory_init_sprite_array(&Man_Draw, &Man, &Man.animation_array[0], &Man_P, 1, 1, 0, 0);
+	// crayon_memory_init_sprite_array(&Man_Draw, &Man, &Man.animation_array[0], &Man_P, 1, 1, 0, 0);
+	crayon_memory_init_draw_array(&Man_Draw, &Man, &Man.animation_array[0], &Man_P, 1, 1, 0, 0);
 	Man_Draw.layer[0] = 2;
 	Man_Draw.scale[0] = 7;
 	Man_Draw.scale[1] = 7;
@@ -161,39 +162,41 @@ int main(){
 	Man_Draw.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(&Man_Draw, 0, 0);
 
-	crayon_memory_init_sprite_array(&Opaque_Blend_Draw, &Opaque, &Opaque.animation_array[0], NULL, 2, 1, (1 << 5), 0);
-	Opaque_Blend_Draw.pos[0] = 0;
-	Opaque_Blend_Draw.pos[1] = 0;
-	Opaque_Blend_Draw.pos[2] = 100;
-	Opaque_Blend_Draw.pos[3] = 0;
-	Opaque_Blend_Draw.layer[0] = 1;
-	Opaque_Blend_Draw.scale[0] = 12;
-	Opaque_Blend_Draw.scale[1] = 12;
-	Opaque_Blend_Draw.flip[0] = 0;
-	Opaque_Blend_Draw.rotation[0] = 0;
-	Opaque_Blend_Draw.colour[0] = 0xFF00FF00;
-	Opaque_Blend_Draw.colour[1] = 0xFFFF0000;
-	Opaque_Blend_Draw.fade[0] = 255;
-	Opaque_Blend_Draw.fade[1] = 255;
-	Opaque_Blend_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Opaque_Blend_Draw, 0, 0);
+	// crayon_memory_init_sprite_array(&Opaque_Blend_Draw, &Opaque, &Opaque.animation_array[0], NULL, 2, 1, (1 << 5), 0);
+	// crayon_memory_init_draw_array(&Opaque_Blend_Draw, &Opaque, &Opaque.animation_array[0], NULL, 2, 1, (1 << 5), 0);
+	// Opaque_Blend_Draw.pos[0] = 0;
+	// Opaque_Blend_Draw.pos[1] = 0;
+	// Opaque_Blend_Draw.pos[2] = 100;
+	// Opaque_Blend_Draw.pos[3] = 0;
+	// Opaque_Blend_Draw.layer[0] = 1;
+	// Opaque_Blend_Draw.scale[0] = 12;
+	// Opaque_Blend_Draw.scale[1] = 12;
+	// Opaque_Blend_Draw.flip[0] = 0;
+	// Opaque_Blend_Draw.rotation[0] = 0;
+	// Opaque_Blend_Draw.colour[0] = 0xFF00FF00;
+	// Opaque_Blend_Draw.colour[1] = 0xFFFF0000;
+	// Opaque_Blend_Draw.fade[0] = 255;
+	// Opaque_Blend_Draw.fade[1] = 255;
+	// Opaque_Blend_Draw.frame_coord_key[0] = 0;
+	// crayon_graphics_frame_coordinates(&Opaque_Blend_Draw, 0, 0);
 
-	crayon_memory_init_sprite_array(&Opaque_Add_Draw, &Opaque, &Opaque.animation_array[0], NULL, 2, 1, (1 << 5) + (1 << 6), 0);
-	Opaque_Add_Draw.pos[0] = 0;
-	Opaque_Add_Draw.pos[1] = 100;
-	Opaque_Add_Draw.pos[2] = 100;
-	Opaque_Add_Draw.pos[3] = 100;
-	Opaque_Add_Draw.layer[0] = 1;
-	Opaque_Add_Draw.scale[0] = 12;
-	Opaque_Add_Draw.scale[1] = 12;
-	Opaque_Add_Draw.flip[0] = 0;
-	Opaque_Add_Draw.rotation[0] = 0;
-	Opaque_Add_Draw.colour[0] = 0xFF00FF00;
-	Opaque_Add_Draw.colour[1] = 0xFFFF0000;
-	Opaque_Add_Draw.fade[0] = 255;
-	Opaque_Add_Draw.fade[1] = 255;
-	Opaque_Add_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Opaque_Add_Draw, 0, 0);
+	// // crayon_memory_init_sprite_array(&Opaque_Add_Draw, &Opaque, &Opaque.animation_array[0], NULL, 2, 1, (1 << 5) + (1 << 6), 0);
+	// crayon_memory_init_draw_array(&Opaque_Add_Draw, &Opaque, &Opaque.animation_array[0], NULL, 2, 1, (1 << 5) + (1 << 6), 0);
+	// Opaque_Add_Draw.pos[0] = 0;
+	// Opaque_Add_Draw.pos[1] = 100;
+	// Opaque_Add_Draw.pos[2] = 100;
+	// Opaque_Add_Draw.pos[3] = 100;
+	// Opaque_Add_Draw.layer[0] = 1;
+	// Opaque_Add_Draw.scale[0] = 12;
+	// Opaque_Add_Draw.scale[1] = 12;
+	// Opaque_Add_Draw.flip[0] = 0;
+	// Opaque_Add_Draw.rotation[0] = 0;
+	// Opaque_Add_Draw.colour[0] = 0xFF00FF00;
+	// Opaque_Add_Draw.colour[1] = 0xFFFF0000;
+	// Opaque_Add_Draw.fade[0] = 255;
+	// Opaque_Add_Draw.fade[1] = 255;
+	// Opaque_Add_Draw.frame_coord_key[0] = 0;
+	// crayon_graphics_frame_coordinates(&Opaque_Add_Draw, 0, 0);
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 	char buffer[15];
@@ -218,28 +221,37 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
-			crayon_graphics_draw(&Opaque_Blend_Draw, PVR_LIST_OP_POLY, 1);
-			crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
+			// crayon_graphics_draw(&Opaque_Blend_Draw, PVR_LIST_OP_POLY, 1);
+			// crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
 			crayon_graphics_draw_text_mono(buffer, &BIOS, PVR_LIST_OP_POLY, 280, 360, 30, 1, 1, BIOS_P.palette_id);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw(&Man_Draw, PVR_LIST_PT_POLY, 1);
+			// crayon_graphics_draw(&Man_Draw, PVR_LIST_PT_POLY, 1);
+			crayon_graphics_draw(&Man_Draw, PVR_LIST_PT_POLY, 0);
 		pvr_list_finish();
 
 		pvr_scene_finish();
 
 		//Rotate the man and keep it within the 0 - 360 range
-		Man_Draw.rotation[0]++;
-		if(Man_Draw.rotation[0] > 360){
-			Man_Draw.rotation[0] -= 360;
-		}
+		// Man_Draw.rotation[0]++;
+		// if(Man_Draw.rotation[0] > 360){
+		// 	Man_Draw.rotation[0] -= 360;
+		// }
 	}
 
 	//Also frees the spritesheet and palette
-	crayon_memory_free_sprite_array(&Man_Draw, 1, 1);
-	crayon_memory_free_sprite_array(&Opaque_Blend_Draw, 0, 0);	//Won't free ss
-	crayon_memory_free_sprite_array(&Opaque_Add_Draw, 1, 0);	//But this one will
+	crayon_memory_free_draw_array(&Man_Draw);
+	crayon_memory_free_draw_array(&Opaque_Blend_Draw);
+	crayon_memory_free_draw_array(&Opaque_Add_Draw);
+
+	crayon_memory_free_mono_font_sheet(&BIOS);
+
+	crayon_memory_free_spritesheet(&Man);
+	crayon_memory_free_spritesheet(&Opaque);
+
+	crayon_memory_free_palette(&Man_P);
+	crayon_memory_free_palette(&BIOS_P);
 
 	return 0;
 }

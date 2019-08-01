@@ -61,17 +61,6 @@ int main(){
 	float htz_adjustment;
 	set_screen(&htz_adjustment);
 
-	// crayon_untextured_array_t rotate;
-
-	// crayon_memory_init_untextered_array(&rotate, 1, 0);
-	// rotate.layer[0] = 2;
-	// rotate.dimensions[0] = 300;
-	// rotate.dimensions[1] = 225;
-	// rotate.pos[0] = (640 - rotate.dimensions[0]) / 2.0f;
-	// rotate.pos[1] = (480 - rotate.dimensions[1]) / 2.0f;
-	// rotate.rotation[0] = 0;
-	// rotate.colour[0] = 0xFFFFFFFF;
-
 	crayon_draw_array_t rotate;
 
 	crayon_memory_init_draw_array(&rotate, NULL, 0, NULL, 1, 0, 0, PVR_FILTER_NONE);
@@ -82,10 +71,6 @@ int main(){
 	rotate.pos[1] = (480 - rotate.scale[1]) / 2.0f;
 	rotate.rotation[0] = 0;
 	rotate.colour[0] = 0xFFFFFFFF;
-
-	// extern void crayon_memory_init_draw_array(crayon_draw_array_t *draw_array, crayon_spritesheet_t *ss,
-	// uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
-	// uint8_t filter);
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 

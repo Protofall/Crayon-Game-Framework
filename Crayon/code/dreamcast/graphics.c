@@ -37,11 +37,21 @@ extern void crayon_graphics_frame_coordinates(const crayon_draw_array_t *draw_li
 }
 
 extern float crayon_graphics_get_draw_element_width(const crayon_draw_array_t *draw_list, uint8_t id){
-	return draw_list->animation->frame_width * draw_list->scale[id * 2];
+	if(draw_list->options & (1 << 7)){
+		return draw_list->animation->frame_width * draw_list->scale[id * 2];
+	}
+	else{
+		return draw_list->scale[id * 2];
+	}
 }
 
 extern float crayon_graphics_get_draw_element_height(const crayon_draw_array_t *draw_list, uint8_t id){
-	return draw_list->animation->frame_height * draw_list->scale[(id * 2) + 1];
+	if(draw_list->options & (1 << 7)){
+		return draw_list->animation->frame_height * draw_list->scale[(id * 2) + 1];
+	}
+	else{
+		return draw_list->scale[(id * 2) + 1];
+	}
 }
 
 extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uint8_t layer, uint16_t dim_x,
@@ -254,11 +264,20 @@ extern uint8_t crayon_graphics_draw(crayon_draw_array_t *draw_array, uint8_t pol
 			}
 			return crayon_graphics_draw_sprites_enhanced(draw_array, poly_list_mode);
 		}
-		else{	//Untextured
-			return crayon_graphics_draw_untextured_array(draw_array, poly_list_mode);
-		}
+		return crayon_graphics_draw_untextured_array(draw_array, poly_list_mode);
 	}
 	else{	//Camera
+		if(draw_array->options & (1 << 7)){	//Textured
+			;
+		}
+		else{
+			if((draw_mode & 1) == 0){
+				;
+			}
+			else{
+				;
+			}
+		}
 		return -1;
 	}
 }
