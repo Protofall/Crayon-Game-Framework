@@ -37,6 +37,7 @@ extern void crayon_graphics_frame_coordinates(const crayon_draw_array_t *draw_li
 }
 
 extern float crayon_graphics_get_draw_element_width(const crayon_draw_array_t *draw_list, uint8_t id){
+	if(!(draw_list->options & (1 << 2))){id = 0;}	//When there's only one scale
 	if(draw_list->options & (1 << 7)){
 		return draw_list->animation->frame_width * draw_list->scale[id * 2];
 	}
@@ -46,6 +47,7 @@ extern float crayon_graphics_get_draw_element_width(const crayon_draw_array_t *d
 }
 
 extern float crayon_graphics_get_draw_element_height(const crayon_draw_array_t *draw_list, uint8_t id){
+	if(!(draw_list->options & (1 << 2))){id = 0;}	//When there's only one scale
 	if(draw_list->options & (1 << 7)){
 		return draw_list->animation->frame_height * draw_list->scale[(id * 2) + 1];
 	}
