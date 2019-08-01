@@ -39,7 +39,7 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 
 //Queue a texture to be rendered, draw mode right most bit is true for enhanced (false for non)
 //And second right most bit will later be used for camera mode control
-extern uint8_t crayon_graphics_draw(crayon_draw_array_t *draw_array, uint8_t poly_list_mode, uint8_t draw_mode);
+extern int8_t crayon_graphics_draw(crayon_draw_array_t *draw_array, uint8_t poly_list_mode, uint8_t draw_mode);
 
 
 //------------------Internal Drawing Functions------------------//

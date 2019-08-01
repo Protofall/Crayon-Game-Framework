@@ -37,8 +37,8 @@ extern void crayon_graphics_frame_coordinates(const crayon_draw_array_t *draw_li
 }
 
 extern float crayon_graphics_get_draw_element_width(const crayon_draw_array_t *draw_list, uint8_t id){
-	if(!(draw_list->options & (1 << 2))){id = 0;}	//When there's only one scale
-	if(draw_list->options & (1 << 7)){
+	if(!(draw_list->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
+	if(draw_list->options & CRAY_HAS_TEXTURE){
 		return draw_list->animation->frame_width * draw_list->scale[id * 2];
 	}
 	else{
@@ -47,8 +47,8 @@ extern float crayon_graphics_get_draw_element_width(const crayon_draw_array_t *d
 }
 
 extern float crayon_graphics_get_draw_element_height(const crayon_draw_array_t *draw_list, uint8_t id){
-	if(!(draw_list->options & (1 << 2))){id = 0;}	//When there's only one scale
-	if(draw_list->options & (1 << 7)){
+	if(!(draw_list->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
+	if(draw_list->options & CRAY_HAS_TEXTURE){
 		return draw_list->animation->frame_height * draw_list->scale[(id * 2) + 1];
 	}
 	else{
@@ -258,10 +258,10 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 //---- --CM
 //C is for camera mode (Unimplemented)
 //M is for draw mode
-extern uint8_t crayon_graphics_draw(crayon_draw_array_t *draw_array, uint8_t poly_list_mode, uint8_t draw_mode){
-	if(((draw_mode >> 1) & 1) == 0){	//No Camera
-		if(draw_array->options & (1 << 7)){	//Textured
-			if((draw_mode & 1) == 0){
+extern int8_t crayon_graphics_draw(crayon_draw_array_t *draw_array, uint8_t poly_list_mode, uint8_t draw_mode){
+	if(!(draw_mode & CRAY_USING_CAMERA)){	//No Camera
+		if(draw_array->options & CRAY_HAS_TEXTURE){	//Textured
+			if(!(draw_mode & CRAY_DRAW_ENHANCED)){	//Simple draw
 				return crayon_graphics_draw_sprites_simple(draw_array, poly_list_mode);
 			}
 			return crayon_graphics_draw_sprites_enhanced(draw_array, poly_list_mode);
@@ -269,11 +269,11 @@ extern uint8_t crayon_graphics_draw(crayon_draw_array_t *draw_array, uint8_t pol
 		return crayon_graphics_draw_untextured_array(draw_array, poly_list_mode);
 	}
 	else{	//Camera
-		if(draw_array->options & (1 << 7)){	//Textured
+		if(draw_array->options & CRAY_HAS_TEXTURE){	//Textured
 			;
 		}
 		else{
-			if((draw_mode & 1) == 0){
+			if(!(draw_mode & CRAY_DRAW_ENHANCED)){
 				;
 			}
 			else{
@@ -335,32 +335,32 @@ extern uint8_t crayon_graphics_draw_sprites_simple(crayon_draw_array_t *draw_arr
 	//Easily lets us use the right index for each array
 		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
 	uint16_t *rotation_index, *flip_index, *frame_index, *z_index;
-	uint8_t multi_scale = !!(draw_array->options & (1 << 2));
+	uint8_t multi_scale = !!(draw_array->options & CRAY_MULTI_SCALE);
 	uint16_t i;	//The main loop's index
 	uint16_t zero = 0;
 	float rotation_under_360;
-	if(draw_array->options & (1 << 0)){
+	if(draw_array->options & CRAY_MULTI_LAYER){
 		z_index = &i;
 	}
 	else{
 		z_index = &zero;
 	}
 
-	if(draw_array->options & (1 << 1)){
+	if(draw_array->options & CRAY_MULTI_FRAME){
 		frame_index = &i;
 	}
 	else{
 		frame_index = &zero;
 	}
 
-	if(draw_array->options & (1 << 3)){
+	if(draw_array->options & CRAY_MULTI_FLIP){
 		flip_index = &i;
 	}
 	else{
 		flip_index = &zero;
 	}
 
-	if(draw_array->options & (1 << 4)){
+	if(draw_array->options & CRAY_MULTI_ROTATE){
 		rotation_index = &i;
 	}
 	else{
@@ -498,7 +498,7 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_draw_array_t *draw_a
 	//Easily lets us use the right index for each array
 		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
 	uint16_t *rotation_index, *flip_index, *frame_index, *z_index, *colour_index;
-	uint8_t multi_scale = !!(draw_array->options & (1 << 2));
+	uint8_t multi_scale = !!(draw_array->options & CRAY_MULTI_SCALE);
 	uint16_t zero = 0;
 	float angle = 0;
 	float mid_x = 0;
@@ -506,19 +506,19 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_draw_array_t *draw_a
 	uint8_t skip = 0;
 
 	uint16_t i, j;	//Indexes
-	if(draw_array->options & (1 << 0)){z_index = &i;}
+	if(draw_array->options & CRAY_MULTI_LAYER){z_index = &i;}
 	else{z_index = &zero;}
 
-	if(draw_array->options & (1 << 1)){frame_index = &i;}
+	if(draw_array->options & CRAY_MULTI_FRAME){frame_index = &i;}
 	else{frame_index = &zero;}
 
-	if(draw_array->options & (1 << 3)){flip_index = &i;}
+	if(draw_array->options & CRAY_MULTI_FLIP){flip_index = &i;}
 	else{flip_index = &zero;}
 
-	if(draw_array->options & (1 << 4)){rotation_index = &i;}
+	if(draw_array->options & CRAY_MULTI_ROTATE){rotation_index = &i;}
 	else{rotation_index = &zero;}
 
-	if(draw_array->options & (1 << 5)){colour_index = &i;}
+	if(draw_array->options & CRAY_MULTI_COLOUR){colour_index = &i;}
 	else{colour_index = &zero;}
 
 	//Set the flags
@@ -576,7 +576,7 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_draw_array_t *draw_a
 			r = (((draw_array->colour[*colour_index] >> 16) & 0xFF) * f)/255.0f;
 			g = (((draw_array->colour[*colour_index] >> 8) & 0xFF) * f)/255.0f;
 			b = (((draw_array->colour[*colour_index]) & 0xFF) * f)/255.0f;
-			if(draw_array->options & (1 << 6)){	//If Adding
+			if(draw_array->options & CRAY_COLOUR_ADD){	//If Adding
 				vert[0].argb = (a << 24) + 0x00FFFFFF;
 			}
 			else{	//If Blending
