@@ -2,6 +2,7 @@
 #define RENDER_STRUCTS_CRAYON_H
 
 #include "texture_structs.h"  //For the spritesheet and anim structs
+#include "vector_structs.h"
 
 #define CRAY_MULTI_LAYER (1 << 0)
 #define CRAY_MULTI_FRAME (1 << 1)
