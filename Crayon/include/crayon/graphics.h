@@ -23,10 +23,6 @@ extern float crayon_graphics_get_draw_element_height(const crayon_draw_array_t *
 //------------------Drawing Untextured polys------------------//
 
 
-//Queue a colour/alpha poly to be rendered. I recommend the array version, but for simple implementation this is good
-extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uint8_t layer,
-	uint16_t dim_x, uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode);
-
 //Draw all coloured polys in the struct's list
 extern uint8_t crayon_graphics_draw_untextured_array(crayon_draw_array_t *poly_array, uint8_t poly_list_mode);
 

@@ -56,48 +56,6 @@ extern float crayon_graphics_get_draw_element_height(const crayon_draw_array_t *
 	}
 }
 
-extern void crayon_graphics_draw_untextured_poly(float draw_x, float draw_y, uint8_t layer, uint16_t dim_x,
-  uint16_t dim_y, uint32_t colour, uint8_t poly_list_mode){
-  	if(colour >> 24 == 0){return;}	//Don't draw alpha-less stuff
-	pvr_poly_cxt_t cxt;
-	pvr_poly_hdr_t hdr;
-	pvr_vertex_t vert;
-
-	float x = trunc(draw_x);
-	float y = trunc(draw_y);
-
-	pvr_poly_cxt_col(&cxt, poly_list_mode);
-	pvr_poly_compile(&hdr, &cxt);
-	pvr_prim(&hdr, sizeof(hdr));
-
-	vert.argb = colour;
-	vert.oargb = 0;	//Due to header stuff, this doesn nothing
-	vert.flags = PVR_CMD_VERTEX;    //I think this is used to define the start of a new polygon
-
-	//These define the verticies of the triangles "strips" (One triangle uses verticies of other triangle)
-	vert.x = x;
-	vert.y = y;
-	vert.z = layer;
-	pvr_prim(&vert, sizeof(vert));
-
-	vert.x = x + dim_x;
-	vert.y = y;
-	vert.z = layer;
-	pvr_prim(&vert, sizeof(vert));
-
-	vert.x = x;
-	vert.y = y + dim_y;
-	vert.z = layer;
-	pvr_prim(&vert, sizeof(vert));
-
-	vert.x = x + dim_x;
-	vert.y = y + dim_y;
-	vert.z = layer;
-	vert.flags = PVR_CMD_VERTEX_EOL;
-	pvr_prim(&vert, sizeof(vert));
-	return;
-}
-
 extern uint8_t crayon_graphics_draw_untextured_array(crayon_draw_array_t *poly_array, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
