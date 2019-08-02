@@ -9,52 +9,52 @@ typedef struct vec3f{
 	float x, y, z;
 } vec3f_t;
 
-typedef struct vec2ui8{
+typedef struct vec2_u8{
 	uint8_t x, y;
-} vec2ui8_t;
+} vec2_u8_t;
 
-typedef struct vec3ui8{
+typedef struct vec3_u8{
 	uint8_t x, y, z;
-} vec3ui8_t;
+} vec3_u8_t;
 
-typedef struct vec2ui16{
+typedef struct vec2_u16{
 	uint16_t x, y;
-} vec2ui16_t;
+} vec2_u16_t;
 
-typedef struct vec3ui16{
+typedef struct vec3_u16{
 	uint16_t x, y, z;
-} vec3ui16_t;
+} vec3_u16_t;
 
-typedef struct vec2ui32{
+typedef struct vec2_u32{
 	uint32_t x, y;
-} vec2ui32_t;
+} vec2_u32_t;
 
-typedef struct vec3ui32{
+typedef struct vec3_u32{
 	uint32_t x, y, z;
-} vec3ui32_t;
+} vec3_u32_t;
 
-typedef struct vec2i8{
+typedef struct vec2_s8{
 	int8_t x, y;
-} vec2i8_t;
+} vec2_s8_t;
 
-typedef struct vec3i8{
+typedef struct vec3_s8{
 	int8_t x, y, z;
-} vec3i8_t;
+} vec3_s8_t;
 
-typedef struct vec2i16{
+typedef struct vec2_s16{
 	int16_t x, y;
-} vec2i16_t;
+} vec2_s16_t;
 
-typedef struct vec3i16{
+typedef struct vec3_s16{
 	int16_t x, y, z;
-} vec3i16_t;
+} vec3_s16_t;
 
-typedef struct vec2i32{
+typedef struct vec2_s32{
 	int32_t x, y;
-} vec2i32_t;
+} vec2_s32_t;
 
-typedef struct vec3i32{
+typedef struct vec3_s32{
 	int32_t x, y, z;
-} vec3i32_t;
+} vec3_s32_t;
 
 #endif
