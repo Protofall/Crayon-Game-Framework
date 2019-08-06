@@ -79,13 +79,8 @@ extern uint8_t crayon_memory_free_mono_font_sheet(crayon_font_mono_t *fm);
 //Frees a palette
 extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp);
 
-//Frees a sprite array
-
-
+//Frees a draw array
 extern uint8_t crayon_memory_free_draw_array(crayon_draw_array_t *draw_array);
-
-//Free an untextured poly array
-// extern uint8_t crayon_memory_free_untextured_array(crayon_untextured_array_t *untextured_array);
 
 
 //------------------Mounting romdisks------------------//

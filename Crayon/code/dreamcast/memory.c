@@ -436,15 +436,17 @@ extern void crayon_memory_init_draw_array(crayon_draw_array_t *draw_array, crayo
 	// ((sprite_array->options >> 1) & 1)	//Extract the frames_used bit
 	// ((sprite_array->options) & 1)		//Extract the layer bit
 
-	draw_array->pos = (float *) malloc(list_size * 2 * sizeof(float));
+	draw_array->coord = (vec2_f_t *) malloc(list_size * 2 * sizeof(vec2_f_t));
+	draw_array->scale = (vec2_f_t *) malloc(((draw_array->options >> 2) & 1 ? list_size: 1) * 2 * sizeof(vec2_f_t));
+
 	draw_array->colour = (uint32_t *) malloc(((draw_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint32_t));
-	draw_array->scale = (float *) malloc(((draw_array->options >> 2) & 1 ? list_size: 1) * 2 * sizeof(float));
 	draw_array->rotation = (float *) malloc(((draw_array->options >> 4) & 1 ? list_size: 1) * sizeof(float));
 	draw_array->layer = (uint8_t *) malloc(((draw_array->options) & 1 ? list_size: 1) * sizeof(uint8_t));
 
 	if(ss){
 		draw_array->frame_coord_key = (uint8_t *) malloc(((draw_array->options >> 1) & 1 ? list_size: 1) * sizeof(uint8_t));
-		draw_array->frame_coord_map = (uint16_t *) malloc(frames_used * 2 * sizeof(uint16_t));
+		// draw_array->frame_coord_map = (uint16_t *) malloc(frames_used * 2 * sizeof(uint16_t));
+		draw_array->frame_coord_map = (vec_2_u16_t *) malloc(frames_used * 2 * sizeof(vec_2_u16_t));
 		draw_array->fade = (uint8_t *) malloc(((draw_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint8_t));
 		draw_array->flip = (uint8_t *) malloc(((draw_array->options >> 3) & 1 ? list_size: 1) * sizeof(uint8_t));
 	}
@@ -524,7 +526,7 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
 
 extern uint8_t crayon_memory_free_sprite_array(crayon_draw_array_t *draw_array){
 	//Free shouldn't do anything if you try to free a NULL ptr, but just incase...
-	if(draw_array->pos){free(draw_array->pos);}
+	if(draw_array->coord){free(draw_array->coord);}
 	if(draw_array->frame_coord_key){free(draw_array->frame_coord_key);}
 	if(draw_array->frame_coord_map){free(draw_array->frame_coord_map);}
 	if(draw_array->colour){free(draw_array->colour);}
@@ -535,7 +537,7 @@ extern uint8_t crayon_memory_free_sprite_array(crayon_draw_array_t *draw_array){
 	if(draw_array->layer){free(draw_array->layer);}
 
 	//Set to NULL just incase user accidentally tries to free these arrays again
-	draw_array->pos = NULL;
+	draw_array->coord = NULL;
 	draw_array->frame_coord_key = NULL;
 	draw_array->frame_coord_map = NULL;
 	draw_array->colour = NULL;

@@ -3,11 +3,11 @@
 
 typedef struct vec2f{
 	float x, y;
-} vec2f_t;
+} vec2_f_t;
 
 typedef struct vec3f{
 	float x, y, z;
-} vec3f_t;
+} vec3_f_t;
 
 typedef struct vec2_u8{
 	uint8_t x, y;

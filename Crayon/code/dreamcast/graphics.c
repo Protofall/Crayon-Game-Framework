@@ -39,24 +39,24 @@ extern void crayon_graphics_frame_coordinates(const crayon_draw_array_t *draw_li
 extern float crayon_graphics_get_draw_element_width(const crayon_draw_array_t *draw_list, uint8_t id){
 	if(!(draw_list->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
 	if(draw_list->options & CRAY_HAS_TEXTURE){
-		return draw_list->animation->frame_width * draw_list->scale[id * 2];
+		return draw_list->animation->frame_width * draw_list->scale[id].x;
 	}
 	else{
-		return draw_list->scale[id * 2];
+		return draw_list->scale[id].x;
 	}
 }
 
 extern float crayon_graphics_get_draw_element_height(const crayon_draw_array_t *draw_list, uint8_t id){
 	if(!(draw_list->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
 	if(draw_list->options & CRAY_HAS_TEXTURE){
-		return draw_list->animation->frame_height * draw_list->scale[(id * 2) + 1];
+		return draw_list->animation->frame_height * draw_list->scale[id].y;
 	}
 	else{
-		return draw_list->scale[(id * 2) + 1];
+		return draw_list->scale[id].y;
 	}
 }
 
-extern uint8_t crayon_graphics_draw_untextured_array(crayon_draw_array_t *poly_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_untextured_array(crayon_draw_array_t *draw_array, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert[4];
@@ -66,10 +66,10 @@ extern uint8_t crayon_graphics_draw_untextured_array(crayon_draw_array_t *poly_a
 	pvr_prim(&hdr, sizeof(hdr));
 
 	//--CR -D-Z
-	uint8_t multiple_rotation = (poly_array->options >> 4) & 1;
-	uint8_t multiple_dims = (poly_array->options >> 2) & 1;
-	uint8_t multiple_colour = (poly_array->options >> 5) & 1;
-	uint8_t multiple_z = poly_array->options & 1;
+	uint8_t multiple_rotation = (draw_array->options >> 4) & 1;
+	uint8_t multiple_dims = (draw_array->options >> 2) & 1;
+	uint8_t multiple_colour = (draw_array->options >> 5) & 1;
+	uint8_t multiple_z = draw_array->options & 1;
 
 	//All this just for rotations
 	uint16_t *rotation_index;
@@ -88,33 +88,33 @@ extern uint8_t crayon_graphics_draw_untextured_array(crayon_draw_array_t *poly_a
 	}
 	vert[3].flags = PVR_CMD_VERTEX_EOL;
 
-	for(i = 0; i < poly_array->list_size; i++){
-		if(poly_array->colour[multiple_colour * i] >> 24 == 0){	//Don't draw alpha-less stuff
+	for(i = 0; i < draw_array->list_size; i++){
+		if(draw_array->colour[multiple_colour * i] >> 24 == 0){	//Don't draw alpha-less stuff
 			if(i != 0){continue;}	//For the first element, we need to initialise our vars, otherwise we just skip to the next element
 			skip = 1;
 		}
-		vert[0].argb = poly_array->colour[multiple_colour * i];	//If only one colour, this is forced to colour zero
+		vert[0].argb = draw_array->colour[multiple_colour * i];	//If only one colour, this is forced to colour zero
 		vert[0].oargb = 0;
-		vert[0].z = poly_array->layer[multiple_z * i];
+		vert[0].z = draw_array->layer[multiple_z * i];
 
-		vert[0].x = trunc(poly_array->pos[2 * i]);
-		vert[0].y = trunc(poly_array->pos[(2 * i) + 1]);
-		vert[1].x = vert[0].x + trunc(poly_array->scale[multiple_dims * 2 * i]);	//If using one dim, multiple dims reduces it to the first value
+		vert[0].x = trunc(draw_array->coord[i].x);
+		vert[0].y = trunc(draw_array->coord[i].y);
+		vert[1].x = vert[0].x + trunc(draw_array->scale[multiple_dims * i].x);	//If using one dim, multiple dims reduces it to the first value
 		vert[1].y = vert[0].y;
 		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + trunc(poly_array->scale[(multiple_dims * 2 * i) + 1]);
+		vert[2].y = vert[0].y + trunc(draw_array->scale[multiple_dims * i].y);
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
 
 		//Update rotation part if needed
 		if(*rotation_index == i){
-			angle = fmod(poly_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
+			angle = fmod(draw_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
 			if(angle < 0){angle += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
 			angle = (angle * M_PI) / 180.0f;	//Convert from degrees to ratians
 		}
 
 		//Rotate the poly
-		if(poly_array->rotation[*rotation_index] != 0.0f){
+		if(draw_array->rotation[*rotation_index] != 0.0f){
 			//Gets the midpoint
 			mid_x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
 			mid_y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
@@ -393,12 +393,12 @@ extern uint8_t crayon_graphics_draw_sprites_simple(crayon_draw_array_t *draw_arr
 			//I couldn't actually do that since the verts wouldn't be set if the rotation aren't checked
 			//Hence it just flows here naturally
 
-		vert.ax = trunc(draw_array->pos[2 * i]);
-		vert.ay = trunc(draw_array->pos[(2 * i) + 1]);
-		vert.bx = vert.ax + trunc(draw_array->animation->frame_width * draw_array->scale[2 * i * multi_scale]);
+		vert.ax = trunc(draw_array->coord[i].x);
+		vert.ay = trunc(draw_array->coord[i].y);
+		vert.bx = vert.ax + trunc(draw_array->animation->frame_width * draw_array->scale[i * multi_scale].x);
 		vert.by = vert.ay;
 		vert.cx = vert.bx;
-		vert.cy = vert.ay + trunc(draw_array->animation->frame_height * draw_array->scale[(2 * i * multi_scale) + 1]);
+		vert.cy = vert.ay + trunc(draw_array->animation->frame_height * draw_array->scale[i * multi_scale].y);
 		vert.dx = vert.ax;
 		vert.dy = vert.cy;
 
@@ -412,12 +412,12 @@ extern uint8_t crayon_graphics_draw_sprites_simple(crayon_draw_array_t *draw_arr
 				//Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = draw_array->animation->frame_width - draw_array->animation->frame_height;
 
-			vert.ax = trunc(draw_array->pos[2 * i]) + ((draw_array->scale[(2 * i * multi_scale) + 1] * diff) / 2);
-			vert.ay = trunc(draw_array->pos[(2 * i) + 1]) - ((draw_array->scale[(2 * i * multi_scale)] * diff) / 2);
-			vert.bx = vert.ax + trunc(draw_array->animation->frame_height * draw_array->scale[(2 * i * multi_scale) + 1]);
+			vert.ax = trunc(draw_array->coord[i].x) + ((draw_array->scale[i * multi_scale].y * diff) / 2);
+			vert.ay = trunc(draw_array->coord[i].y) - ((draw_array->scale[i * multi_scale].x * diff) / 2);
+			vert.bx = vert.ax + trunc(draw_array->animation->frame_height * draw_array->scale[i * multi_scale].y);
 			vert.by = vert.ay;
 			vert.cx = vert.bx;
-			vert.cy = vert.ay + trunc(draw_array->animation->frame_width * draw_array->scale[(2 * i * multi_scale)]);
+			vert.cy = vert.ay + trunc(draw_array->animation->frame_width * draw_array->scale[i * multi_scale].x);
 			vert.dx = vert.ax;
 			vert.dy = vert.cy;
 		}
@@ -544,12 +544,12 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_draw_array_t *draw_a
 			vert[0].oargb = (a << 24) + (r << 16) + (g << 8) + b;
 		}
 
-		vert[0].x = trunc(draw_array->pos[2 * i]);
-		vert[0].y = trunc(draw_array->pos[(2 * i) + 1]);
-		vert[1].x = vert[0].x + trunc(draw_array->animation->frame_width * draw_array->scale[2 * i * multi_scale]);
+		vert[0].x = trunc(draw_array->coord[i].x);
+		vert[0].y = trunc(draw_array->coord[i].y);
+		vert[1].x = vert[0].x + trunc(draw_array->animation->frame_width * draw_array->scale[i * multi_scale].x);
 		vert[1].y = vert[0].y;
 		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + trunc(draw_array->animation->frame_height * draw_array->scale[(2 * i * multi_scale) + 1]);
+		vert[2].y = vert[0].y + trunc(draw_array->animation->frame_height * draw_array->scale[i * multi_scale].y);
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
 
