@@ -150,10 +150,10 @@ int main(){
 
 	crayon_memory_init_draw_array(&Man_Draw, &Man, 0, &Man_P, 1, 1, 0, 0);
 	Man_Draw.layer[0] = 2;
-	Man_Draw.scale[0] = 7;
-	Man_Draw.scale[1] = 7;
-	Man_Draw.pos[0] = (640 - crayon_graphics_get_draw_element_width(&Man_Draw, 0)) / 2.0f;
-	Man_Draw.pos[1] = (480 - crayon_graphics_get_draw_element_height(&Man_Draw, 0)) / 2.0f;;
+	Man_Draw.scale[0].x = 7;
+	Man_Draw.scale[0].y = 7;
+	Man_Draw.coord[0].x = (640 - crayon_graphics_get_draw_element_width(&Man_Draw, 0)) / 2.0f;
+	Man_Draw.coord[0].y = (480 - crayon_graphics_get_draw_element_height(&Man_Draw, 0)) / 2.0f;;
 	Man_Draw.flip[0] = 1;
 	Man_Draw.rotation[0] = 0;
 	Man_Draw.colour[0] = 0xFF0000FF;
@@ -162,12 +162,12 @@ int main(){
 	crayon_graphics_frame_coordinates(&Man_Draw, 0, 0);
 
 	crayon_memory_init_draw_array(&Opaque_Blend_Draw, &Opaque, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_BLEND, 0);
-	Opaque_Blend_Draw.scale[0] = 12;
-	Opaque_Blend_Draw.scale[1] = 12;
-	Opaque_Blend_Draw.pos[0] = 0;
-	Opaque_Blend_Draw.pos[1] = 0;
-	Opaque_Blend_Draw.pos[2] = 4 + crayon_graphics_get_draw_element_width(&Opaque_Blend_Draw, 0);
-	Opaque_Blend_Draw.pos[3] = Opaque_Blend_Draw.pos[0];
+	Opaque_Blend_Draw.scale[0].x = 12;
+	Opaque_Blend_Draw.scale[0].y = 12;
+	Opaque_Blend_Draw.coord[0].x = 0;
+	Opaque_Blend_Draw.coord[0].y = 0;
+	Opaque_Blend_Draw.coord[1].x = 4 + crayon_graphics_get_draw_element_width(&Opaque_Blend_Draw, 0);
+	Opaque_Blend_Draw.coord[1].y = Opaque_Blend_Draw.coord[0].y;
 	Opaque_Add_Draw.layer[0] = 1;
 	Opaque_Blend_Draw.flip[0] = 0;
 	Opaque_Blend_Draw.rotation[0] = 0;
@@ -179,12 +179,12 @@ int main(){
 	crayon_graphics_frame_coordinates(&Opaque_Blend_Draw, 0, 0);
 
 	crayon_memory_init_draw_array(&Opaque_Add_Draw, &Opaque, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_ADD, 0);
-	Opaque_Add_Draw.scale[0] = 12;
-	Opaque_Add_Draw.scale[1] = 12;
-	Opaque_Add_Draw.pos[0] = 0;
-	Opaque_Add_Draw.pos[1] = 4 + crayon_graphics_get_draw_element_height(&Opaque_Blend_Draw, 0);
-	Opaque_Add_Draw.pos[2] = 4 + crayon_graphics_get_draw_element_width(&Opaque_Add_Draw, 0);
-	Opaque_Add_Draw.pos[3] = Opaque_Add_Draw.pos[1];
+	Opaque_Add_Draw.scale[0].x = 12;
+	Opaque_Add_Draw.scale[0].y = 12;
+	Opaque_Add_Draw.coord[0].x = 0;
+	Opaque_Add_Draw.coord[0].y = 4 + crayon_graphics_get_draw_element_height(&Opaque_Blend_Draw, 0);
+	Opaque_Add_Draw.coord[1].x = 4 + crayon_graphics_get_draw_element_width(&Opaque_Add_Draw, 0);
+	Opaque_Add_Draw.coord[1].y = Opaque_Add_Draw.coord[0].y;
 	Opaque_Add_Draw.layer[0] = 1;
 	Opaque_Add_Draw.flip[0] = 0;
 	Opaque_Add_Draw.rotation[0] = 0;

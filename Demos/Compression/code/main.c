@@ -119,10 +119,10 @@ int main(){
 
 	srand(time(0));	//Set the seed for rand()
 
-	crayon_spritesheet_t Logo, Logo2;
-	crayon_sprite_array_t Logo_Draw, Logo2_Draw;
+	crayon_spritesheet_t Ball, Ball2;
+	crayon_draw_array_t Ball_Draw, Ball2_Draw;
 	crayon_font_mono_t BIOS;
-	crayon_palette_t Logo_P, BIOS_P;
+	crayon_palette_t Ball_P, BIOS_P;
 
 	crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
 
@@ -139,8 +139,8 @@ int main(){
 
 	//Load the asset
 	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 0, "/files/BIOS_font.dtex");
-	crayon_memory_load_spritesheet(&Logo, &Logo_P, 1, "/files/logo.dtex");
-	crayon_memory_load_spritesheet(&Logo2, NULL, 1, "/files/logo2.dtex");
+	crayon_memory_load_spritesheet(&Ball, &Ball_P, 1, "/files/logo.dtex");
+	crayon_memory_load_spritesheet(&Ball2, NULL, 1, "/files/logo2.dtex");
 
 	fs_romdisk_unmount("/files");
 
@@ -148,53 +148,59 @@ int main(){
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
-	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	crayon_memory_init_sprite_array(&Logo_Draw, &Logo, &Logo.animation_array[0], &Logo_P, 1, 1, 0, 0);
-	Logo_Draw.pos[0] = 0;
-	Logo_Draw.pos[1] = (480 - Logo.animation_array[0].frame_height) / 2;
-	Logo_Draw.layer[0] = 2;
-	Logo_Draw.scale[0] = 1;
-	Logo_Draw.scale[1] = 1;
-	Logo_Draw.flip[0] = 0;
-	Logo_Draw.rotation[0] = 0;
-	Logo_Draw.colour[0] = 0;
-	Logo_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Logo_Draw, 0, 0);
+	crayon_memory_init_draw_array(&Ball_Draw, &Ball, 0, &Ball_P, 1, 1, 0, 0);
+	Ball_Draw.coord[0].x = 0;
+	Ball_Draw.coord[0].y = (480 - Ball.animation_array[0].frame_height) / 2;
+	Ball_Draw.layer[0] = 2;
+	Ball_Draw.scale[0].x = 1;
+	Ball_Draw.scale[0].y = 1;
+	Ball_Draw.flip[0] = 0;
+	Ball_Draw.rotation[0] = 0;
+	Ball_Draw.colour[0] = 0;
+	Ball_Draw.frame_coord_key[0] = 0;
+	crayon_graphics_frame_coordinates(&Ball_Draw, 0, 0);
 
-	crayon_memory_init_sprite_array(&Logo2_Draw, &Logo2, &Logo2.animation_array[0], NULL, 1, 1, 0, 0);
-	Logo2_Draw.pos[0] = (640 - Logo2.animation_array[0].frame_width);
-	Logo2_Draw.pos[1] = (480 - Logo2.animation_array[0].frame_height) / 2;
-	Logo2_Draw.layer[0] = 2;
-	Logo2_Draw.scale[0] = 1;
-	Logo2_Draw.scale[1] = 1;
-	Logo2_Draw.flip[0] = 0;
-	Logo2_Draw.rotation[0] = 0;
-	Logo2_Draw.colour[0] = 0;
-	Logo2_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Logo2_Draw, 0, 0);
+	crayon_memory_init_draw_array(&Ball2_Draw, &Ball2, 0, NULL, 1, 1, 0, 0);
+	Ball2_Draw.coord[0].x = (640 - Ball2.animation_array[0].frame_width);
+	Ball2_Draw.coord[0].y = (480 - Ball2.animation_array[0].frame_height) / 2;
+	Ball2_Draw.layer[0] = 2;
+	Ball2_Draw.scale[0].x = 1;
+	Ball2_Draw.scale[0].y = 1;
+	Ball2_Draw.flip[0] = 0;
+	Ball2_Draw.rotation[0] = 0;
+	Ball2_Draw.colour[0] = 0;
+	Ball2_Draw.frame_coord_key[0] = 0;
+	crayon_graphics_frame_coordinates(&Ball2_Draw, 0, 0);
 
 	crayon_graphics_setup_palette(&BIOS_P);
-	crayon_graphics_setup_palette(&Logo_P);
+	crayon_graphics_setup_palette(&Ball_P);
 	while(1){
 		pvr_wait_ready();
 
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw_sprites(&Logo_Draw, PVR_LIST_PT_POLY);	//Broken on most emulators, but not hardware
-			crayon_graphics_draw_sprites(&Logo2_Draw, PVR_LIST_PT_POLY);
+			crayon_graphics_draw(&Ball_Draw, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);	//Broken on most emulators, but not hardware
+			crayon_graphics_draw(&Ball2_Draw, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
-			crayon_graphics_draw_text_mono("PAL8BPP", &BIOS, PVR_LIST_OP_POLY, 50, 0, 3, 2, 2, BIOS_P.palette_id);
-			crayon_graphics_draw_text_mono("ARGB1555", &BIOS, PVR_LIST_OP_POLY, 450, 0, 3, 2, 2, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono("PAL8BPP", &BIOS, PVR_LIST_OP_POLY, 50, 32, 3, 2, 2, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono("ARGB1555", &BIOS, PVR_LIST_OP_POLY, 450, 32, 3, 2, 2, BIOS_P.palette_id);
 		pvr_list_finish();
 
 		pvr_scene_finish();
 	}
 
 	//Also frees the spritesheet and palette
-	crayon_memory_free_sprite_array(&Logo_Draw, 1, 1);
+	crayon_memory_free_draw_array(&Ball_Draw);
+	crayon_memory_free_draw_array(&Ball2_Draw);
+
+	crayon_memory_free_spritesheet(&Ball);
+	crayon_memory_free_mono_font_sheet(&BIOS);
+
+	crayon_memory_free_palette(&Ball_P);
+	crayon_memory_free_palette(&BIOS_P);
 
 	return 0;
 }

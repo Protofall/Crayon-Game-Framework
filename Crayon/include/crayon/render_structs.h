@@ -24,14 +24,13 @@
 //then I you'll still need to go through the multi-draw. It shouldn't be too much slower if any.
 typedef struct crayon_draw_array{
 	vec2_f_t *coord;			//Width then Height extracted from anim/frame data,
-								//Each group of 2 is for one sub-texture
+								//Each element is one pair of coordinates
 	uint8_t *frame_coord_key;	//ids for a pair of frame_coords_map elements and uses that for
-								//drawing. frame_coord_key[i] refers to frame_coord_map[2*i AND (2*i)+1]
-	vec2_u16_t *frame_coord_map;//Each pair of 2 elements is UV for one frame of an animation
-	// uint16_t *frame_coord_map;	
+								//drawing. frame_coord_key[i] refers to frame_coord_map[i].x/y
+	vec2_u16_t *frame_coord_map;//Each element is UV for one frame of an animation (U is x, V is Y)
 	uint32_t *colour;			//For poly mode this dictates the rgb and alpha of a polygon
 	uint8_t *fade;				//A part of the colour array. Tells it how to transition between
-								//The base colour and the one from the colour array (UNUSED)
+								//The base colour and the one from the colour array
 	vec2_f_t *scale;			//Float incase you want to shrink or enlarge it. For untextured polys this
 								//is the height and width of the polys
 

@@ -31,8 +31,8 @@ extern void crayon_graphics_frame_coordinates(const crayon_draw_array_t *draw_li
 	uint8_t column_number = frame % frames_per_row;
 	uint8_t row_number = frame / frames_per_row;
 
-	draw_list->frame_coord_map[index * 2] = anim->x + (column_number * anim->frame_width);
-	draw_list->frame_coord_map[(index * 2) + 1] = anim->y + (row_number * anim->frame_height);
+	draw_list->frame_coord_map[index].x = anim->x + (column_number * anim->frame_width);
+	draw_list->frame_coord_map[index].y = anim->y + (row_number * anim->frame_height);
 	return;
 }
 
@@ -338,8 +338,8 @@ extern uint8_t crayon_graphics_draw_sprites_simple(crayon_draw_array_t *draw_arr
 		}
 
 		if(*frame_index == i){	//frame
-			u0 = draw_array->frame_coord_map[(2 * draw_array->frame_coord_key[*frame_index])] / (float)draw_array->spritesheet->dimensions;
-			v0 = draw_array->frame_coord_map[(2 * draw_array->frame_coord_key[*frame_index]) + 1] / (float)draw_array->spritesheet->dimensions;
+			u0 = draw_array->frame_coord_map[draw_array->frame_coord_key[*frame_index]].x / (float)draw_array->spritesheet->dimensions;
+			v0 = draw_array->frame_coord_map[draw_array->frame_coord_key[*frame_index]].y / (float)draw_array->spritesheet->dimensions;
 			u1 = u0 + draw_array->animation->frame_width / (float)draw_array->spritesheet->dimensions;
 			v1 = v0 + draw_array->animation->frame_height / (float)draw_array->spritesheet->dimensions;
 		}
@@ -498,8 +498,8 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_draw_array_t *draw_a
 		}
 
 		if(*frame_index == i){	//frame
-			u0 = draw_array->frame_coord_map[(2 * draw_array->frame_coord_key[*frame_index])] / (float)draw_array->spritesheet->dimensions;
-			v0 = draw_array->frame_coord_map[(2 * draw_array->frame_coord_key[*frame_index]) + 1] / (float)draw_array->spritesheet->dimensions;
+			u0 = draw_array->frame_coord_map[draw_array->frame_coord_key[*frame_index]].x / (float)draw_array->spritesheet->dimensions;
+			v0 = draw_array->frame_coord_map[draw_array->frame_coord_key[*frame_index]].y / (float)draw_array->spritesheet->dimensions;
 			u1 = u0 + draw_array->animation->frame_width / (float)draw_array->spritesheet->dimensions;
 			v1 = v0 + draw_array->animation->frame_height / (float)draw_array->spritesheet->dimensions;
 		}

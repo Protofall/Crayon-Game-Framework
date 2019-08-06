@@ -445,8 +445,7 @@ extern void crayon_memory_init_draw_array(crayon_draw_array_t *draw_array, crayo
 
 	if(ss){
 		draw_array->frame_coord_key = (uint8_t *) malloc(((draw_array->options >> 1) & 1 ? list_size: 1) * sizeof(uint8_t));
-		// draw_array->frame_coord_map = (uint16_t *) malloc(frames_used * 2 * sizeof(uint16_t));
-		draw_array->frame_coord_map = (vec_2_u16_t *) malloc(frames_used * 2 * sizeof(vec_2_u16_t));
+		draw_array->frame_coord_map = (vec2_u16_t *) malloc(frames_used * 2 * sizeof(vec2_u16_t));
 		draw_array->fade = (uint8_t *) malloc(((draw_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint8_t));
 		draw_array->flip = (uint8_t *) malloc(((draw_array->options >> 3) & 1 ? list_size: 1) * sizeof(uint8_t));
 	}

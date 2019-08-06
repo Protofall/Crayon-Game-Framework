@@ -120,7 +120,7 @@ int main(){
 	srand(time(0));	//Set the seed for rand()
 
 	crayon_spritesheet_t Logo;
-	crayon_sprite_array_t Logo_Draw;
+	crayon_draw_array_t Logo_Draw;
 	crayon_palette_t Logo_P;
 
 	crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
@@ -146,12 +146,12 @@ int main(){
 	#endif
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	crayon_memory_init_sprite_array(&Logo_Draw, &Logo, &Logo.animation_array[0], &Logo_P, 1, 1, 0, 0);
-	Logo_Draw.pos[0] = (640 - Logo.animation_array[0].frame_width) / 2;
-	Logo_Draw.pos[1] = (480 - Logo.animation_array[0].frame_height) / 2;
+	crayon_memory_init_draw_array(&Logo_Draw, &Logo, 0, &Logo_P, 1, 1, 0, 0);
+	Logo_Draw.coord[0].x = (640 - Logo.animation_array[0].frame_width) / 2;
+	Logo_Draw.coord[0].y = (480 - Logo.animation_array[0].frame_height) / 2;
 	Logo_Draw.layer[0] = 2;
-	Logo_Draw.scale[0] = 1;
-	Logo_Draw.scale[1] = 1;
+	Logo_Draw.scale[0].x = 1;
+	Logo_Draw.scale[0].y = 1;
 	Logo_Draw.flip[0] = 0;
 	Logo_Draw.rotation[0] = 0;
 	Logo_Draw.colour[0] = 0;
@@ -191,19 +191,19 @@ int main(){
 		//Make the object bounce around
 		if(moving){
 			//Collision detection
-			if(Logo_Draw.pos[0] < 0){	//Off left side
+			if(Logo_Draw.coord[0].x < 0){	//Off left side
 				x_dir = 1;
 				Logo_P.palette[1] = colours[rand() % 5];
 			} 
-			if(Logo_Draw.pos[1] < 0){	//Off top side
+			if(Logo_Draw.coord[0].y < 0){	//Off top side
 				y_dir = 1;
 				Logo_P.palette[1] = colours[rand() % 5];
 			}
-			if(Logo_Draw.pos[0] + new_width > 640){	//Off right side
+			if(Logo_Draw.coord[0].x + new_width > 640){	//Off right side
 				x_dir = -1;
 				Logo_P.palette[1] = colours[rand() % 5];
 			}
-			if(Logo_Draw.pos[1] + new_height > 480){	//Off bottom side
+			if(Logo_Draw.coord[0].y + new_height > 480){	//Off bottom side
 				y_dir = -1;
 				Logo_P.palette[1] = colours[rand() % 5];
 			}
@@ -211,18 +211,18 @@ int main(){
 			//colours Dark Blue, Purple, Pink, Orange, vright Green, Yellow
 
 			//Movement
-			Logo_Draw.pos[0] += 1.5 * htz_adjustment * x_dir;
-			Logo_Draw.pos[1] += 1.5 * htz_adjustment * y_dir;
+			Logo_Draw.coord[0].x += 1.5 * htz_adjustment * x_dir;
+			Logo_Draw.coord[0].y += 1.5 * htz_adjustment * y_dir;
 		}
 
 		//Shrinking process
-		if(begin && Logo_Draw.scale[0] > 0.4 && Logo_Draw.scale[1] > 0.3){
-			Logo_Draw.scale[0] -= (0.6/shrink_time) * htz_adjustment;
-			Logo_Draw.scale[1] -= (0.7/shrink_time) * htz_adjustment;
+		if(begin && Logo_Draw.scale[0].x > 0.4 && Logo_Draw.scale[0].y > 0.3){
+			Logo_Draw.scale[0].x -= (0.6/shrink_time) * htz_adjustment;
+			Logo_Draw.scale[0].y -= (0.7/shrink_time) * htz_adjustment;
 			new_width = crayon_graphics_get_draw_element_width(&Logo_Draw, 0);
 			new_height = crayon_graphics_get_draw_element_height(&Logo_Draw, 0);
-			Logo_Draw.pos[0] = (640 - new_width) / 2;
-			Logo_Draw.pos[1] = (480 - new_height) / 2;
+			Logo_Draw.coord[0].x = (640 - new_width) / 2;
+			Logo_Draw.coord[0].y = (480 - new_height) / 2;
 		}
 		else{
 			if(begin){
@@ -235,14 +235,16 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw_sprites(&Logo_Draw, PVR_LIST_PT_POLY);
+			crayon_graphics_draw(&Logo_Draw, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
 		pvr_list_finish();
 
 		pvr_scene_finish();
 	}
 
-	//Also frees the spritesheet and palette
-	crayon_memory_free_sprite_array(&Logo_Draw, 1, 1);
+	crayon_memory_free_draw_array(&Logo_Draw);
+
+	crayon_memory_free_spritesheet(&Logo);
+	crayon_memory_free_palette(&Logo_P);
 
 	return 0;
 }

@@ -65,10 +65,10 @@ int main(){
 
 	crayon_memory_init_draw_array(&rotate, NULL, 0, NULL, 1, 0, 0, PVR_FILTER_NONE);
 	rotate.layer[0] = 2;
-	rotate.scale[0] = 300;
-	rotate.scale[1] = 225;
-	rotate.pos[0] = (640 - rotate.scale[0]) / 2.0f;
-	rotate.pos[1] = (480 - rotate.scale[1]) / 2.0f;
+	rotate.scale[0].x = 300;
+	rotate.scale[0].y = 225;
+	rotate.coord[0].x = (640 - rotate.scale[0].x) / 2.0f;
+	rotate.coord[0].y = (480 - rotate.scale[0].y) / 2.0f;
 	rotate.rotation[0] = 0;
 	rotate.colour[0] = 0xFFFFFFFF;
 
