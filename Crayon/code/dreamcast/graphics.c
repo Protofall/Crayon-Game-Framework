@@ -359,7 +359,7 @@ extern uint8_t crayon_graphics_draw_sprites_simple(crayon_draw_array_t *draw_arr
 			}
 		}
 
-		if(*rotation_index == i){	//rotation
+		if(*rotation_index == i || (draw_array->flip[*flip_index] & (1 << 0))){	//rotation or if we just flipped
 			//No change is required for a 0 degree angle
 			if(draw_array->rotation){
 				rotation_under_360 = fmod(draw_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
