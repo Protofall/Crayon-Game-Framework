@@ -120,7 +120,7 @@ int main(){
 	srand(time(0));	//Set the seed for rand()
 
 	crayon_spritesheet_t Dwarf_SS;
-	crayon_draw_array_t Dwarf_Draw_Flip, Dwarf_Draw_Rotate, Dwarf_Draw_Scale;
+	crayon_draw_array_t Dwarf_Draw_Flip, Dwarf_Draw_Rotate, Dwarf_Draw_Scale, Dwarf_Draw_Frame, Dwarf_Draw_Mash;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t BIOS_P;
 
@@ -184,7 +184,7 @@ int main(){
 	Dwarf_Draw_Rotate.rotation[1] = 90;
 	Dwarf_Draw_Rotate.rotation[2] = 180;
 	Dwarf_Draw_Rotate.rotation[3] = 270;
-	Dwarf_Draw_Rotate.colour[0] = 0;
+	Dwarf_Draw_Rotate.colour[0] = 0xFFFFFFFF;
 	Dwarf_Draw_Rotate.fade[0] = 0;
 	Dwarf_Draw_Rotate.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(&Dwarf_Draw_Rotate, 0, 0);
@@ -198,7 +198,7 @@ int main(){
 	Dwarf_Draw_Scale.scale[2].y = 2;
 
 	Dwarf_Draw_Scale.coord[0].x = Dwarf_Draw_Flip.coord[0].x;
-	Dwarf_Draw_Scale.coord[0].y = Dwarf_Draw_Rotate.coord[0].y + crayon_graphics_get_draw_element_height(&Dwarf_Draw_Rotate, 0) + 32;
+	Dwarf_Draw_Scale.coord[0].y = Dwarf_Draw_Rotate.coord[0].y + crayon_graphics_get_draw_element_height(&Dwarf_Draw_Scale, 0) + 32;
 	Dwarf_Draw_Scale.coord[1].x = Dwarf_Draw_Scale.coord[0].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Scale, 0) + 32;
 	Dwarf_Draw_Scale.coord[1].y = Dwarf_Draw_Scale.coord[0].y;
 	Dwarf_Draw_Scale.coord[2].x = Dwarf_Draw_Scale.coord[1].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Scale, 0);
@@ -207,10 +207,77 @@ int main(){
 	Dwarf_Draw_Scale.layer[0] = 2;
 	Dwarf_Draw_Scale.flip[0] = 0;
 	Dwarf_Draw_Scale.rotation[0] = 0;
-	Dwarf_Draw_Scale.colour[0] = 0;
+	Dwarf_Draw_Scale.colour[0] = 0xFFFFFFFF;
 	Dwarf_Draw_Scale.fade[0] = 0;
 	Dwarf_Draw_Scale.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(&Dwarf_Draw_Scale, 0, 0);
+
+	crayon_memory_init_draw_array(&Dwarf_Draw_Frame, &Dwarf_SS, 0, NULL, 3, 2, CRAY_MULTI_FRAME, PVR_FILTER_NONE);
+	Dwarf_Draw_Frame.scale[0].x = 1;
+	Dwarf_Draw_Frame.scale[0].y = 1;
+
+	Dwarf_Draw_Frame.coord[0].x = Dwarf_Draw_Flip.coord[0].x;
+	Dwarf_Draw_Frame.coord[0].y = Dwarf_Draw_Scale.coord[0].y + crayon_graphics_get_draw_element_height(&Dwarf_Draw_Frame, 0) + 32 + 6;	//6 because of scale over-stretching
+	Dwarf_Draw_Frame.coord[1].x = Dwarf_Draw_Frame.coord[0].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Frame, 0) + 32;
+	Dwarf_Draw_Frame.coord[1].y = Dwarf_Draw_Frame.coord[0].y;
+	Dwarf_Draw_Frame.coord[2].x = Dwarf_Draw_Frame.coord[1].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Frame, 0) + 32;
+	Dwarf_Draw_Frame.coord[2].y = Dwarf_Draw_Frame.coord[0].y;
+
+	Dwarf_Draw_Frame.layer[0] = 2;
+	Dwarf_Draw_Frame.flip[0] = 0;
+	Dwarf_Draw_Frame.rotation[0] = 0;
+	Dwarf_Draw_Frame.colour[0] = 0xFFFFFFFF;
+	Dwarf_Draw_Frame.fade[0] = 0;
+	Dwarf_Draw_Frame.frame_coord_key[0] = 0;
+	Dwarf_Draw_Frame.frame_coord_key[1] = 1;
+	Dwarf_Draw_Frame.frame_coord_key[2] = 0;
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Frame, 0, 0);
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Frame, 1, 1);
+
+	crayon_memory_init_draw_array(&Dwarf_Draw_Mash, &Dwarf_SS, 0, NULL, 6, 2, CRAY_MULTI_FRAME + CRAY_MULTI_FLIP + CRAY_MULTI_ROTATE, PVR_FILTER_NONE);
+	Dwarf_Draw_Mash.scale[0].x = 1;
+	Dwarf_Draw_Mash.scale[0].y = 1;
+
+	Dwarf_Draw_Mash.coord[0].x = Dwarf_Draw_Flip.coord[0].x;
+	Dwarf_Draw_Mash.coord[0].y = Dwarf_Draw_Frame.coord[0].y + crayon_graphics_get_draw_element_height(&Dwarf_Draw_Mash, 0) + 32;
+	Dwarf_Draw_Mash.coord[1].x = Dwarf_Draw_Mash.coord[0].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Mash, 0) + 32;
+	Dwarf_Draw_Mash.coord[1].y = Dwarf_Draw_Mash.coord[0].y;
+	Dwarf_Draw_Mash.coord[2].x = Dwarf_Draw_Mash.coord[1].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Mash, 0) + 32;
+	Dwarf_Draw_Mash.coord[2].y = Dwarf_Draw_Mash.coord[0].y;
+	Dwarf_Draw_Mash.coord[3].x = Dwarf_Draw_Mash.coord[2].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Mash, 0) + 32;
+	Dwarf_Draw_Mash.coord[3].y = Dwarf_Draw_Mash.coord[0].y;
+	Dwarf_Draw_Mash.coord[4].x = Dwarf_Draw_Mash.coord[3].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Mash, 0) + 32;
+	Dwarf_Draw_Mash.coord[4].y = Dwarf_Draw_Mash.coord[0].y;
+	Dwarf_Draw_Mash.coord[5].x = Dwarf_Draw_Mash.coord[4].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Mash, 0) + 32;
+	Dwarf_Draw_Mash.coord[5].y = Dwarf_Draw_Mash.coord[0].y;
+
+	Dwarf_Draw_Mash.layer[0] = 2;
+
+	Dwarf_Draw_Mash.flip[0] = 0;
+	Dwarf_Draw_Mash.flip[1] = 1;
+	Dwarf_Draw_Mash.flip[2] = 0;
+	Dwarf_Draw_Mash.flip[3] = 1;
+	Dwarf_Draw_Mash.flip[4] = 1;
+	Dwarf_Draw_Mash.flip[5] = 0;
+
+	Dwarf_Draw_Mash.rotation[0] = 0;
+	Dwarf_Draw_Mash.rotation[1] = 167;
+	Dwarf_Draw_Mash.rotation[2] = 51;
+	Dwarf_Draw_Mash.rotation[3] = -113;
+	Dwarf_Draw_Mash.rotation[4] = 218;
+	Dwarf_Draw_Mash.rotation[5] = 299;
+
+	Dwarf_Draw_Mash.colour[0] = 0xFFFFFFFF;
+	Dwarf_Draw_Mash.fade[0] = 0;
+
+	Dwarf_Draw_Mash.frame_coord_key[0] = 0;
+	Dwarf_Draw_Mash.frame_coord_key[1] = 1;
+	Dwarf_Draw_Mash.frame_coord_key[2] = 1;
+	Dwarf_Draw_Mash.frame_coord_key[3] = 1;
+	Dwarf_Draw_Mash.frame_coord_key[4] = 0;
+	Dwarf_Draw_Mash.frame_coord_key[5] = 1;
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Mash, 0, 0);
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Mash, 1, 1);
 
 	crayon_graphics_setup_palette(&BIOS_P);
 	while(1){
@@ -222,6 +289,8 @@ int main(){
 			crayon_graphics_draw(&Dwarf_Draw_Flip, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
 			crayon_graphics_draw(&Dwarf_Draw_Rotate, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
 			crayon_graphics_draw(&Dwarf_Draw_Scale, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
+			crayon_graphics_draw(&Dwarf_Draw_Frame, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
+			crayon_graphics_draw(&Dwarf_Draw_Mash, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
@@ -235,6 +304,8 @@ int main(){
 	crayon_memory_free_draw_array(&Dwarf_Draw_Flip);
 	crayon_memory_free_draw_array(&Dwarf_Draw_Rotate);
 	crayon_memory_free_draw_array(&Dwarf_Draw_Scale);
+	crayon_memory_free_draw_array(&Dwarf_Draw_Frame);
+	crayon_memory_free_draw_array(&Dwarf_Draw_Mash);
 
 	crayon_memory_free_spritesheet(&Dwarf_SS);
 	crayon_memory_free_mono_font_sheet(&BIOS);

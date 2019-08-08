@@ -293,7 +293,6 @@ extern uint8_t crayon_graphics_draw_sprites_simple(crayon_draw_array_t *draw_arr
 	//Easily lets us use the right index for each array
 		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
 	uint16_t *rotation_index, *flip_index, *frame_index, *z_index;
-	uint8_t multi_scale = !!(draw_array->options & CRAY_MULTI_SCALE);
 	uint16_t i;	//The main loop's index
 	uint16_t zero = 0;
 	float rotation_under_360;
@@ -325,6 +324,12 @@ extern uint8_t crayon_graphics_draw_sprites_simple(crayon_draw_array_t *draw_arr
 		rotation_index = &zero;
 	}
 
+	uint8_t multi_scale = !!(draw_array->options & CRAY_MULTI_SCALE);
+
+	uint8_t multi_flip = !!(draw_array->options & CRAY_MULTI_FLIP);
+	uint8_t multi_rotate = !!(draw_array->options & CRAY_MULTI_ROTATE);
+	uint8_t multi_frame = !!(draw_array->options & CRAY_MULTI_FRAME);
+
 	pvr_sprite_hdr_t header;
 	pvr_sprite_compile(&header, &context);
 	pvr_prim(&header, sizeof(header));
@@ -344,7 +349,15 @@ extern uint8_t crayon_graphics_draw_sprites_simple(crayon_draw_array_t *draw_arr
 			v1 = v0 + draw_array->animation->frame_height / (float)draw_array->spritesheet->dimensions;
 		}
 
-		if(*flip_index == i || *frame_index == i){	//UV
+		//Basically enter if first element or either the flip/rotate/frame changed
+			//The multi_blah's are there to prevent checks on draw params that aren't multi/won't change
+		if(i == 0 || (multi_flip && (draw_array->flip[i] != draw_array->flip[i - 1])) ||
+			(multi_rotate && (draw_array->rotation[i] != draw_array->rotation[i - 1])) ||
+			(multi_frame &&
+			((draw_array->frame_coord_map[i].x != draw_array->frame_coord_map[i - 1].x) ||
+			(draw_array->frame_coord_map[i].y != draw_array->frame_coord_map[i - 1].y)))
+			){
+			
 			if(draw_array->flip[*flip_index] & (1 << 0)){	//Is flipped?
 				vert.auv = PVR_PACK_16BIT_UV(u1, v0);
 				vert.buv = PVR_PACK_16BIT_UV(u0, v0);
@@ -357,11 +370,9 @@ extern uint8_t crayon_graphics_draw_sprites_simple(crayon_draw_array_t *draw_arr
 				vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
 				duv = PVR_PACK_16BIT_UV(u0, v1);
 			}
-		}
 
-		if(*rotation_index == i || (draw_array->flip[*flip_index] & (1 << 0))){	//rotation or if we just flipped
-			//No change is required for a 0 degree angle
-			if(draw_array->rotation){
+			//Don't both rotating if the value is zero
+			if(draw_array->rotation[*rotation_index] != 0){
 				rotation_under_360 = fmod(draw_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
 				if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
 
