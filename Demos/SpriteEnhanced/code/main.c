@@ -117,10 +117,11 @@ int main(){
 	float htz_adjustment;
 	set_screen(&htz_adjustment);
 
-	crayon_spritesheet_t Man, Opaque;
-	crayon_palette_t Man_P;
-	crayon_draw_array_t Man_Draw, Opaque_Blend_Draw, Opaque_Add_Draw;
+	srand(time(0));	//Set the seed for rand()
 
+	crayon_spritesheet_t Dwarf_SS;
+	crayon_draw_array_t Dwarf_Draw_Flip, Dwarf_Draw_Rotate, Dwarf_Draw_Scale, Dwarf_Draw_Frame,
+		Dwarf_Draw_Colour_Blend, Dwarf_Draw_Colour_Add, Dwarf_Draw_Mash;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t BIOS_P;
 
@@ -138,9 +139,8 @@ int main(){
 	#endif
 
 	//Load the asset
-	crayon_memory_load_spritesheet(&Man, &Man_P, 0, "/files/Man.dtex");
-	crayon_memory_load_spritesheet(&Opaque, NULL, -1, "/files/Opaque.dtex");
-	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 6, "/files/Fonts/BIOS_font.dtex");	//REMOVE LATER
+	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 0, "/files/BIOS_font.dtex");
+	crayon_memory_load_spritesheet(&Dwarf_SS, NULL, -1, "/files/sprite.dtex");
 
 	fs_romdisk_unmount("/files");
 
@@ -148,105 +148,223 @@ int main(){
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
-	crayon_memory_init_draw_array(&Man_Draw, &Man, 0, &Man_P, 1, 1, 0, 0);
-	Man_Draw.layer[0] = 2;
-	Man_Draw.scale[0].x = 7;
-	Man_Draw.scale[0].y = 7;
-	Man_Draw.coord[0].x = (640 - crayon_graphics_get_draw_element_width(&Man_Draw, 0)) / 2.0f;
-	Man_Draw.coord[0].y = (480 - crayon_graphics_get_draw_element_height(&Man_Draw, 0)) / 2.0f;;
-	Man_Draw.flip[0] = 1;
-	Man_Draw.rotation[0] = 0;
-	Man_Draw.colour[0] = 0xFF0000FF;
-	Man_Draw.fade[0] = 255;
-	Man_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Man_Draw, 0, 0);
+	crayon_memory_init_draw_array(&Dwarf_Draw_Flip, &Dwarf_SS, 0, NULL, 2, 1, CRAY_MULTI_FLIP, PVR_FILTER_NONE);
+	Dwarf_Draw_Flip.scale[0].x = 1;
+	Dwarf_Draw_Flip.scale[0].y = 1;
 
-	crayon_memory_init_draw_array(&Opaque_Blend_Draw, &Opaque, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_BLEND, 0);
-	Opaque_Blend_Draw.scale[0].x = 12;
-	Opaque_Blend_Draw.scale[0].y = 12;
-	Opaque_Blend_Draw.coord[0].x = 0;
-	Opaque_Blend_Draw.coord[0].y = 0;
-	Opaque_Blend_Draw.coord[1].x = 4 + crayon_graphics_get_draw_element_width(&Opaque_Blend_Draw, 0);
-	Opaque_Blend_Draw.coord[1].y = Opaque_Blend_Draw.coord[0].y;
-	Opaque_Add_Draw.layer[0] = 1;
-	Opaque_Blend_Draw.flip[0] = 0;
-	Opaque_Blend_Draw.rotation[0] = 0;
-	Opaque_Blend_Draw.colour[0] = 0xFF00FF00;
-	Opaque_Blend_Draw.colour[1] = 0xFFFF0000;
-	Opaque_Blend_Draw.fade[0] = 255;
-	Opaque_Blend_Draw.fade[1] = 255;
-	Opaque_Blend_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Opaque_Blend_Draw, 0, 0);
+	Dwarf_Draw_Flip.coord[0].x = 32;
+	Dwarf_Draw_Flip.coord[0].y = 32;
+	Dwarf_Draw_Flip.coord[1].x = Dwarf_Draw_Flip.coord[0].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Flip, 0) + 32;
+	Dwarf_Draw_Flip.coord[1].y = Dwarf_Draw_Flip.coord[0].y;
 
-	crayon_memory_init_draw_array(&Opaque_Add_Draw, &Opaque, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_ADD, 0);
-	Opaque_Add_Draw.scale[0].x = 12;
-	Opaque_Add_Draw.scale[0].y = 12;
-	Opaque_Add_Draw.coord[0].x = 0;
-	Opaque_Add_Draw.coord[0].y = 4 + crayon_graphics_get_draw_element_height(&Opaque_Blend_Draw, 0);
-	Opaque_Add_Draw.coord[1].x = 4 + crayon_graphics_get_draw_element_width(&Opaque_Add_Draw, 0);
-	Opaque_Add_Draw.coord[1].y = Opaque_Add_Draw.coord[0].y;
-	Opaque_Add_Draw.layer[0] = 1;
-	Opaque_Add_Draw.flip[0] = 0;
-	Opaque_Add_Draw.rotation[0] = 0;
-	Opaque_Add_Draw.colour[0] = 0xFF00FF00;
-	Opaque_Add_Draw.colour[1] = 0xFFFF0000;
-	Opaque_Add_Draw.fade[0] = 255;
-	Opaque_Add_Draw.fade[1] = 255;
-	Opaque_Add_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Opaque_Add_Draw, 0, 0);
+	Dwarf_Draw_Flip.layer[0] = 2;
+	Dwarf_Draw_Flip.flip[0] = 0;
+	Dwarf_Draw_Flip.flip[1] = 1;
+	Dwarf_Draw_Flip.rotation[0] = 0;
+	Dwarf_Draw_Flip.colour[0] = 0xFFFFFFFF;
+	Dwarf_Draw_Flip.fade[0] = 0;
+	Dwarf_Draw_Flip.frame_coord_key[0] = 0;
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Flip, 0, 0);
 
-	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
-	char buffer[15];
+	crayon_memory_init_draw_array(&Dwarf_Draw_Rotate, &Dwarf_SS, 0, NULL, 4, 1, CRAY_MULTI_ROTATE, PVR_FILTER_NONE);
+	Dwarf_Draw_Rotate.scale[0].x = 1;
+	Dwarf_Draw_Rotate.scale[0].y = 1;
 
+	Dwarf_Draw_Rotate.coord[0].x = Dwarf_Draw_Flip.coord[0].x;
+	Dwarf_Draw_Rotate.coord[0].y = Dwarf_Draw_Flip.coord[0].y + crayon_graphics_get_draw_element_height(&Dwarf_Draw_Flip, 0) + 32;
+	Dwarf_Draw_Rotate.coord[1].x = Dwarf_Draw_Rotate.coord[0].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Rotate, 0) + 32;
+	Dwarf_Draw_Rotate.coord[1].y = Dwarf_Draw_Rotate.coord[0].y;
+	Dwarf_Draw_Rotate.coord[2].x = Dwarf_Draw_Rotate.coord[1].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Rotate, 0) + 32;
+	Dwarf_Draw_Rotate.coord[2].y = Dwarf_Draw_Rotate.coord[1].y;
+	Dwarf_Draw_Rotate.coord[3].x = Dwarf_Draw_Rotate.coord[2].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Rotate, 0) + 32;
+	Dwarf_Draw_Rotate.coord[3].y = Dwarf_Draw_Rotate.coord[2].y;
+
+	Dwarf_Draw_Rotate.layer[0] = 2;
+	Dwarf_Draw_Rotate.flip[0] = 0;
+	Dwarf_Draw_Rotate.rotation[0] = 0;
+	Dwarf_Draw_Rotate.rotation[1] = 81;
+	Dwarf_Draw_Rotate.rotation[2] = 199;
+	Dwarf_Draw_Rotate.rotation[3] = 226;
+	Dwarf_Draw_Rotate.colour[0] = 0xFFFFFFFF;
+	Dwarf_Draw_Rotate.fade[0] = 0;
+	Dwarf_Draw_Rotate.frame_coord_key[0] = 0;
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Rotate, 0, 0);
+
+	crayon_memory_init_draw_array(&Dwarf_Draw_Scale, &Dwarf_SS, 0, NULL, 3, 1, CRAY_MULTI_SCALE, PVR_FILTER_NONE);
+	Dwarf_Draw_Scale.scale[0].x = 1;
+	Dwarf_Draw_Scale.scale[0].y = 1;
+	Dwarf_Draw_Scale.scale[1].x = 0.5;
+	Dwarf_Draw_Scale.scale[1].y = 0.5;
+	Dwarf_Draw_Scale.scale[2].x = 2;
+	Dwarf_Draw_Scale.scale[2].y = 2;
+
+	Dwarf_Draw_Scale.coord[0].x = Dwarf_Draw_Flip.coord[0].x;
+	Dwarf_Draw_Scale.coord[0].y = Dwarf_Draw_Rotate.coord[0].y + crayon_graphics_get_draw_element_height(&Dwarf_Draw_Scale, 0) + 32;
+	Dwarf_Draw_Scale.coord[1].x = Dwarf_Draw_Scale.coord[0].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Scale, 0) + 32;
+	Dwarf_Draw_Scale.coord[1].y = Dwarf_Draw_Scale.coord[0].y;
+	Dwarf_Draw_Scale.coord[2].x = Dwarf_Draw_Scale.coord[1].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Scale, 0);
+	Dwarf_Draw_Scale.coord[2].y = Dwarf_Draw_Scale.coord[0].y;
+
+	Dwarf_Draw_Scale.layer[0] = 2;
+	Dwarf_Draw_Scale.flip[0] = 0;
+	Dwarf_Draw_Scale.rotation[0] = 0;
+	Dwarf_Draw_Scale.colour[0] = 0xFFFFFFFF;
+	Dwarf_Draw_Scale.fade[0] = 0;
+	Dwarf_Draw_Scale.frame_coord_key[0] = 0;
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Scale, 0, 0);
+
+	crayon_memory_init_draw_array(&Dwarf_Draw_Frame, &Dwarf_SS, 0, NULL, 3, 2, CRAY_MULTI_FRAME, PVR_FILTER_NONE);
+	Dwarf_Draw_Frame.scale[0].x = 1;
+	Dwarf_Draw_Frame.scale[0].y = 1;
+
+	Dwarf_Draw_Frame.coord[0].x = Dwarf_Draw_Flip.coord[0].x;
+	Dwarf_Draw_Frame.coord[0].y = Dwarf_Draw_Scale.coord[0].y + crayon_graphics_get_draw_element_height(&Dwarf_Draw_Frame, 0) + 32 + 6;	//6 because of scale over-stretching
+	Dwarf_Draw_Frame.coord[1].x = Dwarf_Draw_Frame.coord[0].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Frame, 0) + 32;
+	Dwarf_Draw_Frame.coord[1].y = Dwarf_Draw_Frame.coord[0].y;
+	Dwarf_Draw_Frame.coord[2].x = Dwarf_Draw_Frame.coord[1].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Frame, 0) + 32;
+	Dwarf_Draw_Frame.coord[2].y = Dwarf_Draw_Frame.coord[0].y;
+
+	Dwarf_Draw_Frame.layer[0] = 2;
+	Dwarf_Draw_Frame.flip[0] = 0;
+	Dwarf_Draw_Frame.rotation[0] = 0;
+	Dwarf_Draw_Frame.colour[0] = 0xFFFFFFFF;
+	Dwarf_Draw_Frame.fade[0] = 0;
+	Dwarf_Draw_Frame.frame_coord_key[0] = 0;
+	Dwarf_Draw_Frame.frame_coord_key[1] = 1;
+	Dwarf_Draw_Frame.frame_coord_key[2] = 0;
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Frame, 0, 0);
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Frame, 1, 1);
+
+	crayon_memory_init_draw_array(&Dwarf_Draw_Colour_Blend, &Dwarf_SS, 0, NULL, 3, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_BLEND, PVR_FILTER_NONE);
+	Dwarf_Draw_Colour_Blend.scale[0].x = 1;
+	Dwarf_Draw_Colour_Blend.scale[0].y = 1;
+
+	Dwarf_Draw_Colour_Blend.coord[0].x = Dwarf_Draw_Flip.coord[0].x;
+	Dwarf_Draw_Colour_Blend.coord[0].y = Dwarf_Draw_Frame.coord[0].y + crayon_graphics_get_draw_element_height(&Dwarf_Draw_Colour_Blend, 0) + 32;
+	Dwarf_Draw_Colour_Blend.coord[1].x = Dwarf_Draw_Colour_Blend.coord[0].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Colour_Blend, 0) + 32;
+	Dwarf_Draw_Colour_Blend.coord[1].y = Dwarf_Draw_Colour_Blend.coord[0].y;
+	Dwarf_Draw_Colour_Blend.coord[2].x = Dwarf_Draw_Colour_Blend.coord[1].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Colour_Blend, 0) + 32;
+	Dwarf_Draw_Colour_Blend.coord[2].y = Dwarf_Draw_Colour_Blend.coord[0].y;
+
+	Dwarf_Draw_Colour_Blend.layer[0] = 2;
+
+	Dwarf_Draw_Colour_Blend.colour[0] = 0xFF00FF00;	//Green
+	Dwarf_Draw_Colour_Blend.fade[0] = 0;
+	Dwarf_Draw_Colour_Blend.colour[1] = 0xFF00FF00;
+	Dwarf_Draw_Colour_Blend.fade[1] = 128;
+	Dwarf_Draw_Colour_Blend.colour[2] = 0xFF00FF00;
+	Dwarf_Draw_Colour_Blend.fade[2] = 255;
+
+	Dwarf_Draw_Colour_Blend.flip[0] = 0;
+	Dwarf_Draw_Colour_Blend.rotation[0] = 0;
+	Dwarf_Draw_Colour_Blend.frame_coord_key[0] = 0;
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Colour_Blend, 0, 0);
+
+	crayon_memory_init_draw_array(&Dwarf_Draw_Colour_Add, &Dwarf_SS, 0, NULL, 3, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_ADD, PVR_FILTER_NONE);
+	Dwarf_Draw_Colour_Add.scale[0].x = 1;
+	Dwarf_Draw_Colour_Add.scale[0].y = 1;
+
+	Dwarf_Draw_Colour_Add.coord[0].x = Dwarf_Draw_Flip.coord[0].x;
+	Dwarf_Draw_Colour_Add.coord[0].y = Dwarf_Draw_Colour_Blend.coord[0].y + crayon_graphics_get_draw_element_height(&Dwarf_Draw_Colour_Add, 0) + 32;
+	Dwarf_Draw_Colour_Add.coord[1].x = Dwarf_Draw_Colour_Add.coord[0].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Colour_Add, 0) + 32;
+	Dwarf_Draw_Colour_Add.coord[1].y = Dwarf_Draw_Colour_Add.coord[0].y;
+	Dwarf_Draw_Colour_Add.coord[2].x = Dwarf_Draw_Colour_Add.coord[1].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Colour_Add, 0) + 32;
+	Dwarf_Draw_Colour_Add.coord[2].y = Dwarf_Draw_Colour_Add.coord[0].y;
+
+	Dwarf_Draw_Colour_Add.layer[0] = 2;
+
+	Dwarf_Draw_Colour_Add.colour[0] = 0xFF0000FF;	//Blue
+	Dwarf_Draw_Colour_Add.fade[0] = 0;
+	Dwarf_Draw_Colour_Add.colour[1] = 0xFF0000FF;
+	Dwarf_Draw_Colour_Add.fade[1] = 128;
+	Dwarf_Draw_Colour_Add.colour[2] = 0xFF0000FF;
+	Dwarf_Draw_Colour_Add.fade[2] = 255;
+
+	Dwarf_Draw_Colour_Add.flip[0] = 0;
+	Dwarf_Draw_Colour_Add.rotation[0] = 0;
+	Dwarf_Draw_Colour_Add.frame_coord_key[0] = 0;
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Colour_Add, 0, 0);
+
+	crayon_memory_init_draw_array(&Dwarf_Draw_Mash, &Dwarf_SS, 0, NULL, 6, 2, CRAY_MULTI_FRAME + CRAY_MULTI_FLIP + CRAY_MULTI_ROTATE, PVR_FILTER_NONE);
+	Dwarf_Draw_Mash.scale[0].x = 1;
+	Dwarf_Draw_Mash.scale[0].y = 1;
+
+	Dwarf_Draw_Mash.coord[0].x = Dwarf_Draw_Flip.coord[0].x;
+	Dwarf_Draw_Mash.coord[0].y = Dwarf_Draw_Colour_Add.coord[0].y + crayon_graphics_get_draw_element_height(&Dwarf_Draw_Mash, 0) + 32;
+	Dwarf_Draw_Mash.coord[1].x = Dwarf_Draw_Mash.coord[0].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Mash, 0) + 32;
+	Dwarf_Draw_Mash.coord[1].y = Dwarf_Draw_Mash.coord[0].y;
+	Dwarf_Draw_Mash.coord[2].x = Dwarf_Draw_Mash.coord[1].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Mash, 0) + 32;
+	Dwarf_Draw_Mash.coord[2].y = Dwarf_Draw_Mash.coord[0].y;
+	Dwarf_Draw_Mash.coord[3].x = Dwarf_Draw_Mash.coord[2].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Mash, 0) + 32;
+	Dwarf_Draw_Mash.coord[3].y = Dwarf_Draw_Mash.coord[0].y;
+	Dwarf_Draw_Mash.coord[4].x = Dwarf_Draw_Mash.coord[3].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Mash, 0) + 32;
+	Dwarf_Draw_Mash.coord[4].y = Dwarf_Draw_Mash.coord[0].y;
+	Dwarf_Draw_Mash.coord[5].x = Dwarf_Draw_Mash.coord[4].x + crayon_graphics_get_draw_element_width(&Dwarf_Draw_Mash, 0) + 32;
+	Dwarf_Draw_Mash.coord[5].y = Dwarf_Draw_Mash.coord[0].y;
+
+	Dwarf_Draw_Mash.layer[0] = 2;
+
+	Dwarf_Draw_Mash.flip[0] = 0;
+	Dwarf_Draw_Mash.flip[1] = 1;
+	Dwarf_Draw_Mash.flip[2] = 0;
+	Dwarf_Draw_Mash.flip[3] = 1;
+	Dwarf_Draw_Mash.flip[4] = 1;
+	Dwarf_Draw_Mash.flip[5] = 0;
+
+	Dwarf_Draw_Mash.rotation[0] = 0;
+	Dwarf_Draw_Mash.rotation[1] = 167;
+	Dwarf_Draw_Mash.rotation[2] = 51;
+	Dwarf_Draw_Mash.rotation[3] = -113;
+	Dwarf_Draw_Mash.rotation[4] = 218;
+	Dwarf_Draw_Mash.rotation[5] = 299;
+
+	Dwarf_Draw_Mash.colour[0] = 0xFFFFFFFF;
+	Dwarf_Draw_Mash.fade[0] = 0;
+
+	Dwarf_Draw_Mash.frame_coord_key[0] = 0;
+	Dwarf_Draw_Mash.frame_coord_key[1] = 1;
+	Dwarf_Draw_Mash.frame_coord_key[2] = 1;
+	Dwarf_Draw_Mash.frame_coord_key[3] = 1;
+	Dwarf_Draw_Mash.frame_coord_key[4] = 0;
+	Dwarf_Draw_Mash.frame_coord_key[5] = 1;
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Mash, 0, 0);
+	crayon_graphics_frame_coordinates(&Dwarf_Draw_Mash, 1, 1);
+
+	crayon_graphics_setup_palette(&BIOS_P);
 	while(1){
 		pvr_wait_ready();
-		// MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-			//If any button is pressed, start the game (Doesn't check thumbstick)
-			// if(st->buttons & (CONT_DPAD_RIGHT)){
-			// 	Man_Draw.rotation[0]++;
-			// }
-			// if(st->buttons & (CONT_DPAD_LEFT)){
-			// 	Man_Draw.rotation[0]--;
-			// }
-		// MAPLE_FOREACH_END()
-
-		crayon_graphics_setup_palette(&Man_P);
-		crayon_graphics_setup_palette(&BIOS_P);
-
-		sprintf(buffer, "Angle: %d", (int)Man_Draw.rotation[0]);
 
 		pvr_scene_begin();
 
-		pvr_list_begin(PVR_LIST_OP_POLY);
-			crayon_graphics_draw(&Opaque_Blend_Draw, PVR_LIST_OP_POLY, 1);
-			crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
-			crayon_graphics_draw_text_mono(buffer, &BIOS, PVR_LIST_OP_POLY, 280, 360, 30, 1, 1, BIOS_P.palette_id);
+		pvr_list_begin(PVR_LIST_PT_POLY);
+			crayon_graphics_draw(&Dwarf_Draw_Flip, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw(&Dwarf_Draw_Rotate, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw(&Dwarf_Draw_Scale, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw(&Dwarf_Draw_Frame, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw(&Dwarf_Draw_Colour_Blend, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw(&Dwarf_Draw_Colour_Add, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw(&Dwarf_Draw_Mash, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
 		pvr_list_finish();
 
-		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw(&Man_Draw, PVR_LIST_PT_POLY, 1);
+		pvr_list_begin(PVR_LIST_OP_POLY);
+			crayon_graphics_draw_text_mono("Controls:", &BIOS, PVR_LIST_OP_POLY, 450, 32, 3, 2, 2, BIOS_P.palette_id);
 		pvr_list_finish();
 
 		pvr_scene_finish();
-
-		//Rotate the man and keep it within the 0 - 360 range
-		Man_Draw.rotation[0]++;
-		if(Man_Draw.rotation[0] > 360){
-			Man_Draw.rotation[0] -= 360;
-		}
 	}
 
 	//Also frees the spritesheet and palette
-	crayon_memory_free_draw_array(&Man_Draw);
-	crayon_memory_free_draw_array(&Opaque_Blend_Draw);
-	crayon_memory_free_draw_array(&Opaque_Add_Draw);
+	crayon_memory_free_draw_array(&Dwarf_Draw_Flip);
+	crayon_memory_free_draw_array(&Dwarf_Draw_Rotate);
+	crayon_memory_free_draw_array(&Dwarf_Draw_Scale);
+	crayon_memory_free_draw_array(&Dwarf_Draw_Frame);
+	crayon_memory_free_draw_array(&Dwarf_Draw_Colour_Blend);
+	crayon_memory_free_draw_array(&Dwarf_Draw_Colour_Add);
+	crayon_memory_free_draw_array(&Dwarf_Draw_Mash);
 
+	crayon_memory_free_spritesheet(&Dwarf_SS);
 	crayon_memory_free_mono_font_sheet(&BIOS);
 
-	crayon_memory_free_spritesheet(&Man);
-	crayon_memory_free_spritesheet(&Opaque);
-
-	crayon_memory_free_palette(&Man_P);
 	crayon_memory_free_palette(&BIOS_P);
 
 	return 0;

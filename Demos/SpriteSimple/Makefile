@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# Bouncing-Logo Makefile
+# Sprite Simple Makefile
 #------------------------------------------------------------------------------
 $(if $(CRAYON_BASE),,$(error Cannot locate Crayon. Please set CRAYON_BASE to\
   Crayon's root directory, either in your environment, or in a command line\
