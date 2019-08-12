@@ -17,7 +17,7 @@
 #endif
 
 #if CRAYON_BOOT_MODE == 1
-	#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
+	#define MNT_MODE FS_EXT2_MOUNT_READONLY
 
 	static void unmount_ext2_sd(){
 		fs_ext2_unmount("/sd");
@@ -235,7 +235,7 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw(&Logo_Draw, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
+			crayon_graphics_draw(&Logo_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
 		pvr_list_finish();
 
 		pvr_scene_finish();

@@ -10,15 +10,14 @@
 #define CRAY_MULTI_DIM (1 << 2)
 #define CRAY_MULTI_FLIP (1 << 3)
 #define CRAY_MULTI_ROTATE (1 << 4)
-#define CRAY_MULTI_COLOUR (1 << 5)
+#define CRAY_MULTI_COLOUR_ADD (3 << 5) // 0110 0000
+#define CRAY_MULTI_COLOUR_BLEND (1 << 5) // 0010 0000
+#define CRAY_MULTI_COLOUR (1 << 5) //Use this one for untextured polys
+
+//Internal usage
 #define CRAY_COLOUR_BLEND (0 << 6)
 #define CRAY_COLOUR_ADD (1 << 6)
 #define CRAY_HAS_TEXTURE (1 << 7)
-
-#define CRAY_DRAW_SIMPLE (0 << 0)
-#define CRAY_DRAW_ENHANCED (1 << 0)
-#define CRAY_NO_CAMERA (0 << 1)
-#define CRAY_USING_CAMERA (1 << 1)
 
 //This is designed for the multi-draw functions. If you want to draw a single thing with this struct
 //then I you'll still need to go through the multi-draw. It shouldn't be too much slower if any.

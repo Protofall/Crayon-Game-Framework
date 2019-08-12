@@ -286,11 +286,11 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw(&Dwarf_Draw_Flip, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw(&Dwarf_Draw_Rotate, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw(&Dwarf_Draw_Scale, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw(&Dwarf_Draw_Frame, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw(&Dwarf_Draw_Mash, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
+			crayon_graphics_draw(&Dwarf_Draw_Flip, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw(&Dwarf_Draw_Rotate, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw(&Dwarf_Draw_Scale, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw(&Dwarf_Draw_Frame, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw(&Dwarf_Draw_Mash, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);

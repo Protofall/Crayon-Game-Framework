@@ -219,7 +219,7 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 extern int8_t crayon_graphics_draw(crayon_draw_array_t *draw_array, uint8_t poly_list_mode, uint8_t draw_mode){
 	if(!(draw_mode & CRAY_USING_CAMERA)){	//No Camera
 		if(draw_array->options & CRAY_HAS_TEXTURE){	//Textured
-			if(!(draw_mode & CRAY_DRAW_ENHANCED)){	//Simple draw
+			if(!(draw_mode & CRAY_SCREEN_DRAW_ENHANCED)){	//Simple draw
 				return crayon_graphics_draw_sprites_simple(draw_array, poly_list_mode);
 			}
 			return crayon_graphics_draw_sprites_enhanced(draw_array, poly_list_mode);
@@ -231,7 +231,7 @@ extern int8_t crayon_graphics_draw(crayon_draw_array_t *draw_array, uint8_t poly
 			;
 		}
 		else{
-			if(!(draw_mode & CRAY_DRAW_ENHANCED)){
+			if(!(draw_mode & CRAY_CAMERA_DRAW_ENHANCED)){
 				;
 			}
 			else{
@@ -240,6 +240,7 @@ extern int8_t crayon_graphics_draw(crayon_draw_array_t *draw_array, uint8_t poly
 		}
 		return -1;
 	}
+	return -1;	//It will never get here
 }
 
 // 	//Use these to merge the two palette if's into one

@@ -8,6 +8,14 @@
 #include <string.h>	//For length of string
 #include <math.h>
 
+#define CRAY_SCREEN_DRAW_SIMPLE 0
+#define CRAY_SCREEN_DRAW_ENHANCED 1
+#define CRAY_CAMERA_DRAW_SIMPLE (1 << 1)	//10 in binary
+#define CRAY_CAMERA_DRAW_ENHANCED 3 //This is 11 in binary
+
+//Internal usage
+#define CRAY_USING_CAMERA (1 << 1)
+
 //Sets a palette for a spritesheet
 extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
 
