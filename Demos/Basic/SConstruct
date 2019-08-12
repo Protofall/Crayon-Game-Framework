@@ -10,8 +10,18 @@ if CRAYON_BASE == None:	#Not in the environment
 		"""
 		exit(1)
 
+#Change this later so default depends on PLATFORM/target
+#So a seperate variable called "build_default" and its set depending on
+#the platform
+#Shouldn't all this be in the "includes" directory? I don't see how I
+#Could implement it
+BUILD_MODE = ARGUMENTS.get('build_mode', 'cd')
+#Section 10.2.1 of the scons user manual could be *very* useful for this
+#...if only it was clear whats going on. Refer to that later
+
 import commands
 
+#Setting the vars
 CRAYON_PROJ_NAME 	= commands.getoutput("basename \"`pwd`\"")	#Basic
 CRAYON_PROJ_LIBS	= "-lkosext2fs -lz"
 CRAYON_PROJ_SRC_C	= commands.getoutput("find code -type f -name '*.c' | tr '\n' ' '")	#Note, since this is in the user space, the file paths can have spaces
@@ -21,38 +31,44 @@ CRAYON_BUILD_DIR	= "build"
 CRAYON_PREPROCESOR	= ""
 DREAMCAST_EMULATOR	= "redream"
 
-print "\nREADING OUT:"
-print CRAYON_PROJ_NAME
-print CRAYON_PROJ_LIBS
-print CRAYON_PROJ_SRC_C
-print CRAYON_PROJ_SRC_CPP
-print CRAYON_BUILD_DIR
-print CRAYON_PREPROCESOR
-print DREAMCAST_EMULATOR
+
 
 # Make env and load with the existing vars
-env=Environment()
-env.Replace(CRAYON_BASE = CRAYON_BASE)	#We made this local var at the beginning
-env.Replace(CRAYON_PROJ_NAME = CRAYON_PROJ_NAME)
-env.Replace(CRAYON_PROJ_LIBS = CRAYON_PROJ_LIBS)
-env.Replace(CRAYON_PROJ_SRC_C = CRAYON_PROJ_SRC_C)
-env.Replace(CRAYON_PROJ_SRC_CPP = CRAYON_PROJ_SRC_CPP)
-env.Replace(CRAYON_BUILD_DIR = CRAYON_BUILD_DIR)
-env.Replace(CRAYON_PREPROCESOR = CRAYON_PREPROCESOR)
-# env.Replace(DREAMCAST_EMULATOR = DREAMCAST_EMULATOR)
+env=Environment(CC = 'kos-cc')	#Currently will only work for Dreamcast
+env['ENV']['PATH'] = os.environ['PATH']	#Import PATH for us. This fixes the "Unable to find kos-cc" thing
+										#You could just add "ENV = os.environ" to the constructor instead
+env['ENV'].update({k: v for k, v in os.environ.items() if k.startswith('KOS_')})	#Adding in KOS vars
+env['ENV'].update(CRAYON_BASE = CRAYON_BASE)	#We made this local var at the beginning
+env['ENV'].update(CRAYON_PROJ_NAME = CRAYON_PROJ_NAME)
+env['ENV'].update(CRAYON_PROJ_LIBS = CRAYON_PROJ_LIBS)
+env['ENV'].update(CRAYON_PROJ_SRC_C = CRAYON_PROJ_SRC_C)
+env['ENV'].update(CRAYON_PROJ_SRC_CPP = CRAYON_PROJ_SRC_CPP)
+env['ENV'].update(CRAYON_BUILD_DIR = CRAYON_BUILD_DIR)
+env['ENV'].update(CRAYON_PREPROCESOR = CRAYON_PREPROCESOR)
+
+#Optionals
+# env['ENV'].update(CRAYON_PROJ_IP_BIN = "")
+# env['ENV'].update(CRAYON_PROJ_CFLAGS = "")
+# env['ENV'].update(CRAYON_PROJ_LDFLAGS = "")
+# env['ENV'].update(CRAYON_PROJ_LIBS = "")
+# env['ENV'].update(DREAMCAST_EMULATOR = DREAMCAST_EMULATOR)	#Unused
 
 #The ability to access any python file, specifically our rule file
-extras_path = CRAYON_BASE + "/rules/" + "dreamcast.py"
 
 import imp
-extras_steps = imp.load_source('dreamcast', extras_path)
+extras_steps = imp.load_source('dreamcast', CRAYON_BASE+'/rules/'+'dreamcast.py')
 
 #Load the platform-specific scons file
 extras_steps.Init(env)
-print env['CRAYON_TEST']	#To confirm it loaded
+# print env['ENV']['PROJECT']	#To confirm it loaded
+
+# Scons user manual section 10.3.2
+# This is the code that will treat `scons` and `scons dreamcast` the same
+# But will BOOT_MODE be set correctly, id we do just `scons`?
+# Default(dreamcast())
+# crayon()
+# check()
 
 
-
-
-# ~~scons --site-dir="$CRAYON_BASE/rules" -Q~~
+# ~~scons --site-dir="$CRAYON_BASE/rules" -Q
 # Just use `scons -Q` now

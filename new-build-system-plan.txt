@@ -1,0 +1,81 @@
+Ideal Project building behaviour:
+
+- build crayon
+- clean crayon (Call Crayon's scons with `scons-c`)
+- clean project (Delete cdfs and "build" dir)
+- preprocess which makes the asset directory. It can use your own pre-processor if you provide the name
+	- check is a form of preprocess. runs preprocess with -noRM mode
+- build this project
+	- Depends on crayon, if libcrayon.a DNE then build it
+	- Call preprocess to build the assets dir
+	- Have a build dir that can have objects for all different kinds of builds (dc/cd/obj, dc/sd/obj, dc/pc/obj, windows/obj, mac/obj, linux/obj). Maybe prefix them such as "dc/cd.main.o, dc/sd.main.o, dc/cd.grid.o, etc"
+
+- execute. Checks if built (cdi present) and if so it runs it with emulator of choice
+	- Later on for computer ports it will check if the game executable is there and if so it executes it
+
+Possible combos:
+
+- scons							#Same as `scons dc-cd` for now
+- scons dreamcast boot_mode=cd	#Makes Dreamcast cd build (mode 0)
+- scons dreamcast boot_mode=sd	#DC build with CRAYON_SD_MODE set to 1
+- scons dreamcast boot_mode=pc	#CRAYON_SD_MODE to 2
+- scons PLATFORM				#PLATFORM = target. Currently only dc works
+- scons dreamcast-c				#Cleans the project, not Crayon
+- scons crayon					#Makes Crayon (Calls Crayon's scons)
+- scons crayon -c				#Cleans Crayon (Calls Crayon's scons)
+- scons check					#Basically runs `./preprocess -noRM
+- scons execute					#Emulates the game. If file DNE, build it
+(FUTURE)
+- Preprocess might change per platform?
+
+
+
+
+
+#tl;dr of how the current Make build system worked
+
+Command given at commandline actually triggers a builder from the included file (Aside from `make check`, but that can be outsourced to the included file)
+
+Important commands are `make` or `make dc-cdi` building the cd build. `make dc-sd/pc` build the sd and pc builds respectfully. `make buildRun` calls `crayon-run`.
+
+Also there are vars in this file that can be "seen" by the included file
+
+Included mk file's Builder list
+	- crayon-cdi
+	- crayon-sd
+	- crayon-pc
+	- crayon-pp
+	- crayon-pp-help
+	- crayon-clean
+	- crayon-rm-cdfs	#Just removes the cdfs folder
+	- crayon-run
+	- crayon-rebuild-crayon		#I don't get this rule. Seems unused
+	- PROJ.cdi	#Includes the iso step
+	- (scramble)
+	- (bin)		#Why is the one called "PROJ.elf.bin"?
+	- (elf)
+	- objects (one per boot mode)
+
+
+#Note that all steps after PROJ.cdi are located in the build directory
+
+-------------------------------------------------------------------------
+
+#Plans on how this could work with scons:
+
+
+`scons PLATFORM build_mode=cd/sd/pc`
+If build_mode is missing, assume the default for the platform (For "dreamcast" its cd). Also note if no target is selected, we "Default()" to the Dreamcast build.
+
+I think I'll need a "dreamcast" builder to work with this command, that builder will change based on variables, but especially the build_mode flag. If build_mode == cd then make a cd, else make a un-scrambled bin. Both versions would also use the pre-processor
+
+
+
+`scons crayon`
+#This one should be relatively simple, just make a "crayon" builder that calls the Crayon SConstruct file with the command. This should also allow for the -c param to work right. I think it would be fine right now for this to re-build all platform's Crayon libs...for now
+
+
+--------------------------------------------------------------------------
+
+#Other
+DREAMCAST: "unibios"
