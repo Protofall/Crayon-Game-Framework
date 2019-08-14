@@ -1,5 +1,15 @@
 #include "memory.h"
 
+extern int16_t crayon_memory_get_animation_id(char * name, crayon_spritesheet_t * ss){
+	uint16_t i;
+	for(i = 0; i < ss->animation_count; i++){
+		if(!strcmp(ss->animation_array[i].name, name)){
+			return i;
+		}
+	}
+	return -1;
+}
+
 extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *dims, uint32_t *format, char *texture_path){
 	uint8_t dtex_result = 0;
 	dtex_header_t dtex_header;

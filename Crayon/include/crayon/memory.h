@@ -26,6 +26,12 @@ typedef struct dpal_header{
 	uint32_t color_count; //number of 32-bit ARGB palette entries
 } dpal_header_t;
 
+//------------------Checking memory------------------//
+
+//Gets the index of an animation
+	//UNTESTED
+extern int16_t crayon_memory_get_animation_id(char * name, crayon_spritesheet_t * ss);
+
 //------------------Allocating memory------------------//
 
 //Reads a file, loads it into a dtex
