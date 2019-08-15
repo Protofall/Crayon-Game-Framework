@@ -198,7 +198,7 @@ Here are some setup guides for installing KOS. I recommend downloading the lates
 
 For cdi4dc:
 
-+ `git clone https://github.com/Kazade/img4dc.git` OR `git@github.com:Kazade/img4dc.git`
++ `git clone https://github.com/Kazade/img4dc.git` OR `git clone git@github.com:Kazade/img4dc.git`
 + `cd img4dc`
 + `cmake .`
 + `make`
