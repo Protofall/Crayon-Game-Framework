@@ -120,7 +120,7 @@ int main(){
 	srand(time(0));	//Set the seed for rand()
 
 	crayon_spritesheet_t Ball, Ball2;
-	crayon_draw_array_t Ball_Draw, Ball2_Draw;
+	crayon_sprite_array_t Ball_Draw, Ball2_Draw;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Ball_P, BIOS_P;
 
@@ -180,8 +180,8 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw(&Ball_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);	//Broken on most emulators, but not hardware
-			crayon_graphics_draw(&Ball2_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Ball_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);	//Broken on most emulators, but not hardware
+			crayon_graphics_draw_sprites(&Ball2_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);

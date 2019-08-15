@@ -120,7 +120,7 @@ int main(){
 	srand(time(0));	//Set the seed for rand()
 
 	crayon_spritesheet_t Logo;
-	crayon_draw_array_t Logo_Draw;
+	crayon_sprite_array_t Logo_Draw;
 	crayon_palette_t Logo_P;
 
 	crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
@@ -235,7 +235,7 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw(&Logo_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Logo_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
 		pvr_list_finish();
 
 		pvr_scene_finish();

@@ -21,7 +21,7 @@
 
 //This is designed for the multi-draw functions. If you want to draw a single thing with this struct
 //then I you'll still need to go through the multi-draw. It shouldn't be too much slower if any.
-typedef struct crayon_draw_array{
+typedef struct crayon_sprite_array{
 	vec2_f_t *coord;			//Width then Height extracted from anim/frame data,
 								//Each element is one pair of coordinates
 	uint8_t *frame_coord_key;	//ids for a pair of frame_coords_map elements and uses that for
@@ -60,7 +60,7 @@ typedef struct crayon_draw_array{
 	crayon_spritesheet_t *spritesheet;
 	crayon_animation_t *animation;
 	crayon_palette_t *palette;	//Also ask if palettes can start at not multiples of 16 or 256
-} crayon_draw_array_t;
+} crayon_sprite_array_t;
 
 // //Getters, for ease of use, you can access the array directly if you want
 // float crayon_get_pos_x(crayon_sprite_array_t * struct, uint16_t index);

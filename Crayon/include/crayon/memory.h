@@ -56,7 +56,7 @@ extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palet
 //Option's format is TCCR (flip)SFZ
 	//If T is set, we ignore the flip, frames and Left colour bits
 //If making an untextured array, set the spritesheet pointer to NULL
-extern void crayon_memory_init_draw_array(crayon_draw_array_t *draw_array, crayon_spritesheet_t *ss,
+extern void crayon_memory_init_draw_array(crayon_sprite_array_t *draw_array, crayon_spritesheet_t *ss,
 	uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
 	uint8_t filter);
 
@@ -86,7 +86,7 @@ extern uint8_t crayon_memory_free_mono_font_sheet(crayon_font_mono_t *fm);
 extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp);
 
 //Frees a draw array
-extern uint8_t crayon_memory_free_draw_array(crayon_draw_array_t *draw_array);
+extern uint8_t crayon_memory_free_draw_array(crayon_sprite_array_t *draw_array);
 
 
 //------------------Mounting romdisks------------------//

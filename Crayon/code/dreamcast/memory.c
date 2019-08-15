@@ -418,7 +418,7 @@ extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palet
 	return;
 }
 
-extern void crayon_memory_init_draw_array(crayon_draw_array_t *draw_array, crayon_spritesheet_t *ss,
+extern void crayon_memory_init_draw_array(crayon_sprite_array_t *draw_array, crayon_spritesheet_t *ss,
 	uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
 	uint8_t filter){
 
@@ -533,7 +533,7 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
 	return 1;
 }
 
-extern uint8_t crayon_memory_free_sprite_array(crayon_draw_array_t *draw_array){
+extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *draw_array){
 	//Free shouldn't do anything if you try to free a NULL ptr, but just incase...
 	if(draw_array->coord){free(draw_array->coord);}
 	if(draw_array->frame_coord_key){free(draw_array->frame_coord_key);}

@@ -25,7 +25,7 @@ extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
 	return 0;
 }
 
-extern void crayon_graphics_frame_coordinates(const crayon_draw_array_t *draw_list, uint8_t index, uint8_t frame){
+extern void crayon_graphics_frame_coordinates(const crayon_sprite_array_t *draw_list, uint8_t index, uint8_t frame){
 	crayon_animation_t * anim = draw_list->animation;
 	uint8_t frames_per_row = anim->sheet_width / anim->frame_width;
 	uint8_t column_number = frame % frames_per_row;
@@ -36,7 +36,7 @@ extern void crayon_graphics_frame_coordinates(const crayon_draw_array_t *draw_li
 	return;
 }
 
-extern float crayon_graphics_get_draw_element_width(const crayon_draw_array_t *draw_list, uint8_t id){
+extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *draw_list, uint8_t id){
 	if(!(draw_list->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
 	if(draw_list->options & CRAY_HAS_TEXTURE){
 		return draw_list->animation->frame_width * draw_list->scale[id].x;
@@ -46,7 +46,7 @@ extern float crayon_graphics_get_draw_element_width(const crayon_draw_array_t *d
 	}
 }
 
-extern float crayon_graphics_get_draw_element_height(const crayon_draw_array_t *draw_list, uint8_t id){
+extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *draw_list, uint8_t id){
 	if(!(draw_list->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
 	if(draw_list->options & CRAY_HAS_TEXTURE){
 		return draw_list->animation->frame_height * draw_list->scale[id].y;
@@ -56,7 +56,7 @@ extern float crayon_graphics_get_draw_element_height(const crayon_draw_array_t *
 	}
 }
 
-extern uint8_t crayon_graphics_draw_untextured_array(crayon_draw_array_t *draw_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_untextured_array(crayon_sprite_array_t *draw_array, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert[4];
@@ -216,7 +216,7 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 //---- --CM
 //C is for camera mode (Unimplemented)
 //M is for draw mode
-extern int8_t crayon_graphics_draw(crayon_draw_array_t *draw_array, uint8_t poly_list_mode, uint8_t draw_mode){
+extern int8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *draw_array, uint8_t poly_list_mode, uint8_t draw_mode){
 	if(!(draw_mode & CRAY_USING_CAMERA)){	//No Camera
 		if(draw_array->options & CRAY_HAS_TEXTURE){	//Textured
 			if(!(draw_mode & CRAY_SCREEN_DRAW_ENHANCED)){	//Simple draw
@@ -269,7 +269,7 @@ extern int8_t crayon_graphics_draw(crayon_draw_array_t *draw_array, uint8_t poly
 // 	//	 ss->dimensions, ss->dimensions, ss->texture, filter);
 
 
-extern uint8_t crayon_graphics_draw_sprites_simple(crayon_draw_array_t *draw_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_sprites_simple(crayon_sprite_array_t *draw_array, uint8_t poly_list_mode){
 	float u0, v0, u1, v1;
 	uint32_t duv;	//duv is used to assist in the rotations
 	u0 = 0; v0 = 0; u1 = 0; v1 = 0; duv = 0;	//Needed if you want to prevent a bunch of compiler warnings...
@@ -440,7 +440,7 @@ extern uint8_t crayon_graphics_draw_sprites_simple(crayon_draw_array_t *draw_arr
 	return 0;
 }
 
-extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_draw_array_t *draw_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *draw_array, uint8_t poly_list_mode){
 	float u0, v0, u1, v1;
 	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	//Needed if you want to prevent a bunch of compiler warnings...
 

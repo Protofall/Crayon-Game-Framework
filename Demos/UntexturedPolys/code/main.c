@@ -61,7 +61,7 @@ int main(){
 	float htz_adjustment;
 	set_screen(&htz_adjustment);
 
-	crayon_draw_array_t rotate;
+	crayon_sprite_array_t rotate;
 
 	crayon_memory_init_draw_array(&rotate, NULL, 0, NULL, 1, 0, 0, PVR_FILTER_NONE);
 	rotate.layer[0] = 2;
@@ -79,7 +79,7 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
-			crayon_graphics_draw(&rotate, PVR_LIST_OP_POLY, 0);
+			crayon_graphics_draw_sprites(&rotate, PVR_LIST_OP_POLY, 0);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);

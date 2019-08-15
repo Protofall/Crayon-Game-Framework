@@ -119,7 +119,7 @@ int main(){
 
 	crayon_spritesheet_t Man, Opaque;
 	crayon_palette_t Man_P;
-	crayon_draw_array_t Man_Draw, Opaque_Blend_Draw, Opaque_Add_Draw;
+	crayon_sprite_array_t Man_Draw, Opaque_Blend_Draw, Opaque_Add_Draw;
 
 	crayon_font_mono_t BIOS;
 	crayon_palette_t BIOS_P;
@@ -218,13 +218,13 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
-			crayon_graphics_draw(&Opaque_Blend_Draw, PVR_LIST_OP_POLY, 1);
-			crayon_graphics_draw(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
+			crayon_graphics_draw_sprites(&Opaque_Blend_Draw, PVR_LIST_OP_POLY, 1);
+			crayon_graphics_draw_sprites(&Opaque_Add_Draw, PVR_LIST_OP_POLY, 1);
 			crayon_graphics_draw_text_mono(buffer, &BIOS, PVR_LIST_OP_POLY, 280, 360, 30, 1, 1, BIOS_P.palette_id);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw(&Man_Draw, PVR_LIST_PT_POLY, 1);
+			crayon_graphics_draw_sprites(&Man_Draw, PVR_LIST_PT_POLY, 1);
 		pvr_list_finish();
 
 		pvr_scene_finish();

@@ -95,8 +95,8 @@ int main(){
 	}
 
 	crayon_spritesheet_t Dwarf, Opaque, Man;
-	crayon_draw_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw;
-	crayon_draw_array_t Man_BG;
+	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw;
+	crayon_sprite_array_t Man_BG;
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P, Red_Man_P, Green_Man_P;
@@ -297,9 +297,9 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
-			crayon_graphics_draw(&Dwarf_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
-			crayon_graphics_draw(&Red_Man_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
-			crayon_graphics_draw(&Green_Man_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Red_Man_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Green_Man_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
 
 			crayon_graphics_draw_text_prop("Tahoma\0", &Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id);
 			crayon_graphics_draw_text_mono("BIOS\0", &BIOS, PVR_LIST_PT_POLY, 120, 40, 30, 1, 1, BIOS_P.palette_id);
@@ -330,11 +330,11 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-			crayon_graphics_draw(&Rainbow_Draw, PVR_LIST_OP_POLY, CRAY_SCREEN_DRAW_SIMPLE);
-			crayon_graphics_draw(&Frames_Draw, PVR_LIST_OP_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Rainbow_Draw, PVR_LIST_OP_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Frames_Draw, PVR_LIST_OP_POLY, CRAY_SCREEN_DRAW_SIMPLE);
 
 			//Represents the boundry box for the red man when not rotated
-			crayon_graphics_draw(&Man_BG, PVR_LIST_OP_POLY, 0);
+			crayon_graphics_draw_sprites(&Man_BG, PVR_LIST_OP_POLY, 0);
 
 		pvr_list_finish();
 

@@ -120,7 +120,7 @@ int main(){
 	srand(time(0));	//Set the seed for rand()
 
 	crayon_spritesheet_t Dwarf_SS;
-	crayon_draw_array_t Dwarf_Draw_Flip, Dwarf_Draw_Rotate, Dwarf_Draw_Scale, Dwarf_Draw_Frame, Dwarf_Draw_Mash;
+	crayon_sprite_array_t Dwarf_Draw_Flip, Dwarf_Draw_Rotate, Dwarf_Draw_Scale, Dwarf_Draw_Frame, Dwarf_Draw_Mash;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t BIOS_P;
 
@@ -286,11 +286,11 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw(&Dwarf_Draw_Flip, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
-			crayon_graphics_draw(&Dwarf_Draw_Rotate, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
-			crayon_graphics_draw(&Dwarf_Draw_Scale, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
-			crayon_graphics_draw(&Dwarf_Draw_Frame, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
-			crayon_graphics_draw(&Dwarf_Draw_Mash, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Flip, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Rotate, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Scale, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Frame, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Mash, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
