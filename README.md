@@ -183,43 +183,39 @@ objectLogicID is basically the general behaviour of a texture. So a background h
 
 + General knowledge of C
 + KallistiOS
+	+ As well as the KOS Port for "zlib"
 + TexturePacker
 + Texconv
 	+ QT is required to build the Texconv executable
 + cdi4dc (Kazade's Unix build)
-+ SCons (Makefile alternative)
++ (NOT NEEDED RIGHT NOW) SCons (Makefile alternative)
 
 ### Installing Pre-requisites
 
-Assuming you have a working clone of KOS.
+Here are some setup guides for installing KOS. I recommend downloading the latest development versions instead of the latest "Release version" so you can use the FAT file system support:
++ http://gamedev.allusion.net/softprj/kos/setup-linux.php (Mac setup is very similar to this)
++ http://gamedev.allusion.net/softprj/kos/setup-wsl.php
 
 For cdi4dc:
 
-`git clone https://github.com/Kazade/img4dc.git`
-
-`cd img4dc`
-
-`cmake .`
-
-`make`
++ `git clone https://github.com/Kazade/img4dc.git` OR `git@github.com:Kazade/img4dc.git`
++ `cd img4dc`
++ `cmake .`
++ `make`
 
 
 For texconv:
 
-`sudo apt-get install qt5-default qtbase5-dev`
-
-`git clone https://github.com/tvspelsfreak/texconv`
-
-`cd texconv`
-
-`qmake`
-
-`make`
-
++ `sudo apt-get install qt5-default qtbase5-dev`
++ `git clone https://github.com/tvspelsfreak/texconv` OR `git clone git@github.com:tvspelsfreak/texconv.git`
++ `cd texconv`
++ `qmake`
++ `make`
 
 Copy the executables for texconv and cdi4dc into a directory whose path is listed in the `~/.profile` file (Or add you own directory path)
 
 
+NOTE: SCONS ISN'T REQUIRED RIGHT NOW AND MAY BE DUMPED IN THE FUTURE. DON'T BOTHER INSTALLING FOR NOW
 Crayon also uses SConstruct as an alternative to makefiles due to its enhanced ability. If you don't already have it installed, run this command
 
 `sudo apt-get install scons`
@@ -228,9 +224,11 @@ Crayon also uses SConstruct as an alternative to makefiles due to its enhanced a
 **CHECK** Do we also require the `convert` command? Its used for changing the png's size to be power of 2 by power of 2
 
 For TexturePacker:
-+ Go onto their website and download the free .deb file
++ Go onto their website https://www.codeandweb.com/texturepacker/download
++ Download the free installer file (For WSL/Dreamcast choose the Linux .deb file)
 + Install it
 + Run it once, read the legal stuff (Or not) and type "agree"
++ You can now use the program
 
 If I remembered that correctly, now you should have an up and running Crayon framework.
 
