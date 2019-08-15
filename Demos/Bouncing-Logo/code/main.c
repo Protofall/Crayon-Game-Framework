@@ -147,8 +147,8 @@ int main(){
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
 	crayon_memory_init_draw_array(&Logo_Draw, &Logo, 0, &Logo_P, 1, 1, 0, 0);
-	Logo_Draw.coord[0].x = (640 - Logo.animation_array[0].frame_width) / 2;
-	Logo_Draw.coord[0].y = (480 - Logo.animation_array[0].frame_height) / 2;
+	Logo_Draw.coord[0].x = (640 - Logo.animation[0].frame_width) / 2;
+	Logo_Draw.coord[0].y = (480 - Logo.animation[0].frame_height) / 2;
 	Logo_Draw.layer[0] = 2;
 	Logo_Draw.scale[0].x = 1;
 	Logo_Draw.scale[0].y = 1;

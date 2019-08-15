@@ -31,7 +31,7 @@ typedef struct crayon_spritesheet{
 	uint16_t dimensions;	//Since a pvr texture must be a square, we don't need height/width
 	uint32_t texture_format;	//The raw dtex type value
 
-	crayon_animation_t *animation_array;	//Allows me to make an array of animation_t pointers
+	crayon_animation_t *animation;	//Allows me to make an array of animation_t pointers
 	uint8_t animation_count;	//The number of animations per spritesheet
 } crayon_spritesheet_t;
 

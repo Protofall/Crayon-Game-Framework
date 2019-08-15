@@ -3,7 +3,7 @@
 extern int16_t crayon_memory_get_animation_id(char * name, crayon_spritesheet_t * ss){
 	uint16_t i;
 	for(i = 0; i < ss->animation_count; i++){
-		if(!strcmp(ss->animation_array[i].name, name)){
+		if(!strcmp(ss->animation[i].name, name)){
 			return i;
 		}
 	}
@@ -94,8 +94,8 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	fscanf(sheet_file, "%d\n", &uint8_holder);
 	ss->animation_count = uint8_holder;
 
-	ss->animation_array = (crayon_animation_t *) malloc(sizeof(crayon_animation_t) * ss->animation_count);
-	if(!ss->animation_array){ERROR(15);}
+	ss->animation = (crayon_animation_t *) malloc(sizeof(crayon_animation_t) * ss->animation_count);
+	if(!ss->animation){ERROR(15);}
 	
 	uint16_t i;
 	int8_t scanned;
@@ -111,24 +111,24 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 				anim_name_part = getc(sheet_file);
 				count++;
 			}
-			ss->animation_array[sprite_index].name = (char *) malloc((count + 1) * sizeof(char));
+			ss->animation[sprite_index].name = (char *) malloc((count + 1) * sizeof(char));
 
 			fseek(sheet_file, -count - 1, SEEK_CUR);  //Go back so we can store the name
-			fread(ss->animation_array[sprite_index].name, sizeof(uint8_t), count, sheet_file);
-			ss->animation_array[sprite_index].name[count] = '\0';	//Add the null-terminator
+			fread(ss->animation[sprite_index].name, sizeof(uint8_t), count, sheet_file);
+			ss->animation[sprite_index].name[count] = '\0';	//Add the null-terminator
 		}
 		else{
 			scanned = fscanf(sheet_file, "%hu %hu %hu %hu %hu %hu %d\n",
-								&ss->animation_array[sprite_index].x,
-								&ss->animation_array[sprite_index].y,
-								&ss->animation_array[sprite_index].sheet_width,
-								&ss->animation_array[sprite_index].sheet_height,
-								&ss->animation_array[sprite_index].frame_width,
-								&ss->animation_array[sprite_index].frame_height,
+								&ss->animation[sprite_index].x,
+								&ss->animation[sprite_index].y,
+								&ss->animation[sprite_index].sheet_width,
+								&ss->animation[sprite_index].sheet_height,
+								&ss->animation[sprite_index].frame_width,
+								&ss->animation[sprite_index].frame_height,
 								&uint8_holder);
-			ss->animation_array[sprite_index].frame_count = uint8_holder;
+			ss->animation[sprite_index].frame_count = uint8_holder;
 			if(scanned != 7){
-				free(ss->animation_array);
+				free(ss->animation);
 				ERROR(16);	//Possible Mem-leak place
 			}
 			sprite_index++;
@@ -429,7 +429,7 @@ extern void crayon_memory_init_draw_array(crayon_draw_array_t *draw_array, crayo
 
 	if(ss){
 		draw_array->spritesheet = ss;
-		draw_array->animation = &ss->animation_array[animation_id];
+		draw_array->animation = &ss->animation[animation_id];
 		draw_array->palette = pal;
 		draw_array->frames_used = frames_used;
 		draw_array->options |= (1 << 7);	//Set the textured bit
@@ -490,9 +490,9 @@ extern uint8_t crayon_memory_free_spritesheet(crayon_spritesheet_t *ss){
 	if(ss){
 		uint16_t i;
 		for(i = 0; i < ss->animation_count; i++){
-			free(ss->animation_array[i].name);
+			free(ss->animation[i].name);
 		}
-		free(ss->animation_array);
+		free(ss->animation);
 
 		//name is unused so we don't free it
 		//free(ss->name);

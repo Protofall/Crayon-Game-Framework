@@ -150,7 +150,7 @@ int main(){
 
 	crayon_memory_init_draw_array(&Ball_Draw, &Ball, 0, &Ball_P, 1, 1, 0, 0);
 	Ball_Draw.coord[0].x = 0;
-	Ball_Draw.coord[0].y = (480 - Ball.animation_array[0].frame_height) / 2;
+	Ball_Draw.coord[0].y = (480 - Ball.animation[0].frame_height) / 2;
 	Ball_Draw.layer[0] = 2;
 	Ball_Draw.scale[0].x = 1;
 	Ball_Draw.scale[0].y = 1;
@@ -161,8 +161,8 @@ int main(){
 	crayon_graphics_frame_coordinates(&Ball_Draw, 0, 0);
 
 	crayon_memory_init_draw_array(&Ball2_Draw, &Ball2, 0, NULL, 1, 1, 0, 0);
-	Ball2_Draw.coord[0].x = (640 - Ball2.animation_array[0].frame_width);
-	Ball2_Draw.coord[0].y = (480 - Ball2.animation_array[0].frame_height) / 2;
+	Ball2_Draw.coord[0].x = (640 - Ball2.animation[0].frame_width);
+	Ball2_Draw.coord[0].y = (480 - Ball2.animation[0].frame_height) / 2;
 	Ball2_Draw.layer[0] = 2;
 	Ball2_Draw.scale[0].x = 1;
 	Ball2_Draw.scale[0].y = 1;
