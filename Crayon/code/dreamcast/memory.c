@@ -10,7 +10,9 @@ extern int16_t crayon_memory_get_animation_id(char * name, crayon_spritesheet_t 
 	return -1;
 }
 
-extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *dims, uint32_t *format, char *texture_path){
+extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *texture_width, uint16_t *texture_height, uint32_t *format,
+	char *texture_path){
+
 	uint8_t dtex_result = 0;
 	dtex_header_t dtex_header;
 
@@ -28,12 +30,8 @@ extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *dims, uint32_t
 
 		if(fread(*dtex, dtex_header.size, 1, texture_file) != 1){DTEX_ERROR(5);}
 
-		if(dtex_header.width > dtex_header.height){
-			*dims = dtex_header.width;
-		}
-		else{
-			*dims = dtex_header.height;
-		}
+		*texture_width = dtex_header.width;
+		*texture_height = dtex_header.height;
 		*format = dtex_header.type;
 
 	#undef DTEX_ERROR
@@ -53,7 +51,8 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 
 	// Load texture
 	//---------------------------------------------------------------------------
-	uint8_t dtex_result = crayon_memory_load_dtex(&ss->texture, &ss->dimensions, &ss->texture_format, path);
+
+	uint8_t dtex_result = crayon_memory_load_dtex(&ss->texture, &ss->texture_width, &ss->texture_height, &ss->texture_format, path);
 
 	if(dtex_result){ERROR(dtex_result);}
 
@@ -164,7 +163,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	// Load texture
 	//---------------------------------------------------------------------------
 
-	uint8_t dtex_result = crayon_memory_load_dtex(&fp->texture, &fp->dimensions, &fp->texture_format, path);
+	uint8_t dtex_result = crayon_memory_load_dtex(&fp->texture, &fp->texture_width, &fp->texture_height, &fp->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
 	uint8_t texture_format = (((1 << 3) - 1) & (fp->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
@@ -299,7 +298,7 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	// Load texture
 	//---------------------------------------------------------------------------
 
-	uint8_t dtex_result = crayon_memory_load_dtex(&fm->texture, &fm->dimensions, &fm->texture_format, path);
+	uint8_t dtex_result = crayon_memory_load_dtex(&fm->texture, &fm->texture_width, &fm->texture_height, &fm->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
 	uint8_t texture_format = (((1 << 3) - 1) & (fm->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format

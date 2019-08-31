@@ -26,19 +26,8 @@ packerSheet () {
 	TexturePacker --sheet "$2/$name.crayon_temp.png" --format gideros --data "$2/$name.crayon_temp.txt" \
 	--size-constraints POT --max-width 1024 --max-height 1024 --pack-mode Best --disable-rotation --trim-mode \
 	None --trim-sprite-names --algorithm Basic --png-opt-level 0 --extrude 0 --disable-auto-alias "$PWD"	#Also this is where "Resulting sprite sheet" message comes from...for some reason
-	
-	#Texconv needs x by x images, so if width != height, we must update them to the larger one
-	dims=$(identify "$2/$name.crayon_temp.png" | cut -d' ' -f3)
-	dimW=$(echo $dims | cut -d'x' -f1)
-	dimH=$(echo $dims | cut -d'x' -f2)
-	if (( dimW != dimH ));then
-		if (( dimH < dimW ));then
-			convert "$2/$name.crayon_temp.png" -background none -extent "x"$dimW "$2/$name.crayon_temp.png"
-		else
-			convert "$2/$name.crayon_temp.png" -background none -extent "$dimH" "$2/$name.crayon_temp.png"
-		fi
-	fi
 
+	#Choice for compression
 	if [ "$4" = 0 ];then
 		texconv -i "$2/$name.crayon_temp.png" -o "$2/$name.dtex" -f "$3"
 	else

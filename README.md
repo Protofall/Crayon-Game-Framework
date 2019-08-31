@@ -220,9 +220,6 @@ Crayon also uses SConstruct as an alternative to makefiles due to its enhanced a
 
 `sudo apt-get install scons`
 
-
-**CHECK** Do we also require the `convert` command? Its used for changing the png's size to be power of 2 by power of 2
-
 For TexturePacker:
 + Go onto their website https://www.codeandweb.com/texturepacker/download
 + Download the free installer file (For WSL/Dreamcast choose the Linux .deb file)
@@ -240,10 +237,9 @@ Sprite mode might only be able to reliably do a maximum dimension of 256 by 256 
 
 ### Useful for identifying colour count
 
-`identify -format %k "filename" && echo` (includes alphas as seperate colours)
-
 `sudo apt install imagemagick`
 
+`identify -format %k "filename" && echo` (includes alphas as seperate colours)
 
 ### Final notes
 
