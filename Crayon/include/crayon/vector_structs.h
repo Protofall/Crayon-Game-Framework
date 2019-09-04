@@ -1,11 +1,11 @@
 #ifndef VECTOR_STRUCTS_CRAYON_H
 #define VECTOR_STRUCTS_CRAYON_H
 
-typedef struct vec2f{
+typedef struct vec2_f{
 	float x, y;
 } vec2_f_t;
 
-typedef struct vec3f{
+typedef struct vec3_f{
 	float x, y, z;
 } vec3_f_t;
 
