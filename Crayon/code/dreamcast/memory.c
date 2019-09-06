@@ -532,7 +532,7 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
 	return 1;
 }
 
-extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *draw_array){
+extern uint8_t crayon_memory_free_draw_array(crayon_sprite_array_t *draw_array){
 	//Free shouldn't do anything if you try to free a NULL ptr, but just incase...
 	if(draw_array->coord){free(draw_array->coord);}
 	if(draw_array->frame_coord_key){free(draw_array->frame_coord_key);}
