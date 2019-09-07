@@ -417,25 +417,25 @@ extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palet
 	return;
 }
 
-extern void crayon_memory_init_draw_array(crayon_sprite_array_t *draw_array, crayon_spritesheet_t *ss,
+extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
 	uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
 	uint8_t filter){
 
 	
-	draw_array->list_size = list_size;
-	draw_array->options = options;
-	draw_array->filter = filter;
+	sprite_array->list_size = list_size;
+	sprite_array->options = options;
+	sprite_array->filter = filter;
 
 	if(ss){
-		draw_array->spritesheet = ss;
-		draw_array->animation = &ss->animation[animation_id];
-		draw_array->palette = pal;
-		draw_array->frames_used = frames_used;
-		draw_array->options |= (1 << 7);	//Set the textured bit
+		sprite_array->spritesheet = ss;
+		sprite_array->animation = &ss->animation[animation_id];
+		sprite_array->palette = pal;
+		sprite_array->frames_used = frames_used;
+		sprite_array->options |= (1 << 7);	//Set the textured bit
 	}
 	else{
-		draw_array->spritesheet = NULL;	//For safety sake
-		draw_array->palette = NULL;
+		sprite_array->spritesheet = NULL;	//For safety sake
+		sprite_array->palette = NULL;
 	}
 
 	// ((sprite_array->options >> 5) & 1)	//Extract the colour bit
@@ -445,24 +445,24 @@ extern void crayon_memory_init_draw_array(crayon_sprite_array_t *draw_array, cra
 	// ((sprite_array->options >> 1) & 1)	//Extract the frames_used bit
 	// ((sprite_array->options) & 1)		//Extract the layer bit
 
-	draw_array->coord = (vec2_f_t *) malloc(list_size * 2 * sizeof(vec2_f_t));
-	draw_array->scale = (vec2_f_t *) malloc(((draw_array->options >> 2) & 1 ? list_size: 1) * 2 * sizeof(vec2_f_t));
+	sprite_array->coord = (vec2_f_t *) malloc(list_size * 2 * sizeof(vec2_f_t));
+	sprite_array->scale = (vec2_f_t *) malloc(((sprite_array->options >> 2) & 1 ? list_size: 1) * 2 * sizeof(vec2_f_t));
 
-	draw_array->colour = (uint32_t *) malloc(((draw_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint32_t));
-	draw_array->rotation = (float *) malloc(((draw_array->options >> 4) & 1 ? list_size: 1) * sizeof(float));
-	draw_array->layer = (uint8_t *) malloc(((draw_array->options) & 1 ? list_size: 1) * sizeof(uint8_t));
+	sprite_array->colour = (uint32_t *) malloc(((sprite_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint32_t));
+	sprite_array->rotation = (float *) malloc(((sprite_array->options >> 4) & 1 ? list_size: 1) * sizeof(float));
+	sprite_array->layer = (uint8_t *) malloc(((sprite_array->options) & 1 ? list_size: 1) * sizeof(uint8_t));
 
 	if(ss){
-		draw_array->frame_coord_key = (uint8_t *) malloc(((draw_array->options >> 1) & 1 ? list_size: 1) * sizeof(uint8_t));
-		draw_array->frame_coord_map = (vec2_u16_t *) malloc(frames_used * 2 * sizeof(vec2_u16_t));
-		draw_array->fade = (uint8_t *) malloc(((draw_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint8_t));
-		draw_array->flip = (uint8_t *) malloc(((draw_array->options >> 3) & 1 ? list_size: 1) * sizeof(uint8_t));
+		sprite_array->frame_coord_key = (uint8_t *) malloc(((sprite_array->options >> 1) & 1 ? list_size: 1) * sizeof(uint8_t));
+		sprite_array->frame_coord_map = (vec2_u16_t *) malloc(frames_used * 2 * sizeof(vec2_u16_t));
+		sprite_array->fade = (uint8_t *) malloc(((sprite_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint8_t));
+		sprite_array->flip = (uint8_t *) malloc(((sprite_array->options >> 3) & 1 ? list_size: 1) * sizeof(uint8_t));
 	}
 	else{
-		draw_array->frame_coord_key = NULL;
-		draw_array->frame_coord_map = NULL;
-		draw_array->fade = NULL;
-		draw_array->flip = NULL;
+		sprite_array->frame_coord_key = NULL;
+		sprite_array->frame_coord_map = NULL;
+		sprite_array->fade = NULL;
+		sprite_array->flip = NULL;
 	}
 
 	return;
@@ -532,27 +532,27 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
 	return 1;
 }
 
-extern uint8_t crayon_memory_free_draw_array(crayon_sprite_array_t *draw_array){
+extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array){
 	//Free shouldn't do anything if you try to free a NULL ptr, but just incase...
-	if(draw_array->coord){free(draw_array->coord);}
-	if(draw_array->frame_coord_key){free(draw_array->frame_coord_key);}
-	if(draw_array->frame_coord_map){free(draw_array->frame_coord_map);}
-	if(draw_array->colour){free(draw_array->colour);}
-	if(draw_array->fade){free(draw_array->fade);}
-	if(draw_array->scale){free(draw_array->scale);}
-	if(draw_array->flip){free(draw_array->flip);}
-	if(draw_array->rotation){free(draw_array->rotation);}
-	if(draw_array->layer){free(draw_array->layer);}
+	if(sprite_array->coord){free(sprite_array->coord);}
+	if(sprite_array->frame_coord_key){free(sprite_array->frame_coord_key);}
+	if(sprite_array->frame_coord_map){free(sprite_array->frame_coord_map);}
+	if(sprite_array->colour){free(sprite_array->colour);}
+	if(sprite_array->fade){free(sprite_array->fade);}
+	if(sprite_array->scale){free(sprite_array->scale);}
+	if(sprite_array->flip){free(sprite_array->flip);}
+	if(sprite_array->rotation){free(sprite_array->rotation);}
+	if(sprite_array->layer){free(sprite_array->layer);}
 
 	//Set to NULL just incase user accidentally tries to free these arrays again
-	draw_array->coord = NULL;
-	draw_array->frame_coord_key = NULL;
-	draw_array->frame_coord_map = NULL;
-	draw_array->colour = NULL;
-	draw_array->scale = NULL;
-	draw_array->flip = NULL;
-	draw_array->rotation = NULL;
-	draw_array->layer = NULL;
+	sprite_array->coord = NULL;
+	sprite_array->frame_coord_key = NULL;
+	sprite_array->frame_coord_map = NULL;
+	sprite_array->colour = NULL;
+	sprite_array->scale = NULL;
+	sprite_array->flip = NULL;
+	sprite_array->rotation = NULL;
+	sprite_array->layer = NULL;
 
 	return 0;
 }

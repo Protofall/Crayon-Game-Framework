@@ -63,7 +63,7 @@ int main(){
 
 	crayon_sprite_array_t rotate;
 
-	crayon_memory_init_draw_array(&rotate, NULL, 0, NULL, 1, 0, 0, PVR_FILTER_NONE);
+	crayon_memory_init_sprite_array(&rotate, NULL, 0, NULL, 1, 0, 0, PVR_FILTER_NONE);
 	rotate.layer[0] = 2;
 	rotate.scale[0].x = 300;
 	rotate.scale[0].y = 225;
@@ -94,7 +94,7 @@ int main(){
 		}
 	}
 
-	crayon_memory_free_draw_array(&rotate);
+	crayon_memory_free_sprite_array(&rotate);
 
 	return 0;
 }

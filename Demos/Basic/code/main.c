@@ -127,7 +127,7 @@ int main(){
 	}
 
 	//Draws 4 faces and rotates between all 12 faces
-	crayon_memory_init_draw_array(&Frames_Draw, &Opaque, 0, NULL, 4, 16, CRAY_MULTI_FRAME, PVR_FILTER_NONE);
+	crayon_memory_init_sprite_array(&Frames_Draw, &Opaque, 0, NULL, 4, 16, CRAY_MULTI_FRAME, PVR_FILTER_NONE);
 	Frames_Draw.coord[0].x = 540;
 	Frames_Draw.coord[0].y = 20;
 	Frames_Draw.coord[1].x = 540 + 32;
@@ -152,7 +152,7 @@ int main(){
 	}
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	crayon_memory_init_draw_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 1, CRAY_MULTI_SCALE, PVR_FILTER_NONE);
+	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 1, CRAY_MULTI_SCALE, PVR_FILTER_NONE);
 	Dwarf_Draw.coord[0].x = 50;
 	Dwarf_Draw.coord[0].y = 20;
 	Dwarf_Draw.coord[1].x = Dwarf_Draw.coord[0].x;
@@ -173,7 +173,7 @@ int main(){
 	crayon_graphics_frame_coordinates(&Dwarf_Draw, 0, 0);
 
 	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
-	crayon_memory_init_draw_array(&Red_Man_Draw, &Man, 0, &Red_Man_P, 1, 1, 0, 0);
+	crayon_memory_init_sprite_array(&Red_Man_Draw, &Man, 0, &Red_Man_P, 1, 1, 0, 0);
 	Red_Man_Draw.coord[0].x = 50;
 	Red_Man_Draw.coord[0].y = 280;
 	Red_Man_Draw.layer[0] = 18;
@@ -190,7 +190,7 @@ int main(){
 	crayon_memory_swap_colour(&Green_Man_P, 0xFFFF0000, 0xFF00D200, 0);
 
 	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
-	crayon_memory_init_draw_array(&Green_Man_Draw, &Man, 0, &Green_Man_P, 1, 1, 0, 0);
+	crayon_memory_init_sprite_array(&Green_Man_Draw, &Man, 0, &Green_Man_P, 1, 1, 0, 0);
 	Green_Man_Draw.coord[0].x = 299;
 	Green_Man_Draw.coord[0].y = 380;
 	Green_Man_Draw.layer[0] = 50;
@@ -203,7 +203,7 @@ int main(){
 	crayon_graphics_frame_coordinates(&Green_Man_Draw, 0, 0);
 
 	//8 sprites, 1 frame, multi rotation and flip
-	crayon_memory_init_draw_array(&Rainbow_Draw, &Opaque, 1, NULL, 8, 1, CRAY_MULTI_FLIP | CRAY_MULTI_ROTATE, 0);
+	crayon_memory_init_sprite_array(&Rainbow_Draw, &Opaque, 1, NULL, 8, 1, CRAY_MULTI_FLIP | CRAY_MULTI_ROTATE, 0);
 	Rainbow_Draw.coord[0].x = Dwarf_Draw.coord[0].x + (2 * Dwarf_Draw.animation[0].frame_width) + 20;
 	Rainbow_Draw.coord[0].y = 20;
 	Rainbow_Draw.coord[1].x = Rainbow_Draw.coord[0].x;
@@ -243,7 +243,7 @@ int main(){
 	Rainbow_Draw.frame_coord_key[0] = 0;
 	crayon_graphics_frame_coordinates(&Rainbow_Draw, 0, 0);
 
-	crayon_memory_init_draw_array(&Man_BG, NULL, 0, NULL, 1, 1, 0, 0);
+	crayon_memory_init_sprite_array(&Man_BG, NULL, 0, NULL, 1, 1, 0, 0);
 	Man_BG.coord[0].x = Red_Man_Draw.coord[0].x;
 	Man_BG.coord[0].y = Red_Man_Draw.coord[0].y;
 	Man_BG.layer[0] = Red_Man_Draw.layer[0] - 1;
