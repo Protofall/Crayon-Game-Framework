@@ -3,6 +3,7 @@
 
 #include "texture_structs.h"  //For the spritehsheet and anim structs
 #include "render_structs.h"  //For the crayon_sprite_array struct
+#include "vector_structs.h"  //For the rotate function struct
 
 #include <stdlib.h>
 #include <string.h>	//For length of string
@@ -28,16 +29,6 @@ extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t 
 extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *draw_list, uint8_t id);
 
 
-//------------------Drawing Untextured polys------------------//
-
-
-//Draw all coloured polys in the struct's list
-extern uint8_t crayon_graphics_draw_untextured_array(crayon_sprite_array_t *draw_array, uint8_t poly_list_mode);
-
-extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t layer, uint32_t colour,
-	uint8_t poly_list_mode);
-
-
 //------------------Drawing Sprites from Spritesheets------------------//
 
 
@@ -56,10 +47,8 @@ extern uint8_t crayon_graphics_draw_sprites_simple(crayon_sprite_array_t *draw_a
 	//For DC this uses "poly mode"
 extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *draw_array, uint8_t poly_list_mode);
 
-//------------------Rotation Stuff------------------//
-
-
-extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
+//This will draw untextured polys (Sprite_arrays with no texture set)
+extern uint8_t crayon_graphics_draw_untextured_array(crayon_sprite_array_t *draw_array, uint8_t poly_list_mode);
 
 
 //------------------Drawing Fonts------------------//
@@ -74,7 +63,14 @@ extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_p
 	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number);
 
 
-//------------------String info------------------//
+//------------------Drawing Lines------------------//
+
+
+extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t layer, uint32_t colour,
+	uint8_t poly_list_mode);
+
+
+//------------------String Info------------------//
 
 
 //Checks to see if a string has any illegal characters in it
@@ -87,8 +83,13 @@ extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t 
 extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char * string, uint8_t newlines);
 
 
-//------------------Internal graphics functions------------------//
+//------------------Misc. Internal Functions------------------//
 
-extern void crayon_graphics_rotate_point(float center_x, float center_y, float * orbit_x, float * orbit_y, float radians);
+//Returns the point "center_x/y" rotated "radian" degrees around "orbit_x/y"
+extern vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, float radians);
+
+//Checks if float a is equal to b (+ or -) epsilon
+extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
+
 
 #endif

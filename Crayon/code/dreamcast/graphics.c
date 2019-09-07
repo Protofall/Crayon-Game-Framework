@@ -60,6 +60,7 @@ extern uint8_t crayon_graphics_draw_untextured_array(crayon_sprite_array_t *draw
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert[4];
+	vec2_f_t rotated_values;
 
 	pvr_poly_cxt_col(&cxt, poly_list_mode);
 	pvr_poly_compile(&hdr, &cxt);
@@ -121,7 +122,9 @@ extern uint8_t crayon_graphics_draw_untextured_array(crayon_sprite_array_t *draw
 
 			//Rotate the verts around the midpoint
 			for(j = 0; j < 4; j++){
-				crayon_graphics_rotate_point(mid_x, mid_y, &vert[j].x, &vert[j].y, angle);
+				rotated_values = crayon_graphics_rotate_point((vec2_f_t){mid_x, mid_y}, (vec2_f_t){vert[j].x, vert[j].y}, angle);
+				vert[j].x = rotated_values.x;
+				vert[j].y = rotated_values.y;
 			}
 		}
 
@@ -450,6 +453,7 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *draw
 	pvr_prim(&hdr, sizeof(hdr));
 
 	pvr_vertex_t vert[4];	//4 verts per sprite
+	vec2_f_t rotated_values;
 
 	//Easily lets us use the right index for each array
 		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
@@ -567,7 +571,9 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *draw
 
 			//Update the vert x and y positions
 			for(j = 0; j < 4; j++){
-				crayon_graphics_rotate_point(mid_x, mid_y, &vert[j].x, &vert[j].y, angle);
+				rotated_values = crayon_graphics_rotate_point((vec2_f_t){mid_x, mid_y}, (vec2_f_t){vert[j].x, vert[j].y}, angle);
+				vert[j].x = rotated_values.x;
+				vert[j].y = rotated_values.y;
 			}
 		}
 
@@ -827,12 +833,9 @@ extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t 
 	return best_length;
 }
 
-extern void crayon_graphics_rotate_point(float center_x, float center_y, float * orbit_x, float * orbit_y, float radians){
+extern vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, float radians){
 	float sin_theta = sin(radians);
 	float cos_theta = cos(radians);
-	float new_x = (cos_theta * (*orbit_x - center_x)) - (sin_theta * (*orbit_y - center_y)) + center_x;
-	*orbit_y = (sin_theta * (*orbit_x - center_x)) + (cos_theta * (*orbit_y - center_y)) + center_y;
-	*orbit_x = new_x;
-	return;
-
+	return (vec2_f_t){(cos_theta * (orbit.x - center.x)) - (sin_theta * (orbit.y - center.y)) + center.x,
+		(sin_theta * (orbit.x - center.x)) + (cos_theta * (orbit.y - center.y)) + center.y};
 }
