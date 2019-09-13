@@ -62,15 +62,21 @@ typedef struct crayon_sprite_array{
 	crayon_palette_t *palette;	//Also ask if palettes can start at not multiples of 16 or 256
 } crayon_sprite_array_t;
 
-// //Getters, for ease of use, you can access the array directly if you want
-// float crayon_get_pos_x(crayon_sprite_array_t * struct, uint16_t index);
-// float crayon_get_pos_y(crayon_sprite_array_t * struct, uint16_t index);
-// uint32_t crayon_get_colour(crayon_sprite_array_t * struct, uint16_t index);
-// uint8_t crayon_get_fade(crayon_sprite_array_t * struct, uint16_t index);
-// float crayon_get_scale_x(crayon_sprite_array_t * struct, uint16_t index);
-// float crayon_get_scale_y(crayon_sprite_array_t * struct, uint16_t index);
-// uint8_t crayon_get_flip(crayon_sprite_array_t * struct, uint16_t index);
-// float crayon_get_rotation(crayon_sprite_array_t * struct, uint16_t index);
-// uint8_t crayon_get_layer(crayon_sprite_array_t * struct, uint16_t index);
+// Getters, for ease of use, you can access the array directly if you want
+	//They will all return values of 0 if it isn't valid, but can still return 0 if its valid...
+	//UNTESTED
+extern float crayon_get_coord_x(crayon_sprite_array_t * sprites, uint16_t index);
+extern float crayon_get_coord_y(crayon_sprite_array_t * sprites, uint16_t index);
+extern vec2_f_t crayon_get_coords(crayon_sprite_array_t * sprites, uint16_t index);
+extern uint32_t crayon_get_colour(crayon_sprite_array_t * sprites, uint16_t index);
+extern uint8_t crayon_get_fade(crayon_sprite_array_t * sprites, uint16_t index);
+extern float crayon_get_scale_x(crayon_sprite_array_t * sprites, uint16_t index);
+extern float crayon_get_scale_y(crayon_sprite_array_t * sprites, uint16_t index);
+extern vec2_f_t crayon_get_scales(crayon_sprite_array_t * sprites, uint16_t index);
+extern uint8_t crayon_get_flip(crayon_sprite_array_t * sprites, uint16_t index);
+extern float crayon_get_rotation(crayon_sprite_array_t * sprites, uint16_t index);
+extern uint8_t crayon_get_layer(crayon_sprite_array_t * sprites, uint16_t index);
+extern uint8_t crayon_get_frame_coord_key(crayon_sprite_array_t * sprites, uint16_t index);
+extern vec2_u16_t crayon_get_frame_coord_map(crayon_sprite_array_t * sprites, uint16_t index);
 
 #endif
