@@ -20,35 +20,35 @@
 //Sets a palette for a spritesheet
 extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
 
-//Give a render struct, map index, and animation frame and it will populate the coordinates
-extern void crayon_graphics_frame_coordinates(const crayon_sprite_array_t *draw_list, uint8_t index, uint8_t frame);
+//Give a sprite_array struct, map index, and animation frame and it will populate the coordinates
+extern void crayon_graphics_frame_coordinates(const crayon_sprite_array_t *sprite_array, uint8_t index, uint8_t frame);
 
 //This will get the size of the draw element as it appears on screen. It takes scale into consideration
 	//Later might want to trunc it and also add viewport support when that happens
-extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *draw_list, uint8_t id);
-extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *draw_list, uint8_t id);
+extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *sprite_array, uint8_t id);
+extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *sprite_array, uint8_t id);
 
 
 //------------------Drawing Sprites from Spritesheets------------------//
 
 
-//Queue a texture to be rendered, draw mode right most bit is true for enhanced (false for non)
+//Queue a texture to be rendered, draw mode right most bit is true for enhanced (false for now)
 //And second right most bit will later be used for camera mode control
-extern int8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode, uint8_t draw_mode);
+extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode, uint8_t draw_mode);
 
 
 //------------------Internal Drawing Functions------------------//
 
 
 //poly_list mode is for the tr/pt/op render list macro we want to use.
-extern uint8_t crayon_graphics_draw_sprites_simple(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
+extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
 
 //The version with polygons (Use this if your spritesheet is bigger than 256 by 256)
 	//For DC this uses "poly mode"
-extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
+extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
 
 //This will draw untextured polys (Sprite_arrays with no texture set)
-extern uint8_t crayon_graphics_draw_untextured_array(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
+extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
 
 
 //------------------Drawing Fonts------------------//

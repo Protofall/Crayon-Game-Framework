@@ -25,38 +25,38 @@ extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
 	return 0;
 }
 
-extern void crayon_graphics_frame_coordinates(const crayon_sprite_array_t *draw_list, uint8_t index, uint8_t frame){
-	crayon_animation_t * anim = draw_list->animation;
+extern void crayon_graphics_frame_coordinates(const crayon_sprite_array_t *sprite_array, uint8_t index, uint8_t frame){
+	crayon_animation_t * anim = sprite_array->animation;
 	uint8_t frames_per_row = anim->sheet_width / anim->frame_width;
 	uint8_t column_number = frame % frames_per_row;
 	uint8_t row_number = frame / frames_per_row;
 
-	draw_list->frame_coord_map[index].x = anim->x + (column_number * anim->frame_width);
-	draw_list->frame_coord_map[index].y = anim->y + (row_number * anim->frame_height);
+	sprite_array->frame_coord_map[index].x = anim->x + (column_number * anim->frame_width);
+	sprite_array->frame_coord_map[index].y = anim->y + (row_number * anim->frame_height);
 	return;
 }
 
-extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *draw_list, uint8_t id){
-	if(!(draw_list->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
-	if(draw_list->options & CRAY_HAS_TEXTURE){
-		return draw_list->animation->frame_width * draw_list->scale[id].x;
+extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *sprite_array, uint8_t id){
+	if(!(sprite_array->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
+	if(sprite_array->options & CRAY_HAS_TEXTURE){
+		return sprite_array->animation->frame_width * sprite_array->scale[id].x;
 	}
 	else{
-		return draw_list->scale[id].x;
+		return sprite_array->scale[id].x;
 	}
 }
 
-extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *draw_list, uint8_t id){
-	if(!(draw_list->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
-	if(draw_list->options & CRAY_HAS_TEXTURE){
-		return draw_list->animation->frame_height * draw_list->scale[id].y;
+extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *sprite_array, uint8_t id){
+	if(!(sprite_array->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
+	if(sprite_array->options & CRAY_HAS_TEXTURE){
+		return sprite_array->animation->frame_height * sprite_array->scale[id].y;
 	}
 	else{
-		return draw_list->scale[id].y;
+		return sprite_array->scale[id].y;
 	}
 }
 
-extern uint8_t crayon_graphics_draw_untextured_array(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert[4];
@@ -219,7 +219,7 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 //---- --CM
 //C is for camera mode (Unimplemented)
 //M is for draw mode
-extern int8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode, uint8_t draw_mode){
+extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode, uint8_t draw_mode){
 	if(!(draw_mode & CRAY_USING_CAMERA)){	//No Camera
 		if(sprite_array->options & CRAY_HAS_TEXTURE){	//Textured
 			if(!(draw_mode & CRAY_SCREEN_DRAW_ENHANCED)){	//Simple draw
@@ -258,7 +258,7 @@ extern int8_t crayon_graphics_draw_sprites(crayon_sprite_array_t *sprite_array, 
 // 	//PVR_TXRFMT_PAL4BPP == 10100 00000 00000 00000 00000 00000
 // 	//PVR_TXRFMT_PAL8BPP == 11000 00000 00000 00000 00000 00000
 
-extern uint8_t crayon_graphics_draw_sprites_simple(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
 	float u0, v0, u1, v1;
 	uint32_t duv;	//duv is used to assist in the rotations
 	u0 = 0; v0 = 0; u1 = 0; v1 = 0; duv = 0;	//Needed if you want to prevent a bunch of compiler warnings...
@@ -429,7 +429,7 @@ extern uint8_t crayon_graphics_draw_sprites_simple(crayon_sprite_array_t *sprite
 	return 0;
 }
 
-extern uint8_t crayon_graphics_draw_sprites_enhanced(crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
+extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
 	float u0, v0, u1, v1;
 	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	//Needed if you want to prevent a bunch of compiler warnings...
 
@@ -598,7 +598,7 @@ extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){
 	return fabs(a-b) < epsilon;
 }
 
-extern uint8_t crayon_graphics_draw_text_mono(char * string, const struct crayon_font_mono *fm, uint8_t poly_list_mode,
+extern uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_mono_t *fm, uint8_t poly_list_mode,
 	float draw_x, float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number){
 
 	float x0 = trunc(draw_x);
@@ -671,7 +671,7 @@ extern uint8_t crayon_graphics_draw_text_mono(char * string, const struct crayon
 	return 0;
 }
 
-extern uint8_t crayon_graphics_draw_text_prop(char * string, const struct crayon_font_prop *fp, uint8_t poly_list_mode,
+extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_prop_t *fp, uint8_t poly_list_mode,
 	float draw_x, float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number){
 
 	float x0 = trunc(draw_x);
