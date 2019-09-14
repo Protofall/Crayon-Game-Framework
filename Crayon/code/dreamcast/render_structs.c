@@ -68,10 +68,13 @@ extern uint8_t crayon_get_layer(crayon_sprite_array_t * sprites, uint16_t index)
 	return 0;
 }
 
-extern uint8_t crayon_get_frame_coord_key(crayon_sprite_array_t * sprites, uint16_t index){
-	return (index < sprites->frames_used) ? sprites->frame_coord_key[index] : 0;
+extern uint8_t crayon_get_frame_coord_id(crayon_sprite_array_t * sprites, uint16_t index){
+	if(((sprites->options & CRAY_MULTI_FRAME) && index == 0) || index < sprites->list_size){
+		return sprites->frame_coord_key[index];
+	}
+	return 0;
 }
 
-extern vec2_u16_t crayon_get_frame_coord_map(crayon_sprite_array_t * sprites, uint16_t index){
+extern vec2_u16_t crayon_get_frame_coord_uv(crayon_sprite_array_t * sprites, uint16_t index){
 	return (index < sprites->frames_used) ? sprites->frame_coord_map[index] : (vec2_u16_t){0, 0};
 }

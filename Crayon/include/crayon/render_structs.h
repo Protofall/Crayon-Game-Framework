@@ -76,7 +76,7 @@ extern vec2_f_t crayon_get_scales(crayon_sprite_array_t * sprites, uint16_t inde
 extern uint8_t crayon_get_flip(crayon_sprite_array_t * sprites, uint16_t index);
 extern float crayon_get_rotation(crayon_sprite_array_t * sprites, uint16_t index);
 extern uint8_t crayon_get_layer(crayon_sprite_array_t * sprites, uint16_t index);
-extern uint8_t crayon_get_frame_coord_key(crayon_sprite_array_t * sprites, uint16_t index);
-extern vec2_u16_t crayon_get_frame_coord_map(crayon_sprite_array_t * sprites, uint16_t index);
+extern uint8_t crayon_get_frame_coord_id(crayon_sprite_array_t * sprites, uint16_t index);
+extern vec2_u16_t crayon_get_frame_coord_uv(crayon_sprite_array_t * sprites, uint16_t index);
 
 #endif
