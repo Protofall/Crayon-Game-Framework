@@ -4,6 +4,8 @@
 #include "texture_structs.h"  //For the spritesheet and anim structs
 #include "vector_structs.h"
 
+#include <stdio.h>	//For perror
+
 #define CRAY_MULTI_LAYER (1 << 0)
 #define CRAY_MULTI_FRAME (1 << 1)
 #define CRAY_MULTI_SCALE (1 << 2)
@@ -65,18 +67,18 @@ typedef struct crayon_sprite_array{
 // Getters, for ease of use, you can access the array directly if you want
 	//They will all return values of 0 if it isn't valid, but can still return 0 if its valid...
 	//UNTESTED
-extern float crayon_get_coord_x(crayon_sprite_array_t * sprites, uint16_t index);
-extern float crayon_get_coord_y(crayon_sprite_array_t * sprites, uint16_t index);
-extern vec2_f_t crayon_get_coords(crayon_sprite_array_t * sprites, uint16_t index);
-extern uint32_t crayon_get_colour(crayon_sprite_array_t * sprites, uint16_t index);
-extern uint8_t crayon_get_fade(crayon_sprite_array_t * sprites, uint16_t index);
-extern float crayon_get_scale_x(crayon_sprite_array_t * sprites, uint16_t index);
-extern float crayon_get_scale_y(crayon_sprite_array_t * sprites, uint16_t index);
-extern vec2_f_t crayon_get_scales(crayon_sprite_array_t * sprites, uint16_t index);
-extern uint8_t crayon_get_flip(crayon_sprite_array_t * sprites, uint16_t index);
-extern float crayon_get_rotation(crayon_sprite_array_t * sprites, uint16_t index);
-extern uint8_t crayon_get_layer(crayon_sprite_array_t * sprites, uint16_t index);
-extern uint8_t crayon_get_frame_coord_id(crayon_sprite_array_t * sprites, uint16_t index);
-extern vec2_u16_t crayon_get_frame_coord_uv(crayon_sprite_array_t * sprites, uint16_t index);
+extern float crayon_get_coord_x(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern float crayon_get_coord_y(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern vec2_f_t crayon_get_coords(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern uint32_t crayon_get_colour(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern uint8_t crayon_get_fade(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern float crayon_get_scale_x(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern float crayon_get_scale_y(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern vec2_f_t crayon_get_scales(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern uint8_t crayon_get_flip(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern float crayon_get_rotation(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern uint8_t crayon_get_layer(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern uint8_t crayon_get_frame_id(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern vec2_u16_t crayon_get_frame_uv(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
 
 #endif
