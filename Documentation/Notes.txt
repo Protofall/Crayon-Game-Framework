@@ -1,0 +1,48 @@
+Part 1: Intro
+Presentation is on Crayon, but need to explain Dreamcast as a part of it
+Have a slide showing Current working Systems and planned systems in order from highest priority to lowest
+DC, then computer (Based on OpenGL)
+
+Part 2: What is the Dreamcast
+Go into detail on Dreamcast. First few slide has specs, controller layout
+Texture format is briefly explained here, but will be explained more later
+Mention savefiles and the VMU screen briefly
+Mention it had Internet capabilities if we want to use it
+
+Part 3: What is Crayon
+Crayon itself. Mention its a library made in C and is a 2D only game framework made by me
+	- Depends on KallisitOS an Open Source library
+Show the demo described in Issue #154
+Mention its still a WIP, stuff is drawn directly to the screen without a "camera/perspective"
+No current sound solution, but OpenAL looks good
+
+Part 4: How a Crayon project works
+- All projects have C code, an assets folder and a "Makefile"
+- When building a project it converts the assets directory into a processed form called "cdfs"
+- This is handled by a script called preprocess.sh, it goes things like make romdisks and converts PNGs to the Dreamcast's native format, DTEX
+
+Part 5: Dreamcast texture format
+- Explain that most PNG's are in 32-bit colour, RGBA8888. Explain channels
+- Briefly explain the bits-per-channel conversion to make sense of stuff like ARGB1555
+- Briefly explain how the PAL4/8BPP formats work
+	- And how we can only have 1024 entries per frame
+- Mention that there is a native compression format that can be lossless, but we'll rarely use it
+- DC's main video-output is 640x480 Progressive Scan (4:3) with VGA
+	- I feel the best game resolution is 640x360 which is 16:9 Letterboxed since it scales well to modern displays
+
+Part 6: Testing methods
+- 4 main ways of testing code
+	- Emulators: DEMUL, REDREAM, Reicast, lxdream. Emulators aren't perfect though
+	- Burn a CD, need to burn a new CD every time you rebuild program
+	- Load via Serial/SD port. Just need to update files on SD card, but its *slow*
+	- BBA. Send code over the network. Tends to be the fastest and best solution
+
+Part 6: Distribution
+- DC console isn't super common, but has an active homebrew community
+	- Physicaly printed discs can be made, some people are setting the raw ISOs too
+	- List some other DC game sales
+- Talk about how piracy is inevitable and there's nothing much we can really do about it
+- Its possible to do an "All-in-one" disc that works on Dreamcast, Windows, Mac and Linux
+
+Part 7: Project examples
+Talk about Minesweeper and Group16's game, but mention it can do more
