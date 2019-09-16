@@ -20,6 +20,11 @@ Part 4: How a Crayon project works
 - All projects have C code, an assets folder and a "Makefile"
 - When building a project it converts the assets directory into a processed form called "cdfs"
 - This is handled by a script called preprocess.sh, it goes things like make romdisks and converts PNGs to the Dreamcast's native format, DTEX
+- State that Crayon uses specific textures
+	- crayon_anims, each frame has to have the same height and width
+	- Spritesheets is the primary texture format for Crayon. Built from crayon_anims
+		- In order to get a texture thats just one sprite, you need to have a spritesheet with one crayon_anim that has one frame
+	- Spritesheets are always 2^m by 2^n dimension wise, this is because the Dreamcast only takes textures in those dimensions
 
 Part 5: Dreamcast texture format
 - Explain that most PNG's are in 32-bit colour, RGBA8888. Explain channels
@@ -27,22 +32,27 @@ Part 5: Dreamcast texture format
 - Briefly explain how the PAL4/8BPP formats work
 	- And how we can only have 1024 entries per frame
 - Mention that there is a native compression format that can be lossless, but we'll rarely use it
-- DC's main video-output is 640x480 Progressive Scan (4:3) with VGA
+- DC's main video-output is 640x480 (4:3) at 50/60Hz with VGA
 	- I feel the best game resolution is 640x360 which is 16:9 Letterboxed since it scales well to modern displays
 
-Part 6: Testing methods
+Part 6: Sound capabilities
+- Although I haven't used it, I hear OpenAL is a good sound API
+- On DC we can have 32-bit audio. Sound effects take up (X-MB of space which is Y-seconds)
+- We can use CDDA audio, this is the audio format of music CDs so the game disc can double as a music CD
+
+Part 7: Testing methods
 - 4 main ways of testing code
 	- Emulators: DEMUL, REDREAM, Reicast, lxdream. Emulators aren't perfect though
 	- Burn a CD, need to burn a new CD every time you rebuild program
 	- Load via Serial/SD port. Just need to update files on SD card, but its *slow*
 	- BBA. Send code over the network. Tends to be the fastest and best solution
 
-Part 6: Distribution
+Part 8: Distribution
 - DC console isn't super common, but has an active homebrew community
 	- Physicaly printed discs can be made, some people are setting the raw ISOs too
 	- List some other DC game sales
 - Talk about how piracy is inevitable and there's nothing much we can really do about it
 - Its possible to do an "All-in-one" disc that works on Dreamcast, Windows, Mac and Linux
 
-Part 7: Project examples
+Part 9: Project examples
 Talk about Minesweeper and Group16's game, but mention it can do more
