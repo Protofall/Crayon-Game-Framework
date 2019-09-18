@@ -144,6 +144,12 @@ int main(){
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
+	char * version = crayon_get_version();
+	char version_msg[60];
+	strcpy(version_msg, "Crayon version number: ");
+	strcat(version_msg, version);
+	free(version);
+
 	pvr_set_bg_color(0.3, 0.3, 0.3);
 
 	crayon_graphics_setup_palette(&BIOS_P);
@@ -159,6 +165,7 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 			crayon_graphics_draw_text_mono("BIOS", &BIOS, PVR_LIST_OP_POLY, 32, Tahoma.char_height + 32, 1, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono(version_msg, &BIOS, PVR_LIST_OP_POLY, 32, Tahoma.char_height + 32 + BIOS.char_height, 1, 1, 1, BIOS_P.palette_id);
 		pvr_list_finish();
 
 		pvr_scene_finish();
