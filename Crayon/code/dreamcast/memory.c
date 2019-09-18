@@ -594,3 +594,246 @@ extern uint8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint){
 	fs_romdisk_mount(mountpoint, buffer, 1);
 	return 0;
 }
+
+
+extern float crayon_memory_get_coord_x(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->coord[index].x;
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return 0;
+}
+
+extern float crayon_memory_get_coord_y(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->coord[index].y;
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return 0;
+}
+
+extern vec2_f_t crayon_memory_get_coords(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->coord[index];
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return (vec2_f_t){0, 0};
+}
+
+extern uint32_t crayon_memory_get_colour(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(((sprites->options & CRAY_MULTI_COLOUR) && index == 0) || index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->colour[index];
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return 0;
+}
+
+extern uint8_t crayon_memory_get_fade(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(((sprites->options & CRAY_MULTI_COLOUR) && index == 0) || index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->fade[index];
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return 0;
+}
+
+extern float crayon_memory_get_scale_x(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(((sprites->options & CRAY_MULTI_SCALE) && index == 0) || index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->scale[index].x;
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return 0;
+}
+
+extern float crayon_memory_get_scale_y(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(((sprites->options & CRAY_MULTI_SCALE) && index == 0) || index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->scale[index].y;
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return 0;
+}
+
+extern vec2_f_t crayon_memory_get_scales(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(((sprites->options & CRAY_MULTI_SCALE) && index == 0) || index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->scale[index];
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return (vec2_f_t){0, 0};
+}
+
+extern uint8_t crayon_memory_get_flip(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(((sprites->options & CRAY_MULTI_FLIP) && index == 0) || index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->flip[index];
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return 0;
+}
+
+extern float crayon_memory_get_rotation(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(((sprites->options & CRAY_MULTI_ROTATE) && index == 0) || index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->rotation[index];
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return 0;
+}
+
+extern uint8_t crayon_memory_get_layer(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(((sprites->options & CRAY_MULTI_LAYER) && index == 0) || index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->layer[index];
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return 0;
+}
+
+extern uint8_t crayon_memory_get_frame_id(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(((sprites->options & CRAY_MULTI_FRAME) && index == 0) || index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->frame_coord_key[index];
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return 0;
+}
+
+extern vec2_u16_t crayon_memory_get_frame_uv(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(index < sprites->frames_used){
+		if(error){*error = 0;}
+		return sprites->frame_coord_map[index];
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return (vec2_u16_t){0, 0};
+}
+
+extern uint8_t crayon_memory_set_coord_x(crayon_sprite_array_t * sprites, uint16_t index, float value){
+	if(index < sprites->list_size){
+		sprites->coord[index].x = value;
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t crayon_memory_set_coord_y(crayon_sprite_array_t * sprites, uint16_t index, float value){
+	if(index < sprites->list_size){
+		sprites->coord[index].y = value;
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t crayon_memory_set_coords(crayon_sprite_array_t * sprites, uint16_t index, vec2_f_t value){
+	if(index < sprites->list_size){
+		sprites->coord[index].x = value.x;
+		sprites->coord[index].y = value.y;
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t crayon_memory_set_colour(crayon_sprite_array_t * sprites, uint16_t index, uint32_t value){
+	if(((sprites->options & CRAY_MULTI_COLOUR) && index == 0) || index < sprites->list_size){
+		sprites->colour[index] = value;
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t crayon_memory_set_fade(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value){
+	if(((sprites->options & CRAY_MULTI_COLOUR) && index == 0) || index < sprites->list_size){
+		sprites->fade[index] = value;
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t crayon_memory_set_scale_x(crayon_sprite_array_t * sprites, uint16_t index, float value){
+	if(((sprites->options & CRAY_MULTI_SCALE) && index == 0) || index < sprites->list_size){
+		sprites->scale[index].x = value;
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t crayon_memory_set_scale_y(crayon_sprite_array_t * sprites, uint16_t index, float value){
+	if(((sprites->options & CRAY_MULTI_SCALE) && index == 0) || index < sprites->list_size){
+		sprites->scale[index].y = value;
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t crayon_memory_set_scales(crayon_sprite_array_t * sprites, uint16_t index, vec2_f_t value){
+	if(((sprites->options & CRAY_MULTI_SCALE) && index == 0) || index < sprites->list_size){
+		sprites->scale[index].x = value.x;
+		sprites->scale[index].y = value.y;
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t crayon_memory_set_flip(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value){
+	if(((sprites->options & CRAY_MULTI_FLIP) && index == 0) || index < sprites->list_size){
+		sprites->flip[index] = value;
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t crayon_memory_set_rotation(crayon_sprite_array_t * sprites, uint16_t index, float value){
+	if(((sprites->options & CRAY_MULTI_ROTATE) && index == 0) || index < sprites->list_size){
+		sprites->rotation[index] = value;
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t crayon_memory_set_layer(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value){
+	if(((sprites->options & CRAY_MULTI_LAYER) && index == 0) || index < sprites->list_size){
+		sprites->layer[index] = value;
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t crayon_memory_set_frame_id(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value){
+	if(((sprites->options & CRAY_MULTI_FRAME) && index == 0) || index < sprites->list_size){
+		sprites->frame_coord_key[index] = value;
+		return 0;
+	}
+	return 1;
+}
+
+extern uint8_t crayon_memory_set_frame_uv(crayon_sprite_array_t * sprites, uint16_t index, uint8_t frame_id){
+	if(index < sprites->frames_used){
+		crayon_animation_t * anim = sprites->animation;
+		uint8_t frames_per_row = anim->sheet_width / anim->frame_width;
+		uint8_t column_number = frame_id % frames_per_row;
+		uint8_t row_number = frame_id / frames_per_row;
+
+		sprites->frame_coord_map[index].x = anim->x + (column_number * anim->frame_width);
+		sprites->frame_coord_map[index].y = anim->y + (row_number * anim->frame_height);
+		return 0;
+	}
+	return 1;
+}
