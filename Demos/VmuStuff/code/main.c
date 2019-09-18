@@ -290,7 +290,7 @@ int main(){
 		pvr_list_begin(PVR_LIST_TR_POLY);
 			switch(save_res){
 			case 0:
-				draw_string(30, 30, 1, 255, 255, 216, 0, &buffer, 2, 2); break;
+				draw_string(30, 30, 1, 255, 255, 216, 0, buffer, 2, 2); break;
 			case 1:
 				draw_string(30, 30, 1, 255, 255, 216, 0, "Selected device isn't a VMU", 2, 2); break;
 			case 2:
