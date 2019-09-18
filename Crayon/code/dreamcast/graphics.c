@@ -25,17 +25,6 @@ extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
 	return 0;
 }
 
-extern void crayon_graphics_frame_coordinates(const crayon_sprite_array_t *sprite_array, uint8_t index, uint8_t frame){
-	crayon_animation_t * anim = sprite_array->animation;
-	uint8_t frames_per_row = anim->sheet_width / anim->frame_width;
-	uint8_t column_number = frame % frames_per_row;
-	uint8_t row_number = frame / frames_per_row;
-
-	sprite_array->frame_coord_map[index].x = anim->x + (column_number * anim->frame_width);
-	sprite_array->frame_coord_map[index].y = anim->y + (row_number * anim->frame_height);
-	return;
-}
-
 extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *sprite_array, uint8_t id){
 	if(!(sprite_array->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
 	if(sprite_array->options & CRAY_HAS_TEXTURE){

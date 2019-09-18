@@ -156,7 +156,7 @@ int main(){
 	Logo_Draw.rotation[0] = 0;
 	Logo_Draw.colour[0] = 0;
 	Logo_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Logo_Draw, 0, 0);
+	crayon_memory_set_frame_uv(&Logo_Draw, 0, 0);
 
 	uint32_t colours[5];
 	colours[0] = Logo_P.palette[1];	//Orange

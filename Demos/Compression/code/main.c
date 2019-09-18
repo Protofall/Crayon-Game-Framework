@@ -158,7 +158,7 @@ int main(){
 	Ball_Draw.rotation[0] = 0;
 	Ball_Draw.colour[0] = 0;
 	Ball_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Ball_Draw, 0, 0);
+	crayon_memory_set_frame_uv(&Ball_Draw, 0, 0);
 
 	crayon_memory_init_sprite_array(&Ball2_Draw, &Ball2, 0, NULL, 1, 1, 0, 0);
 	Ball2_Draw.coord[0].x = (640 - Ball2.animation[0].frame_width);
@@ -170,7 +170,7 @@ int main(){
 	Ball2_Draw.rotation[0] = 0;
 	Ball2_Draw.colour[0] = 0;
 	Ball2_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Ball2_Draw, 0, 0);
+	crayon_memory_set_frame_uv(&Ball2_Draw, 0, 0);
 
 	crayon_graphics_setup_palette(&BIOS_P);
 	crayon_graphics_setup_palette(&Ball_P);

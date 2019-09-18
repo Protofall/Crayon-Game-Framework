@@ -148,7 +148,7 @@ int main(){
 	Frames_Draw.frame_coord_key[3] = 3;
 	uint8_t i;
 	for(i = 0; i < 12; i++){
-		crayon_graphics_frame_coordinates(&Frames_Draw, i, i);
+		crayon_memory_set_frame_uv(&Frames_Draw, i, i);
 	}
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
@@ -170,7 +170,7 @@ int main(){
 	Dwarf_Draw.rotation[0] = 0;
 	Dwarf_Draw.colour[0] = 0;
 	Dwarf_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Dwarf_Draw, 0, 0);
+	crayon_memory_set_frame_uv(&Dwarf_Draw, 0, 0);
 
 	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
 	crayon_memory_init_sprite_array(&Red_Man_Draw, &Man, 0, &Red_Man_P, 1, 1, 0, 0);
@@ -183,7 +183,7 @@ int main(){
 	Red_Man_Draw.rotation[0] = 450;
 	Red_Man_Draw.colour[0] = 0;
 	Red_Man_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Red_Man_Draw, 0, 0);
+	crayon_memory_set_frame_uv(&Red_Man_Draw, 0, 0);
 
 	//Copy the red palette over and modify red with green
 	crayon_memory_clone_palette(&Red_Man_P, &Green_Man_P, 3);
@@ -200,7 +200,7 @@ int main(){
 	Green_Man_Draw.rotation[0] = 0;
 	Green_Man_Draw.colour[0] = 0;
 	Green_Man_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Green_Man_Draw, 0, 0);
+	crayon_memory_set_frame_uv(&Green_Man_Draw, 0, 0);
 
 	//8 sprites, 1 frame, multi rotation and flip
 	crayon_memory_init_sprite_array(&Rainbow_Draw, &Opaque, 1, NULL, 8, 1, CRAY_MULTI_FLIP | CRAY_MULTI_ROTATE, 0);
@@ -241,7 +241,7 @@ int main(){
 	Rainbow_Draw.rotation[7] = 270;
 	Rainbow_Draw.colour[0] = 0;
 	Rainbow_Draw.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Rainbow_Draw, 0, 0);
+	crayon_memory_set_frame_uv(&Rainbow_Draw, 0, 0);
 
 	crayon_memory_init_sprite_array(&Man_BG, NULL, 0, NULL, 1, 1, 0, 0);
 	Man_BG.coord[0].x = Red_Man_Draw.coord[0].x;

@@ -7,7 +7,7 @@
 #include <stdint.h>
 
 #define CRAYON_MAJOR_NUMBER 0
-#define CRAYON_MINOR_NUMBER 1
+#define CRAYON_MINOR_NUMBER 2
 #define CRAYON_PATCH_NUMBER 0
 
 //Gets the crayon version number in form MAJOR.MINOR.PATCH

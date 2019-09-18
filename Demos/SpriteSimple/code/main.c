@@ -163,7 +163,7 @@ int main(){
 	Dwarf_Draw_Flip.colour[0] = 0xFFFFFFFF;
 	Dwarf_Draw_Flip.fade[0] = 0;
 	Dwarf_Draw_Flip.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Dwarf_Draw_Flip, 0, 0);
+	crayon_memory_set_frame_uv(&Dwarf_Draw_Flip, 0, 0);
 
 	crayon_memory_init_sprite_array(&Dwarf_Draw_Rotate, &Dwarf_SS, 0, NULL, 4, 1, CRAY_MULTI_ROTATE, PVR_FILTER_NONE);
 	Dwarf_Draw_Rotate.scale[0].x = 1;
@@ -187,7 +187,7 @@ int main(){
 	Dwarf_Draw_Rotate.colour[0] = 0xFFFFFFFF;
 	Dwarf_Draw_Rotate.fade[0] = 0;
 	Dwarf_Draw_Rotate.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Dwarf_Draw_Rotate, 0, 0);
+	crayon_memory_set_frame_uv(&Dwarf_Draw_Rotate, 0, 0);
 
 	crayon_memory_init_sprite_array(&Dwarf_Draw_Scale, &Dwarf_SS, 0, NULL, 3, 1, CRAY_MULTI_SCALE, PVR_FILTER_NONE);
 	Dwarf_Draw_Scale.scale[0].x = 1;
@@ -210,7 +210,7 @@ int main(){
 	Dwarf_Draw_Scale.colour[0] = 0xFFFFFFFF;
 	Dwarf_Draw_Scale.fade[0] = 0;
 	Dwarf_Draw_Scale.frame_coord_key[0] = 0;
-	crayon_graphics_frame_coordinates(&Dwarf_Draw_Scale, 0, 0);
+	crayon_memory_set_frame_uv(&Dwarf_Draw_Scale, 0, 0);
 
 	crayon_memory_init_sprite_array(&Dwarf_Draw_Frame, &Dwarf_SS, 0, NULL, 3, 2, CRAY_MULTI_FRAME, PVR_FILTER_NONE);
 	Dwarf_Draw_Frame.scale[0].x = 1;
@@ -231,8 +231,8 @@ int main(){
 	Dwarf_Draw_Frame.frame_coord_key[0] = 0;
 	Dwarf_Draw_Frame.frame_coord_key[1] = 1;
 	Dwarf_Draw_Frame.frame_coord_key[2] = 0;
-	crayon_graphics_frame_coordinates(&Dwarf_Draw_Frame, 0, 0);
-	crayon_graphics_frame_coordinates(&Dwarf_Draw_Frame, 1, 1);
+	crayon_memory_set_frame_uv(&Dwarf_Draw_Frame, 0, 0);
+	crayon_memory_set_frame_uv(&Dwarf_Draw_Frame, 1, 1);
 
 	crayon_memory_init_sprite_array(&Dwarf_Draw_Mash, &Dwarf_SS, 0, NULL, 6, 2, CRAY_MULTI_FRAME + CRAY_MULTI_FLIP + CRAY_MULTI_ROTATE, PVR_FILTER_NONE);
 	Dwarf_Draw_Mash.scale[0].x = 1;
@@ -276,8 +276,8 @@ int main(){
 	Dwarf_Draw_Mash.frame_coord_key[3] = 1;
 	Dwarf_Draw_Mash.frame_coord_key[4] = 0;
 	Dwarf_Draw_Mash.frame_coord_key[5] = 1;
-	crayon_graphics_frame_coordinates(&Dwarf_Draw_Mash, 0, 0);
-	crayon_graphics_frame_coordinates(&Dwarf_Draw_Mash, 1, 1);
+	crayon_memory_set_frame_uv(&Dwarf_Draw_Mash, 0, 0);
+	crayon_memory_set_frame_uv(&Dwarf_Draw_Mash, 1, 1);
 
 	crayon_graphics_setup_palette(&BIOS_P);
 	while(1){
