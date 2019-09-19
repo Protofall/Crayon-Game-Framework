@@ -148,7 +148,7 @@ int main(){
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
-	crayon_memory_init_sprite_array(&Ball_Draw, &Ball, 0, &Ball_P, 1, 1, 0, 0);
+	crayon_memory_init_sprite_array(&Ball_Draw, &Ball, 0, &Ball_P, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Ball_Draw.coord[0].x = 0;
 	Ball_Draw.coord[0].y = (480 - Ball.animation[0].frame_height) / 2;
 	Ball_Draw.layer[0] = 2;
@@ -160,7 +160,7 @@ int main(){
 	Ball_Draw.frame_coord_key[0] = 0;
 	crayon_memory_set_frame_uv(&Ball_Draw, 0, 0);
 
-	crayon_memory_init_sprite_array(&Ball2_Draw, &Ball2, 0, NULL, 1, 1, 0, 0);
+	crayon_memory_init_sprite_array(&Ball2_Draw, &Ball2, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Ball2_Draw.coord[0].x = (640 - Ball2.animation[0].frame_width);
 	Ball2_Draw.coord[0].y = (480 - Ball2.animation[0].frame_height) / 2;
 	Ball2_Draw.layer[0] = 2;

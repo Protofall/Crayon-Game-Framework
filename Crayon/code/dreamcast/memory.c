@@ -419,7 +419,7 @@ extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palet
 
 extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
 	uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
-	uint8_t filter){
+	uint8_t filter, uint8_t set_defaults){
 
 	
 	sprite_array->list_size = list_size;
@@ -463,6 +463,39 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 		sprite_array->frame_coord_map = NULL;
 		sprite_array->fade = NULL;
 		sprite_array->flip = NULL;
+	}
+
+	//Sets default values so everything is initialised
+	if(set_defaults){
+		uint16_t i;
+		for(i = 0; i < list_size; i++){
+			sprite_array->coord[i].x = 0;
+			sprite_array->coord[i].y = 0;
+			if(i == 0 || ((sprite_array->options >> 5) & 1)){	//Multi things or first loop
+				sprite_array->colour[i] = 0xFFFFFFFF;
+				sprite_array->fade[i] = 0xFF;
+			}
+			if(i == 0 || ((sprite_array->options >> 4) & 1)){
+				sprite_array->rotation[i] = 0;
+			}
+			if(i == 0 || ((sprite_array->options >> 3) & 1)){
+				sprite_array->flip[i] = 0;
+			}
+			if(i == 0 || ((sprite_array->options >> 2) & 1)){
+				sprite_array->scale[i].x = 1;
+				sprite_array->scale[i].y = 1;
+			}
+			if(i == 0 || ((sprite_array->options >> 1) & 1)){
+				sprite_array->frame_coord_key[i] = 0;
+			}
+			if(i == 0 || ((sprite_array->options) & 1)){
+				sprite_array->layer[i] = 255;
+			}
+		}
+		for(i = 0; i < frames_used; i++){	//No "if" needed since this will always loop inbounds
+			sprite_array->frame_coord_map[i].x = 0;
+			sprite_array->frame_coord_map[i].y = 0;
+		}
 	}
 
 	return;

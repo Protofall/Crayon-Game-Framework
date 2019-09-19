@@ -148,7 +148,7 @@ int main(){
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
-	crayon_memory_init_sprite_array(&Man_Draw, &Man, 0, &Man_P, 1, 1, 0, 0);
+	crayon_memory_init_sprite_array(&Man_Draw, &Man, 0, &Man_P, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Man_Draw.layer[0] = 2;
 	Man_Draw.scale[0].x = 7;
 	Man_Draw.scale[0].y = 7;
@@ -161,7 +161,7 @@ int main(){
 	Man_Draw.frame_coord_key[0] = 0;
 	crayon_memory_set_frame_uv(&Man_Draw, 0, 0);
 
-	crayon_memory_init_sprite_array(&Opaque_Blend_Draw, &Opaque, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_BLEND, 0);
+	crayon_memory_init_sprite_array(&Opaque_Blend_Draw, &Opaque, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_BLEND, PVR_FILTER_NONE, 0);
 	Opaque_Blend_Draw.scale[0].x = 12;
 	Opaque_Blend_Draw.scale[0].y = 12;
 	Opaque_Blend_Draw.coord[0].x = 0;
@@ -178,7 +178,7 @@ int main(){
 	Opaque_Blend_Draw.frame_coord_key[0] = 0;
 	crayon_memory_set_frame_uv(&Opaque_Blend_Draw, 0, 0);
 
-	crayon_memory_init_sprite_array(&Opaque_Add_Draw, &Opaque, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_ADD, 0);
+	crayon_memory_init_sprite_array(&Opaque_Add_Draw, &Opaque, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_ADD, PVR_FILTER_NONE, 0);
 	Opaque_Add_Draw.scale[0].x = 12;
 	Opaque_Add_Draw.scale[0].y = 12;
 	Opaque_Add_Draw.coord[0].x = 0;
