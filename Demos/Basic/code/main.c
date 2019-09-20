@@ -142,10 +142,10 @@ int main(){
 	Frames_Draw.flip[0] = 0;
 	Frames_Draw.rotation[0] = 0;
 	Frames_Draw.colour[0] = 0;
-	Frames_Draw.frame_coord_key[0] = 0;
-	Frames_Draw.frame_coord_key[1] = 1;
-	Frames_Draw.frame_coord_key[2] = 2;
-	Frames_Draw.frame_coord_key[3] = 3;
+	Frames_Draw.frame_id[0] = 0;
+	Frames_Draw.frame_id[1] = 1;
+	Frames_Draw.frame_id[2] = 2;
+	Frames_Draw.frame_id[3] = 3;
 	uint8_t i;
 	for(i = 0; i < 12; i++){
 		crayon_memory_set_frame_uv(&Frames_Draw, i, i);
@@ -169,7 +169,7 @@ int main(){
 	Dwarf_Draw.flip[0] = 0;
 	Dwarf_Draw.rotation[0] = 0;
 	Dwarf_Draw.colour[0] = 0;
-	Dwarf_Draw.frame_coord_key[0] = 0;
+	Dwarf_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 0, 0);
 
 	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
@@ -182,7 +182,7 @@ int main(){
 	Red_Man_Draw.flip[0] = 0;
 	Red_Man_Draw.rotation[0] = 450;
 	Red_Man_Draw.colour[0] = 0;
-	Red_Man_Draw.frame_coord_key[0] = 0;
+	Red_Man_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Red_Man_Draw, 0, 0);
 
 	//Copy the red palette over and modify red with green
@@ -199,7 +199,7 @@ int main(){
 	Green_Man_Draw.flip[0] = 0;
 	Green_Man_Draw.rotation[0] = 0;
 	Green_Man_Draw.colour[0] = 0;
-	Green_Man_Draw.frame_coord_key[0] = 0;
+	Green_Man_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Green_Man_Draw, 0, 0);
 
 	//8 sprites, 1 frame, multi rotation and flip
@@ -240,7 +240,7 @@ int main(){
 	Rainbow_Draw.rotation[6] = 180;
 	Rainbow_Draw.rotation[7] = 270;
 	Rainbow_Draw.colour[0] = 0;
-	Rainbow_Draw.frame_coord_key[0] = 0;
+	Rainbow_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Rainbow_Draw, 0, 0);
 
 	crayon_memory_init_sprite_array(&Man_BG, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -289,10 +289,10 @@ int main(){
 		}
 
 		if(stats.frame_count % 60 == 0){
-			Frames_Draw.frame_coord_key[0] = (Frames_Draw.frame_coord_key[0] + 1) % Frames_Draw.animation->frame_count;
-			Frames_Draw.frame_coord_key[1] = (Frames_Draw.frame_coord_key[1] + 1) % Frames_Draw.animation->frame_count;
-			Frames_Draw.frame_coord_key[2] = (Frames_Draw.frame_coord_key[2] + 1) % Frames_Draw.animation->frame_count;
-			Frames_Draw.frame_coord_key[3] = (Frames_Draw.frame_coord_key[3] + 1) % Frames_Draw.animation->frame_count;
+			Frames_Draw.frame_id[0] = (Frames_Draw.frame_id[0] + 1) % Frames_Draw.animation->frame_count;
+			Frames_Draw.frame_id[1] = (Frames_Draw.frame_id[1] + 1) % Frames_Draw.animation->frame_count;
+			Frames_Draw.frame_id[2] = (Frames_Draw.frame_id[2] + 1) % Frames_Draw.animation->frame_count;
+			Frames_Draw.frame_id[3] = (Frames_Draw.frame_id[3] + 1) % Frames_Draw.animation->frame_count;
 		}
 
 		pvr_list_begin(PVR_LIST_PT_POLY);

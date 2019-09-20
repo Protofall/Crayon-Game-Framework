@@ -24,9 +24,9 @@
 typedef struct crayon_sprite_array{
 	vec2_f_t *coord;			//Width then Height extracted from anim/frame data,
 								//Each element is one pair of coordinates
-	uint8_t *frame_coord_key;	//ids for a pair of frame_coords_map elements and uses that for
-								//drawing. frame_coord_key[i] refers to frame_coord_map[i].x/y
-	vec2_u16_t *frame_coord_map;//Each element is UV for one frame of an animation (U is x, V is Y)
+	uint8_t *frame_id;			//ids for a pair of frame_uv elements and uses that for
+								//drawing. frame_id[i] refers to frame_uv[i].x/y
+	vec2_u16_t *frame_uv;		//Each element is UV for one frame of an animation (U is x, V is Y)
 	uint32_t *colour;			//For poly mode this dictates the rgb and alpha of a polygon
 	uint8_t *fade;				//A part of the colour array. Tells it how to transition between
 								//The base colour and the one from the colour array
@@ -42,7 +42,7 @@ typedef struct crayon_sprite_array{
 	uint8_t frames_used;		//The number of frames you want to use. Minimum 1
 
 	uint8_t options;			//Format TCCR (flip)SFZ, Basically some booleans options relating to
-								//fade/colour, rotation, flip, scale, frame_coords, z coord (layer)
+								//fade/colour, rotation, flip, scale, frame_ids, z coord (layer)
 								//If that bit is set to true, then we use the first element of
 								//arrays (except map) for all sub-textures
 								//Else we assume each sprite has its own unique value

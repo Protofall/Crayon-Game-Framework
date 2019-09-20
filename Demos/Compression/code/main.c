@@ -157,7 +157,7 @@ int main(){
 	Ball_Draw.flip[0] = 0;
 	Ball_Draw.rotation[0] = 0;
 	Ball_Draw.colour[0] = 0;
-	Ball_Draw.frame_coord_key[0] = 0;
+	Ball_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Ball_Draw, 0, 0);
 
 	crayon_memory_init_sprite_array(&Ball2_Draw, &Ball2, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -169,7 +169,7 @@ int main(){
 	Ball2_Draw.flip[0] = 0;
 	Ball2_Draw.rotation[0] = 0;
 	Ball2_Draw.colour[0] = 0;
-	Ball2_Draw.frame_coord_key[0] = 0;
+	Ball2_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Ball2_Draw, 0, 0);
 
 	crayon_graphics_setup_palette(&BIOS_P);

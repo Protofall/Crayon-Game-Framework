@@ -322,8 +322,8 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 		}
 
 		if(*frame_index == i){	//frame
-			u0 = sprite_array->frame_coord_map[sprite_array->frame_coord_key[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
-			v0 = sprite_array->frame_coord_map[sprite_array->frame_coord_key[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
+			u0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
+			v0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
 			u1 = u0 + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
 			v1 = v0 + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
 		}
@@ -333,8 +333,8 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 		if(i == 0 || (multi_flip && (sprite_array->flip[i] != sprite_array->flip[i - 1])) ||
 			(multi_rotate && (sprite_array->rotation[i] != sprite_array->rotation[i - 1])) ||
 			(multi_frame &&
-			((sprite_array->frame_coord_map[i].x != sprite_array->frame_coord_map[i - 1].x) ||
-			(sprite_array->frame_coord_map[i].y != sprite_array->frame_coord_map[i - 1].y)))
+			((sprite_array->frame_uv[i].x != sprite_array->frame_uv[i - 1].x) ||
+			(sprite_array->frame_uv[i].y != sprite_array->frame_uv[i - 1].y)))
 			){
 			
 			if(sprite_array->flip[*flip_index] & (1 << 0)){	//Is flipped?
@@ -489,8 +489,8 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 		}
 
 		if(*frame_index == i){	//frame
-			u0 = sprite_array->frame_coord_map[sprite_array->frame_coord_key[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
-			v0 = sprite_array->frame_coord_map[sprite_array->frame_coord_key[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
+			u0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
+			v0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
 			u1 = u0 + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
 			v1 = v0 + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
 		}

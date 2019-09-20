@@ -445,22 +445,22 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 	// ((sprite_array->options >> 1) & 1)	//Extract the frames_used bit
 	// ((sprite_array->options) & 1)		//Extract the layer bit
 
-	sprite_array->coord = (vec2_f_t *) malloc(list_size * 2 * sizeof(vec2_f_t));
-	sprite_array->scale = (vec2_f_t *) malloc(((sprite_array->options >> 2) & 1 ? list_size: 1) * 2 * sizeof(vec2_f_t));
+	sprite_array->coord = (vec2_f_t *) malloc(list_size * sizeof(vec2_f_t));
+	sprite_array->scale = (vec2_f_t *) malloc(((sprite_array->options >> 2) & 1 ? list_size: 1) * sizeof(vec2_f_t));
 
 	sprite_array->colour = (uint32_t *) malloc(((sprite_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint32_t));
 	sprite_array->rotation = (float *) malloc(((sprite_array->options >> 4) & 1 ? list_size: 1) * sizeof(float));
 	sprite_array->layer = (uint8_t *) malloc(((sprite_array->options) & 1 ? list_size: 1) * sizeof(uint8_t));
 
 	if(ss){
-		sprite_array->frame_coord_key = (uint8_t *) malloc(((sprite_array->options >> 1) & 1 ? list_size: 1) * sizeof(uint8_t));
-		sprite_array->frame_coord_map = (vec2_u16_t *) malloc(frames_used * 2 * sizeof(vec2_u16_t));
+		sprite_array->frame_id = (uint8_t *) malloc(((sprite_array->options >> 1) & 1 ? list_size: 1) * sizeof(uint8_t));
+		sprite_array->frame_uv = (vec2_u16_t *) malloc(frames_used * sizeof(vec2_u16_t));
 		sprite_array->fade = (uint8_t *) malloc(((sprite_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint8_t));
 		sprite_array->flip = (uint8_t *) malloc(((sprite_array->options >> 3) & 1 ? list_size: 1) * sizeof(uint8_t));
 	}
 	else{
-		sprite_array->frame_coord_key = NULL;
-		sprite_array->frame_coord_map = NULL;
+		sprite_array->frame_id = NULL;
+		sprite_array->frame_uv = NULL;
 		sprite_array->fade = NULL;
 		sprite_array->flip = NULL;
 	}
@@ -486,15 +486,15 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 				sprite_array->scale[i].y = 1;
 			}
 			if(i == 0 || ((sprite_array->options >> 1) & 1)){
-				sprite_array->frame_coord_key[i] = 0;
+				sprite_array->frame_id[i] = 0;
 			}
 			if(i == 0 || ((sprite_array->options) & 1)){
 				sprite_array->layer[i] = 255;
 			}
 		}
 		for(i = 0; i < frames_used; i++){	//No "if" needed since this will always loop inbounds
-			sprite_array->frame_coord_map[i].x = 0;
-			sprite_array->frame_coord_map[i].y = 0;
+			sprite_array->frame_uv[i].x = 0;
+			sprite_array->frame_uv[i].y = 0;
 		}
 	}
 
@@ -568,8 +568,8 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
 extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array){
 	//Free shouldn't do anything if you try to free a NULL ptr, but just incase...
 	if(sprite_array->coord){free(sprite_array->coord);}
-	if(sprite_array->frame_coord_key){free(sprite_array->frame_coord_key);}
-	if(sprite_array->frame_coord_map){free(sprite_array->frame_coord_map);}
+	if(sprite_array->frame_id){free(sprite_array->frame_id);}
+	if(sprite_array->frame_uv){free(sprite_array->frame_uv);}
 	if(sprite_array->colour){free(sprite_array->colour);}
 	if(sprite_array->fade){free(sprite_array->fade);}
 	if(sprite_array->scale){free(sprite_array->scale);}
@@ -579,8 +579,8 @@ extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_arr
 
 	//Set to NULL just incase user accidentally tries to free these arrays again
 	sprite_array->coord = NULL;
-	sprite_array->frame_coord_key = NULL;
-	sprite_array->frame_coord_map = NULL;
+	sprite_array->frame_id = NULL;
+	sprite_array->frame_uv = NULL;
 	sprite_array->colour = NULL;
 	sprite_array->scale = NULL;
 	sprite_array->flip = NULL;
@@ -742,7 +742,7 @@ extern uint8_t crayon_memory_get_layer(crayon_sprite_array_t * sprites, uint16_t
 extern uint8_t crayon_memory_get_frame_id(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
 	if(((sprites->options & CRAY_MULTI_FRAME) && index == 0) || index < sprites->list_size){
 		if(error){*error = 0;}
-		return sprites->frame_coord_key[index];
+		return sprites->frame_id[index];
 	}
 	if(error){*error = 1;}
 	perror("Your index is outside this array");
@@ -752,7 +752,7 @@ extern uint8_t crayon_memory_get_frame_id(crayon_sprite_array_t * sprites, uint1
 extern vec2_u16_t crayon_memory_get_frame_uv(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
 	if(index < sprites->frames_used){
 		if(error){*error = 0;}
-		return sprites->frame_coord_map[index];
+		return sprites->frame_uv[index];
 	}
 	if(error){*error = 1;}
 	perror("Your index is outside this array");
@@ -851,7 +851,7 @@ extern uint8_t crayon_memory_set_layer(crayon_sprite_array_t * sprites, uint16_t
 
 extern uint8_t crayon_memory_set_frame_id(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value){
 	if(((sprites->options & CRAY_MULTI_FRAME) && index == 0) || index < sprites->list_size){
-		sprites->frame_coord_key[index] = value;
+		sprites->frame_id[index] = value;
 		return 0;
 	}
 	return 1;
@@ -864,8 +864,8 @@ extern uint8_t crayon_memory_set_frame_uv(crayon_sprite_array_t * sprites, uint1
 		uint8_t column_number = frame_id % frames_per_row;
 		uint8_t row_number = frame_id / frames_per_row;
 
-		sprites->frame_coord_map[index].x = anim->x + (column_number * anim->frame_width);
-		sprites->frame_coord_map[index].y = anim->y + (row_number * anim->frame_height);
+		sprites->frame_uv[index].x = anim->x + (column_number * anim->frame_width);
+		sprites->frame_uv[index].y = anim->y + (row_number * anim->frame_height);
 		return 0;
 	}
 	return 1;
