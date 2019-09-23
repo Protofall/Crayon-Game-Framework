@@ -187,6 +187,7 @@ objectLogicID is basically the general behaviour of a texture. So a background h
 + TexturePacker
 + Texconv
 	+ QT is required to build the Texconv executable
++ Crayon Utilities (To build VMU textures)
 + cdi4dc (Kazade's Unix build)
 + (NOT NEEDED RIGHT NOW) SCons (Makefile alternative)
 
@@ -195,6 +196,10 @@ objectLogicID is basically the general behaviour of a texture. So a background h
 Here are some setup guides for installing KOS. I recommend downloading the latest development versions instead of the latest "Release version" so you can use the FAT file system support:
 + http://gamedev.allusion.net/softprj/kos/setup-linux.php (Mac setup is very similar to this)
 + http://gamedev.allusion.net/softprj/kos/setup-wsl.php
+
+For Crayon Utilities:
++ `git clone https://github.com/Protofall/Crayon-Utilities.git` OR `git@github.com:Protofall/Crayon-Utilities.git`
++ Build the tools as you need them. Crayon doesn't directly use them (Yet)
 
 For cdi4dc:
 
