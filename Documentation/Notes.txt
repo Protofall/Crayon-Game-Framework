@@ -36,9 +36,12 @@ Part 5: Dreamcast texture format
 	- I feel the best game resolution is 640x360 which is 16:9 Letterboxed since it scales well to modern displays
 
 Part 6: Sound capabilities
-- Although I haven't used it, I hear OpenAL is a good sound API
-- On DC we can have 32-bit audio. Sound effects take up (X-MB of space which is Y-seconds)
-- We can use CDDA audio, this is the audio format of music CDs so the game disc can double as a music CD
+- Yamaha AICA with 32-bit ARM7 RISC CPU core, 64 channels
+- Music: Unsure on the details for quality, but you can load OGG files and "CDDA" music (Basically music CD quality)
+- Sound: All sound files must be 16-bit uncompressed or in the ADPCM format (4-bit compressed)
+	- Therefor sound effects last for X seconds for 16-bit and Y seconds for 4-bit
+- Although I haven't used it, I hear OpenAL is a good sound API that should handle most of the technicals for us
+- Also with CDDA audio, the game disc can double as a music CD
 
 Part 7: Testing methods
 - 4 main ways of testing code
@@ -56,3 +59,6 @@ Part 8: Distribution
 
 Part 9: Project examples
 Talk about Minesweeper and Group16's game, but mention it can do more
+
+Part 10: Pros and Cons
+- Have a table with the pros and cons of Crayon and Dreamcast compared to modern systems
