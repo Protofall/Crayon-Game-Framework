@@ -32,4 +32,11 @@ extern uint8_t crayon_assist_read_file(void ** buffer, char * path, size_t size_
 	//this is useful for checking why it stopped reading a number
 extern uint32_t crayon_assist_fgeti(FILE * f, int16_t * last_char);
 
+// If given bit_length = 5 and offset = 2 we will return the bit_length bit offset to the left by offset
+// For example if we give it number = 90 = 01011010 then we return 10110 = 22
+extern uint32_t crayon_assist_extract_bits(uint32_t number, uint8_t bit_length, uint8_t offset);
+
+//This simply insets your second number into the first number. I don't know what happens if number_2 is too long...
+extern uint32_t crayon_assist_insert_bits(uint32_t number_1, uint32_t number_2, uint8_t bit_length, uint8_t offset);
+
 #endif

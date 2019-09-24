@@ -1,6 +1,7 @@
 //Crayon libraries
 #include <crayon/memory.h>
 #include <crayon/graphics.h>
+#include <crayon/assist.h>
 
 //For region and htz stuff
 #include <dc/flashrom.h>
@@ -81,6 +82,23 @@ pvr_init_params_t pvr_params = {
 		0
 };
 
+// If given bit_length = 5 and offset = 2 we will return the bit_length bit offset to the left by offset
+// For example if we give it number = 90 = 01011010 then we return 10110 = 22
+uint32_t extract_bits(uint32_t number, uint8_t bit_length, uint8_t offset){
+	return (((1 << bit_length) - 1) & (number >> offset));
+}
+
+uint32_t insert_bits(uint32_t number_1, uint32_t number_2, uint8_t bit_length, uint8_t offset){
+	//So I want to return number_1, but first clear the range I want to override then & the new range into it
+	//Set nth bit: number |= 1UL << n;
+	//clear nth bit: number &= ~(1UL << n);
+	//Toggle nth bit: number ^= 1UL << n;
+	//Check nth bit: bit = (number >> n) & 1U;
+	//Changing nth bit: number ^= (-x ^ number) & (1UL << n);
+	//Some prefer number = number & ~(1UL << n) | (x << n); for changing nth bit to n
+	return number_1 & ~(((1UL << bit_length) - 1) << offset) | (number_2 << offset);
+}
+
 float thumbstick_int_to_float(int joy){
 	float ret_val;	//Range from -1 to 1
 
@@ -99,11 +117,17 @@ uint8_t frame_indexes[3];
 
 void set_msg(char * buffer, uint8_t code){
 	switch(code){
-		case 0:
-			strcpy(buffer, "Hii!");
-			break;
-		default:
-			strcpy(buffer, "Unknown code given");
+	case 0:
+		strcpy(buffer, "Instructions.\n\
+			Press A to cycle to next sprite\n\
+			L-Trigger and R-Trigger to change options\n\
+			D-PAD Down to decrease a value, D-PAD Up to increase it\n\
+			D-PAD Left and D-PAD Up to change sub option (Colour)\n\
+			Y to hide these instructions\n\
+			Start to terminate program");
+		break;
+	default:
+		strcpy(buffer, "Unknown code given");
 	}
 	return;
 }
@@ -118,43 +142,43 @@ void set_msg(char * buffer, uint8_t code){
 //7 = layer
 void set_msg_option(char * buffer, uint8_t option, uint8_t sub_option, uint8_t sprite){
 	switch(option){
-		case 0:
-			sprintf(buffer, "Option: Frame. Value: %d", frame_indexes[sprite]);
+	case 0:
+		sprintf(buffer, "Option: Frame. Value: %d", frame_indexes[sprite]);
+		break;
+	case 1:
+		switch(sub_option){
+		case 0:	//FIX THESE GETTERS LATER
+			sprintf(buffer, "Option: Colour. Sub-Option: Alpha. Value: 0x%x", (unsigned int)(Faces_Draw[sprite].colour[0] >> 24));
 			break;
 		case 1:
-			switch(sub_option){
-				case 0:	//FIX THESE GETTERS LATER
-					sprintf(buffer, "Option: Colour. Sub-Option: Alpha. Value: 0x%x", (unsigned int)(Faces_Draw[sprite].colour[0] >> 24));
-					break;
-				case 1:
-					sprintf(buffer, "Option: Colour. Sub-Option: Red. Value: 0x%x", (unsigned int)(Faces_Draw[sprite].colour[0] >> 16) & 0xFF);
-					break;
-				case 2:
-					sprintf(buffer, "Option: Colour. Sub-Option: Green. Value: 0x%x", (unsigned int)(Faces_Draw[sprite].colour[0] >> 8) & 0xFF);
-					break;
-				case 3:
-					sprintf(buffer, "Option: Colour. Sub-Option: Blue. Value: 0x%x", (unsigned int)(Faces_Draw[sprite].colour[0] & 0xFF));
-					break;
-			}
+			sprintf(buffer, "Option: Colour. Sub-Option: Red. Value: 0x%x", (unsigned int)(Faces_Draw[sprite].colour[0] >> 16) & 0xFF);
 			break;
 		case 2:
-			sprintf(buffer, "Option: Fade. Value: 0x%x", Faces_Draw[sprite].fade[0]);
+			sprintf(buffer, "Option: Colour. Sub-Option: Green. Value: 0x%x", (unsigned int)(Faces_Draw[sprite].colour[0] >> 8) & 0xFF);
 			break;
 		case 3:
-			sprintf(buffer, "Option: Scale X. Value: %.2f", (double)Faces_Draw[sprite].scale[0].x);
+			sprintf(buffer, "Option: Colour. Sub-Option: Blue. Value: 0x%x", (unsigned int)(Faces_Draw[sprite].colour[0] & 0xFF));
 			break;
-		case 4:
-			sprintf(buffer, "Option: Scale Y. Value: %.2f", (double)Faces_Draw[sprite].scale[0].y);
-			break;
-		case 5:
-			sprintf(buffer, "Option: Flip. Value: %d", Faces_Draw[sprite].flip[0]);
-			break;
-		case 6:
-			sprintf(buffer, "Option: Rotation. Value: %.2f", (double)Faces_Draw[sprite].rotation[0]);
-			break;
-		case 7:
-			sprintf(buffer, "Option: Layer. Value: %d", Faces_Draw[sprite].layer[0]);
-			break;
+		}
+		break;
+	case 2:
+		sprintf(buffer, "Option: Fade. Value: 0x%x", Faces_Draw[sprite].fade[0]);
+		break;
+	case 3:
+		sprintf(buffer, "Option: Scale X. Value: %.2f", (double)Faces_Draw[sprite].scale[0].x);
+		break;
+	case 4:
+		sprintf(buffer, "Option: Scale Y. Value: %.2f", (double)Faces_Draw[sprite].scale[0].y);
+		break;
+	case 5:
+		sprintf(buffer, "Option: Flip. Value: %d", Faces_Draw[sprite].flip[0]);
+		break;
+	case 6:
+		sprintf(buffer, "Option: Rotation. Value: %.2f", (double)Faces_Draw[sprite].rotation[0]);
+		break;
+	case 7:
+		sprintf(buffer, "Option: Layer. Value: %d", Faces_Draw[sprite].layer[0]);
+		break;
 	}
 }
 
@@ -220,11 +244,11 @@ int main(){
 	#endif
 
 	crayon_memory_init_sprite_array(&Faces_Draw[0], &Faces_SS, 0, &Faces_P, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Faces_Draw[0].coord[0].x = 0;
-	Faces_Draw[0].coord[0].y = 0;
 	Faces_Draw[0].layer[0] = 50;
 	Faces_Draw[0].scale[0].x = 4;
 	Faces_Draw[0].scale[0].y = 4;
+	Faces_Draw[0].coord[0].x = (2*640/6.0) - (crayon_graphics_get_draw_element_height(&Faces_Draw[0],0) / 2.0);
+	Faces_Draw[0].coord[0].y = 240 - (crayon_graphics_get_draw_element_height(&Faces_Draw[0],0) / 2.0);
 	Faces_Draw[0].flip[0] = 0;
 	Faces_Draw[0].rotation[0] = 0;
 	Faces_Draw[0].colour[0] = 0xFFFFFFFF;
@@ -233,11 +257,11 @@ int main(){
 	crayon_memory_set_frame_uv(&Faces_Draw[0], 0, 0);
 
 	crayon_memory_init_sprite_array(&Faces_Draw[1], &Faces_SS, 0, &Faces_P, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Faces_Draw[1].coord[0].x = 0;
-	Faces_Draw[1].coord[0].y = 0;
 	Faces_Draw[1].layer[0] = 50;
 	Faces_Draw[1].scale[0].x = 4;
 	Faces_Draw[1].scale[0].y = 4;
+	Faces_Draw[1].coord[0].x = (3*640/6.0) - (crayon_graphics_get_draw_element_height(&Faces_Draw[0],0) / 2.0);
+	Faces_Draw[1].coord[0].y = Faces_Draw[0].coord[0].y;
 	Faces_Draw[1].flip[0] = 0;
 	Faces_Draw[1].rotation[0] = 0;
 	Faces_Draw[1].colour[0] = 0xFFFFFFFF;
@@ -246,11 +270,11 @@ int main(){
 	crayon_memory_set_frame_uv(&Faces_Draw[1], 0, 1);
 
 	crayon_memory_init_sprite_array(&Faces_Draw[2], &Faces_SS, 0, &Faces_P, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Faces_Draw[2].coord[0].x = 0;
-	Faces_Draw[2].coord[0].y = 0;
 	Faces_Draw[2].layer[0] = 50;
 	Faces_Draw[2].scale[0].x = 4;
 	Faces_Draw[2].scale[0].y = 4;
+	Faces_Draw[2].coord[0].x = (4*640/6.0) - (crayon_graphics_get_draw_element_height(&Faces_Draw[0],0) / 2.0);
+	Faces_Draw[2].coord[0].y = Faces_Draw[0].coord[0].y;
 	Faces_Draw[2].flip[0] = 0;
 	Faces_Draw[2].rotation[0] = 0;
 	Faces_Draw[2].colour[0] = 0xFFFFFFFF;
@@ -267,8 +291,10 @@ int main(){
 	uint8_t max_options = 8;
 	uint8_t sprite = 0;
 	uint8_t holder_value_u8 = 0;
+	uint32_t holder_value_u32 = 0;
 
-	char msg[200];
+	uint8_t hide_msg = 0;
+	char msg[1024];
 	char msg_option[80];
 	//0 = frame_id
 	//1 = colour
@@ -318,6 +344,11 @@ int main(){
 				set_msg_option(msg_option, option, sub_option, sprite);	//To update the var
 			}
 
+			//Hid HUD text
+			if((st->buttons & CONT_Y) && !(prev_btns[__dev->port] & CONT_Y)){
+				hide_msg = !hide_msg;
+			}
+
 			thumb.x = thumbstick_int_to_float(st->joyx);
 			thumb.y = thumbstick_int_to_float(st->joyy);
 			thumb_active = ((thumb.x * thumb.x) + (thumb.y * thumb.y) > 0.4 * 0.4);
@@ -327,115 +358,140 @@ int main(){
 				Faces_Draw[sprite].coord[0].y += (thumb.y * 2.5);
 			}
 
-			//0 = frame_id
-			//1 = colour
-			//2 = fade
-			//3 = scale x
-			//4 = scale y
-			//5 = flip
-			//6 = rotate
-			//7 = layer
-
 			//For ones we want tokeep increasing
 			if((st->buttons & CONT_DPAD_UP)){
 				switch(option){
-					case 1:
-						// crayon_memory_set_colour();
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
-					case 2:
-						holder_value_u8 = crayon_memory_get_fade(&Faces_Draw[sprite], 0, NULL);
-						if(holder_value_u8 != 255){
-							holder_value_u8++;
-							crayon_memory_set_fade(&Faces_Draw[sprite], 0, holder_value_u8);
-						}
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
-					case 3:
-						crayon_memory_set_scale_x(&Faces_Draw[sprite], 0, crayon_memory_get_scale_x(&Faces_Draw[sprite], 0, NULL) + 0.05);
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
-					case 4:
-						crayon_memory_set_scale_y(&Faces_Draw[sprite], 0, crayon_memory_get_scale_y(&Faces_Draw[sprite], 0, NULL) + 0.05);
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
-					case 6:
-						crayon_memory_set_rotation(&Faces_Draw[sprite], 0, crayon_memory_get_rotation(&Faces_Draw[sprite], 0, NULL) + 1);
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
+				case 1:
+					// switch(option){
+					// case 0:
+					// 	holder_value_u32 = crayon_memory_get_fade(&Faces_Draw[sprite], 0, NULL);
+					// 	holder_value_u8 = holder_value_u32 >> 24;
+					// 	if(holder_value_u8 < 0xFF){holder_value_u8++;}
+					// 	holder_value_u32 = (holder_value_u32 & (1 << 24) - 1) | (holder_value_u8 << 24);
+					// 	break;
+					// case 1:
+					// 	;
+					// 	break;
+					// case 2:
+					// 	;
+					// 	break;
+					// case 3:
+					// 	holder_value_u32 = crayon_memory_get_fade(&Faces_Draw[sprite], 0, NULL);
+					// 	holder_value_u8 = holder_value_u32 & 0xFF;
+					// 	if(holder_value_u8 < 0xFF){holder_value_u8++;}
+					// 	holder_value_u32 = (holder_value_u32 & (1 << 24) - 1) | (holder_value_u8 << 24);
+					// 	break;
+					// }
+					// crayon_memory_set_colour();
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
+				case 2:
+					holder_value_u8 = crayon_memory_get_fade(&Faces_Draw[sprite], 0, NULL);
+					if(holder_value_u8 != 255){
+						holder_value_u8++;
+						crayon_memory_set_fade(&Faces_Draw[sprite], 0, holder_value_u8);
+					}
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
+				case 3:
+					crayon_memory_set_scale_x(&Faces_Draw[sprite], 0, crayon_memory_get_scale_x(&Faces_Draw[sprite], 0, NULL) + 0.05);
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
+				case 4:
+					crayon_memory_set_scale_y(&Faces_Draw[sprite], 0, crayon_memory_get_scale_y(&Faces_Draw[sprite], 0, NULL) + 0.05);
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
+				case 6:
+					crayon_memory_set_rotation(&Faces_Draw[sprite], 0, crayon_memory_get_rotation(&Faces_Draw[sprite], 0, NULL) + 1);
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
 				}
 			}
 			if((st->buttons & CONT_DPAD_UP) && !(prev_btns[__dev->port] & CONT_DPAD_UP)){
 				switch(option){
-					case 0:
-						frame_indexes[sprite]++;
-						if(frame_indexes[sprite] >= Faces_SS.animation[0].frame_count){frame_indexes[sprite] = 0;}	//For some reason, this is triggering early
-						crayon_memory_set_frame_uv(&Faces_Draw[sprite], 0, frame_indexes[sprite]);
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
-					case 5:
-						crayon_memory_set_flip(&Faces_Draw[sprite], 0, !crayon_memory_get_flip(&Faces_Draw[sprite], 0, NULL));
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
-					case 7:
-						holder_value_u8 = crayon_memory_get_layer(&Faces_Draw[sprite], 0, NULL);
-						if(holder_value_u8 != 255){
-							holder_value_u8++;
-							crayon_memory_set_layer(&Faces_Draw[sprite], 0, holder_value_u8);
-						}
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
+				case 0:
+					frame_indexes[sprite]++;
+					if(frame_indexes[sprite] >= Faces_SS.animation[0].frame_count){frame_indexes[sprite] = 0;}	//For some reason, this is triggering early
+					crayon_memory_set_frame_uv(&Faces_Draw[sprite], 0, frame_indexes[sprite]);
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
+				case 5:
+					crayon_memory_set_flip(&Faces_Draw[sprite], 0, !crayon_memory_get_flip(&Faces_Draw[sprite], 0, NULL));
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
+				case 7:
+					holder_value_u8 = crayon_memory_get_layer(&Faces_Draw[sprite], 0, NULL);
+					if(holder_value_u8 != 255){
+						holder_value_u8++;
+						crayon_memory_set_layer(&Faces_Draw[sprite], 0, holder_value_u8);
+					}
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
 				}
 			}
 			//Decrease value
 			if((st->buttons & CONT_DPAD_DOWN)){
 				switch(option){
+				case 1:
+					switch(sub_option){
+					case 0:
+						;
+						break;
 					case 1:
-						// crayon_memory_set_colour();
-						set_msg_option(msg_option, option, sub_option, sprite);
+						;
 						break;
 					case 2:
-						holder_value_u8 = crayon_memory_get_fade(&Faces_Draw[sprite], 0, NULL);
-						if(holder_value_u8 != 0){
-							holder_value_u8--;
-							crayon_memory_set_fade(&Faces_Draw[sprite], 0, holder_value_u8);
-						}
-						set_msg_option(msg_option, option, sub_option, sprite);
+						;
 						break;
 					case 3:
-						crayon_memory_set_scale_x(&Faces_Draw[sprite], 0, crayon_memory_get_scale_x(&Faces_Draw[sprite], 0, NULL) - 0.05);
-						set_msg_option(msg_option, option, sub_option, sprite);
+						;
 						break;
-					case 4:
-						crayon_memory_set_scale_y(&Faces_Draw[sprite], 0, crayon_memory_get_scale_y(&Faces_Draw[sprite], 0, NULL) - 0.05);
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
-					case 6:
-						crayon_memory_set_rotation(&Faces_Draw[sprite], 0, crayon_memory_get_rotation(&Faces_Draw[sprite], 0, NULL) - 1);
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
+					}
+					// crayon_memory_set_colour();
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
+				case 2:
+					holder_value_u8 = crayon_memory_get_fade(&Faces_Draw[sprite], 0, NULL);
+					if(holder_value_u8 != 0){
+						holder_value_u8--;
+						crayon_memory_set_fade(&Faces_Draw[sprite], 0, holder_value_u8);
+					}
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
+				case 3:
+					crayon_memory_set_scale_x(&Faces_Draw[sprite], 0, crayon_memory_get_scale_x(&Faces_Draw[sprite], 0, NULL) - 0.05);
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
+				case 4:
+					crayon_memory_set_scale_y(&Faces_Draw[sprite], 0, crayon_memory_get_scale_y(&Faces_Draw[sprite], 0, NULL) - 0.05);
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
+				case 6:
+					crayon_memory_set_rotation(&Faces_Draw[sprite], 0, crayon_memory_get_rotation(&Faces_Draw[sprite], 0, NULL) - 1);
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
 				}
 			}
 			if((st->buttons & CONT_DPAD_DOWN) && !(prev_btns[__dev->port] & CONT_DPAD_DOWN)){
 				switch(option){
-					case 0:
-						if(frame_indexes[sprite] <= 0){frame_indexes[sprite] = Faces_SS.animation[0].frame_count;}
-						frame_indexes[sprite]--;
-						crayon_memory_set_frame_uv(&Faces_Draw[sprite], 0, frame_indexes[sprite]);
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
-					case 5:
-						crayon_memory_set_flip(&Faces_Draw[sprite], 0, !crayon_memory_get_flip(&Faces_Draw[sprite], 0, NULL));
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
-					case 7:
-						holder_value_u8 = crayon_memory_get_layer(&Faces_Draw[sprite], 0, NULL);
-						if(holder_value_u8 != 1){
-							holder_value_u8--;
-							crayon_memory_set_layer(&Faces_Draw[sprite], 0, holder_value_u8);
-						}
-						set_msg_option(msg_option, option, sub_option, sprite);
-						break;
+				case 0:
+					if(frame_indexes[sprite] <= 0){frame_indexes[sprite] = Faces_SS.animation[0].frame_count;}
+					frame_indexes[sprite]--;
+					crayon_memory_set_frame_uv(&Faces_Draw[sprite], 0, frame_indexes[sprite]);
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
+				case 5:
+					crayon_memory_set_flip(&Faces_Draw[sprite], 0, !crayon_memory_get_flip(&Faces_Draw[sprite], 0, NULL));
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
+				case 7:
+					holder_value_u8 = crayon_memory_get_layer(&Faces_Draw[sprite], 0, NULL);
+					if(holder_value_u8 != 1){
+						holder_value_u8--;
+						crayon_memory_set_layer(&Faces_Draw[sprite], 0, holder_value_u8);
+					}
+					set_msg_option(msg_option, option, sub_option, sprite);
+					break;
 				}
 			}
 
@@ -471,9 +527,11 @@ int main(){
 			crayon_graphics_draw_sprites(&Faces_Draw[1], PVR_LIST_OP_POLY, CRAY_SCREEN_DRAW_ENHANCED);
 			crayon_graphics_draw_sprites(&Faces_Draw[2], PVR_LIST_OP_POLY, CRAY_SCREEN_DRAW_ENHANCED);
 
-			crayon_graphics_draw_text_mono(msg, &BIOS, PVR_LIST_OP_POLY, 32, 480 - (BIOS.char_height * 4), 255, 1, 1, BIOS_P.palette_id);
-			crayon_graphics_draw_text_mono(msg_option, &BIOS, PVR_LIST_OP_POLY, 32, 480 - (BIOS.char_height * 3), 255, 1, 1, BIOS_P.palette_id);
-			crayon_graphics_draw_text_mono(msg_sprite, &BIOS, PVR_LIST_OP_POLY, 32, 480 - (BIOS.char_height * 2), 255, 1, 1, BIOS_P.palette_id);
+			if(!hide_msg){
+				crayon_graphics_draw_text_mono(msg, &BIOS, PVR_LIST_OP_POLY, 32, 480 - (BIOS.char_height * 10.5), 255, 1, 1, BIOS_P.palette_id);
+				crayon_graphics_draw_text_mono(msg_option, &BIOS, PVR_LIST_OP_POLY, 32, 480 - (BIOS.char_height * 3), 255, 1, 1, BIOS_P.palette_id);
+				crayon_graphics_draw_text_mono(msg_sprite, &BIOS, PVR_LIST_OP_POLY, 32, 480 - (BIOS.char_height * 2), 255, 1, 1, BIOS_P.palette_id);
+			}
 		pvr_list_finish();
 
 		pvr_scene_finish();
