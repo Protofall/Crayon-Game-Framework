@@ -93,5 +93,5 @@ extern uint32_t extract_bits(uint32_t number, uint8_t bit_length, uint8_t offset
 }
 
 extern uint32_t insert_bits(uint32_t number_1, uint32_t number_2, uint8_t bit_length, uint8_t offset){
-	return number_1 & ~(((1UL << bit_length) - 1) << offset) | (number_2 << offset);
+	return (number_1 & ~(((1UL << bit_length) - 1) << offset)) | (number_2 << offset);
 }

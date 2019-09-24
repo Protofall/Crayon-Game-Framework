@@ -82,23 +82,6 @@ pvr_init_params_t pvr_params = {
 		0
 };
 
-// If given bit_length = 5 and offset = 2 we will return the bit_length bit offset to the left by offset
-// For example if we give it number = 90 = 01011010 then we return 10110 = 22
-uint32_t extract_bits(uint32_t number, uint8_t bit_length, uint8_t offset){
-	return (((1 << bit_length) - 1) & (number >> offset));
-}
-
-uint32_t insert_bits(uint32_t number_1, uint32_t number_2, uint8_t bit_length, uint8_t offset){
-	//So I want to return number_1, but first clear the range I want to override then & the new range into it
-	//Set nth bit: number |= 1UL << n;
-	//clear nth bit: number &= ~(1UL << n);
-	//Toggle nth bit: number ^= 1UL << n;
-	//Check nth bit: bit = (number >> n) & 1U;
-	//Changing nth bit: number ^= (-x ^ number) & (1UL << n);
-	//Some prefer number = number & ~(1UL << n) | (x << n); for changing nth bit to n
-	return number_1 & ~(((1UL << bit_length) - 1) << offset) | (number_2 << offset);
-}
-
 float thumbstick_int_to_float(int joy){
 	float ret_val;	//Range from -1 to 1
 
