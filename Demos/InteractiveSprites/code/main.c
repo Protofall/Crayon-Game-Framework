@@ -105,7 +105,7 @@ void set_msg(char * buffer, uint8_t code){
 			Press A to cycle to next sprite\n\
 			L-Trigger and R-Trigger to change options\n\
 			D-PAD Down to decrease a value, D-PAD Up to increase it\n\
-			D-PAD Left and D-PAD Up to change sub option (Colour)\n\
+			D-PAD Left and D-PAD Right to change sub option (Colour)\n\
 			Y to hide these instructions\n\
 			Start to terminate program");
 		break;
@@ -553,6 +553,7 @@ int main(){
 		Highlight_Draw.coord[0].x = Faces_Draw[sprite].coord[0].x - 2;
 		Highlight_Draw.coord[0].y = Faces_Draw[sprite].coord[0].y - 2;
 		Highlight_Draw.rotation[0] = Faces_Draw[sprite].rotation[0];
+		// Highlight_Draw.colour[0] = crayon_assist_insert_bits(crayon_assist_extract_bits(Faces_Draw[sprite].colour[0], 24, 0), crayon_assist_extract_bits(Faces_Draw[sprite].colour[0], 24, 0), 8, 24);
 
 		pvr_scene_begin();
 
