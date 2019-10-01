@@ -614,11 +614,11 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	uint8_t cropped = 0;
 	uint8_t flipped_val = 0;
 	uint8_t rotation_val = 0;
-	// uint8_t holder;
+	uint8_t holder;
 
 	// float u0, v0, u1, v1;
 	float uvs[4] = {0};	//u0, v0, u1, v1
-	// uint8_t side_uv_indexes[4] = {0};	//LTRB)
+	uint8_t side_uv_indexes[4] = {0};	//LTRB)
 	// uint32_t duv;	//duv is used to assist in the rotations
 	// u0 = 0; v0 = 0; u1 = 0; v1 = 0; duv = 0;	//Needed if you want to prevent a bunch of compiler warnings...
 	// u0 = 0; v0 = 0; u1 = 0; v1 = 0;	//Needed if you want to prevent a bunch of compiler warnings...
@@ -711,17 +711,17 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			
 			if(sprite_array->flip[*flip_index] & (1 << 0)){	//Is flipped?
 				flipped_val = 1;
-				// side_uv_indexes[0] = 2;
-				// side_uv_indexes[1] = 1;
-				// side_uv_indexes[2] = 0;
-				// side_uv_indexes[3] = 3;
+				side_uv_indexes[0] = 2;
+				side_uv_indexes[1] = 1;
+				side_uv_indexes[2] = 0;
+				side_uv_indexes[3] = 3;
 			}
 			else{
 				flipped_val = 0;
-				// side_uv_indexes[0] = 0;	//u0 v0 u1 v1
-				// side_uv_indexes[1] = 1;	//LTRB
-				// side_uv_indexes[2] = 2;
-				// side_uv_indexes[3] = 3;
+				side_uv_indexes[0] = 0;	//u0 v0 u1 v1
+				side_uv_indexes[1] = 1;	//LTRB
+				side_uv_indexes[2] = 2;
+				side_uv_indexes[3] = 3;
 			}
 
 			//Don't bother doing extra calculations
@@ -732,30 +732,30 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 				//For sprite mode we can't simply "rotate" the verts, instead we need to change the uv
 				if(crayon_graphics_almost_equals(rotation_under_360, 90.0, 45.0)){
 					rotation_val = 1;
-					// holder = side_uv_indexes[0];
-					// side_uv_indexes[0] = side_uv_indexes[1];	//L becomes T
-					// side_uv_indexes[1] = side_uv_indexes[2];	//T becomes R
-					// side_uv_indexes[2] = side_uv_indexes[3];	//R becomes B
-					// side_uv_indexes[3] = holder;				//B becomes L
+					holder = side_uv_indexes[0];
+					side_uv_indexes[0] = side_uv_indexes[1];	//L becomes T
+					side_uv_indexes[1] = side_uv_indexes[2];	//T becomes R
+					side_uv_indexes[2] = side_uv_indexes[3];	//R becomes B
+					side_uv_indexes[3] = holder;				//B becomes L
 					goto verts_rotated;
 				}
 				else if(crayon_graphics_almost_equals(rotation_under_360, 180.0, 45.0)){
 					rotation_val = 2;
-					// holder = side_uv_indexes[0];
-					// side_uv_indexes[0] = side_uv_indexes[2];
-					// holder = side_uv_indexes[2];
-					// side_uv_indexes[2] = side_uv_indexes[0];
-					// holder = side_uv_indexes[1];
-					// side_uv_indexes[1] = side_uv_indexes[3];
-					// side_uv_indexes[3] = holder;
+					holder = side_uv_indexes[0];
+					side_uv_indexes[0] = side_uv_indexes[2];
+					holder = side_uv_indexes[2];
+					side_uv_indexes[2] = side_uv_indexes[0];
+					holder = side_uv_indexes[1];
+					side_uv_indexes[1] = side_uv_indexes[3];
+					side_uv_indexes[3] = holder;
 				}
 				else if(crayon_graphics_almost_equals(rotation_under_360, 270.0, 45.0)){
 					rotation_val = 3;
-					// holder = side_uv_indexes[3];
-					// side_uv_indexes[3] = side_uv_indexes[2];
-					// side_uv_indexes[2] = side_uv_indexes[1];
-					// side_uv_indexes[1] = side_uv_indexes[0];
-					// side_uv_indexes[0] = holder;
+					holder = side_uv_indexes[3];
+					side_uv_indexes[3] = side_uv_indexes[2];
+					side_uv_indexes[2] = side_uv_indexes[1];
+					side_uv_indexes[1] = side_uv_indexes[0];
+					side_uv_indexes[0] = holder;
 					goto verts_rotated;
 				}
 				else{
@@ -824,6 +824,12 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 				//If less it doesn't scale fast enough
 				//If more it scales too fast
 			//However when using the scale, it never works right
+			// uvs[2] = (
+			// 	sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
+			// 	sprite_array->animation->frame_width -
+			// 	((vert.bx - camera->window_x - camera->window_width)/sprite_array->scale[i * multi_scale].x)) /
+			// 	(float)sprite_array->spritesheet->texture_width;
+
 			uvs[2] = (
 				sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
 				sprite_array->animation->frame_width -

@@ -191,14 +191,42 @@ int main(){
 	crayon_memory_swap_colour(&Green_Man_P, 0xFFFF0000, 0xFF00D200, 0);
 
 	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
-	crayon_memory_init_sprite_array(&Green_Man_Draw, &Man, 0, &Green_Man_P, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Green_Man_Draw.coord[0].x = 299;
-	Green_Man_Draw.coord[0].y = 380;
+	crayon_memory_init_sprite_array(&Green_Man_Draw, &Man, 0, &Green_Man_P, 8, 1, CRAY_MULTI_FLIP | CRAY_MULTI_ROTATE, PVR_FILTER_NONE, 0);
+	Green_Man_Draw.coord[0].x = 300;
+	Green_Man_Draw.coord[0].y = 360;
+	Green_Man_Draw.coord[1].x = 360;
+	Green_Man_Draw.coord[1].y = Green_Man_Draw.coord[0].y;
+	Green_Man_Draw.coord[2].x = Green_Man_Draw.coord[0].x;
+	Green_Man_Draw.coord[2].y = Green_Man_Draw.coord[0].y + 60;
+	Green_Man_Draw.coord[3].x = Green_Man_Draw.coord[1].x;
+	Green_Man_Draw.coord[3].y = Green_Man_Draw.coord[0].y + 60;
+	Green_Man_Draw.coord[4].x = Green_Man_Draw.coord[0].x;
+	Green_Man_Draw.coord[4].y = Green_Man_Draw.coord[0].y + 120;
+	Green_Man_Draw.coord[5].x = Green_Man_Draw.coord[1].x;
+	Green_Man_Draw.coord[5].y = Green_Man_Draw.coord[0].y + 120;
+	Green_Man_Draw.coord[6].x = Green_Man_Draw.coord[0].x;
+	Green_Man_Draw.coord[6].y = Green_Man_Draw.coord[0].y + 180;
+	Green_Man_Draw.coord[7].x = Green_Man_Draw.coord[1].x;
+	Green_Man_Draw.coord[7].y = Green_Man_Draw.coord[0].y + 180;
 	Green_Man_Draw.layer[0] = 50;
-	Green_Man_Draw.scale[0].x = 6;
-	Green_Man_Draw.scale[0].y = 6;
+	Green_Man_Draw.scale[0].x = 3;
+	Green_Man_Draw.scale[0].y = 3;
 	Green_Man_Draw.flip[0] = 0;
+	Green_Man_Draw.flip[1] = 1;
+	Green_Man_Draw.flip[2] = 0;
+	Green_Man_Draw.flip[3] = 1;
+	Green_Man_Draw.flip[4] = 0;
+	Green_Man_Draw.flip[5] = 1;
+	Green_Man_Draw.flip[6] = 0;
+	Green_Man_Draw.flip[7] = 1;
 	Green_Man_Draw.rotation[0] = 0;
+	Green_Man_Draw.rotation[1] = 0;
+	Green_Man_Draw.rotation[2] = 90;
+	Green_Man_Draw.rotation[3] = 90;
+	Green_Man_Draw.rotation[4] = 180;
+	Green_Man_Draw.rotation[5] = 180;
+	Green_Man_Draw.rotation[6] = 270;
+	Green_Man_Draw.rotation[7] = 270;
 	Green_Man_Draw.colour[0] = 0;
 	Green_Man_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Green_Man_Draw, 0, 0);
@@ -257,8 +285,8 @@ int main(){
 	Cam2_BG.coord[0].x = 100;
 	Cam2_BG.coord[0].y = 100;
 	Cam2_BG.layer[0] = 1;
-	Cam2_BG.scale[0].x = 300;
-	Cam2_BG.scale[0].y = 200;
+	Cam2_BG.scale[0].x = 400;
+	Cam2_BG.scale[0].y = 300;
 	Cam2_BG.rotation[0] = 0;
 	Cam2_BG.colour[0] = 0xFF888888;
 
