@@ -205,13 +205,13 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 	return;
 }
 
-//---- --CM
-//C is for camera mode (Unimplemented)
-//M is for draw mode
-extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode, uint8_t draw_mode){
-	if(!(draw_mode & CRAY_USING_CAMERA)){	//No Camera
+//draw_mode == ---- ---M
+//M is for draw mode (1 for enhanced, 0 for simple)
+extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode, uint8_t draw_mode){
+	if(camera == NULL){	//No Camera
 		if(sprite_array->options & CRAY_HAS_TEXTURE){	//Textured
-			if(!(draw_mode & CRAY_SCREEN_DRAW_ENHANCED)){	//Simple draw
+			if(!(draw_mode & CRAY_DRAW_ENHANCED)){	//Simple draw
 				return crayon_graphics_draw_sprites_simple(sprite_array, poly_list_mode);
 			}
 			return crayon_graphics_draw_sprites_enhanced(sprite_array, poly_list_mode);
@@ -220,17 +220,16 @@ extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_a
 	}
 	else{	//Camera
 		if(sprite_array->options & CRAY_HAS_TEXTURE){	//Textured
-			;
+			return -1;
 		}
 		else{
-			if(!(draw_mode & CRAY_CAMERA_DRAW_ENHANCED)){
-				;
+			if(!(draw_mode & CRAY_DRAW_ENHANCED)){
+				return -1;
 			}
 			else{
-				;
+				return crayon_graphics_camera_draw_sprites_simple(sprite_array, camera, poly_list_mode);
 			}
 		}
-		return -1;
 	}
 	return -1;	//It will never get here
 }
@@ -581,6 +580,177 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 	}
 
 	return 0;
+}
+
+extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode){
+
+	float u0, v0, u1, v1;
+	uint32_t duv;	//duv is used to assist in the rotations
+	u0 = 0; v0 = 0; u1 = 0; v1 = 0; duv = 0;	//Needed if you want to prevent a bunch of compiler warnings...
+
+	pvr_sprite_cxt_t context;
+	uint8_t texture_format = (((1 << 3) - 1) & (sprite_array->spritesheet->texture_format >> (28 - 1)));	//Gets the Pixel format
+																										//https://github.com/tvspelsfreak/texconv
+	int textureformat = sprite_array->spritesheet->texture_format;
+	if(texture_format == 5){	//4BPP
+			textureformat |= ((sprite_array->palette->palette_id) << 21);	//Update the later to use KOS' macros
+	}
+	if(texture_format == 6){	//8BPP
+			textureformat |= ((sprite_array->palette->palette_id) << 25);	//Update the later to use KOS' macros
+	}
+	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, sprite_array->spritesheet->texture_width,
+		sprite_array->spritesheet->texture_height, sprite_array->spritesheet->texture, sprite_array->filter);
+
+	pvr_sprite_txr_t vert = {
+		.flags = PVR_CMD_VERTEX_EOL
+	};
+
+	//Easily lets us use the right index for each array
+		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
+	uint16_t *rotation_index, *flip_index, *frame_index, *z_index;
+	uint16_t i;	//The main loop's index
+	uint16_t zero = 0;
+	float rotation_under_360;
+	if(sprite_array->options & CRAY_MULTI_LAYER){
+		z_index = &i;
+	}
+	else{
+		z_index = &zero;
+	}
+
+	if(sprite_array->options & CRAY_MULTI_FRAME){
+		frame_index = &i;
+	}
+	else{
+		frame_index = &zero;
+	}
+
+	if(sprite_array->options & CRAY_MULTI_FLIP){
+		flip_index = &i;
+	}
+	else{
+		flip_index = &zero;
+	}
+
+	if(sprite_array->options & CRAY_MULTI_ROTATE){
+		rotation_index = &i;
+	}
+	else{
+		rotation_index = &zero;
+	}
+
+	uint8_t multi_scale = !!(sprite_array->options & CRAY_MULTI_SCALE);
+
+	uint8_t multi_flip = !!(sprite_array->options & CRAY_MULTI_FLIP);
+	uint8_t multi_rotate = !!(sprite_array->options & CRAY_MULTI_ROTATE);
+	uint8_t multi_frame = !!(sprite_array->options & CRAY_MULTI_FRAME);
+
+	pvr_sprite_hdr_t header;
+	pvr_sprite_compile(&header, &context);
+	pvr_prim(&header, sizeof(header));
+	for(i = 0; i < sprite_array->list_size; i++){
+		//These if statements will trigger once if we have a single element (i == 0)
+			//and every time for a multi-list
+		if(*z_index == i){	//z
+			vert.az = (float)sprite_array->layer[*z_index];
+			vert.bz = (float)sprite_array->layer[*z_index];
+			vert.cz = (float)sprite_array->layer[*z_index];
+		}
+
+		if(*frame_index == i){	//frame
+			u0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
+			v0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
+			u1 = u0 + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
+			v1 = v0 + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
+		}
+
+		//Basically enter if first element or either the flip/rotate/frame changed
+			//The multi_blah's are there to prevent checks on draw params that aren't multi/won't change
+		if(i == 0 || (multi_flip && (sprite_array->flip[i] != sprite_array->flip[i - 1])) ||
+			(multi_rotate && (sprite_array->rotation[i] != sprite_array->rotation[i - 1])) ||
+			(multi_frame &&
+			((sprite_array->frame_uv[i].x != sprite_array->frame_uv[i - 1].x) ||
+			(sprite_array->frame_uv[i].y != sprite_array->frame_uv[i - 1].y)))
+			){
+			
+			if(sprite_array->flip[*flip_index] & (1 << 0)){	//Is flipped?
+				vert.auv = PVR_PACK_16BIT_UV(u1, v0);
+				vert.buv = PVR_PACK_16BIT_UV(u0, v0);
+				vert.cuv = PVR_PACK_16BIT_UV(u0, v1);
+				duv = PVR_PACK_16BIT_UV(u1, v1);	//Used for possible rotation calculations
+			}
+			else{
+				vert.auv = PVR_PACK_16BIT_UV(u0, v0);
+				vert.buv = PVR_PACK_16BIT_UV(u1, v0);
+				vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+				duv = PVR_PACK_16BIT_UV(u0, v1);
+			}
+
+			//Don't both rotating if the value is zero
+			if(sprite_array->rotation[*rotation_index] != 0){
+				rotation_under_360 = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
+				if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
+
+				//For sprite mode we can't simply "rotate" the verts, instead we need to change the uv
+				if(crayon_graphics_almost_equals(rotation_under_360, 90.0, 45.0)){
+					vert.cuv = vert.buv;
+					vert.buv = vert.auv;
+					vert.auv = duv;
+
+					goto verts_rotated;
+				}
+				else if(crayon_graphics_almost_equals(rotation_under_360, 180.0, 45.0)){
+					vert.buv = duv;
+					duv = vert.auv;
+					vert.auv = vert.cuv;
+					vert.cuv = duv;
+				}
+				else if(crayon_graphics_almost_equals(rotation_under_360, 270.0, 45.0)){
+					vert.auv = vert.buv;
+					vert.buv = vert.cuv;
+					vert.cuv = duv;
+
+					goto verts_rotated;
+				}
+			}
+		}
+
+		//Imagine a "goto verts_normal;" for this little bit
+			//I couldn't actually do that since the verts wouldn't be set if the rotation aren't checked
+			//Hence it just flows here naturally
+
+		vert.ax = trunc(sprite_array->coord[i].x);
+		vert.ay = trunc(sprite_array->coord[i].y);
+		vert.bx = vert.ax + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
+		vert.by = vert.ay;
+		vert.cx = vert.bx;
+		vert.cy = vert.ay + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
+		vert.dx = vert.ax;
+		vert.dy = vert.cy;
+
+		//For 90 and 270 modes we need different vert positions aswell
+			//for cases where frame width != frame height
+		if(0){
+			verts_rotated:	;	//The semi-colon is there because a label can't be followed by a declaration (Compiler thing)
+								//So instead we trick it and give an empty statement :P
+
+			//Both vars are uint16_t and lengths can't be negative or more than 1024 (Largest texture size for DC)
+				//Therfore storing the result in a int16_t is perfectly fine
+			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
+
+			vert.ax = trunc(sprite_array->coord[i].x) + ((sprite_array->scale[i * multi_scale].y * diff) / 2);
+			vert.ay = trunc(sprite_array->coord[i].y) - ((sprite_array->scale[i * multi_scale].x * diff) / 2);
+			vert.bx = vert.ax + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
+			vert.by = vert.ay;
+			vert.cx = vert.bx;
+			vert.cy = vert.ay + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
+			vert.dx = vert.ax;
+			vert.dy = vert.cy;
+		}
+
+		pvr_prim(&vert, sizeof(vert));
+	}
 }
 
 extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){

@@ -79,7 +79,7 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
-			crayon_graphics_draw_sprites(&rotate, PVR_LIST_OP_POLY, 0);
+			crayon_graphics_draw_sprites(&rotate, NULL, PVR_LIST_OP_POLY, 0);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
