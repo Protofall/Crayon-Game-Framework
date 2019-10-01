@@ -600,8 +600,9 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode){
 
-	uint8_t crop = (1 << 5) - 1;	//---- TBLR
+	uint8_t crop = (1 << 4) - 1;	//---- TBLR
 									//---- 1111 (Crop on all edges)
+
 	//DELETE THIS LATER. A basic optimisation for now
 	if(camera->window_width == 640){crop = crop & (~ (1 << 0));}
 	if(camera->window_x == 0){crop = crop & (~ (1 << 1));}
@@ -609,6 +610,10 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	if(camera->window_y == 0){crop = crop & (~ (1 << 3));}
 
 	uint8_t bounds = 0;
+
+	uint8_t cropped = 0;
+	uint8_t flipped_val = 0;
+	uint8_t rotation_val = 0;
 
 	float u0, v0, u1, v1;
 	uint32_t duv;	//duv is used to assist in the rotations
@@ -636,7 +641,7 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	uint16_t *rotation_index, *flip_index, *frame_index, *z_index;
 	uint16_t i;	//The main loop's index
 	uint16_t zero = 0;
-	float rotation_under_360;
+	float rotation_under_360 = 0;
 	if(sprite_array->options & CRAY_MULTI_LAYER){
 		z_index = &i;
 	}
@@ -683,7 +688,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			vert.cz = (float)sprite_array->layer[*z_index];
 		}
 
-		if(*frame_index == i){	//frame
+		if(*frame_index == i || cropped){	//frame
+			cropped = 0;
 			u0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
 			v0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
 			u1 = u0 + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
@@ -700,44 +706,35 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			){
 			
 			if(sprite_array->flip[*flip_index] & (1 << 0)){	//Is flipped?
-				vert.auv = PVR_PACK_16BIT_UV(u1, v0);
-				vert.buv = PVR_PACK_16BIT_UV(u0, v0);
-				vert.cuv = PVR_PACK_16BIT_UV(u0, v1);
-				duv = PVR_PACK_16BIT_UV(u1, v1);	//Used for possible rotation calculations
+				flipped_val = 1;
 			}
 			else{
-				vert.auv = PVR_PACK_16BIT_UV(u0, v0);
-				vert.buv = PVR_PACK_16BIT_UV(u1, v0);
-				vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
-				duv = PVR_PACK_16BIT_UV(u0, v1);
+				flipped_val = 0;
 			}
 
-			//Don't both rotating if the value is zero
+			//Don't bother doing extra calculations
 			if(sprite_array->rotation[*rotation_index] != 0){
 				rotation_under_360 = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
 				if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
 
 				//For sprite mode we can't simply "rotate" the verts, instead we need to change the uv
 				if(crayon_graphics_almost_equals(rotation_under_360, 90.0, 45.0)){
-					vert.cuv = vert.buv;
-					vert.buv = vert.auv;
-					vert.auv = duv;
-
+					rotation_val = 1;
 					goto verts_rotated;
 				}
 				else if(crayon_graphics_almost_equals(rotation_under_360, 180.0, 45.0)){
-					vert.buv = duv;
-					duv = vert.auv;
-					vert.auv = vert.cuv;
-					vert.cuv = duv;
+					rotation_val = 2;
 				}
 				else if(crayon_graphics_almost_equals(rotation_under_360, 270.0, 45.0)){
-					vert.auv = vert.buv;
-					vert.buv = vert.cuv;
-					vert.cuv = duv;
-
+					rotation_val = 3;
 					goto verts_rotated;
 				}
+				else{
+					rotation_val = 0;
+				}
+			}
+			else{
+				rotation_val = 0;
 			}
 		}
 
@@ -777,30 +774,78 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		//Verts c and d are swapped so its in Z order instead of "Backwards C" order
 		bounds = crayon_graphics_check_bounds((vec2_f_t[4]){(vec2_f_t){camera->window_x,camera->window_y},
 			(vec2_f_t){camera->window_x+camera->window_width,camera->window_y},
-			(vec2_f_t){camera->window_x,camera->window_y+camera->window_width},
+			(vec2_f_t){camera->window_x,camera->window_y+camera->window_height},
 			(vec2_f_t){camera->window_x+camera->window_width,camera->window_y+camera->window_height}},
 			(vec2_f_t[4]){(vec2_f_t){vert.ax,vert.ay}, (vec2_f_t){vert.bx,vert.by}, (vec2_f_t){vert.dx,vert.dy}, (vec2_f_t){vert.cx,vert.cy}});
 
-		// bounds = crayon_graphics_check_bounds((vec2_f_t[4]){(vec2_f_t){0,0},(vec2_f_t){0,0},(vec2_f_t){0,0},(vec2_f_t){0,0}},
-		// 	(vec2_f_t[4]){(vec2_f_t){0,0},(vec2_f_t){0,0},(vec2_f_t){0,0},(vec2_f_t){0,0}});
-
 		//If OOB then don't draw
 		if(bounds & (1 << 4)){continue;}
-		else{
-			// error_freeze("sd");
+
+		if((crop & (1 << 0)) && (bounds & (1 << 0))){	//Right side
+			vert.bx = camera->window_x+camera->window_width;
+			vert.cx = vert.bx;
+			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x
+			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width
+			// vert.buv = ?; (Modify the U part)
+			// vert.cuv = ?; (Modify the U part)
+		}
+		if((crop & (1 << 1)) && (bounds & (1 << 1))){	//Left side
+			vert.ax = camera->window_x;
+			vert.dx = vert.ax;
+			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x
+			// vert.auv = ?; (Modify the U part)
+			//no duv so no need to modify
+		}
+		if((crop & (1 << 2)) && (bounds & (1 << 2))){	//Bottom side
+			vert.cy = camera->window_y+camera->window_height;
+			vert.dy = vert.cy;
+			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y
+			// vert.cuv = ?; (Modify the V part)
+		}
+		if((crop & (1 << 3)) && (bounds & (1 << 3))){	//Top side
+			vert.ay = camera->window_y;
+			vert.by = vert.ay;
+			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y
+			// vert.auv = ?; (Modify the V part)
+			// vert.buv = ?; (Modify the V part)
 		}
 
-		if(crop & (1 << 0)){	//Right side
-			;
+		//Finally set the UVs
+		if(flipped_val){	//Is flipped?
+			vert.auv = PVR_PACK_16BIT_UV(u1, v0);
+			vert.buv = PVR_PACK_16BIT_UV(u0, v0);
+			vert.cuv = PVR_PACK_16BIT_UV(u0, v1);
+			duv = PVR_PACK_16BIT_UV(u1, v1);	//Used for possible rotation calculations
 		}
-		if(crop & (1 << 1)){	//Left side
-			;
+		else{
+			vert.auv = PVR_PACK_16BIT_UV(u0, v0);
+			vert.buv = PVR_PACK_16BIT_UV(u1, v0);
+			vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+			duv = PVR_PACK_16BIT_UV(u0, v1);
 		}
-		if(crop & (1 << 2)){	//Bottom side
-			;
+		if(rotation_val == 1){	//90
+			vert.cuv = vert.buv;
+			vert.buv = vert.auv;
+			vert.auv = duv;
 		}
-		if(crop & (1 << 3)){	//Top side
-			;
+		else if(rotation_val == 2){	//180
+			vert.buv = duv;
+			duv = vert.auv;
+			vert.auv = vert.cuv;
+			vert.cuv = duv;
+		}
+		else if(rotation_val == 3){	//270
+			vert.auv = vert.buv;
+			vert.buv = vert.cuv;
+			vert.cuv = duv;
+		}
+
+		//Signal to next item we just modified the base u/v's by cropping
+		if(bounds){
+			cropped = 1;
+		}
+		else{
+			cropped = 0;
 		}
 
 		pvr_prim(&vert, sizeof(vert));
@@ -904,7 +949,7 @@ extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_p
 	pvr_sprite_cxt_t context;
 
 	uint8_t texture_format = (((1 << 3) - 1) & (fp->texture_format >> (28 - 1)));	//Gets the Pixel format
-																												//https://github.com/tvspelsfreak/texconv
+																					//https://github.com/tvspelsfreak/texconv
 	int textureformat = fp->texture_format;
 	if(texture_format == 5){	//4BPP
 			textureformat |= ((palette_number) << 21);	//Update the later to use KOS' macros
@@ -1092,7 +1137,11 @@ extern uint8_t crayon_graphics_check_bounds(vec2_f_t vC[4], vec2_f_t vO[4]){
 	}
 
 	//The crop checks
-	// uint8_t bounds = 0;
+	uint8_t bounds = 0;	//---- TBLR (Top, Bottom, Left, Right)
+	if(vO[0].y < vC[0].y || vO[1].y < vC[0].y){bounds |= (1 << 3);}
+	if(vO[2].y > vC[2].y || vO[3].y > vC[2].y){bounds |= (1 << 2);}
+	if(vO[0].x < vC[0].x || vO[2].x < vC[0].x){bounds |= (1 << 1);}
+	if(vO[1].x > vC[1].x || vO[3].x > vC[1].x){bounds |= (1 << 0);}
 
-	return 0;
+	return bounds;
 }
