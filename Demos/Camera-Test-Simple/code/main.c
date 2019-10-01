@@ -274,12 +274,18 @@ int main(){
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
-		//Change the direction the guy is facing
 		if(st->buttons & CONT_DPAD_LEFT){
-			Green_Man_Draw.flip[0] = 1;
+			current_camera->world_x -= 1;
 		}
 		else if(st->buttons & CONT_DPAD_RIGHT){
-			Green_Man_Draw.flip[0] = 0;
+			current_camera->world_x += 1;
+		}
+
+		if(st->buttons & CONT_DPAD_UP){
+			current_camera->world_y -= 1;
+		}
+		else if(st->buttons & CONT_DPAD_DOWN){
+			current_camera->world_y += 1;
 		}
 
 		// previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses

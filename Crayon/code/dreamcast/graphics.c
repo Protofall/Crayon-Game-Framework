@@ -735,8 +735,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//I couldn't actually do that since the verts wouldn't be set if the rotation aren't checked
 			//Hence it just flows here naturally
 
-		vert.ax = trunc(sprite_array->coord[i].x);
-		vert.ay = trunc(sprite_array->coord[i].y);
+		vert.ax = trunc(camera->world_x + sprite_array->coord[i].x);
+		vert.ay = trunc(camera->world_y + sprite_array->coord[i].y);
 		vert.bx = vert.ax + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
 		vert.by = vert.ay;
 		vert.cx = vert.bx;
@@ -754,8 +754,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 				//Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.ax = trunc(sprite_array->coord[i].x) + ((sprite_array->scale[i * multi_scale].y * diff) / 2);
-			vert.ay = trunc(sprite_array->coord[i].y) - ((sprite_array->scale[i * multi_scale].x * diff) / 2);
+			vert.ax = trunc(camera->world_x + sprite_array->coord[i].x) + ((sprite_array->scale[i * multi_scale].y * diff) / 2);
+			vert.ay = trunc(camera->world_y + sprite_array->coord[i].y) - ((sprite_array->scale[i * multi_scale].x * diff) / 2);
 			vert.bx = vert.ax + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
 			vert.by = vert.ay;
 			vert.cx = vert.bx;
