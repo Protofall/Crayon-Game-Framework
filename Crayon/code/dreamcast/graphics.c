@@ -827,7 +827,7 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			uvs[2] = (
 				sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
 				sprite_array->animation->frame_width -
-				vert.bx - camera->window_x+camera->window_x + camera->window_x+camera->window_width) /
+				((vert.bx - camera->window_x - camera->window_width)/sprite_array->scale[i * multi_scale].x)) /
 				(float)sprite_array->spritesheet->texture_width;
 
 			// uvs[2] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x + sprite_array->animation->frame_width - ((vert.bx - camera->window_x+camera->window_x + camera->window_x+camera->window_width) / sprite_array->scale[i * multi_scale].x)) / (float)sprite_array->spritesheet->texture_width;
@@ -837,33 +837,23 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 			vert.bx = camera->window_x+camera->window_width;
 			vert.cx = vert.bx;
-
-			// uvs[0] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
-			// uvs[2] = uvs[0] + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
-
-			//Crop the "Right" edge
-			//uvs[VAR] = (CROPPED U-OR-V);	//For this one its the U
-					// thing = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x - (camera->window_x+camera->window_width - vert.bx))
-					// 	/ (float)sprite_array->spritesheet->texture_width
-			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width
 		}
 		if(bounds & (1 << 1)){	//Left side
+			uvs[0] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
+				camera->window_x - vert.ax) /
+				(float)sprite_array->spritesheet->texture_width;
 			vert.ax = camera->window_x;
 			vert.dx = vert.ax;
-			// uvs[side_uv_indexes[0]] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x + (camera->window_x+camera->window_width - vert.ax))
-						// / (float)sprite_array->spritesheet->texture_width;
 		}
 		if(bounds & (1 << 2)){	//Bottom side
+			//uvs[3]
 			vert.cy = camera->window_y+camera->window_height;
 			vert.dy = vert.cy;
-			// uvs[side_uv_indexes[0]] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y + (camera->window_y+camera->window_height - vert.ay))
-						// / (float)sprite_array->spritesheet->texture_height;
 		}
 		if(bounds & (1 << 3)){	//Top side
+			//uvs[1]
 			vert.ay = camera->window_y;
 			vert.by = vert.ay;
-			// uvs[side_uv_indexes[0]] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y - (vert.cy + camera->window_y+camera->window_height))
-						// / (float)sprite_array->spritesheet->texture_height;
 		}
 
 		//The only difference in the flip is that all uv[0]'s swap with uv[2]'s. The "v's" stay the same
