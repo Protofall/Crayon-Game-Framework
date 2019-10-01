@@ -211,25 +211,22 @@ extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_a
 	uint8_t poly_list_mode, uint8_t draw_mode){
 	if(camera == NULL){	//No Camera
 		if(sprite_array->options & CRAY_HAS_TEXTURE){	//Textured
-			if(!(draw_mode & CRAY_DRAW_ENHANCED)){	//Simple draw
-				return crayon_graphics_draw_sprites_simple(sprite_array, poly_list_mode);
+			if(draw_mode & CRAY_DRAW_ENHANCED){	//Enhanced draw
+				return crayon_graphics_draw_sprites_enhanced(sprite_array, poly_list_mode);
 			}
-			return crayon_graphics_draw_sprites_enhanced(sprite_array, poly_list_mode);
+			return crayon_graphics_draw_sprites_simple(sprite_array, poly_list_mode);
 		}
 		return crayon_graphics_draw_untextured_array(sprite_array, poly_list_mode);
 	}
 	else{	//Camera
 		if(sprite_array->options & CRAY_HAS_TEXTURE){	//Textured
-			return -1;
-		}
-		else{
-			if(!(draw_mode & CRAY_DRAW_ENHANCED)){
+			if(draw_mode & CRAY_DRAW_ENHANCED){
 				return -1;
+				// return crayon_graphics_camera_draw_sprites_enhanced(sprite_array, camera, poly_list_mode);
 			}
-			else{
-				return crayon_graphics_camera_draw_sprites_simple(sprite_array, camera, poly_list_mode);
-			}
+			return crayon_graphics_camera_draw_sprites_simple(sprite_array, camera, poly_list_mode);
 		}
+		return -1;
 	}
 	return -1;	//It will never get here
 }
@@ -582,6 +579,24 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 	return 0;
 }
 
+// typedef struct crayon_viewport_t{
+// 	//Top left of the world region and dimensions
+// 	float world_x;	//Must be a float since the draw position array is a bunch of floats
+// 	float world_y;
+// 	uint16_t world_width;
+// 	uint16_t world_height;
+
+// 	//The scrolling modifier
+// 	float world_movement_factor;
+
+// 	//Top left of where to render to on screen and dimensions
+// 		//For DC these can all be uint16_t's. For the PC port I think uint16_t is still fine even with larger monitors because a uint16_t is 65535 at most and that still supports 8K (And possibly higher)
+// 	uint16_t window_x;
+// 	uint16_t window_y;
+// 	uint16_t window_width;
+// 	uint16_t window_height;
+// } crayon_viewport_t;
+
 extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode){
 
@@ -751,6 +766,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 		pvr_prim(&vert, sizeof(vert));
 	}
+
+	return 0;
 }
 
 extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){

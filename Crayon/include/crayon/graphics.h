@@ -38,8 +38,7 @@ extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t
 //------------------Drawing Sprites from Spritesheets------------------//
 
 
-//Queue a texture to be rendered, draw mode right most bit is true for enhanced (false for now)
-//And second right most bit will later be used for camera mode control
+//Queue a texture to be rendered, draw mode right most bit is true for enhanced
 extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t draw_mode);
 
