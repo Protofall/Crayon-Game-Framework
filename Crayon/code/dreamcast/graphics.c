@@ -616,8 +616,9 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	uint8_t rotation_val = 0;
 
 	float u0, v0, u1, v1;
-	uint32_t duv;	//duv is used to assist in the rotations
-	u0 = 0; v0 = 0; u1 = 0; v1 = 0; duv = 0;	//Needed if you want to prevent a bunch of compiler warnings...
+	// uint32_t duv;	//duv is used to assist in the rotations
+	// u0 = 0; v0 = 0; u1 = 0; v1 = 0; duv = 0;	//Needed if you want to prevent a bunch of compiler warnings...
+	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	//Needed if you want to prevent a bunch of compiler warnings...
 
 	pvr_sprite_cxt_t context;
 	uint8_t texture_format = (((1 << 3) - 1) & (sprite_array->spritesheet->texture_format >> (28 - 1)));	//Gets the Pixel format
@@ -784,6 +785,39 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		if((crop & (1 << 0)) && (bounds & (1 << 0))){	//Right side
 			vert.bx = camera->window_x+camera->window_width;
 			vert.cx = vert.bx;
+			if(flipped_val){
+				switch(rotation_val){
+					case 0:
+					// thing = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x - (camera->window_x+camera->window_width - vert.bx))
+					// 	/ (float)sprite_array->spritesheet->texture_width
+					break;
+					case 1:
+					;
+					break;
+					case 2:
+					;
+					break;
+					case 3:
+					;
+					break;
+				}
+			}
+			else{
+				switch(rotation_val){
+					case 0:
+					;
+					break;
+					case 1:
+					;
+					break;
+					case 2:
+					;
+					break;
+					case 3:
+					;
+					break;
+				}
+			}
 			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x
 			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width
 			// vert.buv = ?; (Modify the U part)
@@ -811,34 +845,85 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		}
 
 		//Finally set the UVs
-		if(flipped_val){	//Is flipped?
-			vert.auv = PVR_PACK_16BIT_UV(u1, v0);
-			vert.buv = PVR_PACK_16BIT_UV(u0, v0);
-			vert.cuv = PVR_PACK_16BIT_UV(u0, v1);
-			duv = PVR_PACK_16BIT_UV(u1, v1);	//Used for possible rotation calculations
+		if(flipped_val){
+			switch(rotation_val){
+				case 0:
+				vert.auv = PVR_PACK_16BIT_UV(u1, v0);
+				vert.buv = PVR_PACK_16BIT_UV(u0, v0);
+				vert.cuv = PVR_PACK_16BIT_UV(u0, v1);
+				// 	duv = PVR_PACK_16BIT_UV(u1, v1);
+				break;
+				case 1:
+				vert.auv = PVR_PACK_16BIT_UV(u1, v1);
+				vert.buv = PVR_PACK_16BIT_UV(u1, v0);
+				vert.cuv = PVR_PACK_16BIT_UV(u0, v0);
+				break;
+				case 2:
+				vert.auv = PVR_PACK_16BIT_UV(u0, v1);
+				vert.buv = PVR_PACK_16BIT_UV(u1, v1);
+				vert.cuv = PVR_PACK_16BIT_UV(u1, v0);
+				break;
+				case 3:
+				vert.auv = PVR_PACK_16BIT_UV(u0, v0);
+				vert.buv = PVR_PACK_16BIT_UV(u0, v1);
+				vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+				break;
+			}
 		}
 		else{
-			vert.auv = PVR_PACK_16BIT_UV(u0, v0);
-			vert.buv = PVR_PACK_16BIT_UV(u1, v0);
-			vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
-			duv = PVR_PACK_16BIT_UV(u0, v1);
+			switch(rotation_val){
+				case 0:
+				vert.auv = PVR_PACK_16BIT_UV(u0, v0);
+				vert.buv = PVR_PACK_16BIT_UV(u1, v0);
+				vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+				// 	duv = PVR_PACK_16BIT_UV(u0, v1);
+				break;
+				case 1:
+				vert.auv = PVR_PACK_16BIT_UV(u0, v1);	//a = d
+				vert.buv = PVR_PACK_16BIT_UV(u0, v0);	//b = a
+				vert.cuv = PVR_PACK_16BIT_UV(u1, v0);	//c = b
+				break;
+				case 2:
+				vert.auv = PVR_PACK_16BIT_UV(u1, v1);	//=c
+				vert.buv = PVR_PACK_16BIT_UV(u0, v1);	//=d
+				vert.cuv = PVR_PACK_16BIT_UV(u0, v0);	//=a
+				break;
+				case 3:
+				vert.auv = PVR_PACK_16BIT_UV(u1, v0);	//=b
+				vert.buv = PVR_PACK_16BIT_UV(u1, v1);	//=c
+				vert.cuv = PVR_PACK_16BIT_UV(u0, v1);	//=d
+				break;
+			}
 		}
-		if(rotation_val == 1){	//90
-			vert.cuv = vert.buv;
-			vert.buv = vert.auv;
-			vert.auv = duv;
-		}
-		else if(rotation_val == 2){	//180
-			vert.buv = duv;
-			duv = vert.auv;
-			vert.auv = vert.cuv;
-			vert.cuv = duv;
-		}
-		else if(rotation_val == 3){	//270
-			vert.auv = vert.buv;
-			vert.buv = vert.cuv;
-			vert.cuv = duv;
-		}
+
+		// if(flipped_val){	//Is flipped?
+		// 	vert.auv = PVR_PACK_16BIT_UV(u1, v0);
+		// 	vert.buv = PVR_PACK_16BIT_UV(u0, v0);
+		// 	vert.cuv = PVR_PACK_16BIT_UV(u0, v1);
+		// 	duv = PVR_PACK_16BIT_UV(u1, v1);	//Used for possible rotation calculations
+		// }
+		// else{
+		// 	vert.auv = PVR_PACK_16BIT_UV(u0, v0);
+		// 	vert.buv = PVR_PACK_16BIT_UV(u1, v0);
+		// 	vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+		// 	duv = PVR_PACK_16BIT_UV(u0, v1);
+		// }
+		// if(rotation_val == 1){	//90
+		// 	vert.cuv = vert.buv;
+		// 	vert.buv = vert.auv;
+		// 	vert.auv = duv;
+		// }
+		// else if(rotation_val == 2){	//180
+		// 	vert.buv = duv;
+		// 	duv = vert.auv;
+		// 	vert.auv = vert.cuv;
+		// 	vert.cuv = duv;
+		// }
+		// else if(rotation_val == 3){	//270
+		// 	vert.auv = vert.buv;
+		// 	vert.buv = vert.cuv;
+		// 	vert.cuv = duv;
+		// }
 
 		//Signal to next item we just modified the base u/v's by cropping
 		if(bounds){

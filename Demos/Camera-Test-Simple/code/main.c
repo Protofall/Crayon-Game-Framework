@@ -314,11 +314,17 @@ int main(){
 		pvr_get_stats(&stats);
 
 		//Animation of red man falling and faces rotating
-		if(stats.frame_count % 60 <= 30){
+		if(stats.frame_count % 120 <= 30){
 			Red_Man_Draw.rotation[0] = 0;
 		}
-		else{
+		else if(stats.frame_count % 120 <= 60){
 			Red_Man_Draw.rotation[0] = 90;
+		}
+		else if(stats.frame_count % 120 <= 90){
+			Red_Man_Draw.rotation[0] = 180;
+		}
+		else{
+			Red_Man_Draw.rotation[0] = 270;
 		}
 
 		if(stats.frame_count % 60 == 0){
