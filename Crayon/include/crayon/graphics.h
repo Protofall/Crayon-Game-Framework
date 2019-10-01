@@ -108,5 +108,11 @@ extern vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, fl
 //Checks if float a is equal to b (+ or -) epsilon
 extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
 
+//Returns a crop range to see which edges need to be cropped
+//---- TBLR (Top, Bottom, Left, Right)
+//If its outside the camera, then the highest bit is set
+//NOTE: Verts must be passed in in Z order
+extern uint8_t crayon_graphics_check_bounds(vec2_f_t vC[4], vec2_f_t vO[4]);
+
 
 #endif

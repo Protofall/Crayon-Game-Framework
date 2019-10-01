@@ -600,6 +600,16 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode){
 
+	uint8_t crop = (1 << 5) - 1;	//---- TBLR
+									//---- 1111 (Crop on all edges)
+	//DELETE THIS LATER. A basic optimisation for now
+	if(camera->window_width == 640){crop = crop & (~ (1 << 0));}
+	if(camera->window_x == 0){crop = crop & (~ (1 << 1));}
+	if(camera->window_height == 480){crop = crop & (~ (1 << 2));}
+	if(camera->window_y == 0){crop = crop & (~ (1 << 3));}
+
+	uint8_t bounds = 0;
+
 	float u0, v0, u1, v1;
 	uint32_t duv;	//duv is used to assist in the rotations
 	u0 = 0; v0 = 0; u1 = 0; v1 = 0; duv = 0;	//Needed if you want to prevent a bunch of compiler warnings...
@@ -735,8 +745,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//I couldn't actually do that since the verts wouldn't be set if the rotation aren't checked
 			//Hence it just flows here naturally
 
-		vert.ax = trunc(camera->world_x + sprite_array->coord[i].x);
-		vert.ay = trunc(camera->world_y + sprite_array->coord[i].y);
+		vert.ax = trunc(sprite_array->coord[i].x - camera->world_x + camera->window_x);
+		vert.ay = trunc(sprite_array->coord[i].y - camera->world_y + camera->window_y);
 		vert.bx = vert.ax + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
 		vert.by = vert.ay;
 		vert.cx = vert.bx;
@@ -754,14 +764,43 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 				//Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.ax = trunc(camera->world_x + sprite_array->coord[i].x) + ((sprite_array->scale[i * multi_scale].y * diff) / 2);
-			vert.ay = trunc(camera->world_y + sprite_array->coord[i].y) - ((sprite_array->scale[i * multi_scale].x * diff) / 2);
+			vert.ax = trunc(sprite_array->coord[i].x - camera->world_x + camera->window_x) + ((sprite_array->scale[i * multi_scale].y * diff) / 2);
+			vert.ay = trunc(sprite_array->coord[i].y - camera->world_y + camera->window_y) - ((sprite_array->scale[i * multi_scale].x * diff) / 2);
 			vert.bx = vert.ax + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
 			vert.by = vert.ay;
 			vert.cx = vert.bx;
 			vert.cy = vert.ay + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
 			vert.dx = vert.ax;
 			vert.dy = vert.cy;
+		}
+
+		//Verts c and d are swapped so its in Z order instead of "Backwards C" order
+		bounds = crayon_graphics_check_bounds((vec2_f_t[4]){(vec2_f_t){camera->window_x,camera->window_y},
+			(vec2_f_t){camera->window_x+camera->window_width,camera->window_y},
+			(vec2_f_t){camera->window_x,camera->window_y+camera->window_width},
+			(vec2_f_t){camera->window_x+camera->window_width,camera->window_y+camera->window_height}},
+			(vec2_f_t[4]){(vec2_f_t){vert.ax,vert.ay}, (vec2_f_t){vert.bx,vert.by}, (vec2_f_t){vert.dx,vert.dy}, (vec2_f_t){vert.cx,vert.cy}});
+
+		// bounds = crayon_graphics_check_bounds((vec2_f_t[4]){(vec2_f_t){0,0},(vec2_f_t){0,0},(vec2_f_t){0,0},(vec2_f_t){0,0}},
+		// 	(vec2_f_t[4]){(vec2_f_t){0,0},(vec2_f_t){0,0},(vec2_f_t){0,0},(vec2_f_t){0,0}});
+
+		//If OOB then don't draw
+		if(bounds & (1 << 4)){continue;}
+		else{
+			// error_freeze("sd");
+		}
+
+		if(crop & (1 << 0)){	//Right side
+			;
+		}
+		if(crop & (1 << 1)){	//Left side
+			;
+		}
+		if(crop & (1 << 2)){	//Bottom side
+			;
+		}
+		if(crop & (1 << 3)){	//Top side
+			;
 		}
 
 		pvr_prim(&vert, sizeof(vert));
@@ -1014,4 +1053,46 @@ extern vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, fl
 	float cos_theta = cos(radians);
 	return (vec2_f_t){(cos_theta * (orbit.x - center.x)) - (sin_theta * (orbit.y - center.y)) + center.x,
 		(sin_theta * (orbit.x - center.x)) + (cos_theta * (orbit.y - center.y)) + center.y};
+}
+
+//How to check if OOB
+		//All verts are further away than one of the camera verts
+			//So if The left X vert of the camera is 150 and all the vX verts are less than 150 then its OOB
+
+//Verts order: Top left, Top right, bottom left, bottom right
+// extern uint8_t crayon_graphics_check_bounds(const crayon_viewport_t *camera, vec2_f_t v1, vec2_f_t v2, vec2_f_t v3, vec2_f_t v4){
+extern uint8_t crayon_graphics_check_bounds(vec2_f_t vC[4], vec2_f_t vO[4]){
+	uint8_t i;
+
+	//The OOB checks
+	for(i = 0; i < 2; i++){
+		if(i % 2){	//left verts
+			if(vO[0].x < vC[i*2].x && vO[1].x < vC[i*2].x && vO[2].x < vC[i*2].x && vO[3].x < vC[i*2].x){
+				return (1 << 4);
+			}
+		}
+		if(i < 2){	//top verts
+			if(vO[0].y < vC[i].y && vO[1].y < vC[i].y && vO[2].y < vC[i].y && vO[3].y < vC[i].y){
+				return (1 << 4);
+			}
+		}
+	}
+
+	for(i = 0; i < 2; i++){
+		if(i % 2){	//right verts
+			if(vO[0].x > vC[(i*2)+1].x && vO[1].x > vC[(i*2)+1].x && vO[2].x > vC[(i*2)+1].x && vO[3].x > vC[(i*2)+1].x){
+				return (1 << 4);
+			}
+		}
+		if(i < 2){	//bottom verts
+			if(vO[0].y > vC[i+2].y && vO[1].y > vC[i+2].y && vO[2].y > vC[i+2].y && vO[3].y > vC[i+2].y){
+				return (1 << 4);
+			}
+		}
+	}
+
+	//The crop checks
+	// uint8_t bounds = 0;
+
+	return 0;
 }

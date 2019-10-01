@@ -97,6 +97,7 @@ int main(){
 	crayon_spritesheet_t Dwarf, Opaque, Man;
 	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw;
 	crayon_sprite_array_t Man_BG;
+	crayon_sprite_array_t Cam2_BG;
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P, Red_Man_P, Green_Man_P;
@@ -252,12 +253,29 @@ int main(){
 	Man_BG.rotation[0] = 0;
 	Man_BG.colour[0] = 0xFF000000;
 
+	crayon_memory_init_sprite_array(&Cam2_BG, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	Cam2_BG.coord[0].x = 100;
+	Cam2_BG.coord[0].y = 100;
+	Cam2_BG.layer[0] = 1;
+	Cam2_BG.scale[0].x = 300;
+	Cam2_BG.scale[0].y = 200;
+	Cam2_BG.rotation[0] = 0;
+	Cam2_BG.colour[0] = 0xFF888888;
+
 	crayon_viewport_t camera1, camera2, camera3;
-	crayon_viewport_t * current_camera = &camera1;
+	crayon_viewport_t * current_camera = &camera2;
+
+	//This is the same as no camera
 	crayon_memory_init_camera(&camera1, (vec2_f_t){0,0}, (vec2_u16_t){640,480},
 		(vec2_u16_t){0,0}, (vec2_u16_t){640,480}, 0);
-	crayon_memory_init_camera(&camera2, (vec2_f_t){100,100}, (vec2_u16_t){300,200},
-		(vec2_u16_t){100,100}, (vec2_u16_t){300,200}, 0);
+
+	//This is the basic view, no scaling, but we crop everything outside the inner 300/200 box
+	crayon_memory_init_camera(&camera2, (vec2_f_t){Cam2_BG.coord[0].x,Cam2_BG.coord[0].y},
+		(vec2_u16_t){Cam2_BG.scale[0].x,Cam2_BG.scale[0].y},
+		(vec2_u16_t){Cam2_BG.coord[0].x,Cam2_BG.coord[0].y},
+		(vec2_u16_t){Cam2_BG.scale[0].x,Cam2_BG.scale[0].y}, 0);
+
+	//Magnify the selection 2 times
 	crayon_memory_init_camera(&camera3, (vec2_f_t){160,120}, (vec2_u16_t){320,240},
 		(vec2_u16_t){0,0}, (vec2_u16_t){640,480}, 0);
 
@@ -275,17 +293,17 @@ int main(){
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
 		if(st->buttons & CONT_DPAD_LEFT){
-			current_camera->world_x -= 1;
+			current_camera->world_x += 1;
 		}
 		else if(st->buttons & CONT_DPAD_RIGHT){
-			current_camera->world_x += 1;
+			current_camera->world_x -= 1;
 		}
 
 		if(st->buttons & CONT_DPAD_UP){
-			current_camera->world_y -= 1;
+			current_camera->world_y += 1;
 		}
 		else if(st->buttons & CONT_DPAD_DOWN){
-			current_camera->world_y += 1;
+			current_camera->world_y -= 1;
 		}
 
 		// previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
@@ -351,6 +369,9 @@ int main(){
 
 			//Represents the boundry box for the red man when not rotated
 			// crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, 0);
+
+			//This represents camera 2's space
+			crayon_graphics_draw_sprites(&Cam2_BG, NULL, PVR_LIST_OP_POLY, 0);
 
 		pvr_list_finish();
 
