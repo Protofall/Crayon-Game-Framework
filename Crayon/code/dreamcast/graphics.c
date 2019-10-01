@@ -614,11 +614,14 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	uint8_t cropped = 0;
 	uint8_t flipped_val = 0;
 	uint8_t rotation_val = 0;
+	// uint8_t holder;
 
-	float u0, v0, u1, v1;
+	// float u0, v0, u1, v1;
+	float uvs[4] = {0};	//u0, v0, u1, v1
+	// uint8_t side_uv_indexes[4] = {0};	//LTRB)
 	// uint32_t duv;	//duv is used to assist in the rotations
 	// u0 = 0; v0 = 0; u1 = 0; v1 = 0; duv = 0;	//Needed if you want to prevent a bunch of compiler warnings...
-	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	//Needed if you want to prevent a bunch of compiler warnings...
+	// u0 = 0; v0 = 0; u1 = 0; v1 = 0;	//Needed if you want to prevent a bunch of compiler warnings...
 
 	pvr_sprite_cxt_t context;
 	uint8_t texture_format = (((1 << 3) - 1) & (sprite_array->spritesheet->texture_format >> (28 - 1)));	//Gets the Pixel format
@@ -691,10 +694,10 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 		if(*frame_index == i || cropped){	//frame
 			cropped = 0;
-			u0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
-			v0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
-			u1 = u0 + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
-			v1 = v0 + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
+			uvs[0] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
+			uvs[1] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
+			uvs[2] = uvs[0] + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
+			uvs[3] = uvs[1] + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
 		}
 
 		//Basically enter if first element or either the flip/rotate/frame changed
@@ -708,9 +711,17 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			
 			if(sprite_array->flip[*flip_index] & (1 << 0)){	//Is flipped?
 				flipped_val = 1;
+				// side_uv_indexes[0] = 2;
+				// side_uv_indexes[1] = 1;
+				// side_uv_indexes[2] = 0;
+				// side_uv_indexes[3] = 3;
 			}
 			else{
 				flipped_val = 0;
+				// side_uv_indexes[0] = 0;	//u0 v0 u1 v1
+				// side_uv_indexes[1] = 1;	//LTRB
+				// side_uv_indexes[2] = 2;
+				// side_uv_indexes[3] = 3;
 			}
 
 			//Don't bother doing extra calculations
@@ -721,13 +732,30 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 				//For sprite mode we can't simply "rotate" the verts, instead we need to change the uv
 				if(crayon_graphics_almost_equals(rotation_under_360, 90.0, 45.0)){
 					rotation_val = 1;
+					// holder = side_uv_indexes[0];
+					// side_uv_indexes[0] = side_uv_indexes[1];	//L becomes T
+					// side_uv_indexes[1] = side_uv_indexes[2];	//T becomes R
+					// side_uv_indexes[2] = side_uv_indexes[3];	//R becomes B
+					// side_uv_indexes[3] = holder;				//B becomes L
 					goto verts_rotated;
 				}
 				else if(crayon_graphics_almost_equals(rotation_under_360, 180.0, 45.0)){
 					rotation_val = 2;
+					// holder = side_uv_indexes[0];
+					// side_uv_indexes[0] = side_uv_indexes[2];
+					// holder = side_uv_indexes[2];
+					// side_uv_indexes[2] = side_uv_indexes[0];
+					// holder = side_uv_indexes[1];
+					// side_uv_indexes[1] = side_uv_indexes[3];
+					// side_uv_indexes[3] = holder;
 				}
 				else if(crayon_graphics_almost_equals(rotation_under_360, 270.0, 45.0)){
 					rotation_val = 3;
+					// holder = side_uv_indexes[3];
+					// side_uv_indexes[3] = side_uv_indexes[2];
+					// side_uv_indexes[2] = side_uv_indexes[1];
+					// side_uv_indexes[1] = side_uv_indexes[0];
+					// side_uv_indexes[0] = holder;
 					goto verts_rotated;
 				}
 				else{
@@ -782,116 +810,112 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		//If OOB then don't draw
 		if(bounds & (1 << 4)){continue;}
 
-		if((crop & (1 << 0)) && (bounds & (1 << 0))){	//Right side
+//The setting of "uvs[]" below is incorrect for all edges
+//LTRB
+		//To simplify the if checks
+		bounds &= crop;
+		if(bounds & (1 << 0)){	//Right side
+			// uvs[2] = (
+			// 	sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width) +
+			// 	(sprite_array->animation->frame_width /
+			// 	(float)sprite_array->spritesheet->texture_width);
+
+			//This works when scale is set to 1.
+				//If less it doesn't scale fast enough
+				//If more it scales too fast
+			//However when using the scale, it never works right
+			uvs[2] = (
+				sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
+				sprite_array->animation->frame_width -
+				vert.bx - camera->window_x+camera->window_x + camera->window_x+camera->window_width) /
+				(float)sprite_array->spritesheet->texture_width;
+
+			// uvs[2] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x + sprite_array->animation->frame_width - ((vert.bx - camera->window_x+camera->window_x + camera->window_x+camera->window_width) / sprite_array->scale[i * multi_scale].x)) / (float)sprite_array->spritesheet->texture_width;
+
+			//sprite_array->scale[i * multi_scale].x
+
+
 			vert.bx = camera->window_x+camera->window_width;
 			vert.cx = vert.bx;
-			if(flipped_val){
-				switch(rotation_val){
-					case 0:
+
+			// uvs[0] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
+			// uvs[2] = uvs[0] + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
+
+			//Crop the "Right" edge
+			//uvs[VAR] = (CROPPED U-OR-V);	//For this one its the U
 					// thing = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x - (camera->window_x+camera->window_width - vert.bx))
 					// 	/ (float)sprite_array->spritesheet->texture_width
-					break;
-					case 1:
-					;
-					break;
-					case 2:
-					;
-					break;
-					case 3:
-					;
-					break;
-				}
-			}
-			else{
-				switch(rotation_val){
-					case 0:
-					;
-					break;
-					case 1:
-					;
-					break;
-					case 2:
-					;
-					break;
-					case 3:
-					;
-					break;
-				}
-			}
-			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x
 			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width
-			// vert.buv = ?; (Modify the U part)
-			// vert.cuv = ?; (Modify the U part)
 		}
-		if((crop & (1 << 1)) && (bounds & (1 << 1))){	//Left side
+		if(bounds & (1 << 1)){	//Left side
 			vert.ax = camera->window_x;
 			vert.dx = vert.ax;
-			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x
-			// vert.auv = ?; (Modify the U part)
-			//no duv so no need to modify
+			// uvs[side_uv_indexes[0]] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x + (camera->window_x+camera->window_width - vert.ax))
+						// / (float)sprite_array->spritesheet->texture_width;
 		}
-		if((crop & (1 << 2)) && (bounds & (1 << 2))){	//Bottom side
+		if(bounds & (1 << 2)){	//Bottom side
 			vert.cy = camera->window_y+camera->window_height;
 			vert.dy = vert.cy;
-			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y
-			// vert.cuv = ?; (Modify the V part)
+			// uvs[side_uv_indexes[0]] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y + (camera->window_y+camera->window_height - vert.ay))
+						// / (float)sprite_array->spritesheet->texture_height;
 		}
-		if((crop & (1 << 3)) && (bounds & (1 << 3))){	//Top side
+		if(bounds & (1 << 3)){	//Top side
 			vert.ay = camera->window_y;
 			vert.by = vert.ay;
-			// sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y
-			// vert.auv = ?; (Modify the V part)
-			// vert.buv = ?; (Modify the V part)
+			// uvs[side_uv_indexes[0]] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y - (vert.cy + camera->window_y+camera->window_height))
+						// / (float)sprite_array->spritesheet->texture_height;
 		}
+
+		//The only difference in the flip is that all uv[0]'s swap with uv[2]'s. The "v's" stay the same
 
 		//Finally set the UVs
 		if(flipped_val){
 			switch(rotation_val){
 				case 0:
-				vert.auv = PVR_PACK_16BIT_UV(u1, v0);
-				vert.buv = PVR_PACK_16BIT_UV(u0, v0);
-				vert.cuv = PVR_PACK_16BIT_UV(u0, v1);
-				// 	duv = PVR_PACK_16BIT_UV(u1, v1);
+				vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
+				vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
+				vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
+				// 	duv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
 				break;
 				case 1:
-				vert.auv = PVR_PACK_16BIT_UV(u1, v1);
-				vert.buv = PVR_PACK_16BIT_UV(u1, v0);
-				vert.cuv = PVR_PACK_16BIT_UV(u0, v0);
+				vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
+				vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
+				vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
 				break;
 				case 2:
-				vert.auv = PVR_PACK_16BIT_UV(u0, v1);
-				vert.buv = PVR_PACK_16BIT_UV(u1, v1);
-				vert.cuv = PVR_PACK_16BIT_UV(u1, v0);
+				vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
+				vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
+				vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
 				break;
 				case 3:
-				vert.auv = PVR_PACK_16BIT_UV(u0, v0);
-				vert.buv = PVR_PACK_16BIT_UV(u0, v1);
-				vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
+				vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
+				vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
+				vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
 				break;
 			}
 		}
 		else{
 			switch(rotation_val){
 				case 0:
-				vert.auv = PVR_PACK_16BIT_UV(u0, v0);
-				vert.buv = PVR_PACK_16BIT_UV(u1, v0);
-				vert.cuv = PVR_PACK_16BIT_UV(u1, v1);
-				// 	duv = PVR_PACK_16BIT_UV(u0, v1);
+				vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
+				vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
+				vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
+				// 	duv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
 				break;
 				case 1:
-				vert.auv = PVR_PACK_16BIT_UV(u0, v1);	//a = d
-				vert.buv = PVR_PACK_16BIT_UV(u0, v0);	//b = a
-				vert.cuv = PVR_PACK_16BIT_UV(u1, v0);	//c = b
+				vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);	//a = d
+				vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);	//b = a
+				vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);	//c = b
 				break;
 				case 2:
-				vert.auv = PVR_PACK_16BIT_UV(u1, v1);	//=c
-				vert.buv = PVR_PACK_16BIT_UV(u0, v1);	//=d
-				vert.cuv = PVR_PACK_16BIT_UV(u0, v0);	//=a
+				vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);	//=c
+				vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);	//=d
+				vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);	//=a
 				break;
 				case 3:
-				vert.auv = PVR_PACK_16BIT_UV(u1, v0);	//=b
-				vert.buv = PVR_PACK_16BIT_UV(u1, v1);	//=c
-				vert.cuv = PVR_PACK_16BIT_UV(u0, v1);	//=d
+				vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);	//=b
+				vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);	//=c
+				vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);	//=d
 				break;
 			}
 		}
