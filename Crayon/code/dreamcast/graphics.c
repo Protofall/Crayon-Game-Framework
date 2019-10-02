@@ -822,28 +822,18 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		//If OOB then don't draw
 		if(bounds & (1 << 4)){continue;}
 
-//The setting of "uvs[]" below is incorrect for all edges
-//LTRB
-
-// extern float crayon_graphics_crop_simple_uv(float frame_uv, uint16_t frame_dim, float texture_offset, float texture_dim,
-// 	int8_t direction){
-// 	return (frame_uv + frame_dim + (direction * texture_offset)) / (float)texture_dim;
-// }
-
-// uvs[(2 + rotation_val) % 4] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
-// 				sprite_array->animation->frame_width - texture_offset) /
-// 				(float)sprite_array->spritesheet->texture_width;
+//uvs[] is LTRB
 
 		//To simplify the if checks
 		bounds &= crop;
 		if(bounds & (1 << 0)){	//Right side
 			texture_offset = vert.bx - camera->window_x - camera->window_width;
-			if(rotation_val == 0 || rotation_val == 2){
-				texture_offset /= sprite_array->scale[i * multi_scale].x;
-			}
-			else{
-				texture_offset /= sprite_array->scale[i * multi_scale].y;
-			}
+			// if(rotation_val == 0 || rotation_val == 2){
+			// 	texture_offset /= sprite_array->scale[i * multi_scale].x;
+			// }
+			// else{
+			// 	texture_offset /= sprite_array->scale[i * multi_scale].y;
+			// }
 
 			//Note uvs[] is a range from 0 to 1
 				//The UV isn't being rounded down fast enough. The value is too large/small depending on rotation
@@ -858,22 +848,36 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 				// sprite_array->spritesheet->texture_width	= u16
 			switch(rotation_val){
 				case 0:
-				uvs[2] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
-					sprite_array->animation->frame_width - texture_offset) /
+				// uvs[2] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
+				// 	sprite_array->animation->frame_width - (texture_offset / sprite_array->scale[i * multi_scale].x)) /
+				// 	(float)sprite_array->spritesheet->texture_width;
+				uvs[2] -= (texture_offset / sprite_array->scale[i * multi_scale].x) /
 					(float)sprite_array->spritesheet->texture_width;
 				break;
 				case 1:
-				uvs[1] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y + texture_offset) /
-					(float)sprite_array->spritesheet->texture_height;
+				// uvs[1] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y +
+				// 	(texture_offset / sprite_array->scale[i * multi_scale].y)) /
+				// 	(float)sprite_array->spritesheet->texture_height;
+				// uvs[1] += (texture_offset / sprite_array->scale[i * multi_scale].y) /
+					// (float)sprite_array->spritesheet->texture_height;
+				uvs[1] += texture_offset / (sprite_array->scale[i * multi_scale].y *
+					(float)sprite_array->spritesheet->texture_height);	//Timesing doesn't get rid of the shimmering...
 				break;
 				case 2:
-				uvs[0] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x + texture_offset) /
+				// uvs[0] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
+				// 	(texture_offset / sprite_array->scale[i * multi_scale].x)) /
+				// 	(float)sprite_array->spritesheet->texture_width;
+				uvs[0] += (texture_offset / sprite_array->scale[i * multi_scale].x) /
 					(float)sprite_array->spritesheet->texture_width;
 				break;
 				case 3:
-				uvs[3] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y +
-					sprite_array->animation->frame_height - texture_offset) /
-					(float)sprite_array->spritesheet->texture_height;
+				// uvs[3] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y +
+				// 	sprite_array->animation->frame_height - (texture_offset / sprite_array->scale[i * multi_scale].y)) /
+				// 	(float)sprite_array->spritesheet->texture_height;
+				// uvs[3] -= (texture_offset / sprite_array->scale[i * multi_scale].y) /
+				// 	(float)sprite_array->spritesheet->texture_height;
+				uvs[3] -= texture_offset / (sprite_array->scale[i * multi_scale].y *
+					(float)sprite_array->spritesheet->texture_height);
 				break;
 			}
 			// uvs[(2 + rotation_val) % 4] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
