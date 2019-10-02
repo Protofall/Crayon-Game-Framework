@@ -619,7 +619,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	float texture_offset;
 	// uint8_t a, b;
 	vec2_f_t rotated_verts[4];
-	vec2_f_t verts[4];
+	// vec2_f_t verts[4];
+	vec2_f_t selected_vert;
 
 	float uvs[4] = {0};	//u0, v0, u1, v1 (Set to zero to avoid compiler warnings)
 
@@ -806,7 +807,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		// rotated_verts[(2+rotation_val)%4] = crayon_graphics_get_sprite_vert(vert, 2);
 		// rotated_verts[(3+rotation_val)%4] = crayon_graphics_get_sprite_vert(vert, 3);
 
-		//MIGHT NEED TO COME BACK AND CHANGE THE VERT ORDER HERE
 		//Verts c and d are swapped so its in Z order instead of "Backwards C" order
 		bounds = crayon_graphics_check_bounds((vec2_f_t[4]){(vec2_f_t){camera->window_x,camera->window_y},
 			(vec2_f_t){camera->window_x+camera->window_width,camera->window_y},
@@ -831,142 +831,105 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 		//If OOB then don't draw
 		if(bounds & (1 << 4)){continue;}
-		// if(bounds){
-		// 	// cropped = 1;
-		// 	continue;
-		// 	// error_freeze("Test");
-		// }
 
 //uvs[] is LTRB
+//verts[] is in 0132 (The numbers count in Z position)
+//Considering the element we need, its:
+//uvs[] R,T,L,B
 
-		// crayon_graphics_get_sprite_verts(pvr_sprite_txr_t sprite, uint8_t vert, uint8_t var)
+		//Note uvs[] is a range from 0 to 1
+			//The UV isn't being rounded down fast enough. The value is too large/small depending on rotation
+				//(But appears as large)
+		//Types
+			// sprite_array->frame_uv.x/y				= u16
+			// sprite_array->animation->frame_width		= u16
+			// texture_offset							= float		//Why is this a float, it doesn't need to be?
+				// selected_vert.x								= float
+				// camera->window_x						= float
+				// camera->window_width					= u16
+			// sprite_array->spritesheet->texture_width	= u16
+
 
 		//To simplify the if checks
 		bounds &= crop;
 		if(bounds & (1 << 0)){	//Right side
 
 			//Get the vert that's currently on the right side
-			verts[0] = crayon_graphics_get_sprite_vert(vert, (1 + rotation_val) % 4);
-			texture_offset = verts[0].x - (camera->window_x + camera->window_width);
+			selected_vert = crayon_graphics_get_sprite_vert(vert, (1 + rotation_val) % 4);
+			// texture_offset = selected_vert.x - (camera->window_x + camera->window_width);
+
+			//CROPPER PLAN
+			//Two functions:
+				// get_uv_index(). Takes side, rotation and flip into account
+				// calculate_texture_offset(). Takes selected_vert, window_x/width or window_y/height, frame and rotation
+				// calculate_uv(). Takes frame_uv vec, frame_dim vec, offset, texture dims and ( sign (Add or subtract) or rotation/flip )
+					//This is almost the same as before
 
 			//Crop u1
+			// uvs[(2 + rotation_val) % 4] -= (texture_offset / sprite_array->scale[i * multi_scale].x) /
+			// 	(float)sprite_array->spritesheet->texture_width;
+
+			//If we move positive, then we add to the uv and add by just window_x
+			//If we move negative, then we take from the uv by "window_x/width"
+
+			// if((flipped_val && rotation_val == 3) || (!flipped_val && rotation_val == 0)){
+			// 	uvs[2] -= (texture_offset / sprite_array->scale[i * multi_scale].x) /
+			// 	(float)sprite_array->spritesheet->texture_width;
+			// }
+			// if((flipped_val && rotation_val == 2) || (!flipped_val && rotation_val == 1)){
+			// 	;
+			// }
+			// if((flipped_val && rotation_val == 2) || (!flipped_val && rotation_val == 2)){
+			// 	;
+			// }
+			// if((flipped_val && rotation_val == 0) || (!flipped_val && rotation_val == 3)){
+			// 	uvs[2] -= (texture_offset / sprite_array->scale[i * multi_scale].x) /
+			// 	(float)sprite_array->spritesheet->texture_width;
+			// }
+
+			//The point of the UV cropping is to bring in a vert thats too far out
+
+
+			// uvs[?] = dir * crayon_graphics_crop_simple_uv();
+
+			// extern float crayon_graphics_crop_simple_uv(float frame_uv, uint16_t frame_dim, float texture_offset, float texture_dim,
+			// 	int8_t direction){
+			// 	return (frame_uv + frame_dim + (direction * texture_offset)) / (float)texture_dim;
+			// }
 
 			//Set the vert
 			crayon_graphics_set_sprite_vert_x(&vert, (1 + rotation_val) % 4, camera->window_x + camera->window_width);
 			crayon_graphics_set_sprite_vert_x(&vert, (2 + rotation_val) % 4, camera->window_x + camera->window_width);
 		}
 		if(bounds & (1 << 1)){	//Left side
-			verts[0] = crayon_graphics_get_sprite_vert(vert, (3 + rotation_val) % 4);
-			texture_offset = camera->window_x - verts[0].x;
+			selected_vert = crayon_graphics_get_sprite_vert(vert, (3 + rotation_val) % 4);
+			texture_offset = camera->window_x - selected_vert.x;
 
-			//Crop u1
+			//Crop u0
 
 			//Set the vert
 			crayon_graphics_set_sprite_vert_x(&vert, (0 + rotation_val) % 4, camera->window_x);
 			crayon_graphics_set_sprite_vert_x(&vert, (3 + rotation_val) % 4, camera->window_x);
 		}
 		if(bounds & (1 << 2)){	//Bottom side
-			verts[0] = crayon_graphics_get_sprite_vert(vert, (2 + rotation_val) % 4);
-			texture_offset = verts[0].y - (camera->window_y + camera->window_height);
+			selected_vert = crayon_graphics_get_sprite_vert(vert, (2 + rotation_val) % 4);
+			texture_offset = selected_vert.y - (camera->window_y + camera->window_height);
 
-			//Crop u1
+			//Crop v0
 
 			//Set the vert
 			crayon_graphics_set_sprite_vert_y(&vert, (2 + rotation_val) % 4, camera->window_y + camera->window_height);
 			crayon_graphics_set_sprite_vert_y(&vert, (3 + rotation_val) % 4, camera->window_y + camera->window_height);
 		}
 		if(bounds & (1 << 3)){	//Top side
-			verts[0] = crayon_graphics_get_sprite_vert(vert, (0 + rotation_val) % 4);
-			texture_offset = camera->window_y - verts[0].y;
+			selected_vert = crayon_graphics_get_sprite_vert(vert, (0 + rotation_val) % 4);
+			texture_offset = camera->window_y - selected_vert.y;
 
-			//Crop u1
+			//Crop v1
 
 			//Set the vert
 			crayon_graphics_set_sprite_vert_y(&vert, (0 + rotation_val) % 4, camera->window_y);
 			crayon_graphics_set_sprite_vert_y(&vert, (1 + rotation_val) % 4, camera->window_y);
-		}
-
-
-		if(0){
-		if(bounds & (1 << 0)){	//Right side
-			texture_offset = vert.bx - (camera->window_x + camera->window_width);
-
-			//Note uvs[] is a range from 0 to 1
-				//The UV isn't being rounded down fast enough. The value is too large/small depending on rotation
-					//(But appears as large)
-			//Types
-				// sprite_array->frame_uv.x/y				= u16
-				// sprite_array->animation->frame_width		= u16
-				// texture_offset							= float		//Why is this a float, it doesn't need to be?
-					// vert.bx								= float
-					// camera->window_x						= float
-					// camera->window_width					= u16
-				// sprite_array->spritesheet->texture_width	= u16
-			if(0){
-			switch(rotation_val){
-				case 0:
-				// uvs[2] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
-				// 	sprite_array->animation->frame_width - (texture_offset / sprite_array->scale[i * multi_scale].x)) /
-				// 	(float)sprite_array->spritesheet->texture_width;
-				uvs[2] -= (texture_offset / sprite_array->scale[i * multi_scale].x) /
-					(float)sprite_array->spritesheet->texture_width;
-				break;
-				case 1:
-				// uvs[1] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y +
-				// 	(texture_offset / sprite_array->scale[i * multi_scale].y)) /
-				// 	(float)sprite_array->spritesheet->texture_height;
-				// uvs[1] += (texture_offset / sprite_array->scale[i * multi_scale].y) /
-					// (float)sprite_array->spritesheet->texture_height;
-				uvs[1] += texture_offset / (sprite_array->scale[i * multi_scale].y *
-					(float)sprite_array->spritesheet->texture_height);	//Timesing doesn't get rid of the shimmering...
-				break;
-				case 2:
-				// uvs[0] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
-				// 	(texture_offset / sprite_array->scale[i * multi_scale].x)) /
-				// 	(float)sprite_array->spritesheet->texture_width;
-				uvs[0] += (texture_offset / sprite_array->scale[i * multi_scale].x) /
-					(float)sprite_array->spritesheet->texture_width;
-				break;
-				case 3:
-				// uvs[3] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y +
-				// 	sprite_array->animation->frame_height - (texture_offset / sprite_array->scale[i * multi_scale].y)) /
-				// 	(float)sprite_array->spritesheet->texture_height;
-				// uvs[3] -= (texture_offset / sprite_array->scale[i * multi_scale].y) /
-				// 	(float)sprite_array->spritesheet->texture_height;
-				uvs[3] -= texture_offset / (sprite_array->scale[i * multi_scale].y *
-					(float)sprite_array->spritesheet->texture_height);
-				break;
-			}
-			}
-			// uvs[(2 + rotation_val) % 4] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
-			// 	sprite_array->animation->frame_width - texture_offset) /
-			// 	(float)sprite_array->spritesheet->texture_width;
-
-			// uvs[2] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
-			// 	sprite_array->animation->frame_width -
-			// 	((vert.bx - camera->window_x - camera->window_width)/sprite_array->scale[i * multi_scale].x)) /
-			// 	(float)sprite_array->spritesheet->texture_width;
-
-			vert.bx = camera->window_x+camera->window_width;
-			vert.cx = vert.bx;
-		}
-		if(bounds & (1 << 1)){	//Left side
-			// uvs[0] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
-			// 	(camera->window_x - vert.ax)/sprite_array->scale[i * multi_scale].x) /
-			// 	(float)sprite_array->spritesheet->texture_width;
-			vert.ax = camera->window_x;
-			vert.dx = vert.ax;
-		}
-		if(bounds & (1 << 2)){	//Bottom side
-			//uvs[3]
-			vert.cy = camera->window_y+camera->window_height;
-			vert.dy = vert.cy;
-		}
-		if(bounds & (1 << 3)){	//Top side
-			//uvs[1]
-			vert.ay = camera->window_y;
-			vert.by = vert.ay;
-		}
 		}
 
 		//The only difference in the flip is that all uv[0]'s swap with uv[2]'s. The "v's" stay the same
@@ -1372,4 +1335,18 @@ extern void crayon_graphics_set_sprite_vert_y(pvr_sprite_txr_t *sprite, uint8_t 
 		break;
 	}
 	return;
+}
+
+//Side is in format LTRB, 0123
+extern uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t flip_val){
+    //rotate it *back* by rotation_val
+    side -= rotation_val;
+    if(side > 3){side += 4;}
+    
+    //L becomes R, R becomes L, T and Bottom don't change
+    if(flip_val && side % 2 == 0){
+        side = (side + 2) % 4;
+    }
+    
+    return side;
 }
