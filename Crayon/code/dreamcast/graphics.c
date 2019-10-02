@@ -612,13 +612,13 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	uint8_t bounds = 0;
 
 	uint8_t cropped = 0;
-	uint8_t flipped_val = 0;
+	uint8_t flip_val = 0;
 	uint8_t rotation_val = 0;
 
 	//Check if these vars are required
 	float texture_offset;
 	// uint8_t a, b;
-	vec2_f_t rotated_verts[4];
+	// vec2_f_t rotated_verts[4];
 	// vec2_f_t verts[4];
 	vec2_f_t selected_vert;
 
@@ -711,10 +711,10 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			){
 			
 			if(sprite_array->flip[*flip_index] & (1 << 0)){	//Is flipped?
-				flipped_val = 1;
+				flip_val = 1;
 			}
 			else{
-				flipped_val = 0;
+				flip_val = 0;
 			}
 
 			//Don't bother doing extra calculations
@@ -859,6 +859,10 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
 			// texture_offset = selected_vert.x - (camera->window_x + camera->window_width);
 
+			//The below command *is* scaling the correct side, this is good
+			// uvs[crayon_get_uv_index(2, rotation_val, flip_val)] = uvs[crayon_get_uv_index(0, rotation_val, flip_val)] -
+			// 	(uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[crayon_get_uv_index(2, rotation_val, flip_val)])/2;
+
 			//CROPPER PLAN
 			//Two functions:
 				//	(DONE)	get_uv_index(). Takes side, rotation and flip into account
@@ -934,7 +938,7 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		}
 
 		//The only difference in the flip is that all uv[0]'s swap with uv[2]'s. The "v's" stay the same
-		// if(flipped_val){
+		// if(flip_val){
 		// 	a = 0; b = 2;
 		// }
 		// else{
@@ -966,7 +970,7 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		// }
 
 		//Might need to adjust this to handle flips later?
-		if(flipped_val){
+		if(flip_val){
 			vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
 			vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
 			vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
