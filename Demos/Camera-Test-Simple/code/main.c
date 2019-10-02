@@ -282,8 +282,8 @@ int main(){
 	Man_BG.colour[0] = 0xFF000000;
 
 	crayon_memory_init_sprite_array(&Cam2_BG, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Cam2_BG.coord[0].x = 100;
-	Cam2_BG.coord[0].y = 100;
+	Cam2_BG.coord[0].x = 32;
+	Cam2_BG.coord[0].y = 32;
 	Cam2_BG.layer[0] = 1;
 	Cam2_BG.scale[0].x = 400;
 	Cam2_BG.scale[0].y = 300;

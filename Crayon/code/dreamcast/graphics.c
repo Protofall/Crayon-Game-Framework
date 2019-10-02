@@ -614,11 +614,16 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	uint8_t cropped = 0;
 	uint8_t flipped_val = 0;
 	uint8_t rotation_val = 0;
-	uint8_t holder;
+
+	//Check if these vars are required
+	// uint8_t holder;
+	// uint8_t side_uv_indexes[4] = {0};	//LTRB
+	float texture_offset;
+	uint8_t a, b;
+	uint8_t round_way[2];
 
 	// float u0, v0, u1, v1;
 	float uvs[4] = {0};	//u0, v0, u1, v1
-	uint8_t side_uv_indexes[4] = {0};	//LTRB)
 	// uint32_t duv;	//duv is used to assist in the rotations
 	// u0 = 0; v0 = 0; u1 = 0; v1 = 0; duv = 0;	//Needed if you want to prevent a bunch of compiler warnings...
 	// u0 = 0; v0 = 0; u1 = 0; v1 = 0;	//Needed if you want to prevent a bunch of compiler warnings...
@@ -711,17 +716,17 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			
 			if(sprite_array->flip[*flip_index] & (1 << 0)){	//Is flipped?
 				flipped_val = 1;
-				side_uv_indexes[0] = 2;
-				side_uv_indexes[1] = 1;
-				side_uv_indexes[2] = 0;
-				side_uv_indexes[3] = 3;
+				// side_uv_indexes[0] = 2;
+				// side_uv_indexes[1] = 1;
+				// side_uv_indexes[2] = 0;
+				// side_uv_indexes[3] = 3;
 			}
 			else{
 				flipped_val = 0;
-				side_uv_indexes[0] = 0;	//u0 v0 u1 v1
-				side_uv_indexes[1] = 1;	//LTRB
-				side_uv_indexes[2] = 2;
-				side_uv_indexes[3] = 3;
+				// side_uv_indexes[0] = 0;	//u0 v0 u1 v1
+				// side_uv_indexes[1] = 1;	//LTRB
+				// side_uv_indexes[2] = 2;
+				// side_uv_indexes[3] = 3;
 			}
 
 			//Don't bother doing extra calculations
@@ -732,30 +737,30 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 				//For sprite mode we can't simply "rotate" the verts, instead we need to change the uv
 				if(crayon_graphics_almost_equals(rotation_under_360, 90.0, 45.0)){
 					rotation_val = 1;
-					holder = side_uv_indexes[0];
-					side_uv_indexes[0] = side_uv_indexes[1];	//L becomes T
-					side_uv_indexes[1] = side_uv_indexes[2];	//T becomes R
-					side_uv_indexes[2] = side_uv_indexes[3];	//R becomes B
-					side_uv_indexes[3] = holder;				//B becomes L
+					// holder = side_uv_indexes[0];
+					// side_uv_indexes[0] = side_uv_indexes[1];	//L becomes T
+					// side_uv_indexes[1] = side_uv_indexes[2];	//T becomes R
+					// side_uv_indexes[2] = side_uv_indexes[3];	//R becomes B
+					// side_uv_indexes[3] = holder;				//B becomes L
 					goto verts_rotated;
 				}
 				else if(crayon_graphics_almost_equals(rotation_under_360, 180.0, 45.0)){
 					rotation_val = 2;
-					holder = side_uv_indexes[0];
-					side_uv_indexes[0] = side_uv_indexes[2];
-					holder = side_uv_indexes[2];
-					side_uv_indexes[2] = side_uv_indexes[0];
-					holder = side_uv_indexes[1];
-					side_uv_indexes[1] = side_uv_indexes[3];
-					side_uv_indexes[3] = holder;
+					// holder = side_uv_indexes[0];
+					// side_uv_indexes[0] = side_uv_indexes[2];
+					// holder = side_uv_indexes[2];
+					// side_uv_indexes[2] = side_uv_indexes[0];
+					// holder = side_uv_indexes[1];
+					// side_uv_indexes[1] = side_uv_indexes[3];
+					// side_uv_indexes[3] = holder;
 				}
 				else if(crayon_graphics_almost_equals(rotation_under_360, 270.0, 45.0)){
 					rotation_val = 3;
-					holder = side_uv_indexes[3];
-					side_uv_indexes[3] = side_uv_indexes[2];
-					side_uv_indexes[2] = side_uv_indexes[1];
-					side_uv_indexes[1] = side_uv_indexes[0];
-					side_uv_indexes[0] = holder;
+					// holder = side_uv_indexes[3];
+					// side_uv_indexes[3] = side_uv_indexes[2];
+					// side_uv_indexes[2] = side_uv_indexes[1];
+					// side_uv_indexes[1] = side_uv_indexes[0];
+					// side_uv_indexes[0] = holder;
 					goto verts_rotated;
 				}
 				else{
@@ -780,6 +785,10 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		vert.dx = vert.ax;
 		vert.dy = vert.cy;
 
+		//uint8_t round_way(float value)
+		//The current vert rounding is only really a problem for simmering if the scale multiplication doesn't end in an exact int
+			//Hence this can't be causing he shimmering
+
 		//For 90 and 270 modes we need different vert positions aswell
 			//for cases where frame width != frame height
 		if(0){
@@ -789,6 +798,9 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//Both vars are uint16_t and lengths can't be negative or more than 1024 (Largest texture size for DC)
 				//Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
+
+			//SHIMMERING SEEMS TO COME FROM HERE
+				//Nope, this code doesn't seem to affect it
 
 			vert.ax = trunc(sprite_array->coord[i].x - camera->world_x + camera->window_x) + ((sprite_array->scale[i * multi_scale].y * diff) / 2);
 			vert.ay = trunc(sprite_array->coord[i].y - camera->world_y + camera->window_y) - ((sprite_array->scale[i * multi_scale].x * diff) / 2);
@@ -812,41 +824,73 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 //The setting of "uvs[]" below is incorrect for all edges
 //LTRB
+
+// extern float crayon_graphics_crop_simple_uv(float frame_uv, uint16_t frame_dim, float texture_offset, float texture_dim,
+// 	int8_t direction){
+// 	return (frame_uv + frame_dim + (direction * texture_offset)) / (float)texture_dim;
+// }
+
+// uvs[(2 + rotation_val) % 4] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
+// 				sprite_array->animation->frame_width - texture_offset) /
+// 				(float)sprite_array->spritesheet->texture_width;
+
 		//To simplify the if checks
 		bounds &= crop;
 		if(bounds & (1 << 0)){	//Right side
-			// uvs[2] = (
-			// 	sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width) +
-			// 	(sprite_array->animation->frame_width /
-			// 	(float)sprite_array->spritesheet->texture_width);
+			texture_offset = vert.bx - camera->window_x - camera->window_width;
+			if(rotation_val == 0 || rotation_val == 2){
+				texture_offset /= sprite_array->scale[i * multi_scale].x;
+			}
+			else{
+				texture_offset /= sprite_array->scale[i * multi_scale].y;
+			}
 
-			//This works when scale is set to 1.
-				//If less it doesn't scale fast enough
-				//If more it scales too fast
-			//However when using the scale, it never works right
-			// uvs[2] = (
-			// 	sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
+			//Note uvs[] is a range from 0 to 1
+				//The UV isn't being rounded down fast enough. The value is too large/small depending on rotation
+					//(But appears as large)
+			//Types
+				// sprite_array->frame_uv.x/y				= u16
+				// sprite_array->animation->frame_width		= u16
+				// texture_offset							= float		//Why is this a float, it doesn't need to be?
+					// vert.bx								= float
+					// camera->window_x						= float
+					// camera->window_width					= u16
+				// sprite_array->spritesheet->texture_width	= u16
+			switch(rotation_val){
+				case 0:
+				uvs[2] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
+					sprite_array->animation->frame_width - texture_offset) /
+					(float)sprite_array->spritesheet->texture_width;
+				break;
+				case 1:
+				uvs[1] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y + texture_offset) /
+					(float)sprite_array->spritesheet->texture_height;
+				break;
+				case 2:
+				uvs[0] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x + texture_offset) /
+					(float)sprite_array->spritesheet->texture_width;
+				break;
+				case 3:
+				uvs[3] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y +
+					sprite_array->animation->frame_height - texture_offset) /
+					(float)sprite_array->spritesheet->texture_height;
+				break;
+			}
+			// uvs[(2 + rotation_val) % 4] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
+			// 	sprite_array->animation->frame_width - texture_offset) /
+			// 	(float)sprite_array->spritesheet->texture_width;
+
+			// uvs[2] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
 			// 	sprite_array->animation->frame_width -
 			// 	((vert.bx - camera->window_x - camera->window_width)/sprite_array->scale[i * multi_scale].x)) /
 			// 	(float)sprite_array->spritesheet->texture_width;
-
-			uvs[2] = (
-				sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
-				sprite_array->animation->frame_width -
-				((vert.bx - camera->window_x - camera->window_width)/sprite_array->scale[i * multi_scale].x)) /
-				(float)sprite_array->spritesheet->texture_width;
-
-			// uvs[2] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x + sprite_array->animation->frame_width - ((vert.bx - camera->window_x+camera->window_x + camera->window_x+camera->window_width) / sprite_array->scale[i * multi_scale].x)) / (float)sprite_array->spritesheet->texture_width;
-
-			//sprite_array->scale[i * multi_scale].x
-
 
 			vert.bx = camera->window_x+camera->window_width;
 			vert.cx = vert.bx;
 		}
 		if(bounds & (1 << 1)){	//Left side
 			uvs[0] = (sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x +
-				camera->window_x - vert.ax) /
+				(camera->window_x - vert.ax)/sprite_array->scale[i * multi_scale].x) /
 				(float)sprite_array->spritesheet->texture_width;
 			vert.ax = camera->window_x;
 			vert.dx = vert.ax;
@@ -864,57 +908,88 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 		//The only difference in the flip is that all uv[0]'s swap with uv[2]'s. The "v's" stay the same
 
-		//Finally set the UVs
 		if(flipped_val){
-			switch(rotation_val){
-				case 0:
-				vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
-				vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
-				vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
-				// 	duv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
-				break;
-				case 1:
-				vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
-				vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
-				vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
-				break;
-				case 2:
-				vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
-				vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
-				vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
-				break;
-				case 3:
-				vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
-				vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
-				vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
-				break;
-			}
+			a = 0; b = 2;
 		}
 		else{
-			switch(rotation_val){
-				case 0:
-				vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
-				vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
-				vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
-				// 	duv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
-				break;
-				case 1:
-				vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);	//a = d
-				vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);	//b = a
-				vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);	//c = b
-				break;
-				case 2:
-				vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);	//=c
-				vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);	//=d
-				vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);	//=a
-				break;
-				case 3:
-				vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);	//=b
-				vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);	//=c
-				vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);	//=d
-				break;
-			}
+			a = 2; b = 0;
 		}
+
+		switch(rotation_val){
+			case 0:
+			vert.auv = PVR_PACK_16BIT_UV(uvs[b], uvs[1]);
+			vert.buv = PVR_PACK_16BIT_UV(uvs[a], uvs[1]);
+			vert.cuv = PVR_PACK_16BIT_UV(uvs[a], uvs[3]);
+			// 	duv = PVR_PACK_16BIT_UV(uvs[b], uvs[3]);
+			break;
+			case 1:
+			vert.auv = PVR_PACK_16BIT_UV(uvs[b], uvs[3]);
+			vert.buv = PVR_PACK_16BIT_UV(uvs[b], uvs[1]);
+			vert.cuv = PVR_PACK_16BIT_UV(uvs[a], uvs[1]);
+			break;
+			case 2:
+			vert.auv = PVR_PACK_16BIT_UV(uvs[a], uvs[3]);
+			vert.buv = PVR_PACK_16BIT_UV(uvs[b], uvs[3]);
+			vert.cuv = PVR_PACK_16BIT_UV(uvs[b], uvs[1]);
+			break;
+			case 3:
+			vert.auv = PVR_PACK_16BIT_UV(uvs[a], uvs[1]);
+			vert.buv = PVR_PACK_16BIT_UV(uvs[a], uvs[3]);
+			vert.cuv = PVR_PACK_16BIT_UV(uvs[b], uvs[3]);
+			break;
+		}
+
+		//Finally set the UVs
+		// if(flipped_val){
+		// 	switch(rotation_val){
+		// 		case 0:
+		// 		vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
+		// 		vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
+		// 		vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
+		// 		// 	duv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
+		// 		break;
+		// 		case 1:
+		// 		vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
+		// 		vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
+		// 		vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
+		// 		break;
+		// 		case 2:
+		// 		vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
+		// 		vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
+		// 		vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
+		// 		break;
+		// 		case 3:
+		// 		vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
+		// 		vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
+		// 		vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
+		// 		break;
+		// 	}
+		// }
+		// else{
+		// 	switch(rotation_val){
+		// 		case 0:
+		// 		vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
+		// 		vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
+		// 		vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
+		// 		// 	duv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);
+		// 		break;
+		// 		case 1:
+		// 		vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);	//a = d
+		// 		vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);	//b = a
+		// 		vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);	//c = b
+		// 		break;
+		// 		case 2:
+		// 		vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);	//=c
+		// 		vert.buv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);	//=d
+		// 		vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);	//=a
+		// 		break;
+		// 		case 3:
+		// 		vert.auv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);	//=b
+		// 		vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);	//=c
+		// 		vert.cuv = PVR_PACK_16BIT_UV(uvs[0], uvs[3]);	//=d
+		// 		break;
+		// 	}
+		// }
 
 		// if(flipped_val){	//Is flipped?
 		// 	vert.auv = PVR_PACK_16BIT_UV(u1, v0);
@@ -1249,4 +1324,13 @@ extern uint8_t crayon_graphics_check_bounds(vec2_f_t vC[4], vec2_f_t vO[4]){
 	if(vO[1].x > vC[1].x || vO[3].x > vC[1].x){bounds |= (1 << 0);}
 
 	return bounds;
+}
+
+extern float crayon_graphics_crop_simple_uv(float frame_uv, uint16_t frame_dim, float texture_offset, float texture_dim,
+	int8_t direction){
+	return (frame_uv + frame_dim + (direction * texture_offset)) / (float)texture_dim;
+}
+
+extern uint8_t round_way(float value){
+	return (value - (int)value > 0.5) ? 1 : 0;
 }
