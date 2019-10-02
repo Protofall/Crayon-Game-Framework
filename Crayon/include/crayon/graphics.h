@@ -121,5 +121,8 @@ extern float crayon_graphics_crop_simple_uv(float frame_uv, uint16_t frame_dim, 
 //returns 1 ( more than 0.5) if it would be rounded up.
 extern uint8_t round_way(float value);
 
+//Takes the texture coord (Coordinate of an edge on the sub-texture) and returns the float version
+extern float crayon_graphics_texture_coord_converter(uint16_t value, uint16_t dimension);
+
 
 #endif
