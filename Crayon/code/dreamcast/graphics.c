@@ -859,8 +859,14 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
 			// texture_offset = selected_vert.x - (camera->window_x + camera->window_width);
 
-			//The below command *is* scaling the correct side, this is good
-			// uvs[crayon_get_uv_index(2, rotation_val, flip_val)] = uvs[crayon_get_uv_index(0, rotation_val, flip_val)] -
+			//The below command *is* scaling the correct side, this is good. This is consistent for ALL flips/rotations...
+				//I can simplify to just plus too
+			// uvs[crayon_get_uv_index(2, rotation_val, flip_val)] += (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] -
+			// 	uvs[crayon_get_uv_index(2, rotation_val, flip_val)])/2;
+
+			//THIS could be it. Make a function that gets the texture dim given side/rot/flip and also for calculating offset
+				//This might also remove the shimmering? We'll see
+			// uvs[crayon_get_uv_index(2, rotation_val, flip_val)] += (texture_offset / texture_dim) * 
 			// 	(uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[crayon_get_uv_index(2, rotation_val, flip_val)])/2;
 
 			//CROPPER PLAN
