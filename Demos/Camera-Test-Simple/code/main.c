@@ -97,7 +97,7 @@ int main(){
 	crayon_spritesheet_t Dwarf, Opaque, Man;
 	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw;
 	crayon_sprite_array_t Man_BG;
-	crayon_sprite_array_t Cam2_BG;
+	crayon_sprite_array_t Cam2_BG, Rainbow_Draw2;
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P, Red_Man_P, Green_Man_P;
@@ -129,14 +129,14 @@ int main(){
 
 	//Draws 4 faces and rotates between all 12 faces
 	crayon_memory_init_sprite_array(&Frames_Draw, &Opaque, 0, NULL, 4, 16, CRAY_MULTI_FRAME, PVR_FILTER_NONE, 0);
-	Frames_Draw.coord[0].x = 540;
+	Frames_Draw.coord[0].x = 440;
 	Frames_Draw.coord[0].y = 20;
-	Frames_Draw.coord[1].x = 540 + 32;
-	Frames_Draw.coord[1].y = 20;
-	Frames_Draw.coord[2].x = 540;
-	Frames_Draw.coord[2].y = 20 + 32;
-	Frames_Draw.coord[3].x = 540 + 32;
-	Frames_Draw.coord[3].y = 20 + 32;
+	Frames_Draw.coord[1].x = Frames_Draw.coord[0].x + 32;
+	Frames_Draw.coord[1].y = Frames_Draw.coord[0].y;
+	Frames_Draw.coord[2].x = Frames_Draw.coord[0].x;
+	Frames_Draw.coord[2].y = Frames_Draw.coord[0].y + 32;
+	Frames_Draw.coord[3].x = Frames_Draw.coord[1].x;
+	Frames_Draw.coord[3].y = Frames_Draw.coord[2].y;
 	Frames_Draw.layer[0] = 18;
 	Frames_Draw.scale[0].x = 2;
 	Frames_Draw.scale[0].y = 2;
@@ -272,6 +272,18 @@ int main(){
 	Rainbow_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Rainbow_Draw, 0, 0);
 
+	crayon_memory_init_sprite_array(&Rainbow_Draw2, &Opaque, 1, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	Rainbow_Draw2.coord[0].x = Rainbow_Draw.coord[0].x;
+	Rainbow_Draw2.coord[0].y = Rainbow_Draw.coord[0].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10;
+	Rainbow_Draw2.layer[0] = 17;
+	Rainbow_Draw2.scale[0].x = 8;
+	Rainbow_Draw2.scale[0].y = 8;
+	Rainbow_Draw2.flip[0] = 0;
+	Rainbow_Draw2.rotation[0] = 180;
+	Rainbow_Draw2.colour[0] = 0;
+	Rainbow_Draw2.frame_id[0] = 0;
+	crayon_memory_set_frame_uv(&Rainbow_Draw2, 0, 0);
+
 	crayon_memory_init_sprite_array(&Man_BG, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Man_BG.coord[0].x = Red_Man_Draw.coord[0].x;
 	Man_BG.coord[0].y = Red_Man_Draw.coord[0].y;
@@ -398,11 +410,12 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
+			// crayon_graphics_draw_sprites(&Rainbow_Draw2, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 
 			//Represents the boundry box for the red man when not rotated
-			// crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, 0);
+			crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, 0);
 
 			//This represents camera 2's space
 			crayon_graphics_draw_sprites(&Cam2_BG, NULL, PVR_LIST_OP_POLY, 0);

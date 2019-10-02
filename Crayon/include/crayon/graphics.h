@@ -124,5 +124,11 @@ extern uint8_t round_way(float value);
 //Takes the texture coord (Coordinate of an edge on the sub-texture) and returns the float version
 extern float crayon_graphics_texture_coord_converter(uint16_t value, uint16_t dimension);
 
+//vert is the nth vert (Backwards C shaped)
+extern vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t sprite, uint8_t vert);
+
+extern void crayon_graphics_set_sprite_vert_x(pvr_sprite_txr_t *sprite, uint8_t vert, float value);
+extern void crayon_graphics_set_sprite_vert_y(pvr_sprite_txr_t *sprite, uint8_t vert, float value);
+
 
 #endif
