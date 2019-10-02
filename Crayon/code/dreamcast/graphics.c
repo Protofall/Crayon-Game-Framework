@@ -917,6 +917,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			texture_offset = camera->window_x - selected_vert.x;
 
 			//Crop u0
+			// uvs[crayon_get_uv_index(0, rotation_val, flip_val)] += (uvs[crayon_get_uv_index(2, rotation_val, flip_val)] -
+			// 	uvs[crayon_get_uv_index(0, rotation_val, flip_val)])/2;
 
 			//Set the vert
 			crayon_graphics_set_sprite_vert_x(&vert, (4 + 0 - rotation_val) % 4, camera->window_x);
@@ -927,6 +929,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			texture_offset = selected_vert.y - (camera->window_y + camera->window_height);
 
 			//Crop v0
+			// uvs[crayon_get_uv_index(3, rotation_val, flip_val)] += (uvs[crayon_get_uv_index(1, rotation_val, flip_val)] -
+			// 	uvs[crayon_get_uv_index(3, rotation_val, flip_val)])/2;
 
 			//Set the vert
 			crayon_graphics_set_sprite_vert_y(&vert, (4 + 2 - rotation_val) % 4, camera->window_y + camera->window_height);
@@ -937,6 +941,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			texture_offset = camera->window_y - selected_vert.y;
 
 			//Crop v1
+			// uvs[crayon_get_uv_index(1, rotation_val, flip_val)] += (uvs[crayon_get_uv_index(3, rotation_val, flip_val)] -
+			// 	uvs[crayon_get_uv_index(1, rotation_val, flip_val)])/2;
 
 			//Set the vert
 			crayon_graphics_set_sprite_vert_y(&vert, (4 + 0 - rotation_val) % 4, camera->window_y);
