@@ -861,12 +861,14 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//Get the vert that's currently on the right side
 			uv_index = crayon_get_uv_index(2, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
-			texture_offset = crayon_graphics_get_texture_offset(uv_index, &sprite_array->scale[i * multi_scale], &selected_vert, camera);
+			texture_offset = crayon_graphics_get_texture_offset(uv_index, &selected_vert, camera);
 			texture_divider = crayon_graphics_get_texture_divisor(2, rotation_val,
 				(vec2_f_t){sprite_array->spritesheet->texture_width,sprite_array->spritesheet->texture_height});
 
 			//For debugging
 				//Ranges from -400 to -464. Why is it negative?
+					//I think the 400 is the window_x/width. So the 0 degrees and 180 flipped work fine
+					//because the rainbow square is on the left of the spritesheet
 				//Divider is 64
 				//uv_index == 0
 			if(i == 4){graphics_tester_var = texture_offset;}
@@ -874,20 +876,13 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//The texture offset produced by the function feels constant
 				//The selected_vert should be one of the two vertexes to be modified
 
-			// texture_offset = 32;
 			// texture_offset = (camera->window_x - selected_vert.x)/sprite_array->scale[i * multi_scale].x;
-
-			//OLD
-			//The below command *is* scaling the correct side, this is good. This is consistent for ALL flips/rotations...
-				//I can simplify to just plus too
-			// uvs[uv_index] += (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index])/2;
 
 			//NEW
 			//THIS could be it. Make a function that gets the texture dim given side/rot/flip and also for calculating offset
 				//This might also remove the shimmering? We'll see
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index]);
 
-			// uvs[uv_index] += (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index]) - (texture_offset / texture_divider);	//Doesn't work
 			//This: Is the original distance between the two uvs in uv-space:
 				//(uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index])
 			//THe idea is we use the texture_offset (And maybe divider) to adjust that distance so it scales
@@ -1362,8 +1357,7 @@ extern float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_
 // 	return 0;	//Shouldn't get here
 // }
 
-extern float crayon_graphics_get_texture_offset(uint8_t uv_index, vec2_f_t * scale, vec2_f_t * vert,
-	const crayon_viewport_t *camera){
+extern float crayon_graphics_get_texture_offset(uint8_t uv_index, vec2_f_t * vert, const crayon_viewport_t *camera){
 	switch(uv_index){
 		case 0:
 		return (camera->window_x - vert->x);
