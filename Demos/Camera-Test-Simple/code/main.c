@@ -194,20 +194,20 @@ int main(){
 	crayon_memory_init_sprite_array(&Green_Man_Draw, &Man, 0, &Green_Man_P, 8, 1, CRAY_MULTI_FLIP | CRAY_MULTI_ROTATE, PVR_FILTER_NONE, 0);
 	Green_Man_Draw.coord[0].x = 300;
 	Green_Man_Draw.coord[0].y = 360;
-	Green_Man_Draw.coord[1].x = 360;
+	Green_Man_Draw.coord[1].x = Green_Man_Draw.coord[0].x + 60;
 	Green_Man_Draw.coord[1].y = Green_Man_Draw.coord[0].y;
 	Green_Man_Draw.coord[2].x = Green_Man_Draw.coord[0].x;
 	Green_Man_Draw.coord[2].y = Green_Man_Draw.coord[0].y + 60;
 	Green_Man_Draw.coord[3].x = Green_Man_Draw.coord[1].x;
-	Green_Man_Draw.coord[3].y = Green_Man_Draw.coord[0].y + 60;
+	Green_Man_Draw.coord[3].y = Green_Man_Draw.coord[2].y;
 	Green_Man_Draw.coord[4].x = Green_Man_Draw.coord[0].x;
-	Green_Man_Draw.coord[4].y = Green_Man_Draw.coord[0].y + 120;
+	Green_Man_Draw.coord[4].y = Green_Man_Draw.coord[3].y + 60;
 	Green_Man_Draw.coord[5].x = Green_Man_Draw.coord[1].x;
-	Green_Man_Draw.coord[5].y = Green_Man_Draw.coord[0].y + 120;
+	Green_Man_Draw.coord[5].y = Green_Man_Draw.coord[4].y;
 	Green_Man_Draw.coord[6].x = Green_Man_Draw.coord[0].x;
-	Green_Man_Draw.coord[6].y = Green_Man_Draw.coord[0].y + 180;
+	Green_Man_Draw.coord[6].y = Green_Man_Draw.coord[4].y + 60;
 	Green_Man_Draw.coord[7].x = Green_Man_Draw.coord[1].x;
-	Green_Man_Draw.coord[7].y = Green_Man_Draw.coord[0].y + 180;
+	Green_Man_Draw.coord[7].y = Green_Man_Draw.coord[6].y;
 	Green_Man_Draw.layer[0] = 50;
 	Green_Man_Draw.scale[0].x = 3;
 	Green_Man_Draw.scale[0].y = 3;
@@ -376,9 +376,9 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
-			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
+			// crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
+			// crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
+			// crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
 
 			//Fonts aren't supported by cameras yet
 			// crayon_graphics_draw_text_prop("Tahoma\0", &Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id);
@@ -412,10 +412,10 @@ int main(){
 
 			// crayon_graphics_draw_sprites(&Rainbow_Draw2, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
+			// crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 
 			//Represents the boundry box for the red man when not rotated
-			crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, 0);
+			// crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, 0);
 
 			//This represents camera 2's space
 			crayon_graphics_draw_sprites(&Cam2_BG, NULL, PVR_LIST_OP_POLY, 0);
