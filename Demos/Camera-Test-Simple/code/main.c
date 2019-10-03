@@ -326,6 +326,9 @@ int main(){
 	crayon_graphics_setup_palette(&Red_Man_P);
 	crayon_graphics_setup_palette(&Green_Man_P);
 
+	graphics_tester_var = 0;
+	char snum[20];
+
 	pvr_stats_t stats;
 	// uint32_t previous_buttons[4] = {0};
 	while(1){
@@ -419,6 +422,8 @@ int main(){
 
 			//This represents camera 2's space
 			crayon_graphics_draw_sprites(&Cam2_BG, NULL, PVR_LIST_OP_POLY, 0);
+			sprintf(snum, "%.9f", graphics_tester_var);
+			crayon_graphics_draw_text_mono(snum, &BIOS, PVR_LIST_PT_POLY, 0, 400, 30, 1, 1, BIOS_P.palette_id);
 
 		pvr_list_finish();
 

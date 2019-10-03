@@ -696,7 +696,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		}
 
 		if(*frame_index == i || cropped){	//frame
-			cropped = 0;
 			uvs[0] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
 			uvs[1] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
 			uvs[2] = uvs[0] + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
@@ -705,13 +704,13 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 		//Basically enter if first element or either the flip/rotate/frame changed
 			//The multi_blah's are there to prevent checks on draw params that aren't multi/won't change
-		if(i == 0 || (multi_flip && (sprite_array->flip[i] != sprite_array->flip[i - 1])) ||
+		if(i == 0 || cropped || (multi_flip && (sprite_array->flip[i] != sprite_array->flip[i - 1])) ||
 			(multi_rotate && (sprite_array->rotation[i] != sprite_array->rotation[i - 1])) ||
 			(multi_frame &&
 			((sprite_array->frame_uv[i].x != sprite_array->frame_uv[i - 1].x) ||
 			(sprite_array->frame_uv[i].y != sprite_array->frame_uv[i - 1].y)))
 			){
-			// cropped = 0;
+			cropped = 0;
 
 			
 			if(sprite_array->flip[*flip_index] & (1 << 0)){	//Is flipped?
@@ -860,13 +859,23 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		if(bounds & (1 << 0)){	//Right side
 
 			//Get the vert that's currently on the right side
-			// uv_index = crayon_get_uv_index(2, rotation_val, flip_val);
+			uv_index = crayon_get_uv_index(2, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
-			// texture_offset = crayon_graphics_get_texture_offset(uv_index, &sprite_array->scale[i * multi_scale], selected_vert, camera);
-			// texture_divider = crayon_graphics_get_texture_divisor(2, rotation_val,
-			// 	(vec2_f_t){sprite_array->spritesheet->texture_width,sprite_array->spritesheet->texture_height});
+			texture_offset = crayon_graphics_get_texture_offset(uv_index, &sprite_array->scale[i * multi_scale], &selected_vert, camera);
+			texture_divider = crayon_graphics_get_texture_divisor(2, rotation_val,
+				(vec2_f_t){sprite_array->spritesheet->texture_width,sprite_array->spritesheet->texture_height});
+
+			//For debugging
+				//Ranges from -400 to -464. Why is it negative?
+				//Divider is 64
+				//uv_index == 0
+			if(i == 4){graphics_tester_var = texture_offset;}
+
+			//The texture offset produced by the function feels constant
+				//The selected_vert should be one of the two vertexes to be modified
 
 			// texture_offset = 32;
+			// texture_offset = (camera->window_x - selected_vert.x)/sprite_array->scale[i * multi_scale].x;
 
 			//OLD
 			//The below command *is* scaling the correct side, this is good. This is consistent for ALL flips/rotations...
@@ -876,7 +885,12 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//NEW
 			//THIS could be it. Make a function that gets the texture dim given side/rot/flip and also for calculating offset
 				//This might also remove the shimmering? We'll see
-			// uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index]);
+			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index]);
+
+			// uvs[uv_index] += (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index]) - (texture_offset / texture_divider);	//Doesn't work
+			//This: Is the original distance between the two uvs in uv-space:
+				//(uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index])
+			//THe idea is we use the texture_offset (And maybe divider) to adjust that distance so it scales
 
 			//CROPPER PLAN
 			//Two functions:
@@ -891,7 +905,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		}
 		if(bounds & (1 << 1)){	//Left side
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4);
-			texture_offset = camera->window_x - selected_vert.x;
 
 			// texture_offset = 32;
 
@@ -905,7 +918,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		}
 		if(bounds & (1 << 2)){	//Bottom side
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
-			texture_offset = selected_vert.y - (camera->window_y + camera->window_height);
 
 			// texture_offset = 32;
 
@@ -919,7 +931,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		}
 		if(bounds & (1 << 3)){	//Top side
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
-			texture_offset = camera->window_y - selected_vert.y;
 			// texture_offset = 32;
 
 			//Crop v1
@@ -1335,16 +1346,33 @@ extern float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_
     return dims.y;   //height
 }
 
-extern float crayon_graphics_get_texture_offset(uint8_t uv_index, vec2_f_t * scale, vec2_f_t vert,
+//Try remove the scales
+// extern float crayon_graphics_get_texture_offset(uint8_t uv_index, vec2_f_t * scale, vec2_f_t * vert,
+// 	const crayon_viewport_t *camera){
+// 	switch(uv_index){
+// 		case 0:
+// 		return (camera->window_x - vert->x)/(float)scale->x;
+// 		case 1:
+// 		return (vert->y - (camera->window_y + camera->window_height))/(float)scale->y;
+// 		case 2:
+// 		return (vert->x - (camera->window_x + camera->window_width))/(float)scale->x;
+// 		case 3:
+// 		return (camera->window_y - vert->y)/(float)scale->y;
+// 	}
+// 	return 0;	//Shouldn't get here
+// }
+
+extern float crayon_graphics_get_texture_offset(uint8_t uv_index, vec2_f_t * scale, vec2_f_t * vert,
 	const crayon_viewport_t *camera){
 	switch(uv_index){
 		case 0:
-		return (camera->window_x - vert.x)/scale->x;
+		return (camera->window_x - vert->x);
 		case 1:
-		return (vert.y - (camera->window_y + camera->window_height))/scale->y;
+		return (vert->y - (camera->window_y + camera->window_height));
 		case 2:
-		return (vert.x - (camera->window_x + camera->window_width))/scale->x;
+		return (vert->x - (camera->window_x + camera->window_width));
 		case 3:
-		return (camera->window_y - vert.y)/scale->y;
+		return (camera->window_y - vert->y);
 	}
+	return 0;	//Shouldn't get here
 }
