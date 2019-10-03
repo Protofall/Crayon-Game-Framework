@@ -617,10 +617,11 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 	//Check if these vars are required
 	float texture_offset;
-	// uint8_t a, b;
+	float texture_divider;
 	// vec2_f_t rotated_verts[4];
 	// vec2_f_t verts[4];
 	vec2_f_t selected_vert;
+	uint8_t uv_index;
 
 	float uvs[4] = {0};	//u0, v0, u1, v1 (Set to zero to avoid compiler warnings)
 
@@ -856,18 +857,21 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		if(bounds & (1 << 0)){	//Right side
 
 			//Get the vert that's currently on the right side
+			uv_index = crayon_get_uv_index(2, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
-			// texture_offset = selected_vert.x - (camera->window_x + camera->window_width);
+			texture_offset = crayon_graphics_get_texture_offset(uv_index, &sprite_array->scale[i * multi_scale], selected_vert, camera);
+			texture_divider = crayon_graphics_get_texture_divisor(2, rotation_val,
+				(vec2_f_t){sprite_array->spritesheet->texture_width,sprite_array->spritesheet->texture_height});
 
+			//OLD
 			//The below command *is* scaling the correct side, this is good. This is consistent for ALL flips/rotations...
 				//I can simplify to just plus too
-			// uvs[crayon_get_uv_index(2, rotation_val, flip_val)] += (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] -
-			// 	uvs[crayon_get_uv_index(2, rotation_val, flip_val)])/2;
+			// uvs[uv_index] += (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index])/2;
 
+			//NEW
 			//THIS could be it. Make a function that gets the texture dim given side/rot/flip and also for calculating offset
 				//This might also remove the shimmering? We'll see
-			// uvs[crayon_get_uv_index(2, rotation_val, flip_val)] += (texture_offset / texture_dim) * 
-			// 	(uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[crayon_get_uv_index(2, rotation_val, flip_val)])/2;
+			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index]);
 
 			//CROPPER PLAN
 			//Two functions:
@@ -875,38 +879,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 				//			calculate_texture_offset(). Takes selected_vert, window_x/width or window_y/height, frame and rotation
 				// 			Calculate_uv(). Takes frame_uv vec, frame_dim vec, offset, texture dims and ( sign (Add or subtract) or rotation/flip )
 							//This is almost the same as before
-
-			//Crop u1
-			// uvs[(2 + rotation_val) % 4] -= (texture_offset / sprite_array->scale[i * multi_scale].x) /
-			// 	(float)sprite_array->spritesheet->texture_width;
-
-			//If we move positive, then we add to the uv and add by just window_x
-			//If we move negative, then we take from the uv by "window_x/width"
-
-			// if((flipped_val && rotation_val == 3) || (!flipped_val && rotation_val == 0)){
-			// 	uvs[2] -= (texture_offset / sprite_array->scale[i * multi_scale].x) /
-			// 	(float)sprite_array->spritesheet->texture_width;
-			// }
-			// if((flipped_val && rotation_val == 2) || (!flipped_val && rotation_val == 1)){
-			// 	;
-			// }
-			// if((flipped_val && rotation_val == 2) || (!flipped_val && rotation_val == 2)){
-			// 	;
-			// }
-			// if((flipped_val && rotation_val == 0) || (!flipped_val && rotation_val == 3)){
-			// 	uvs[2] -= (texture_offset / sprite_array->scale[i * multi_scale].x) /
-			// 	(float)sprite_array->spritesheet->texture_width;
-			// }
-
-			//The point of the UV cropping is to bring in a vert thats too far out
-
-
-			// uvs[?] = dir * crayon_graphics_crop_simple_uv();
-
-			// extern float crayon_graphics_crop_simple_uv(float frame_uv, uint16_t frame_dim, float texture_offset, float texture_dim,
-			// 	int8_t direction){
-			// 	return (frame_uv + frame_dim + (direction * texture_offset)) / (float)texture_dim;
-			// }
 
 			//Set the vert
 			crayon_graphics_set_sprite_vert_x(&vert, (4 + 1 - rotation_val) % 4, camera->window_x + camera->window_width);
@@ -1374,4 +1346,25 @@ extern uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t f
 	}
 
 	return side;
+}
+
+extern float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, vec2_f_t dims){
+    if((side % 2 == 0 && rotation_val % 2 == 0) || (side % 2 == 1 && rotation_val % 2 == 1)){
+        return dims.x;  //width
+    }
+    return dims.y;   //height
+}
+
+extern float crayon_graphics_get_texture_offset(uint8_t uv_index, vec2_f_t * scale, vec2_f_t vert,
+	const crayon_viewport_t *camera){
+	switch(uv_index){
+		case 0:
+		return (camera->window_x - vert.x)/scale->x;
+		case 1:
+		return (vert.y - camera->window_y + camera->window_height)/scale->y;
+		case 2:
+		return (vert.x - camera->window_x + camera->window_width)/scale->x;
+		case 3:
+		return (camera->window_y - vert.y)/scale->y;
+	}
 }

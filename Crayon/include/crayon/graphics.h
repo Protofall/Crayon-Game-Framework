@@ -133,5 +133,10 @@ extern void crayon_graphics_set_sprite_vert_y(pvr_sprite_txr_t *sprite, uint8_t 
 //Given a 90-degree-increment rotation, flip flag and side, it will return the correct index to modify
 extern uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t flip_val);
 
+extern float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, vec2_f_t dims);
+
+extern float crayon_graphics_get_texture_offset(uint8_t uv_index, vec2_f_t * scale, vec2_f_t vert,
+	const crayon_viewport_t *camera);
+
 
 #endif
