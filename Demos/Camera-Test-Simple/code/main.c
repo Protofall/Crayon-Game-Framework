@@ -95,9 +95,9 @@ int main(){
 	}
 
 	crayon_spritesheet_t Dwarf, Opaque, Man;
-	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw;
-	crayon_sprite_array_t Man_BG;
-	crayon_sprite_array_t Cam2_BG, Rainbow_Draw2;
+	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw, Man_BG;
+	crayon_sprite_array_t Cam_BGs[3];
+	crayon_sprite_array_t Rainbow_Draw2;
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P, Red_Man_P, Green_Man_P;
@@ -266,11 +266,11 @@ int main(){
 	crayon_memory_set_frame_uv(&Rainbow_Draw, 0, 0);
 
 	crayon_memory_init_sprite_array(&Rainbow_Draw2, &Opaque, 1, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Rainbow_Draw2.coord[0].x = Rainbow_Draw.coord[0].x;
-	Rainbow_Draw2.coord[0].y = Rainbow_Draw.coord[0].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10;
+	Rainbow_Draw2.coord[0].x = Rainbow_Draw.coord[0].x - 60;
+	Rainbow_Draw2.coord[0].y = Rainbow_Draw.coord[0].y;
 	Rainbow_Draw2.layer[0] = 17;
-	Rainbow_Draw2.scale[0].x = 8;
-	Rainbow_Draw2.scale[0].y = 8;
+	Rainbow_Draw2.scale[0].x = 1;
+	Rainbow_Draw2.scale[0].y = 1;
 	Rainbow_Draw2.flip[0] = 0;
 	Rainbow_Draw2.rotation[0] = 180;
 	Rainbow_Draw2.colour[0] = 0;
@@ -286,30 +286,52 @@ int main(){
 	Man_BG.rotation[0] = 0;
 	Man_BG.colour[0] = 0xFF000000;
 
-	crayon_memory_init_sprite_array(&Cam2_BG, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Cam2_BG.coord[0].x = 32;
-	Cam2_BG.coord[0].y = 32;
-	Cam2_BG.layer[0] = 1;
-	Cam2_BG.scale[0].x = 400;
-	Cam2_BG.scale[0].y = 300;
-	Cam2_BG.rotation[0] = 0;
-	Cam2_BG.colour[0] = 0xFF888888;
+	crayon_memory_init_sprite_array(&Cam_BGs[0], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	Cam_BGs[0].coord[0].x = 0;
+	Cam_BGs[0].coord[0].y = 0;
+	Cam_BGs[0].layer[0] = 1;
+	Cam_BGs[0].scale[0].x = 640;
+	Cam_BGs[0].scale[0].y = 480;
+	Cam_BGs[0].rotation[0] = 0;
+	Cam_BGs[0].colour[0] = 0xFF888888;
 
-	crayon_viewport_t camera1, camera2, camera3;
-	crayon_viewport_t * current_camera = &camera2;
+	crayon_memory_init_sprite_array(&Cam_BGs[1], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	Cam_BGs[1].coord[0].x = 32;
+	Cam_BGs[1].coord[0].y = 32;
+	Cam_BGs[1].layer[0] = 1;
+	Cam_BGs[1].scale[0].x = 400;
+	Cam_BGs[1].scale[0].y = 300;
+	Cam_BGs[1].rotation[0] = 0;
+	Cam_BGs[1].colour[0] = 0xFF888888;
+
+	crayon_memory_init_sprite_array(&Cam_BGs[2], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	Cam_BGs[2].coord[0].x = 160;
+	Cam_BGs[2].coord[0].y = 120;
+	Cam_BGs[2].layer[0] = 1;
+	Cam_BGs[2].scale[0].x = 320;
+	Cam_BGs[2].scale[0].y = 240;
+	Cam_BGs[2].rotation[0] = 0;
+	Cam_BGs[2].colour[0] = 0xFF888888;
+
+	uint8_t current_camera_id = 1;
+	crayon_viewport_t cameras[3];
+	crayon_viewport_t * current_camera = &cameras[current_camera_id];
 
 	//This is the same as no camera
-	crayon_memory_init_camera(&camera1, (vec2_f_t){0,0}, (vec2_u16_t){640,480},
-		(vec2_u16_t){0,0}, (vec2_u16_t){640,480}, 0);
+	crayon_memory_init_camera(&cameras[0], (vec2_f_t){Cam_BGs[0].coord[0].x,Cam_BGs[0].coord[0].y},
+		(vec2_u16_t){Cam_BGs[0].scale[0].x,Cam_BGs[0].scale[0].y},
+		(vec2_u16_t){Cam_BGs[0].coord[0].x,Cam_BGs[0].coord[0].y},
+		(vec2_u16_t){Cam_BGs[0].scale[0].x,Cam_BGs[0].scale[0].y}, 0);
 
 	//This is the basic view, no scaling, but we crop everything outside the inner 300/200 box
-	crayon_memory_init_camera(&camera2, (vec2_f_t){Cam2_BG.coord[0].x,Cam2_BG.coord[0].y},
-		(vec2_u16_t){Cam2_BG.scale[0].x,Cam2_BG.scale[0].y},
-		(vec2_u16_t){Cam2_BG.coord[0].x,Cam2_BG.coord[0].y},
-		(vec2_u16_t){Cam2_BG.scale[0].x,Cam2_BG.scale[0].y}, 0);
+	crayon_memory_init_camera(&cameras[1], (vec2_f_t){Cam_BGs[1].coord[0].x,Cam_BGs[1].coord[0].y},
+		(vec2_u16_t){Cam_BGs[1].scale[0].x,Cam_BGs[1].scale[0].y},
+		(vec2_u16_t){Cam_BGs[1].coord[0].x,Cam_BGs[1].coord[0].y},
+		(vec2_u16_t){Cam_BGs[1].scale[0].x,Cam_BGs[1].scale[0].y}, 0);
 
 	//Magnify the selection 2 times
-	crayon_memory_init_camera(&camera3, (vec2_f_t){160,120}, (vec2_u16_t){320,240},
+	crayon_memory_init_camera(&cameras[2], (vec2_f_t){Cam_BGs[1].coord[0].x,Cam_BGs[1].coord[0].y},
+		(vec2_u16_t){Cam_BGs[1].scale[0].x,Cam_BGs[1].scale[0].y},
 		(vec2_u16_t){0,0}, (vec2_u16_t){640,480}, 0);
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
@@ -319,10 +341,15 @@ int main(){
 	crayon_graphics_setup_palette(&Red_Man_P);
 	crayon_graphics_setup_palette(&Green_Man_P);
 
-	// char snum[20];
+	char snum1[20];
+	char snum2[20];
+	char snum3[20];
+	for(i = 0; i < 8; i++){
+		__GRAPHICS_DEBUG_VARIABLES[i] = 0;
+	}
 
 	pvr_stats_t stats;
-	// uint32_t previous_buttons[4] = {0};
+	uint32_t previous_buttons[4] = {0};
 	while(1){
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -341,7 +368,13 @@ int main(){
 			current_camera->world_y -= 1;
 		}
 
-		// previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
+		if((st->buttons & CONT_A) && !(previous_buttons[__dev->port] & CONT_A)){
+			current_camera_id += 1;
+			current_camera_id %= 3;
+			current_camera = &cameras[current_camera_id];
+		}
+
+		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
 		MAPLE_FOREACH_END()
 
 		pvr_scene_begin();
@@ -406,17 +439,27 @@ int main(){
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
 			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
-			// crayon_graphics_draw_sprites(&Rainbow_Draw2, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Rainbow_Draw2, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 
 			//Represents the boundry box for the red man when not rotated
 			// crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, 0);
 
 			//This represents camera 2's space
-			crayon_graphics_draw_sprites(&Cam2_BG, NULL, PVR_LIST_OP_POLY, 0);
-			
-			// sprintf(snum, "%.9f", graphics_tester_var);
-			// crayon_graphics_draw_text_mono(snum, &BIOS, PVR_LIST_PT_POLY, 0, 400, 30, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_sprites(&Cam_BGs[current_camera_id], NULL, PVR_LIST_OP_POLY, 0);
+
+			// sprintf(snum1, "Left %.9f", __GRAPHICS_DEBUG_VARIABLES[0]);
+			// sprintf(snum2, "Top %.9f", __GRAPHICS_DEBUG_VARIABLES[1]);
+			// crayon_graphics_draw_text_mono(snum1, &BIOS, PVR_LIST_PT_POLY, 0, 400, 30, 1, 1, BIOS_P.palette_id);
+			// crayon_graphics_draw_text_mono(snum2, &BIOS, PVR_LIST_PT_POLY, 0, 400 + BIOS.char_height, 30, 1, 1, BIOS_P.palette_id);
+
+			sprintf(snum1, "X: %.2f", current_camera->world_x);
+			sprintf(snum2, "Y: %.2f", current_camera->world_y);
+			sprintf(snum3, "Camera ID: %d", current_camera_id);
+			crayon_graphics_draw_text_mono("World Coords:", &BIOS, PVR_LIST_PT_POLY, 0, 420 - BIOS.char_height, 30, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono(snum1, &BIOS, PVR_LIST_PT_POLY, 0, 420, 30, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono(snum2, &BIOS, PVR_LIST_PT_POLY, 0, 420 + BIOS.char_height, 30, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono(snum3, &BIOS, PVR_LIST_PT_POLY, 0, 420 + (2 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
 
 		pvr_list_finish();
 

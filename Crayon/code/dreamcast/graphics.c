@@ -609,18 +609,15 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	if(camera->window_height == 480){crop = crop & (~ (1 << 2));}
 	if(camera->window_y == 0){crop = crop & (~ (1 << 3));}
 
+	//Used for cropping
 	uint8_t bounds = 0;
-
 	uint8_t cropped = 0;
 	uint8_t flip_val = 0;
 	uint8_t rotation_val = 0;
 
-	//Check if these vars are required
+	//Used in calcuating the new UV
 	float texture_offset;
 	float texture_divider;
-	uint8_t tester = 0;
-	// vec2_f_t rotated_verts[4];
-	// vec2_f_t verts[4];
 	vec2_f_t selected_vert;
 	uint8_t uv_index;
 
@@ -805,13 +802,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			vert.ay = vert.dy;
 		}
 
-		// rotated_verts[(0+rotation_val)%4] = crayon_graphics_get_sprite_vert(vert, 0);
-		// rotated_verts[(1+rotation_val)%4] = crayon_graphics_get_sprite_vert(vert, 1);
-		// rotated_verts[(2+rotation_val)%4] = crayon_graphics_get_sprite_vert(vert, 2);
-		// rotated_verts[(3+rotation_val)%4] = crayon_graphics_get_sprite_vert(vert, 3);
-
-		//DOESN'T FULLY DETECT NOW AFTER CHANGE
-			//I swapped verts 1 and 3 (zero indexed) and that looks good
 		//Verts c and d are swapped so its in Z order instead of "Backwards C" order
 		bounds = crayon_graphics_check_bounds((vec2_f_t[4]){(vec2_f_t){camera->window_x,camera->window_y},
 			(vec2_f_t){camera->window_x+camera->window_width,camera->window_y},
@@ -821,17 +811,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 				crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4),
 				crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4),
 				crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4)});
-
-		//Order
-		/*
-
-		0:	a b		90:	d a		180:c d		270:	b c
-			d c			c b			b a				a d
-
-		Z order is
-		0:	0 1		90:	3 0		180:2 3		270:	1 2
-			2 3			2 1			1 0				0 3
-		*/
 
 		//If OOB then don't draw
 		if(bounds & (1 << 4)){continue;}
@@ -917,14 +896,9 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		}
 
 		//Signal to next item we just modified the uvs and verts via cropping so we need to recalculate them
-		// if(bounds){
-		// 	cropped = 1;
-		// }
-		// else{
-		// 	cropped = 0;
-		// }
 		cropped = (bounds) ? 1 : 0;
 
+		//Draw the sprite
 		pvr_prim(&vert, sizeof(vert));
 
 	}
