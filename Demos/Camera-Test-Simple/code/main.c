@@ -313,7 +313,7 @@ int main(){
 	Cam_BGs[2].rotation[0] = 0;
 	Cam_BGs[2].colour[0] = 0xFF888888;
 
-	uint8_t current_camera_id = 1;
+	uint8_t current_camera_id = 2;
 	crayon_viewport_t cameras[3];
 	crayon_viewport_t * current_camera = &cameras[current_camera_id];
 
@@ -329,10 +329,11 @@ int main(){
 		(vec2_u16_t){Cam_BGs[1].coord[0].x,Cam_BGs[1].coord[0].y},
 		(vec2_u16_t){Cam_BGs[1].scale[0].x,Cam_BGs[1].scale[0].y}, 0);
 
-	//Magnify the selection 2 times
-	crayon_memory_init_camera(&cameras[2], (vec2_f_t){Cam_BGs[1].coord[0].x,Cam_BGs[1].coord[0].y},
-		(vec2_u16_t){Cam_BGs[1].scale[0].x,Cam_BGs[1].scale[0].y},
-		(vec2_u16_t){0,0}, (vec2_u16_t){640,480}, 0);
+	//Magnify the selectioned zone (160,120 to 480, 360) The world is half the size of the window
+	crayon_memory_init_camera(&cameras[2], (vec2_f_t){0,0},
+		(vec2_u16_t){640,480},
+		(vec2_u16_t){Cam_BGs[2].coord[0].x,Cam_BGs[2].coord[0].y},
+		(vec2_u16_t){Cam_BGs[2].scale[0].x,Cam_BGs[2].scale[0].y}, 0);
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 

@@ -579,24 +579,6 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 	return 0;
 }
 
-// typedef struct crayon_viewport_t{
-// 	//Top left of the world region and dimensions
-// 	float world_x;	//Must be a float since the draw position array is a bunch of floats
-// 	float world_y;
-// 	uint16_t world_width;
-// 	uint16_t world_height;
-
-// 	//The scrolling modifier
-// 	float world_movement_factor;
-
-// 	//Top left of where to render to on screen and dimensions
-// 		//For DC these can all be uint16_t's. For the PC port I think uint16_t is still fine even with larger monitors because a uint16_t is 65535 at most and that still supports 8K (And possibly higher)
-// 	uint16_t window_x;
-// 	uint16_t window_y;
-// 	uint16_t window_width;
-// 	uint16_t window_height;
-// } crayon_viewport_t;
-
 extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode){
 
@@ -747,15 +729,21 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		//Imagine a "goto verts_normal;" for this little bit
 			//I couldn't actually do that since the verts wouldn't be set if the rotation aren't checked
 			//Hence it just flows here naturally
-
-		vert.ax = trunc(sprite_array->coord[i].x - camera->world_x + camera->window_x);
-		vert.ay = trunc(sprite_array->coord[i].y - camera->world_y + camera->window_y);
-		vert.bx = vert.ax + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
+		//NOTE: we don't need to trunc the camera's window vars because they're all ints
+		vert.ax = trunc((sprite_array->coord[i].x - camera->world_x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+		vert.ay = trunc((sprite_array->coord[i].y - camera->world_y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+		vert.bx = vert.ax + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
 		vert.by = vert.ay;
 		vert.cx = vert.bx;
-		vert.cy = vert.ay + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
+		vert.cy = vert.ay + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_height / (float)camera->world_height));
 		vert.dx = vert.ax;
 		vert.dy = vert.cy;
+
+		//The camera init function is "world_x/y" then "world_w/h" then "window_x/y" then "window_w/h"
+		//For camera 3 we have both the x/y's being at 160,120. The window_w/h is 640 by 480 and the world_w/h is 320 by 240
+
+		// (camera->window_width / camera->world_width)
+ 		// (camera->window_height / camera->world_height)
 
 		//These blocks act as the rotation
 		if(0){
@@ -766,24 +754,27 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 				//Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.dx = trunc(sprite_array->coord[i].x - camera->world_x + camera->window_x) + ((sprite_array->scale[i * multi_scale].y * diff) / 2);
-			vert.dy = trunc(sprite_array->coord[i].y - camera->world_y + camera->window_y) - ((sprite_array->scale[i * multi_scale].x * diff) / 2);
-			vert.ax = vert.dx + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
+			// * (camera->window_height / (float)camera->world_height)
+			// * (camera->window_width / (float)camera->world_width)
+
+			vert.dx = trunc((sprite_array->coord[i].x - camera->world_x + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.dy = trunc((sprite_array->coord[i].y - camera->world_y - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.ax = vert.dx + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_width / (float)camera->world_width));
 			vert.ay = vert.dy;
 			vert.bx = vert.ax;
-			vert.by = vert.dy + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
+			vert.by = vert.dy + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_height / (float)camera->world_height));
 			vert.cx = vert.dx;
 			vert.cy = vert.by;
 		}
 		if(0){
 			verts_rotated_180:	;
 
-			vert.cx = trunc(sprite_array->coord[i].x - camera->world_x + camera->window_x);
-			vert.cy = trunc(sprite_array->coord[i].y - camera->world_y + camera->window_y);
-			vert.dx = vert.cx + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
+			vert.cx = trunc((sprite_array->coord[i].x - camera->world_x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.cy = trunc((sprite_array->coord[i].y - camera->world_y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.dx = vert.cx + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
 			vert.dy = vert.cy;
 			vert.ax = vert.dx;
-			vert.ay = vert.cy + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
+			vert.ay = vert.cy + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_height / (float)camera->world_height));
 			vert.bx = vert.cx;
 			vert.by = vert.ay;
 		}
@@ -792,12 +783,12 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.bx = trunc(sprite_array->coord[i].x - camera->world_x + camera->window_x) + ((sprite_array->scale[i * multi_scale].y * diff) / 2);
-			vert.by = trunc(sprite_array->coord[i].y - camera->world_y + camera->window_y) - ((sprite_array->scale[i * multi_scale].x * diff) / 2);
-			vert.cx = vert.bx + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
+			vert.bx = trunc((sprite_array->coord[i].x - camera->world_x + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.by = trunc((sprite_array->coord[i].y - camera->world_y - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.cx = vert.bx + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_width / (float)camera->world_width));
 			vert.cy = vert.by;
 			vert.dx = vert.cx;
-			vert.dy = vert.by + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
+			vert.dy = vert.by + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_height / (float)camera->world_height));
 			vert.ax = vert.bx;
 			vert.ay = vert.dy;
 		}
@@ -1285,13 +1276,13 @@ extern float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_
 extern float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, vec2_f_t * scale, const crayon_viewport_t *camera){
 	switch(side){
 		case 0:
-		return (camera->window_x - vert->x)/scale->x;
+		return (camera->world_width/camera->window_width) * (camera->window_x - vert->x)/scale->x;
 		case 1:
-		return (camera->window_y - vert->y)/scale->y;
+		return (camera->world_height/camera->window_height) * (camera->window_y - vert->y)/scale->y;
 		case 2:
-		return (vert->x - (camera->window_x + camera->window_width))/scale->x;
+		return (camera->world_width/camera->window_width) * (vert->x - (camera->window_x + camera->window_width))/scale->x;
 		case 3:
-		return (vert->y - (camera->window_y + camera->window_height))/scale->y;
+		return (camera->world_height/camera->window_height) * (vert->y - (camera->window_y + camera->window_height))/scale->y;
 	}
 	return 0;	//Shouldn't get here
 }
