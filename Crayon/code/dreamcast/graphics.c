@@ -849,9 +849,9 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//Get the vert that's currently on the right side
 			uv_index = crayon_get_uv_index(2, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
-			texture_offset = crayon_graphics_get_texture_offset(2, &selected_vert, camera);
+			texture_offset = crayon_graphics_get_texture_offset(2, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
 			texture_divider = crayon_graphics_get_texture_divisor(2, rotation_val,
-				(vec2_f_t){sprite_array->spritesheet->texture_width,sprite_array->spritesheet->texture_height});
+				(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
 
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index]);
 
@@ -864,9 +864,9 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//Get the vert that's currently on the left side
 			uv_index = crayon_get_uv_index(0, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4);
-			texture_offset = crayon_graphics_get_texture_offset(0, &selected_vert, camera);
+			texture_offset = crayon_graphics_get_texture_offset(0, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
 			texture_divider = crayon_graphics_get_texture_divisor(0, rotation_val,
-				(vec2_f_t){sprite_array->spritesheet->texture_width,sprite_array->spritesheet->texture_height});
+				(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
 
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(2, rotation_val, flip_val)] - uvs[uv_index]);
 
@@ -879,9 +879,9 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//Get the vert that's currently on the bottom side
 			uv_index = crayon_get_uv_index(3, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
-			texture_offset = crayon_graphics_get_texture_offset(3, &selected_vert, camera);
+			texture_offset = crayon_graphics_get_texture_offset(3, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
 			texture_divider = crayon_graphics_get_texture_divisor(3, rotation_val,
-				(vec2_f_t){sprite_array->spritesheet->texture_width,sprite_array->spritesheet->texture_height});
+				(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
 
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(1, rotation_val, flip_val)] - uvs[uv_index]);
 
@@ -894,9 +894,9 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//Get uv thats on top side
 			uv_index = crayon_get_uv_index(1, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
-			texture_offset = crayon_graphics_get_texture_offset(1, &selected_vert, camera);
+			texture_offset = crayon_graphics_get_texture_offset(1, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
 			texture_divider = crayon_graphics_get_texture_divisor(1, rotation_val,
-				(vec2_f_t){sprite_array->spritesheet->texture_width,sprite_array->spritesheet->texture_height});
+				(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
 
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(3, rotation_val, flip_val)] - uvs[uv_index]);
 
@@ -1307,16 +1307,16 @@ extern float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_
     return dims.y;   //height
 }
 
-extern float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, const crayon_viewport_t *camera){
+extern float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, vec2_f_t * scale, const crayon_viewport_t *camera){
 	switch(side){
 		case 0:
-		return (camera->window_x - vert->x);
+		return (camera->window_x - vert->x)/scale->x;
 		case 1:
-		return (camera->window_y - vert->y);
+		return (camera->window_y - vert->y)/scale->y;
 		case 2:
-		return (vert->x - (camera->window_x + camera->window_width));
+		return (vert->x - (camera->window_x + camera->window_width))/scale->x;
 		case 3:
-		return (vert->y - (camera->window_y + camera->window_height));
+		return (vert->y - (camera->window_y + camera->window_height))/scale->y;
 	}
 	return 0;	//Shouldn't get here
 }

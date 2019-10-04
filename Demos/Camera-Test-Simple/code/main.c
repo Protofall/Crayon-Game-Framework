@@ -120,26 +120,19 @@ int main(){
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
-	//Basic test to show valid_string checking. Top fails, bottom works
-	// const char * string = " Weird littole 347 test strin\ng \thellow";
-	const char * string = " Weird littole 347 test strin\ng hellow~3";
-	if(crayon_graphics_valid_string(string, Tahoma.num_chars)){
-		return 1;
-	}
-
 	//Draws 4 faces and rotates between all 12 faces
 	crayon_memory_init_sprite_array(&Frames_Draw, &Opaque, 0, NULL, 4, 16, CRAY_MULTI_FRAME, PVR_FILTER_NONE, 0);
-	Frames_Draw.coord[0].x = 440;
-	Frames_Draw.coord[0].y = 20;
-	Frames_Draw.coord[1].x = Frames_Draw.coord[0].x + 32;
+	Frames_Draw.scale[0].x = 3;
+	Frames_Draw.scale[0].y = 3;
+	Frames_Draw.coord[0].x = 380;
+	Frames_Draw.coord[0].y = 50;
+	Frames_Draw.coord[1].x = Frames_Draw.coord[0].x + (Frames_Draw.scale[0].x * Opaque.animation[0].frame_width);
 	Frames_Draw.coord[1].y = Frames_Draw.coord[0].y;
 	Frames_Draw.coord[2].x = Frames_Draw.coord[0].x;
-	Frames_Draw.coord[2].y = Frames_Draw.coord[0].y + 32;
+	Frames_Draw.coord[2].y = Frames_Draw.coord[0].y + (Frames_Draw.scale[0].y * Opaque.animation[0].frame_height);
 	Frames_Draw.coord[3].x = Frames_Draw.coord[1].x;
 	Frames_Draw.coord[3].y = Frames_Draw.coord[2].y;
 	Frames_Draw.layer[0] = 18;
-	Frames_Draw.scale[0].x = 2;
-	Frames_Draw.scale[0].y = 2;
 	Frames_Draw.flip[0] = 0;
 	Frames_Draw.rotation[0] = 0;
 	Frames_Draw.colour[0] = 0;
@@ -326,8 +319,7 @@ int main(){
 	crayon_graphics_setup_palette(&Red_Man_P);
 	crayon_graphics_setup_palette(&Green_Man_P);
 
-	graphics_tester_var = 0;
-	char snum[20];
+	// char snum[20];
 
 	pvr_stats_t stats;
 	// uint32_t previous_buttons[4] = {0};
@@ -413,15 +405,16 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
+			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 			// crayon_graphics_draw_sprites(&Rainbow_Draw2, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 
 			//Represents the boundry box for the red man when not rotated
 			// crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, 0);
 
 			//This represents camera 2's space
 			crayon_graphics_draw_sprites(&Cam2_BG, NULL, PVR_LIST_OP_POLY, 0);
+			
 			// sprintf(snum, "%.9f", graphics_tester_var);
 			// crayon_graphics_draw_text_mono(snum, &BIOS, PVR_LIST_PT_POLY, 0, 400, 30, 1, 1, BIOS_P.palette_id);
 
