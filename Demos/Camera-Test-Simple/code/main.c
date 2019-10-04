@@ -96,7 +96,7 @@ int main(){
 
 	crayon_spritesheet_t Dwarf, Opaque, Man;
 	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw, Man_BG;
-	crayon_sprite_array_t Cam_BGs[3];
+	crayon_sprite_array_t Cam_BGs[4];
 	crayon_sprite_array_t Rainbow_Draw2;
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
@@ -313,8 +313,17 @@ int main(){
 	Cam_BGs[2].rotation[0] = 0;
 	Cam_BGs[2].colour[0] = 0xFF888888;
 
-	uint8_t current_camera_id = 2;
-	crayon_viewport_t cameras[3];
+	crayon_memory_init_sprite_array(&Cam_BGs[3], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	Cam_BGs[3].coord[0].x = 0;
+	Cam_BGs[3].coord[0].y = 0;
+	Cam_BGs[3].layer[0] = 1;
+	Cam_BGs[3].scale[0].x = 640;
+	Cam_BGs[3].scale[0].y = 480;
+	Cam_BGs[3].rotation[0] = 0;
+	Cam_BGs[3].colour[0] = 0xFF888888;
+
+	uint8_t current_camera_id = 0;
+	crayon_viewport_t cameras[4];
 	crayon_viewport_t * current_camera = &cameras[current_camera_id];
 
 	//This is the same as no camera
@@ -334,6 +343,11 @@ int main(){
 		(vec2_u16_t){640,480},
 		(vec2_u16_t){Cam_BGs[2].coord[0].x,Cam_BGs[2].coord[0].y},
 		(vec2_u16_t){Cam_BGs[2].scale[0].x,Cam_BGs[2].scale[0].y}, 0);
+
+	crayon_memory_init_camera(&cameras[3], (vec2_f_t){0,0},
+		(vec2_u16_t){320,240},
+		(vec2_u16_t){Cam_BGs[3].coord[0].x,Cam_BGs[3].coord[0].y},
+		(vec2_u16_t){Cam_BGs[3].scale[0].x,Cam_BGs[3].scale[0].y}, 0);
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
@@ -371,9 +385,17 @@ int main(){
 
 		if((st->buttons & CONT_A) && !(previous_buttons[__dev->port] & CONT_A)){
 			current_camera_id += 1;
-			current_camera_id %= 3;
+			current_camera_id %= 4;
 			current_camera = &cameras[current_camera_id];
 		}
+
+		// if((st->buttons & CONT_B) && !(previous_buttons[__dev->port] & CONT_B)){
+		// 	;
+		// }
+
+		// if((st->buttons & CONT_X) && !(previous_buttons[__dev->port] & CONT_X)){
+		// 	;
+		// }
 
 		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
 		MAPLE_FOREACH_END()
