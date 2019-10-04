@@ -135,7 +135,7 @@ extern uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t f
 
 extern float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, vec2_f_t dims);
 
-extern float crayon_graphics_get_texture_offset(uint8_t uv_index, vec2_f_t * vert, const crayon_viewport_t *camera);
+extern float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, const crayon_viewport_t *camera);
 
 float graphics_tester_var;
 
