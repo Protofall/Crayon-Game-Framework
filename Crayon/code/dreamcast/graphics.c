@@ -916,13 +916,14 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
 		}
 
-		//Signal to next item we just modified the base u/v's by cropping
-		if(bounds){
-			cropped = 1;
-		}
-		else{
-			cropped = 0;
-		}
+		//Signal to next item we just modified the uvs and verts via cropping so we need to recalculate them
+		// if(bounds){
+		// 	cropped = 1;
+		// }
+		// else{
+		// 	cropped = 0;
+		// }
+		cropped = (bounds) ? 1 : 0;
 
 		pvr_prim(&vert, sizeof(vert));
 
