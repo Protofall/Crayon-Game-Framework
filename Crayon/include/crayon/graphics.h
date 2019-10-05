@@ -119,15 +119,9 @@ extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
 //NOTE: Verts must be passed in in Z order
 extern uint8_t crayon_graphics_check_bounds(vec2_f_t vC[4], vec2_f_t vO[4]);
 
-extern float crayon_graphics_crop_simple_uv(float frame_uv, uint16_t frame_dim, float texture_offset, float texture_dim,
-	int8_t direction);
-
 //This function will return 0 (0.5 or less) if the number would be rounded down and
 //returns 1 ( more than 0.5) if it would be rounded up.
 extern uint8_t round_way(float value);
-
-//Takes the texture coord (Coordinate of an edge on the sub-texture) and returns the float version
-extern float crayon_graphics_texture_coord_converter(uint16_t value, uint16_t dimension);
 
 //vert is the nth vert (Backwards C shaped)
 extern vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t sprite, uint8_t vert);

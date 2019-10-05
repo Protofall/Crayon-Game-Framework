@@ -363,6 +363,9 @@ int main(){
 		__GRAPHICS_DEBUG_VARIABLES[i] = 0;
 	}
 
+	cameras[1].world_x += 0.5;
+	cameras[2].world_x += 0.5;
+
 	pvr_stats_t stats;
 	uint32_t previous_buttons[4] = {0};
 	while(1){

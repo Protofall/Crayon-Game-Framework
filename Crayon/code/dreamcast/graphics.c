@@ -730,8 +730,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//I couldn't actually do that since the verts wouldn't be set if the rotation aren't checked
 			//Hence it just flows here naturally
 		//NOTE: we don't need to trunc the camera's window vars because they're all ints
-		vert.ax = trunc((sprite_array->coord[i].x - camera->world_x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-		vert.ay = trunc((sprite_array->coord[i].y - camera->world_y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+		vert.ax = trunc((sprite_array->coord[i].x - trunc(camera->world_x)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+		vert.ay = trunc((sprite_array->coord[i].y - trunc(camera->world_y)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 		vert.bx = vert.ax + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
 		vert.by = vert.ay;
 		vert.cx = vert.bx;
@@ -754,11 +754,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 				//Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			// * (camera->window_height / (float)camera->world_height)
-			// * (camera->window_width / (float)camera->world_width)
-
-			vert.dx = trunc((sprite_array->coord[i].x - camera->world_x + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.dy = trunc((sprite_array->coord[i].y - camera->world_y - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.dx = trunc((sprite_array->coord[i].x - trunc(camera->world_x) + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.dy = trunc((sprite_array->coord[i].y - trunc(camera->world_y) - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 			vert.ax = vert.dx + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_width / (float)camera->world_width));
 			vert.ay = vert.dy;
 			vert.bx = vert.ax;
@@ -769,8 +766,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		if(0){
 			verts_rotated_180:	;
 
-			vert.cx = trunc((sprite_array->coord[i].x - camera->world_x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.cy = trunc((sprite_array->coord[i].y - camera->world_y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.cx = trunc((sprite_array->coord[i].x - trunc(camera->world_x)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.cy = trunc((sprite_array->coord[i].y - trunc(camera->world_y)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 			vert.dx = vert.cx + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
 			vert.dy = vert.cy;
 			vert.ax = vert.dx;
@@ -783,8 +780,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.bx = trunc((sprite_array->coord[i].x - camera->world_x + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.by = trunc((sprite_array->coord[i].y - camera->world_y - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.bx = trunc((sprite_array->coord[i].x - trunc(camera->world_x) + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.by = trunc((sprite_array->coord[i].y - trunc(camera->world_y) - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 			vert.cx = vert.bx + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_width / (float)camera->world_width));
 			vert.cy = vert.by;
 			vert.dx = vert.cx;
@@ -793,26 +790,28 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			vert.ay = vert.dy;
 		}
 
-		//Verts c and d are swapped so its in Z order instead of "Backwards C" order
-		bounds = crayon_graphics_check_bounds((vec2_f_t[4]){(vec2_f_t){camera->window_x,camera->window_y},
-			(vec2_f_t){camera->window_x+camera->window_width,camera->window_y},
-			(vec2_f_t){camera->window_x,camera->window_y+camera->window_height},
-			(vec2_f_t){camera->window_x+camera->window_width,camera->window_y+camera->window_height}},
-			(vec2_f_t[4]){crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4),
-				crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4),
-				crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4),
-				crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4)});
+		//If we don't need to crop at all, don't both doing the checks. bounds is zero by default
+		if(crop){
+			//Verts c and d are swapped so its in Z order instead of "Backwards C" order
+			bounds = crayon_graphics_check_bounds((vec2_f_t[4]){(vec2_f_t){camera->window_x,camera->window_y},
+				(vec2_f_t){camera->window_x+camera->window_width,camera->window_y},
+				(vec2_f_t){camera->window_x,camera->window_y+camera->window_height},
+				(vec2_f_t){camera->window_x+camera->window_width,camera->window_y+camera->window_height}},
+				(vec2_f_t[4]){crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4),
+					crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4),
+					crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4),
+					crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4)});
 
-		//If OOB then don't draw
-		if(bounds & (1 << 4)){continue;}
+			//If OOB then don't draw
+			if(bounds & (1 << 4)){continue;}
+			bounds &= crop;		//To simplify the if checks
+		}
 
 //uvs[] is LTRB
 //verts[] is in 0132 (The numbers count in Z position)
 //Considering the element we need, its:
 //uvs[] R,T,L,B
 
-		//To simplify the if checks
-		bounds &= crop;
 		if(bounds & (1 << 0)){	//Right side
 			//I don't fully understand why we use the magic number 2, maybe its the opposite of 0 (0 == R, 2 == L)
 
@@ -1188,17 +1187,8 @@ extern uint8_t crayon_graphics_check_bounds(vec2_f_t vC[4], vec2_f_t vO[4]){
 	return bounds;
 }
 
-extern float crayon_graphics_crop_simple_uv(float frame_uv, uint16_t frame_dim, float texture_offset, float texture_dim,
-	int8_t direction){
-	return (frame_uv + frame_dim + (direction * texture_offset)) / (float)texture_dim;
-}
-
 extern uint8_t round_way(float value){
 	return (value - (int)value > 0.5) ? 1 : 0;
-}
-
-extern float crayon_graphics_texture_coord_converter(uint16_t value, uint16_t dimension){
-	return value / (float)dimension;
 }
 
 //NOTE: This is in the backwards C format (C is bottom right and D is bottom left verts)
