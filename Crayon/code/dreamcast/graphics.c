@@ -820,7 +820,7 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 			//Get the vert that's currently on the right side
 			uv_index = crayon_get_uv_index(2, rotation_val, flip_val);
-			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
+			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 			texture_offset = crayon_graphics_get_texture_offset(2, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
 			texture_divider = crayon_graphics_get_texture_divisor(2, rotation_val,
 				(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
@@ -828,14 +828,14 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index]);
 
 			//Set the vert
-			crayon_graphics_set_sprite_vert_x(&vert, (4 + 1 - rotation_val) % 4, camera->window_x + camera->window_width);
 			crayon_graphics_set_sprite_vert_x(&vert, (4 + 2 - rotation_val) % 4, camera->window_x + camera->window_width);
+			crayon_graphics_set_sprite_vert_x(&vert, (4 + 1 - rotation_val) % 4, camera->window_x + camera->window_width);
 		}
 		if(bounds & (1 << 1)){	//Left side
 
 			//Get the vert that's currently on the left side
 			uv_index = crayon_get_uv_index(0, rotation_val, flip_val);
-			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4);
+			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
 			texture_offset = crayon_graphics_get_texture_offset(0, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
 			texture_divider = crayon_graphics_get_texture_divisor(0, rotation_val,
 				(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
@@ -850,7 +850,7 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 			//Get the vert that's currently on the bottom side
 			uv_index = crayon_get_uv_index(3, rotation_val, flip_val);
-			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
+			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4);
 			texture_offset = crayon_graphics_get_texture_offset(3, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
 			texture_divider = crayon_graphics_get_texture_divisor(3, rotation_val,
 				(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
@@ -858,14 +858,14 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(1, rotation_val, flip_val)] - uvs[uv_index]);
 
 			//Set the vert
-			crayon_graphics_set_sprite_vert_y(&vert, (4 + 2 - rotation_val) % 4, camera->window_y + camera->window_height);
 			crayon_graphics_set_sprite_vert_y(&vert, (4 + 3 - rotation_val) % 4, camera->window_y + camera->window_height);
+			crayon_graphics_set_sprite_vert_y(&vert, (4 + 2 - rotation_val) % 4, camera->window_y + camera->window_height);
 		}
 		if(bounds & (1 << 3)){	//Top side
 
 			//Get uv thats on top side
 			uv_index = crayon_get_uv_index(1, rotation_val, flip_val);
-			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
+			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
 			texture_offset = crayon_graphics_get_texture_offset(1, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
 			texture_divider = crayon_graphics_get_texture_divisor(1, rotation_val,
 				(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
@@ -873,8 +873,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(3, rotation_val, flip_val)] - uvs[uv_index]);
 
 			//Set the vert
-			crayon_graphics_set_sprite_vert_y(&vert, (4 + 0 - rotation_val) % 4, camera->window_y);
 			crayon_graphics_set_sprite_vert_y(&vert, (4 + 1 - rotation_val) % 4, camera->window_y);
+			crayon_graphics_set_sprite_vert_y(&vert, (4 + 0 - rotation_val) % 4, camera->window_y);
 		}
 
 		if(flip_val){
