@@ -117,7 +117,9 @@ extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
 //---- TBLR (Top, Bottom, Left, Right)
 //If its outside the camera, then the highest bit is set
 //NOTE: Verts must be passed in in Z order
-extern uint8_t crayon_graphics_check_bounds(vec2_f_t vC[4], vec2_f_t vO[4]);
+extern uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]);
+
+extern uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4]);
 
 //This function will return 0 (0.5 or less) if the number would be rounded down and
 //returns 1 ( more than 0.5) if it would be rounded up.
