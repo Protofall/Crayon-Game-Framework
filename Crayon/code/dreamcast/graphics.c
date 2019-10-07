@@ -597,6 +597,9 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	uint8_t flip_val = 0;
 	uint8_t rotation_val = 0;
 
+	vec2_f_t current_coord;
+	vec2_f_t world_coord = (vec2_f_t){trunc(camera->world_x),trunc(camera->world_y)};
+
 	//Used in calcuating the new UV
 	float texture_offset;
 	float texture_divider;
@@ -671,6 +674,11 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	pvr_sprite_compile(&header, &context);
 	pvr_prim(&header, sizeof(header));
 	for(i = 0; i < sprite_array->list_size; i++){
+		//Once debugging has finished, I'll just replace the places this is used with the trunc of the original
+		//to save on space/extra computational time
+		current_coord.x = trunc(sprite_array->coord[i].x);
+		current_coord.y = trunc(sprite_array->coord[i].y);
+
 		//These if statements will trigger once if we have a single element (i == 0)
 			//and every time for a multi-list
 		if(*z_index == i){	//z
@@ -735,8 +743,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//I couldn't actually do that since the verts wouldn't be set if the rotation aren't checked
 			//Hence it just flows here naturally
 		//NOTE: we don't need to trunc the camera's window vars because they're all ints
-		vert.ax = trunc((sprite_array->coord[i].x - trunc(camera->world_x)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-		vert.ay = trunc((sprite_array->coord[i].y - trunc(camera->world_y)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+		vert.ax = trunc((current_coord.x - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+		vert.ay = trunc((current_coord.y - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 		vert.bx = vert.ax + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
 		vert.by = vert.ay;
 		vert.cx = vert.bx;
@@ -747,9 +755,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		//The camera init function is "world_x/y" then "world_w/h" then "window_x/y" then "window_w/h"
 		//For camera 3 we have both the x/y's being at 160,120. The window_w/h is 640 by 480 and the world_w/h is 320 by 240
 
-		// (camera->window_width / camera->world_width)
- 		// (camera->window_height / camera->world_height)
-
 		//These blocks act as the rotation
 		if(0){
 			verts_rotated_90:	;	//The semi-colon is there because a label can't be followed by a declaration (Compiler thing)
@@ -759,8 +764,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 				//Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.dx = trunc((sprite_array->coord[i].x - trunc(camera->world_x) + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.dy = trunc((sprite_array->coord[i].y - trunc(camera->world_y) - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.dx = trunc((current_coord.x - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.dy = trunc((current_coord.y - world_coord.y - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 			vert.ax = vert.dx + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_width / (float)camera->world_width));
 			vert.ay = vert.dy;
 			vert.bx = vert.ax;
@@ -771,8 +776,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		if(0){
 			verts_rotated_180:	;
 
-			vert.cx = trunc((sprite_array->coord[i].x - trunc(camera->world_x)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.cy = trunc((sprite_array->coord[i].y - trunc(camera->world_y)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.cx = trunc((current_coord.x - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.cy = trunc((current_coord.y - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 			vert.dx = vert.cx + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
 			vert.dy = vert.cy;
 			vert.ax = vert.dx;
@@ -785,8 +790,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.bx = trunc((sprite_array->coord[i].x - trunc(camera->world_x) + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.by = trunc((sprite_array->coord[i].y - trunc(camera->world_y) - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.bx = trunc((current_coord.x - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.by = trunc((current_coord.y - world_coord.y - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 			vert.cx = vert.bx + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_width / (float)camera->world_width));
 			vert.cy = vert.by;
 			vert.dx = vert.cx;
@@ -906,19 +911,10 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		pvr_prim(&vert, sizeof(vert));
 
 		if(cropped && __GRAPHICS_DEBUG_VARIABLES[8] == i){
-			sprite_verts[0] = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
-			sprite_verts[1] = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
-			sprite_verts[2] = crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4);
-			sprite_verts[3] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
-
-			__GRAPHICS_DEBUG_VARIABLES[0] = sprite_verts[0].x;
-			__GRAPHICS_DEBUG_VARIABLES[1] = sprite_verts[0].y;
-			__GRAPHICS_DEBUG_VARIABLES[2] = sprite_verts[1].x;
-			__GRAPHICS_DEBUG_VARIABLES[3] = sprite_verts[1].y;
-			__GRAPHICS_DEBUG_VARIABLES[4] = sprite_verts[2].x;
-			__GRAPHICS_DEBUG_VARIABLES[5] = sprite_verts[2].y;
-			__GRAPHICS_DEBUG_VARIABLES[6] = sprite_verts[3].x;
-			__GRAPHICS_DEBUG_VARIABLES[7] = sprite_verts[3].y;
+			(vec2_f_t){__GRAPHICS_DEBUG_VARIABLES[0], __GRAPHICS_DEBUG_VARIABLES[1]} = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
+			(vec2_f_t){__GRAPHICS_DEBUG_VARIABLES[1], __GRAPHICS_DEBUG_VARIABLES[3]} = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
+			(vec2_f_t){__GRAPHICS_DEBUG_VARIABLES[2], __GRAPHICS_DEBUG_VARIABLES[5]} = crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4);
+			(vec2_f_t){__GRAPHICS_DEBUG_VARIABLES[3], __GRAPHICS_DEBUG_VARIABLES[7]} = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 		}
 
 	}
