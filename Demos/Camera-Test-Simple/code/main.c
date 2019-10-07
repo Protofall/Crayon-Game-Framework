@@ -55,6 +55,92 @@
 	}
 #endif
 
+float thumbstick_int_to_float(int joy){
+	float ret_val;	//Range from -1 to 1
+
+	if(joy > 0){	//Converting from -128, 127 to -1, 1
+		ret_val = joy / 127.0;
+	}
+	else{
+		ret_val = joy / 128.0;
+	}
+
+	return ret_val;
+}
+
+uint32_t thumbstick_to_dpad(int joyx, int joyy, float deadspace){
+	float thumb_x = thumbstick_int_to_float(joyx);
+	float thumb_y = thumbstick_int_to_float(joyy);
+
+	//If the thumbstick is inside the deadspace then we don't check angle
+	if((thumb_x * thumb_x) + (thumb_y * thumb_y) < deadspace * deadspace){
+		return 0;
+	}
+
+	//8 options. N, NE, E, SE, S, SW, W, NW.
+
+	//Rotate the thumbstick coordinate 22.5 degrees (Or 22.5 * (PI/180) ~= 0.3927 radians) clockwise
+		//22.5 degrees is 1/16th of 360 degrees, this makes it easier to check which region the coords are in
+	float angle = 22.5 * M_PI / 180.0;	//In radians
+
+	vec2_f_t point = crayon_graphics_rotate_point((vec2_f_t){0, 0}, (vec2_f_t){thumb_x, thumb_y}, angle);
+	thumb_x = point.x;
+	thumb_y = point.y;
+
+	float abs_x = fabs(thumb_x);
+	float abs_y = fabs(thumb_y);
+
+	uint32_t bitmap;
+	if(thumb_y < 0){
+		if(thumb_x > 0){
+			if(abs_y > abs_x){	//N
+				bitmap = CONT_DPAD_UP;
+			}
+			else{	//NE
+				bitmap = CONT_DPAD_UP + CONT_DPAD_RIGHT;
+			}
+		}
+		else{
+			if(abs_y < abs_x){	//W
+				bitmap = CONT_DPAD_LEFT;
+			}
+			else{	//NW
+				bitmap = CONT_DPAD_UP + CONT_DPAD_LEFT;
+			}
+		}
+	}
+	else{
+		if(thumb_x > 0){
+			if(abs_y < abs_x){	//E
+				bitmap = CONT_DPAD_RIGHT;
+			}
+			else{	//SE
+				bitmap = CONT_DPAD_DOWN + CONT_DPAD_RIGHT;
+			}
+		}
+		else{
+			if(abs_y > abs_x){	//S
+				bitmap = CONT_DPAD_DOWN;
+			}
+			else{	//SW
+				bitmap = CONT_DPAD_DOWN + CONT_DPAD_LEFT;
+			}
+		}
+	}
+
+	return bitmap;
+}
+
+void set_msg(char * buffer){
+	strcpy(buffer, "Use the thumbstick to move the current camera around the world\n\
+		Press A to cycle between the 4 cameras\n\
+		Press L/R-Triggers move one unit in the direction you last moved in\n\
+		D-PAD Up/Down increase/decrease the world_movement_factor (Powers of 2)\n\
+		Start to terminate program\n\
+		Y to hide these instructions");
+	return;
+}
+
 pvr_init_params_t pvr_params = {
 		// Enable opaque, translucent and punch through polygons with size 16
 			//To better explain, the opb_sizes or Object Pointer Buffer sizes
@@ -296,7 +382,7 @@ int main(){
 	Cam_BGs[0].colour[0] = 0xFF888888;
 
 	crayon_memory_init_sprite_array(&Cam_BGs[1], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Cam_BGs[1].coord[0].x = 32;
+	Cam_BGs[1].coord[0].x = 140;
 	Cam_BGs[1].coord[0].y = 32;
 	Cam_BGs[1].layer[0] = 1;
 	Cam_BGs[1].scale[0].x = 400;
@@ -360,28 +446,26 @@ int main(){
 	char snum2[20];
 	char snum3[20];
 
-	char gbuff0[12];
-	char gbuff1[30];
-	char gbuff2[30];
-	char gbuff3[30];
-	char gbuff4[30];
-	for(i = 0; i < 16; i++){
-		__GRAPHICS_DEBUG_VARIABLES[i] = 0;
-	}
-	//values 0 through 7 are used for vert pos. 0 is used to select the particular element
-	__GRAPHICS_DEBUG_VARIABLES[8] = 0;
+	char instructions[300];
+	set_msg(instructions);
 
 	//LTRB
 	uint8_t last_dir = 0;
-
-	cameras[1].world_x += 0.5;
-	cameras[2].world_x += 0.5;
+	uint8_t info_disp = 1;
 
 	pvr_stats_t stats;
-	uint32_t previous_buttons[4] = {0};
-	while(1){
+	uint8_t escape = 0;
+	uint32_t prev_btns[4] = {0};
+	vec2_u8_t prev_trigs[4] = {(vec2_u8_t){0,0}};
+	uint32_t curr_thumb = 0;
+	uint32_t prev_thumb = 0;
+	uint8_t thumb_active;
+	while(!escape){
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
+
+		//Use this instead of the dpad
+		curr_thumb = thumbstick_to_dpad(st->joyx, st->joyy, 0.4);
 
 		if(st->buttons & CONT_DPAD_LEFT){
 			current_camera->world_x += 1;
@@ -401,18 +485,18 @@ int main(){
 			last_dir = 3;
 		}
 
-		if((st->buttons & CONT_A) && !(previous_buttons[__dev->port] & CONT_A)){
+		if((st->buttons & CONT_A) && !(prev_btns[__dev->port] & CONT_A)){
 			current_camera_id += 1;
 			current_camera_id %= 4;
 			current_camera = &cameras[current_camera_id];
 		}
 
-		if((st->buttons & CONT_B) && !(previous_buttons[__dev->port] & CONT_B)){
-			__GRAPHICS_DEBUG_VARIABLES[8]++;
-			if(__GRAPHICS_DEBUG_VARIABLES[8] > 7){__GRAPHICS_DEBUG_VARIABLES[8] = 0;}
-		}
+		//Need to add the free-ing functions first
+		// if((st->buttons & CONT_START) && !(prev_btns[__dev->port] & CONT_START)){
+		// 	escape = 1;
+		// }
 
-		if((st->buttons & CONT_X) && !(previous_buttons[__dev->port] & CONT_X)){
+		if((st->rtrig > 0xFF * 0.1) && (prev_trigs[__dev->port].y <= 0xFF * 0.1)){
 			switch(last_dir){
 				case 0:
 				current_camera->world_x += 1;
@@ -429,7 +513,7 @@ int main(){
 			}
 		}
 
-		if((st->buttons & CONT_Y) && !(previous_buttons[__dev->port] & CONT_Y)){
+		if((st->ltrig > 0xFF * 0.1) && (prev_trigs[__dev->port].x <= 0xFF * 0.1)){
 			switch(last_dir){
 				case 0:
 				current_camera->world_x -= 1;
@@ -446,7 +530,14 @@ int main(){
 			}
 		}
 
-		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
+		if((st->buttons & CONT_Y) && !(prev_btns[__dev->port] & CONT_Y)){
+			info_disp = !info_disp;
+		}
+
+		prev_thumb = curr_thumb;
+		prev_btns[__dev->port] = st->buttons;
+		prev_trigs[__dev->port].x = st->ltrig;
+		prev_trigs[__dev->port].y = st->rtrig;
 		MAPLE_FOREACH_END()
 
 		pvr_scene_begin();
@@ -520,31 +611,18 @@ int main(){
 			//This represents camera 2's space
 			crayon_graphics_draw_sprites(&Cam_BGs[current_camera_id], NULL, PVR_LIST_OP_POLY, 0);
 
-			// sprintf(snum1, "Left %.9f", __GRAPHICS_DEBUG_VARIABLES[0]);
-			// sprintf(snum2, "Top %.9f", __GRAPHICS_DEBUG_VARIABLES[1]);
-			// crayon_graphics_draw_text_mono(snum1, &BIOS, PVR_LIST_PT_POLY, 0, 400, 30, 1, 1, BIOS_P.palette_id);
-			// crayon_graphics_draw_text_mono(snum2, &BIOS, PVR_LIST_PT_POLY, 0, 400 + BIOS.char_height, 30, 1, 1, BIOS_P.palette_id);
+			if(info_disp){
+				sprintf(snum1, "Camera ID: %d", current_camera_id);
+				sprintf(snum2, "X: %.2f", current_camera->world_x);
+				sprintf(snum3, "Y: %.2f", current_camera->world_y);
 
-			sprintf(snum1, "X: %.2f", current_camera->world_x);
-			sprintf(snum2, "Y: %.2f", current_camera->world_y);
-			sprintf(snum3, "Camera ID: %d", current_camera_id);
+				crayon_graphics_draw_text_mono("World Coords:", &BIOS, PVR_LIST_PT_POLY, 32, 312 - (1 * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
+				crayon_graphics_draw_text_mono(snum1, &BIOS, PVR_LIST_PT_POLY, 32, 312 + (0 * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
+				crayon_graphics_draw_text_mono(snum2, &BIOS, PVR_LIST_PT_POLY, 32, 312 + (1 * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
+				crayon_graphics_draw_text_mono(snum3, &BIOS, PVR_LIST_PT_POLY, 32, 312 + (2 * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
 
-			sprintf(gbuff0, "Sprite: %.0f", __GRAPHICS_DEBUG_VARIABLES[8]);
-			sprintf(gbuff1, "TL, X: %.2f, Y: %.2f", __GRAPHICS_DEBUG_VARIABLES[0], __GRAPHICS_DEBUG_VARIABLES[1]);
-			sprintf(gbuff2, "TR, X: %.2f, Y: %.2f", __GRAPHICS_DEBUG_VARIABLES[2], __GRAPHICS_DEBUG_VARIABLES[3]);
-			sprintf(gbuff3, "BL, X: %.2f, Y: %.2f", __GRAPHICS_DEBUG_VARIABLES[4], __GRAPHICS_DEBUG_VARIABLES[5]);
-			sprintf(gbuff4, "BR, X: %.2f, Y: %.2f", __GRAPHICS_DEBUG_VARIABLES[6], __GRAPHICS_DEBUG_VARIABLES[7]);
-
-			crayon_graphics_draw_text_mono("World Coords:", &BIOS, PVR_LIST_PT_POLY, 0, 420 - BIOS.char_height, 30, 1, 1, BIOS_P.palette_id);
-			crayon_graphics_draw_text_mono(snum1, &BIOS, PVR_LIST_PT_POLY, 0, 420, 30, 1, 1, BIOS_P.palette_id);
-			crayon_graphics_draw_text_mono(snum2, &BIOS, PVR_LIST_PT_POLY, 0, 420 + BIOS.char_height, 30, 1, 1, BIOS_P.palette_id);
-			crayon_graphics_draw_text_mono(snum3, &BIOS, PVR_LIST_PT_POLY, 0, 420 + (2 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
-
-			crayon_graphics_draw_text_mono(gbuff0, &BIOS, PVR_LIST_PT_POLY, 200, 420 - (2 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
-			crayon_graphics_draw_text_mono(gbuff1, &BIOS, PVR_LIST_PT_POLY, 200, 420 - (1 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
-			crayon_graphics_draw_text_mono(gbuff2, &BIOS, PVR_LIST_PT_POLY, 200, 420 + (0 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
-			crayon_graphics_draw_text_mono(gbuff3, &BIOS, PVR_LIST_PT_POLY, 200, 420 + (1 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
-			crayon_graphics_draw_text_mono(gbuff4, &BIOS, PVR_LIST_PT_POLY, 200, 420 + (2 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
+				crayon_graphics_draw_text_mono(instructions, &BIOS, PVR_LIST_PT_POLY, 32, 368, 254, 1, 1, BIOS_P.palette_id);
+			}
 
 		pvr_list_finish();
 
