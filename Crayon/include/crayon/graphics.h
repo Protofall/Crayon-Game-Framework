@@ -29,7 +29,7 @@
 //This var's purpose is to make debugging the render-ers and other graphics function much easier
 	//Since I currently can't print any text while rendering an object, instead I can set vars to
 	//this variable and render them later since this is global
-float __GRAPHICS_DEBUG_VARIABLES[8];
+float __GRAPHICS_DEBUG_VARIABLES[16];
 
 //Sets a palette for a spritesheet
 extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);

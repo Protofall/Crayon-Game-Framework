@@ -359,9 +359,20 @@ int main(){
 	char snum1[20];
 	char snum2[20];
 	char snum3[20];
-	for(i = 0; i < 8; i++){
+
+	char gbuff0[12];
+	char gbuff1[30];
+	char gbuff2[30];
+	char gbuff3[30];
+	char gbuff4[30];
+	for(i = 0; i < 16; i++){
 		__GRAPHICS_DEBUG_VARIABLES[i] = 0;
 	}
+	//values 0 through 7 are used for vert pos. 0 is used to select the particular element
+	__GRAPHICS_DEBUG_VARIABLES[8] = 0;
+
+	//LTRB
+	uint8_t last_dir = 0;
 
 	cameras[1].world_x += 0.5;
 	cameras[2].world_x += 0.5;
@@ -374,16 +385,20 @@ int main(){
 
 		if(st->buttons & CONT_DPAD_LEFT){
 			current_camera->world_x += 1;
+			last_dir = 0;
 		}
 		else if(st->buttons & CONT_DPAD_RIGHT){
 			current_camera->world_x -= 1;
+			last_dir = 2;
 		}
 
 		if(st->buttons & CONT_DPAD_UP){
 			current_camera->world_y += 1;
+			last_dir = 1;
 		}
 		else if(st->buttons & CONT_DPAD_DOWN){
 			current_camera->world_y -= 1;
+			last_dir = 3;
 		}
 
 		if((st->buttons & CONT_A) && !(previous_buttons[__dev->port] & CONT_A)){
@@ -392,13 +407,44 @@ int main(){
 			current_camera = &cameras[current_camera_id];
 		}
 
-		// if((st->buttons & CONT_B) && !(previous_buttons[__dev->port] & CONT_B)){
-		// 	;
-		// }
+		if((st->buttons & CONT_B) && !(previous_buttons[__dev->port] & CONT_B)){
+			__GRAPHICS_DEBUG_VARIABLES[8]++;
+			if(__GRAPHICS_DEBUG_VARIABLES[8] > 7){__GRAPHICS_DEBUG_VARIABLES[8] = 0;}
+		}
 
-		// if((st->buttons & CONT_X) && !(previous_buttons[__dev->port] & CONT_X)){
-		// 	;
-		// }
+		if((st->buttons & CONT_X) && !(previous_buttons[__dev->port] & CONT_X)){
+			switch(last_dir){
+				case 0:
+				current_camera->world_x += 1;
+				break;
+				case 1:
+				current_camera->world_y += 1;
+				break;
+				case 2:
+				current_camera->world_x -= 1;
+				break;
+				case 3:
+				current_camera->world_y -= 1;
+				break;
+			}
+		}
+
+		if((st->buttons & CONT_Y) && !(previous_buttons[__dev->port] & CONT_Y)){
+			switch(last_dir){
+				case 0:
+				current_camera->world_x -= 1;
+				break;
+				case 1:
+				current_camera->world_y -= 1;
+				break;
+				case 2:
+				current_camera->world_x += 1;
+				break;
+				case 3:
+				current_camera->world_y += 1;
+				break;
+			}
+		}
 
 		previous_buttons[__dev->port] = st->buttons;	//Store the previous button presses
 		MAPLE_FOREACH_END()
@@ -482,10 +528,23 @@ int main(){
 			sprintf(snum1, "X: %.2f", current_camera->world_x);
 			sprintf(snum2, "Y: %.2f", current_camera->world_y);
 			sprintf(snum3, "Camera ID: %d", current_camera_id);
+
+			sprintf(gbuff0, "Sprite: %.0f", __GRAPHICS_DEBUG_VARIABLES[8]);
+			sprintf(gbuff1, "TL, X: %.2f, Y: %.2f", __GRAPHICS_DEBUG_VARIABLES[0], __GRAPHICS_DEBUG_VARIABLES[1]);
+			sprintf(gbuff2, "TR, X: %.2f, Y: %.2f", __GRAPHICS_DEBUG_VARIABLES[2], __GRAPHICS_DEBUG_VARIABLES[3]);
+			sprintf(gbuff3, "BL, X: %.2f, Y: %.2f", __GRAPHICS_DEBUG_VARIABLES[4], __GRAPHICS_DEBUG_VARIABLES[5]);
+			sprintf(gbuff4, "BR, X: %.2f, Y: %.2f", __GRAPHICS_DEBUG_VARIABLES[6], __GRAPHICS_DEBUG_VARIABLES[7]);
+
 			crayon_graphics_draw_text_mono("World Coords:", &BIOS, PVR_LIST_PT_POLY, 0, 420 - BIOS.char_height, 30, 1, 1, BIOS_P.palette_id);
 			crayon_graphics_draw_text_mono(snum1, &BIOS, PVR_LIST_PT_POLY, 0, 420, 30, 1, 1, BIOS_P.palette_id);
 			crayon_graphics_draw_text_mono(snum2, &BIOS, PVR_LIST_PT_POLY, 0, 420 + BIOS.char_height, 30, 1, 1, BIOS_P.palette_id);
 			crayon_graphics_draw_text_mono(snum3, &BIOS, PVR_LIST_PT_POLY, 0, 420 + (2 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
+
+			crayon_graphics_draw_text_mono(gbuff0, &BIOS, PVR_LIST_PT_POLY, 200, 420 - (2 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono(gbuff1, &BIOS, PVR_LIST_PT_POLY, 200, 420 - (1 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono(gbuff2, &BIOS, PVR_LIST_PT_POLY, 200, 420 + (0 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono(gbuff3, &BIOS, PVR_LIST_PT_POLY, 200, 420 + (1 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono(gbuff4, &BIOS, PVR_LIST_PT_POLY, 200, 420 + (2 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
 
 		pvr_list_finish();
 
