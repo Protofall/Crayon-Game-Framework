@@ -743,7 +743,7 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		//Imagine a "goto verts_normal;" for this little bit
 			//I couldn't actually do that since the verts wouldn't be set if the rotation aren't checked
 			//Hence it just flows here naturally
-		//NOTE: we don't need to trunc the camera's window vars because they're all ints
+		//NOTE: we don't need to floor the camera's window vars because they're all ints
 		vert.ax = floor((current_coord.x - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
 		vert.ay = floor((current_coord.y - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 		vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
@@ -752,9 +752,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		vert.cy = vert.ay + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_height / (float)camera->world_height));
 		vert.dx = vert.ax;
 		vert.dy = vert.cy;
-
-		//The camera init function is "world_x/y" then "world_w/h" then "window_x/y" then "window_w/h"
-		//For camera 3 we have both the x/y's being at 160,120. The window_w/h is 640 by 480 and the world_w/h is 320 by 240
 
 		//These blocks act as the rotation
 		if(0){
