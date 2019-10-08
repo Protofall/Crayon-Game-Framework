@@ -39,6 +39,10 @@ extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
 extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *sprite_array, uint8_t id);
 extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *sprite_array, uint8_t id);
 
+//This gets the width and height of the screen in pixels
+extern uint32_t crayon_graphics_get_window_width();
+extern uint32_t crayon_graphics_get_window_height();
+
 
 //------------------Drawing Sprites from Spritesheets------------------//
 

@@ -45,6 +45,15 @@ extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t
 	}
 }
 
+//Right now on Dreamcast I have no idea how to check the current dimensions, so I just assume this. Its usually right
+extern uint32_t crayon_graphics_get_window_width(){
+	return 640;
+}
+
+extern uint32_t crayon_graphics_get_window_height(){
+	return 480;
+}
+
 extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode){
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
@@ -582,13 +591,14 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode){
 
+	//Adjust this so its in the "LTRB" order
 	uint8_t crop = (1 << 4) - 1;	//---- TBLR
 									//---- 1111 (Crop on all edges)
 
 	//DELETE THIS LATER. A basic optimisation for now
-	if(camera->window_width == 640){crop = crop & (~ (1 << 0));}
+	if(camera->window_width == crayon_graphics_get_window_width()){crop = crop & (~ (1 << 0));}
 	if(camera->window_x == 0){crop = crop & (~ (1 << 1));}
-	if(camera->window_height == 480){crop = crop & (~ (1 << 2));}
+	if(camera->window_height == crayon_graphics_get_window_height()){crop = crop & (~ (1 << 2));}
 	if(camera->window_y == 0){crop = crop & (~ (1 << 3));}
 
 	//Used for cropping
