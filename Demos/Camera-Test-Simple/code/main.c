@@ -131,13 +131,21 @@ uint32_t thumbstick_to_dpad(int joyx, int joyy, float deadspace){
 	return bitmap;
 }
 
+//Char count:
+//63
+//39
+//68
+//72
+//27
+//29
+//Total: 298
 void set_msg(char * buffer){
 	strcpy(buffer, "Use the thumbstick to move the current camera around the world\n\
-		Press A to cycle between the 4 cameras\n\
-		Press L/R-Triggers move one unit in the direction you last moved in\n\
-		D-PAD Up/Down increase/decrease the world_movement_factor (Powers of 2)\n\
-		Start to terminate program\n\
-		Y to hide these instructions");
+Press A to cycle between the 4 cameras\n\
+Press L/R-Triggers move one unit in the direction you last moved in\n\
+D-PAD Up/Down increase/decrease the world_movement_factor (Powers of 2)\n\
+Start to terminate program\n\
+Y to hide these instructions");
 	return;
 }
 
@@ -183,7 +191,6 @@ int main(){
 	crayon_spritesheet_t Dwarf, Opaque, Man;
 	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw, Man_BG;
 	crayon_sprite_array_t Cam_BGs[4];
-	crayon_sprite_array_t Rainbow_Draw2;
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P, Red_Man_P, Green_Man_P;
@@ -351,18 +358,6 @@ int main(){
 	Rainbow_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Rainbow_Draw, 0, 0);
 
-	crayon_memory_init_sprite_array(&Rainbow_Draw2, &Opaque, 1, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Rainbow_Draw2.coord[0].x = Rainbow_Draw.coord[0].x - 60;
-	Rainbow_Draw2.coord[0].y = Rainbow_Draw.coord[0].y;
-	Rainbow_Draw2.layer[0] = 17;
-	Rainbow_Draw2.scale[0].x = 1;
-	Rainbow_Draw2.scale[0].y = 1;
-	Rainbow_Draw2.flip[0] = 0;
-	Rainbow_Draw2.rotation[0] = 180;
-	Rainbow_Draw2.colour[0] = 0;
-	Rainbow_Draw2.frame_id[0] = 0;
-	crayon_memory_set_frame_uv(&Rainbow_Draw2, 0, 0);
-
 	crayon_memory_init_sprite_array(&Man_BG, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Man_BG.coord[0].x = Red_Man_Draw.coord[0].x;
 	Man_BG.coord[0].y = Red_Man_Draw.coord[0].y;
@@ -416,24 +411,24 @@ int main(){
 	crayon_memory_init_camera(&cameras[0], (vec2_f_t){Cam_BGs[0].coord[0].x,Cam_BGs[0].coord[0].y},
 		(vec2_u16_t){Cam_BGs[0].scale[0].x,Cam_BGs[0].scale[0].y},
 		(vec2_u16_t){Cam_BGs[0].coord[0].x,Cam_BGs[0].coord[0].y},
-		(vec2_u16_t){Cam_BGs[0].scale[0].x,Cam_BGs[0].scale[0].y}, 0);
+		(vec2_u16_t){Cam_BGs[0].scale[0].x,Cam_BGs[0].scale[0].y}, 1);
 
 	//This is the basic view, no scaling, but we crop everything outside the inner 300/200 box
 	crayon_memory_init_camera(&cameras[1], (vec2_f_t){Cam_BGs[1].coord[0].x,Cam_BGs[1].coord[0].y},
 		(vec2_u16_t){Cam_BGs[1].scale[0].x,Cam_BGs[1].scale[0].y},
 		(vec2_u16_t){Cam_BGs[1].coord[0].x,Cam_BGs[1].coord[0].y},
-		(vec2_u16_t){Cam_BGs[1].scale[0].x,Cam_BGs[1].scale[0].y}, 0);
+		(vec2_u16_t){Cam_BGs[1].scale[0].x,Cam_BGs[1].scale[0].y}, 1);
 
 	//Magnify the selectioned zone (160,120 to 480, 360) The world is half the size of the window
 	crayon_memory_init_camera(&cameras[2], (vec2_f_t){0,0},
 		(vec2_u16_t){640,480},
 		(vec2_u16_t){Cam_BGs[2].coord[0].x,Cam_BGs[2].coord[0].y},
-		(vec2_u16_t){Cam_BGs[2].scale[0].x,Cam_BGs[2].scale[0].y}, 0);
+		(vec2_u16_t){Cam_BGs[2].scale[0].x,Cam_BGs[2].scale[0].y}, 1);
 
 	crayon_memory_init_camera(&cameras[3], (vec2_f_t){0,0},
 		(vec2_u16_t){320,240},
 		(vec2_u16_t){Cam_BGs[3].coord[0].x,Cam_BGs[3].coord[0].y},
-		(vec2_u16_t){Cam_BGs[3].scale[0].x,Cam_BGs[3].scale[0].y}, 0);
+		(vec2_u16_t){Cam_BGs[3].scale[0].x,Cam_BGs[3].scale[0].y}, 1);
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
@@ -442,12 +437,13 @@ int main(){
 	crayon_graphics_setup_palette(&Red_Man_P);
 	crayon_graphics_setup_palette(&Green_Man_P);
 
-	char snum1[20];
-	char snum2[20];
-	char snum3[20];
+	char snum1[80];
 
-	char instructions[300];
+	char instructions[320];	//I'm only using 298 chars, but I gave more space just to be safe
 	set_msg(instructions);
+
+	//World_movement_factor_adjustment
+	int8_t scale_adjustment = 1;
 
 	//LTRB
 	uint8_t last_dir = 0;
@@ -458,8 +454,7 @@ int main(){
 	uint32_t prev_btns[4] = {0};
 	vec2_u8_t prev_trigs[4] = {(vec2_u8_t){0,0}};
 	uint32_t curr_thumb = 0;
-	uint32_t prev_thumb = 0;
-	uint8_t thumb_active;
+	// uint32_t prev_thumb = 0;
 	while(!escape){
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -467,22 +462,33 @@ int main(){
 		//Use this instead of the dpad
 		curr_thumb = thumbstick_to_dpad(st->joyx, st->joyy, 0.4);
 
-		if(st->buttons & CONT_DPAD_LEFT){
+		if(curr_thumb & CONT_DPAD_LEFT){
 			current_camera->world_x += 1;
 			last_dir = 0;
 		}
-		else if(st->buttons & CONT_DPAD_RIGHT){
+		else if(curr_thumb & CONT_DPAD_RIGHT){
 			current_camera->world_x -= 1;
 			last_dir = 2;
 		}
 
-		if(st->buttons & CONT_DPAD_UP){
+		if(curr_thumb & CONT_DPAD_UP){
 			current_camera->world_y += 1;
 			last_dir = 1;
 		}
-		else if(st->buttons & CONT_DPAD_DOWN){
+		else if(curr_thumb & CONT_DPAD_DOWN){
 			current_camera->world_y -= 1;
 			last_dir = 3;
+		}
+
+
+		//Adjust the current world movement factor
+		if(st->buttons & CONT_DPAD_UP){
+			scale_adjustment++;
+			//Set the scale factor
+		}
+		else if(st->buttons & CONT_DPAD_DOWN){
+			scale_adjustment--;
+			//Set the scale factor
 		}
 
 		if((st->buttons & CONT_A) && !(prev_btns[__dev->port] & CONT_A)){
@@ -492,9 +498,9 @@ int main(){
 		}
 
 		//Need to add the free-ing functions first
-		// if((st->buttons & CONT_START) && !(prev_btns[__dev->port] & CONT_START)){
-		// 	escape = 1;
-		// }
+		if((st->buttons & CONT_START) && !(prev_btns[__dev->port] & CONT_START)){
+			escape = 1;
+		}
 
 		if((st->rtrig > 0xFF * 0.1) && (prev_trigs[__dev->port].y <= 0xFF * 0.1)){
 			switch(last_dir){
@@ -534,11 +540,13 @@ int main(){
 			info_disp = !info_disp;
 		}
 
-		prev_thumb = curr_thumb;
+		// prev_thumb = curr_thumb;
 		prev_btns[__dev->port] = st->buttons;
 		prev_trigs[__dev->port].x = st->ltrig;
 		prev_trigs[__dev->port].y = st->rtrig;
 		MAPLE_FOREACH_END()
+
+		if(escape){break;}
 
 		pvr_scene_begin();
 
@@ -602,24 +610,20 @@ int main(){
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
 			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Rainbow_Draw2, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 
 			//Represents the boundry box for the red man when not rotated
 			// crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, 0);
 
-			//This represents camera 2's space
+			//This represents the camera's space
 			crayon_graphics_draw_sprites(&Cam_BGs[current_camera_id], NULL, PVR_LIST_OP_POLY, 0);
 
 			if(info_disp){
-				sprintf(snum1, "Camera ID: %d", current_camera_id);
-				sprintf(snum2, "X: %.2f", current_camera->world_x);
-				sprintf(snum3, "Y: %.2f", current_camera->world_y);
+				sprintf(snum1, "Camera ID: %d\nX: %.2f\nY: %.2f\nWorld_Movement_Factor: %.2f",
+					current_camera_id, current_camera->world_x, current_camera->world_y, current_camera->world_movement_factor);
 
-				crayon_graphics_draw_text_mono("World Coords:", &BIOS, PVR_LIST_PT_POLY, 32, 312 - (1 * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
-				crayon_graphics_draw_text_mono(snum1, &BIOS, PVR_LIST_PT_POLY, 32, 312 + (0 * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
-				crayon_graphics_draw_text_mono(snum2, &BIOS, PVR_LIST_PT_POLY, 32, 312 + (1 * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
-				crayon_graphics_draw_text_mono(snum3, &BIOS, PVR_LIST_PT_POLY, 32, 312 + (2 * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
+				crayon_graphics_draw_text_mono("World Coords:", &BIOS, PVR_LIST_PT_POLY, 32, 280, 254, 1, 1, BIOS_P.palette_id);
+				crayon_graphics_draw_text_mono(snum1, &BIOS, PVR_LIST_PT_POLY, 32, 280 + (BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
 
 				crayon_graphics_draw_text_mono(instructions, &BIOS, PVR_LIST_PT_POLY, 32, 368, 254, 1, 1, BIOS_P.palette_id);
 			}
@@ -631,11 +635,32 @@ int main(){
 	}
 
 	//Confirm everything was unloaded successfully (Should equal zero)
-	// int retVal = 0;
-	// retVal += memory_free_crayon_spritesheet(&Fade, 1);
-	// retVal += memory_free_crayon_spritesheet(&Enlarge, 1);
-	// retVal += memory_free_crayon_spritesheet(&Frames, 1);
-	// error_freeze("Free-ing result %d!\n", retVal);
+	uint32_t retVal = 0;
 
-	return 0;
+	retVal += crayon_memory_free_spritesheet(&Dwarf);
+	retVal += crayon_memory_free_spritesheet(&Opaque);
+	retVal += crayon_memory_free_spritesheet(&Man);
+
+	retVal += crayon_memory_free_mono_font_sheet(&BIOS);
+	retVal += crayon_memory_free_prop_font_sheet(&Tahoma);
+
+	retVal += crayon_memory_free_palette(&BIOS_P);
+	retVal += crayon_memory_free_palette(&Tahoma_P);
+	retVal += crayon_memory_free_palette(&Red_Man_P);
+	retVal += crayon_memory_free_palette(&Green_Man_P);
+
+	retVal += crayon_memory_free_sprite_array(&Dwarf_Draw);
+	retVal += crayon_memory_free_sprite_array(&Rainbow_Draw);
+	retVal += crayon_memory_free_sprite_array(&Frames_Draw);
+	retVal += crayon_memory_free_sprite_array(&Red_Man_Draw);
+	retVal += crayon_memory_free_sprite_array(&Green_Man_Draw);
+	retVal += crayon_memory_free_sprite_array(&Man_BG);
+	retVal += crayon_memory_free_sprite_array(&Cam_BGs[0]);
+	retVal += crayon_memory_free_sprite_array(&Cam_BGs[1]);
+	retVal += crayon_memory_free_sprite_array(&Cam_BGs[2]);
+	retVal += crayon_memory_free_sprite_array(&Cam_BGs[3]);
+
+	pvr_shutdown();
+
+	return retVal;
 }

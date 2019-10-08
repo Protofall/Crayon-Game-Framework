@@ -586,5 +586,7 @@ int main(){
 	crayon_memory_free_sprite_array(&Faces_Draw[1]);
 	crayon_memory_free_sprite_array(&Faces_Draw[2]);
 
+	pvr_shutdown();
+
 	return 0;
 }
