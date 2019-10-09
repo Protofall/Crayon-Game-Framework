@@ -826,18 +826,25 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		sprite_verts[3] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 
 		//If OOB then don't draw
-		if(crayon_graphics_check_oob(camera_verts, sprite_verts)){continue;}
+		if(crayon_graphics_check_oob(camera_verts, sprite_verts)){
+			if(__GRAPHICS_DEBUG_VARIABLES[8] == i){
+				__GRAPHICS_DEBUG_VARIABLES[0] = -1;
+				__GRAPHICS_DEBUG_VARIABLES[1] = -1;
+				__GRAPHICS_DEBUG_VARIABLES[2] = -1;
+				__GRAPHICS_DEBUG_VARIABLES[3] = -1;
+				__GRAPHICS_DEBUG_VARIABLES[4] = -1;
+				__GRAPHICS_DEBUG_VARIABLES[5] = -1;
+				__GRAPHICS_DEBUG_VARIABLES[6] = -1;
+				__GRAPHICS_DEBUG_VARIABLES[7] = -1;
+			}
+			continue;
+		}
 
 		//If we don't need to crop at all, don't both doing the checks. bounds is zero by default
 		if(crop_edges){
 			bounds = crayon_graphics_check_intersect(camera_verts, sprite_verts);
 			bounds &= crop_edges;		//To simplify the if checks
 		}
-
-//uvs[] is LTRB
-//verts[] is in 0132 (The numbers count in Z position)
-//Considering the element we need, its:
-//uvs[] R,T,L,B
 
 		if(bounds & (1 << 0)){	//Left side
 			//Get the vert that's currently on the left side
@@ -854,6 +861,9 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			crayon_graphics_set_sprite_vert_x(&vert, (4 + 3 - rotation_val) % 4, camera->window_x);
 		}
 		if(bounds & (1 << 1)){	//Top side
+			if(__GRAPHICS_DEBUG_VARIABLES[8] == i){
+				// error_freeze("");
+			}
 			//Get uv thats on top side
 			uv_index = crayon_get_uv_index(1, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
@@ -907,6 +917,22 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			vert.auv = PVR_PACK_16BIT_UV(uvs[0], uvs[1]);
 			vert.buv = PVR_PACK_16BIT_UV(uvs[2], uvs[1]);
 			vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
+		}
+
+		if(__GRAPHICS_DEBUG_VARIABLES[8] == i){
+			sprite_verts[0] = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
+			sprite_verts[1] = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
+			sprite_verts[2] = crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4);
+			sprite_verts[3] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
+			
+			__GRAPHICS_DEBUG_VARIABLES[0] = sprite_verts[0].x;
+			__GRAPHICS_DEBUG_VARIABLES[1] = sprite_verts[0].y;
+			__GRAPHICS_DEBUG_VARIABLES[2] = sprite_verts[1].x;
+			__GRAPHICS_DEBUG_VARIABLES[3] = sprite_verts[1].y;
+			__GRAPHICS_DEBUG_VARIABLES[4] = sprite_verts[2].x;
+			__GRAPHICS_DEBUG_VARIABLES[5] = sprite_verts[2].y;
+			__GRAPHICS_DEBUG_VARIABLES[6] = sprite_verts[3].x;
+			__GRAPHICS_DEBUG_VARIABLES[7] = sprite_verts[3].y;
 		}
 
 		//Signal to next item we just modified the uvs and verts via cropping so we need to recalculate them
