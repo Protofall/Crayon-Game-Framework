@@ -592,14 +592,25 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	uint8_t poly_list_mode){
 
 	//Adjust this so its in the "LTRB" order
-	uint8_t crop = (1 << 4) - 1;	//---- TBLR
-									//---- 1111 (Crop on all edges)
+	// uint8_t crop_edges = (1 << 4) - 1;	//---- TBLR
+										//---- 1111 (Crop on all edges)
 
 	//DELETE THIS LATER. A basic optimisation for now
-	if(camera->window_width == crayon_graphics_get_window_width()){crop = crop & (~ (1 << 0));}
-	if(camera->window_x == 0){crop = crop & (~ (1 << 1));}
-	if(camera->window_height == crayon_graphics_get_window_height()){crop = crop & (~ (1 << 2));}
-	if(camera->window_y == 0){crop = crop & (~ (1 << 3));}
+	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 0));}
+	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 1));}
+	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 2));}
+	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 3));}
+
+	//3210 -> 1302
+
+	uint8_t crop_edges = (1 << 4) - 1;	//---- TBLR	-> LTRB
+										//---- 1111 (Crop on all edges)
+
+	//DELETE THIS LATER. A basic optimisation for now
+	if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 0));}
+	if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 1));}
+	if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 2));}
+	if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 3));}
 
 	//Used for cropping
 	uint8_t bounds = 0;
@@ -818,9 +829,9 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		if(crayon_graphics_check_oob(camera_verts, sprite_verts)){continue;}
 
 		//If we don't need to crop at all, don't both doing the checks. bounds is zero by default
-		if(crop){
+		if(crop_edges){
 			bounds = crayon_graphics_check_intersect(camera_verts, sprite_verts);
-			bounds &= crop;		//To simplify the if checks
+			bounds &= crop_edges;		//To simplify the if checks
 		}
 
 //uvs[] is LTRB
@@ -828,7 +839,35 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 //Considering the element we need, its:
 //uvs[] R,T,L,B
 
-		if(bounds & (1 << 0)){	//Right side
+		if(bounds & (1 << 0)){	//Left side
+			//Get the vert that's currently on the left side
+			uv_index = crayon_get_uv_index(0, rotation_val, flip_val);
+			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
+			texture_offset = crayon_graphics_get_texture_offset(0, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
+			texture_divider = crayon_graphics_get_texture_divisor(0, rotation_val,
+				(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
+
+			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(2, rotation_val, flip_val)] - uvs[uv_index]);
+
+			//Set the vert
+			crayon_graphics_set_sprite_vert_x(&vert, (4 + 0 - rotation_val) % 4, camera->window_x);
+			crayon_graphics_set_sprite_vert_x(&vert, (4 + 3 - rotation_val) % 4, camera->window_x);
+		}
+		if(bounds & (1 << 1)){	//Top side
+			//Get uv thats on top side
+			uv_index = crayon_get_uv_index(1, rotation_val, flip_val);
+			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
+			texture_offset = crayon_graphics_get_texture_offset(1, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
+			texture_divider = crayon_graphics_get_texture_divisor(1, rotation_val,
+				(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
+
+			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(3, rotation_val, flip_val)] - uvs[uv_index]);
+
+			//Set the vert
+			crayon_graphics_set_sprite_vert_y(&vert, (4 + 1 - rotation_val) % 4, camera->window_y);
+			crayon_graphics_set_sprite_vert_y(&vert, (4 + 0 - rotation_val) % 4, camera->window_y);
+		}
+		if(bounds & (1 << 2)){	//Right side
 			//I don't fully understand why we use the magic number 2, maybe its the opposite of 0 (0 == R, 2 == L)
 
 			//Get the vert that's currently on the right side
@@ -844,23 +883,7 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			crayon_graphics_set_sprite_vert_x(&vert, (4 + 2 - rotation_val) % 4, camera->window_x + camera->window_width);
 			crayon_graphics_set_sprite_vert_x(&vert, (4 + 1 - rotation_val) % 4, camera->window_x + camera->window_width);
 		}
-		if(bounds & (1 << 1)){	//Left side
-
-			//Get the vert that's currently on the left side
-			uv_index = crayon_get_uv_index(0, rotation_val, flip_val);
-			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
-			texture_offset = crayon_graphics_get_texture_offset(0, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
-			texture_divider = crayon_graphics_get_texture_divisor(0, rotation_val,
-				(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
-
-			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(2, rotation_val, flip_val)] - uvs[uv_index]);
-
-			//Set the vert
-			crayon_graphics_set_sprite_vert_x(&vert, (4 + 0 - rotation_val) % 4, camera->window_x);
-			crayon_graphics_set_sprite_vert_x(&vert, (4 + 3 - rotation_val) % 4, camera->window_x);
-		}
-		if(bounds & (1 << 2)){	//Bottom side
-
+		if(bounds & (1 << 3)){	//Bottom side
 			//Get the vert that's currently on the bottom side
 			uv_index = crayon_get_uv_index(3, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4);
@@ -873,21 +896,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//Set the vert
 			crayon_graphics_set_sprite_vert_y(&vert, (4 + 3 - rotation_val) % 4, camera->window_y + camera->window_height);
 			crayon_graphics_set_sprite_vert_y(&vert, (4 + 2 - rotation_val) % 4, camera->window_y + camera->window_height);
-		}
-		if(bounds & (1 << 3)){	//Top side
-
-			//Get uv thats on top side
-			uv_index = crayon_get_uv_index(1, rotation_val, flip_val);
-			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
-			texture_offset = crayon_graphics_get_texture_offset(1, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
-			texture_divider = crayon_graphics_get_texture_divisor(1, rotation_val,
-				(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
-
-			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(3, rotation_val, flip_val)] - uvs[uv_index]);
-
-			//Set the vert
-			crayon_graphics_set_sprite_vert_y(&vert, (4 + 1 - rotation_val) % 4, camera->window_y);
-			crayon_graphics_set_sprite_vert_y(&vert, (4 + 0 - rotation_val) % 4, camera->window_y);
 		}
 
 		if(flip_val){
@@ -1159,12 +1167,13 @@ extern vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, fl
 }
 
 //Verts order: Top left, Top right, bottom left, bottom right. Z order
+	//Return is of format "---- LTRB"
 extern uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]){
 	uint8_t bounds = 0;	//---- TBLR (Top, Bottom, Left, Right)
-	if(vS[0].y < vC[0].y || vS[1].y < vC[0].y){bounds |= (1 << 3);}
-	if(vS[2].y > vC[2].y || vS[3].y > vC[2].y){bounds |= (1 << 2);}
-	if(vS[0].x < vC[0].x || vS[2].x < vC[0].x){bounds |= (1 << 1);}
-	if(vS[1].x > vC[1].x || vS[3].x > vC[1].x){bounds |= (1 << 0);}
+	if(vS[0].y < vC[0].y || vS[1].y < vC[0].y){bounds |= (1 << 1);}
+	if(vS[2].y > vC[2].y || vS[3].y > vC[2].y){bounds |= (1 << 3);}
+	if(vS[0].x < vC[0].x || vS[2].x < vC[0].x){bounds |= (1 << 0);}
+	if(vS[1].x > vC[1].x || vS[3].x > vC[1].x){bounds |= (1 << 2);}
 
 	return bounds;
 }
