@@ -1650,17 +1650,3 @@ extern float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, v
 	}
 	return 0;	//Shouldn't get here
 }
-
-// extern float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, vec2_f_t * scale, const crayon_viewport_t *camera){
-// 	switch(side){
-// 		case 0:
-// 		return (camera->world_width/camera->window_width) * (camera->window_x - vert->x);
-// 		case 1:
-// 		return (camera->world_height/camera->window_height) * (camera->window_y - vert->y);
-// 		case 2:
-// 		return (camera->world_width/camera->window_width) * (vert->x - (camera->window_x + camera->window_width));
-// 		case 3:
-// 		return (camera->world_height/camera->window_height) * (vert->y - (camera->window_y + camera->window_height));
-// 	}
-// 	return 0;	//Shouldn't get here
-// }

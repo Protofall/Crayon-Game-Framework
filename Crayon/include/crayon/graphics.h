@@ -127,6 +127,7 @@ extern uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4]);
 
 //This function will return 0 (0.5 or less) if the number would be rounded down and
 //returns 1 ( more than 0.5) if it would be rounded up.
+	//CURRENTLY UNUSED
 extern uint8_t round_way(float value);
 
 //vert is the nth vert (Backwards C shaped)
