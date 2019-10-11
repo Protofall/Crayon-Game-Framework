@@ -118,11 +118,11 @@ extern vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, fl
 extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
 
 //Returns a crop range to see which edges need to be cropped
-//---- TBLR (Top, Bottom, Left, Right)
-//If its outside the camera, then the highest bit is set
+//---- LTRB (Left, Top, Right, Bottom)
 //NOTE: Verts must be passed in in Z order
 extern uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]);
 
+//Checks if an element is entirely outside of another. Verts are in the Z order
 extern uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4]);
 
 //This function will return 0 (0.5 or less) if the number would be rounded down and
