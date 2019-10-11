@@ -297,9 +297,9 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
-			crayon_graphics_draw_sprites(&Dwarf_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Red_Man_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Green_Man_Draw, PVR_LIST_PT_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Red_Man_Draw, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Green_Man_Draw, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
 
 			crayon_graphics_draw_text_prop("Tahoma\0", &Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id);
 			crayon_graphics_draw_text_mono("BIOS\0", &BIOS, PVR_LIST_PT_POLY, 120, 40, 30, 1, 1, BIOS_P.palette_id);
@@ -330,11 +330,11 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-			crayon_graphics_draw_sprites(&Rainbow_Draw, PVR_LIST_OP_POLY, CRAY_SCREEN_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Frames_Draw, PVR_LIST_OP_POLY, CRAY_SCREEN_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Rainbow_Draw, NULL, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Frames_Draw, NULL, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 
 			//Represents the boundry box for the red man when not rotated
-			crayon_graphics_draw_sprites(&Man_BG, PVR_LIST_OP_POLY, 0);
+			crayon_graphics_draw_sprites(&Man_BG, NULL, PVR_LIST_OP_POLY, 0);
 
 		pvr_list_finish();
 

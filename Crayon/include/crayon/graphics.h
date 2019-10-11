@@ -23,13 +23,13 @@
 #define crayon_graphics_list_finish() pvr_list_finish()
 #define crayon_graphics_scene_finish() pvr_scene_finish()
 
-#define CRAY_SCREEN_DRAW_SIMPLE 0
-#define CRAY_SCREEN_DRAW_ENHANCED 1
-#define CRAY_CAMERA_DRAW_SIMPLE (1 << 1)	//10 in binary
-#define CRAY_CAMERA_DRAW_ENHANCED 3 //This is 11 in binary
+#define CRAY_DRAW_SIMPLE 0
+#define CRAY_DRAW_ENHANCED 1
 
-//Internal usage
-#define CRAY_USING_CAMERA (1 << 1)
+//This var's purpose is to make debugging the render-ers and other graphics function much easier
+	//Since I currently can't print any text while rendering an object, instead I can set vars to
+	//this variable and render them later since this is global
+float __GRAPHICS_DEBUG_VARIABLES[16];
 
 //Sets a palette for a spritesheet
 extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
@@ -39,13 +39,17 @@ extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
 extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *sprite_array, uint8_t id);
 extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *sprite_array, uint8_t id);
 
+//This gets the width and height of the screen in pixels
+extern uint32_t crayon_graphics_get_window_width();
+extern uint32_t crayon_graphics_get_window_height();
+
 
 //------------------Drawing Sprites from Spritesheets------------------//
 
 
-//Queue a texture to be rendered, draw mode right most bit is true for enhanced (false for now)
-//And second right most bit will later be used for camera mode control
-extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode, uint8_t draw_mode);
+//Queue a texture to be rendered, draw mode right most bit is true for enhanced
+extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode, uint8_t draw_mode);
 
 
 //------------------Internal Drawing Functions------------------//
@@ -61,6 +65,17 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 //This will draw untextured polys (Sprite_arrays with no texture set)
 extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
 
+//Like the other simple draw one, but this uses a camera to control where on screen to render and what region to show
+extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode);
+
+//These will come in later
+// extern uint8_t crayon_graphics_camera_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	// uint8_t poly_list_mode);
+
+// extern uint8_t crayon_graphics_camera_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	// uint8_t poly_list_mode);
+
 
 //------------------Drawing Fonts------------------//
 
@@ -74,7 +89,7 @@ extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_p
 	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number);
 
 
-//------------------Drawing Lines------------------//
+//------------------Drawing Other------------------//
 
 
 extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t layer, uint32_t colour,
@@ -101,6 +116,32 @@ extern vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, fl
 
 //Checks if float a is equal to b (+ or -) epsilon
 extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
+
+//Returns a crop range to see which edges need to be cropped
+//---- LTRB (Left, Top, Right, Bottom)
+//NOTE: Verts must be passed in in Z order
+extern uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]);
+
+//Checks if an element is entirely outside of another. Verts are in the Z order
+extern uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4]);
+
+//This function will return 0 (0.5 or less) if the number would be rounded down and
+//returns 1 ( more than 0.5) if it would be rounded up.
+	//CURRENTLY UNUSED
+extern uint8_t round_way(float value);
+
+//vert is the nth vert (Backwards C shaped)
+extern vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t sprite, uint8_t vert);
+
+extern void crayon_graphics_set_sprite_vert_x(pvr_sprite_txr_t *sprite, uint8_t vert, float value);
+extern void crayon_graphics_set_sprite_vert_y(pvr_sprite_txr_t *sprite, uint8_t vert, float value);
+
+//Given a 90-degree-increment rotation, flip flag and side, it will return the correct index to modify
+extern uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t flip_val);
+
+extern float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, vec2_f_t dims);
+
+extern float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, vec2_f_t * scale, const crayon_viewport_t *camera);
 
 
 #endif

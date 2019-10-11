@@ -559,12 +559,12 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 			if(!hide_msg){
-				crayon_graphics_draw_sprites(&Highlight_Draw, PVR_LIST_TR_POLY, CRAY_SCREEN_DRAW_ENHANCED);
+				crayon_graphics_draw_sprites(&Highlight_Draw, NULL, PVR_LIST_TR_POLY, CRAY_DRAW_ENHANCED);
 			}
 
-			crayon_graphics_draw_sprites(&Faces_Draw[0], PVR_LIST_TR_POLY, CRAY_SCREEN_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Faces_Draw[1], PVR_LIST_TR_POLY, CRAY_SCREEN_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Faces_Draw[2], PVR_LIST_TR_POLY, CRAY_SCREEN_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Faces_Draw[0], NULL, PVR_LIST_TR_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Faces_Draw[1], NULL, PVR_LIST_TR_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Faces_Draw[2], NULL, PVR_LIST_TR_POLY, CRAY_DRAW_ENHANCED);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
@@ -585,6 +585,8 @@ int main(){
 	crayon_memory_free_sprite_array(&Faces_Draw[0]);
 	crayon_memory_free_sprite_array(&Faces_Draw[1]);
 	crayon_memory_free_sprite_array(&Faces_Draw[2]);
+
+	pvr_shutdown();
 
 	return 0;
 }

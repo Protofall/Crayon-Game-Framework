@@ -501,6 +501,22 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 	return;
 }
 
+extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_coord, vec2_u16_t world_dim,
+	vec2_u16_t window_coord, vec2_u16_t window_dim, float world_movement_factor){
+
+	camera->world_x = world_coord.x;
+	camera->world_y = world_coord.y;
+	camera->world_width = world_dim.x;
+	camera->world_height = world_dim.y;
+	camera->world_movement_factor = world_movement_factor;
+	camera->window_x = window_coord.x;
+	camera->window_y = window_coord.y;
+	camera->window_width = window_dim.x;
+	camera->window_height = window_dim.y;
+
+	return;
+}
+
 extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1, uint32_t colour2, uint8_t _continue){
 	uint16_t i;
 	uint16_t found = 0;

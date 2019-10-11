@@ -19,6 +19,25 @@
 #define CRAY_COLOUR_ADD (1 << 6)
 #define CRAY_HAS_TEXTURE (1 << 7)
 
+//The camera, controls where on screen to render and which part of the world to draw
+typedef struct crayon_viewport_t{
+	//Top left of the world region and dimensions
+	float world_x;	//Must be a float since the draw position array is a bunch of floats
+	float world_y;
+	uint16_t world_width;
+	uint16_t world_height;
+
+	//The scrolling modifier
+	float world_movement_factor;
+
+	//Top left of where to render to on screen and dimensions
+		//For DC these can all be uint16_t's. For the PC port I think uint16_t is still fine even with larger monitors because a uint16_t is 65535 at most and that still supports 8K (And possibly higher)
+	uint16_t window_x;
+	uint16_t window_y;
+	uint16_t window_width;
+	uint16_t window_height;
+} crayon_viewport_t;
+
 //This is designed for the multi-draw functions. If you want to draw a single thing with this struct
 //then I you'll still need to go through the multi-draw. It shouldn't be too much slower if any.
 typedef struct crayon_sprite_array{

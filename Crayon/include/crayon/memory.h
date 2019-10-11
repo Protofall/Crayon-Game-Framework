@@ -61,6 +61,9 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 	uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
 	uint8_t filter, uint8_t set_defaults);
 
+extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_coord, vec2_u16_t world_dim,
+	vec2_u16_t window_coord, vec2_u16_t window_dim, float world_movement_factor);
+
 
 //------------------Modifying memory----------------//
 
