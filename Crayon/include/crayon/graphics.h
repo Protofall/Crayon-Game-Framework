@@ -89,7 +89,7 @@ extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_p
 	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number);
 
 
-//------------------Drawing Lines------------------//
+//------------------Drawing Other------------------//
 
 
 extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t layer, uint32_t colour,
