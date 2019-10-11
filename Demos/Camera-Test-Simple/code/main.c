@@ -438,14 +438,6 @@ int main(){
 	crayon_graphics_setup_palette(&Green_Man_P);
 
 	char snum1[80];
-	char gbuff[180];
-	for(i = 0; i < 16; i++){
-		__GRAPHICS_DEBUG_VARIABLES[i] = -1;
-	}
-	//values 0 through 7 are used for vert pos. 0 is used to select the particular element
-	__GRAPHICS_DEBUG_VARIABLES[8] = 0;
-	__GRAPHICS_DEBUG_VARIABLES[9] = -1;
-	__GRAPHICS_DEBUG_VARIABLES[10] = -1;
 
 	char instructions[320];	//I'm only using 298 chars, but I gave more space just to be safe
 	set_msg(instructions);
@@ -639,13 +631,6 @@ int main(){
 				crayon_graphics_draw_text_mono(snum1, &BIOS, PVR_LIST_PT_POLY, 32, 280 + (BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
 
 				crayon_graphics_draw_text_mono(instructions, &BIOS, PVR_LIST_PT_POLY, 32, 368, 254, 1, 1, BIOS_P.palette_id);
-			}
-			else{
-				sprintf(gbuff, "Sprite: %.0f\nTL, X: %.2f, Y: %.2f\nTR, X: %.2f, Y: %.2f\nBL, X: %.2f, Y: %.2f\nBR, X: %.2f, Y: %.2f\nOffset: %.10f",
-					__GRAPHICS_DEBUG_VARIABLES[8], __GRAPHICS_DEBUG_VARIABLES[0], __GRAPHICS_DEBUG_VARIABLES[1], __GRAPHICS_DEBUG_VARIABLES[2],
-					__GRAPHICS_DEBUG_VARIABLES[3], __GRAPHICS_DEBUG_VARIABLES[4], __GRAPHICS_DEBUG_VARIABLES[5], __GRAPHICS_DEBUG_VARIABLES[6],
-					__GRAPHICS_DEBUG_VARIABLES[7], __GRAPHICS_DEBUG_VARIABLES[10]);
-				crayon_graphics_draw_text_mono(gbuff, &BIOS, PVR_LIST_PT_POLY, 400, 420 - (3 * BIOS.char_height), 30, 1, 1, BIOS_P.palette_id);
 			}
 
 		pvr_list_finish();
