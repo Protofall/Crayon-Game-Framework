@@ -137,6 +137,9 @@ int main(){
 	Frames_Draw.coord[3].x = 540 + 32;
 	Frames_Draw.coord[3].y = 20 + 32;
 	Frames_Draw.layer[0] = 18;
+	Frames_Draw.layer[1] = 18;
+	Frames_Draw.layer[2] = 18;
+	Frames_Draw.layer[3] = 18;
 	Frames_Draw.scale[0].x = 2;
 	Frames_Draw.scale[0].y = 2;
 	Frames_Draw.flip[0] = 0;
@@ -160,6 +163,8 @@ int main(){
 	Dwarf_Draw.coord[2].x = Dwarf_Draw.coord[0].x;
 	Dwarf_Draw.coord[2].y = Dwarf_Draw.coord[1].y + Dwarf_Draw.animation[0].frame_height;
 	Dwarf_Draw.layer[0] = 18;
+	Dwarf_Draw.layer[1] = 18;
+	Dwarf_Draw.layer[2] = 18;
 	Dwarf_Draw.scale[0].x = 0.5;
 	Dwarf_Draw.scale[0].y = 0.5;
 	Dwarf_Draw.scale[1].x = 1;
@@ -221,6 +226,13 @@ int main(){
 	Rainbow_Draw.coord[7].x = Rainbow_Draw.coord[4].x;
 	Rainbow_Draw.coord[7].y = Rainbow_Draw.coord[6].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10;
 	Rainbow_Draw.layer[0] = 17;
+	Rainbow_Draw.layer[1] = 17;
+	Rainbow_Draw.layer[2] = 17;
+	Rainbow_Draw.layer[3] = 17;
+	Rainbow_Draw.layer[4] = 17;
+	Rainbow_Draw.layer[5] = 17;
+	Rainbow_Draw.layer[6] = 17;
+	Rainbow_Draw.layer[7] = 17;
 	Rainbow_Draw.scale[0].x = 8;
 	Rainbow_Draw.scale[0].y = 8;
 	Rainbow_Draw.flip[0] = 0;

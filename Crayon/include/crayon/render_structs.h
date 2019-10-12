@@ -4,7 +4,6 @@
 #include "texture_structs.h"  //For the spritesheet and anim structs
 #include "vector_structs.h"
 
-#define CRAY_MULTI_LAYER (1 << 0)
 #define CRAY_MULTI_FRAME (1 << 1)
 #define CRAY_MULTI_SCALE (1 << 2)
 #define CRAY_MULTI_DIM (1 << 2)
@@ -43,6 +42,7 @@ typedef struct crayon_viewport_t{
 typedef struct crayon_sprite_array{
 	vec2_f_t *coord;			//Width then Height extracted from anim/frame data,
 								//Each element is one pair of coordinates
+	uint8_t *layer;				//The layer to help deal with overlapping sprites/polys
 	uint8_t *frame_id;			//ids for a pair of frame_uv elements and uses that for
 								//drawing. frame_id[i] refers to frame_uv[i].x/y
 	vec2_u16_t *frame_uv;		//Each element is UV for one frame of an animation (U is x, V is Y)
@@ -56,18 +56,16 @@ typedef struct crayon_sprite_array{
 
 	float *rotation;			//Poly uses angles to rotate on Z axis, sprite uses
 								//booleans/flip bits. Decide what type this should be...
-	uint8_t *layer;				//The layer to help deal with overlapping sprites/polys
 	uint16_t list_size;			//This tells the draw function how many sprites/polys to draw.
 	uint8_t frames_used;		//The number of frames you want to use. Minimum 1
 
-	uint8_t options;			//Format TCCR (flip)SFZ, Basically some booleans options relating to
-								//fade/colour, rotation, flip, scale, frame_ids, z coord (layer)
+	uint8_t options;			//Format TCCR (flip)SF-, Basically some booleans options relating to
+								//fade/colour, rotation, flip, scale and frame_ids
 								//If that bit is set to true, then we use the first element of
 								//arrays (except map) for all sub-textures
 								//Else we assume each sprite has its own unique value
 								//T stands for "Textured". Changes how we handle the struct
-									//Untextured polys only use The right Colour bit, Rotation, Scale
-									//and Layer (Z)
+									//Untextured polys only use The right Colour bit, Rotation and Scale
 
 								//Note that the 1st colour bit tells it to use either Blend or Add
 								//mode when applying the colour

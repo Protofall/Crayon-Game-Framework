@@ -168,7 +168,8 @@ int main(){
 	Opaque_Blend_Draw.coord[0].y = 0;
 	Opaque_Blend_Draw.coord[1].x = 4 + crayon_graphics_get_draw_element_width(&Opaque_Blend_Draw, 0);
 	Opaque_Blend_Draw.coord[1].y = Opaque_Blend_Draw.coord[0].y;
-	Opaque_Add_Draw.layer[0] = 1;
+	Opaque_Blend_Draw.layer[0] = 1;
+	Opaque_Blend_Draw.layer[1] = 1;
 	Opaque_Blend_Draw.flip[0] = 0;
 	Opaque_Blend_Draw.rotation[0] = 0;
 	Opaque_Blend_Draw.colour[0] = 0xFF00FF00;
@@ -186,6 +187,7 @@ int main(){
 	Opaque_Add_Draw.coord[1].x = 4 + crayon_graphics_get_draw_element_width(&Opaque_Add_Draw, 0);
 	Opaque_Add_Draw.coord[1].y = Opaque_Add_Draw.coord[0].y;
 	Opaque_Add_Draw.layer[0] = 1;
+	Opaque_Add_Draw.layer[1] = 1;
 	Opaque_Add_Draw.flip[0] = 0;
 	Opaque_Add_Draw.rotation[0] = 0;
 	Opaque_Add_Draw.colour[0] = 0xFF00FF00;

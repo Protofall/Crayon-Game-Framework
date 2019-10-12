@@ -443,14 +443,13 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 	// ((sprite_array->options >> 3) & 1)	//Extract the flip bit
 	// ((sprite_array->options >> 2) & 1)	//Extract the scale bit
 	// ((sprite_array->options >> 1) & 1)	//Extract the frames_used bit
-	// ((sprite_array->options) & 1)		//Extract the layer bit
 
 	sprite_array->coord = (vec2_f_t *) malloc(list_size * sizeof(vec2_f_t));
+	sprite_array->layer = (uint8_t *) malloc(list_size * sizeof(uint8_t));
 	sprite_array->scale = (vec2_f_t *) malloc(((sprite_array->options >> 2) & 1 ? list_size: 1) * sizeof(vec2_f_t));
 
 	sprite_array->colour = (uint32_t *) malloc(((sprite_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint32_t));
 	sprite_array->rotation = (float *) malloc(((sprite_array->options >> 4) & 1 ? list_size: 1) * sizeof(float));
-	sprite_array->layer = (uint8_t *) malloc(((sprite_array->options) & 1 ? list_size: 1) * sizeof(uint8_t));
 
 	if(ss){
 		sprite_array->frame_id = (uint8_t *) malloc(((sprite_array->options >> 1) & 1 ? list_size: 1) * sizeof(uint8_t));
@@ -746,7 +745,7 @@ extern float crayon_memory_get_rotation(crayon_sprite_array_t * sprites, uint16_
 }
 
 extern uint8_t crayon_memory_get_layer(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
-	if(((sprites->options & CRAY_MULTI_LAYER) && index == 0) || index < sprites->list_size){
+	if(index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->layer[index];
 	}
@@ -858,7 +857,7 @@ extern uint8_t crayon_memory_set_rotation(crayon_sprite_array_t * sprites, uint1
 }
 
 extern uint8_t crayon_memory_set_layer(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value){
-	if(((sprites->options & CRAY_MULTI_LAYER) && index == 0) || index < sprites->list_size){
+	if(index < sprites->list_size){
 		sprites->layer[index] = value;
 		return 0;
 	}

@@ -120,16 +120,10 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 
 	//Easily lets us use the right index for each array
 		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
-	uint16_t *rotation_index, *flip_index, *frame_index, *z_index;
+	uint16_t *rotation_index, *flip_index, *frame_index;
 	uint16_t i;	//The main loop's index
 	uint16_t zero = 0;
 	float rotation_under_360;
-	if(sprite_array->options & CRAY_MULTI_LAYER){
-		z_index = &i;
-	}
-	else{
-		z_index = &zero;
-	}
 
 	if(sprite_array->options & CRAY_MULTI_FRAME){
 		frame_index = &i;
@@ -164,11 +158,6 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 	for(i = 0; i < sprite_array->list_size; i++){
 		//These if statements will trigger once if we have a single element (i == 0)
 			//and every time for a multi-list
-		if(*z_index == i){	//z
-			vert.az = (float)sprite_array->layer[*z_index];
-			vert.bz = (float)sprite_array->layer[*z_index];
-			vert.cz = (float)sprite_array->layer[*z_index];
-		}
 
 		if(*frame_index == i){	//frame
 			u0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
@@ -261,6 +250,11 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			vert.dy = vert.cy;
 		}
 
+		//Chek if the float cast-ing is nessisary
+		vert.az = (float)sprite_array->layer[i];
+		vert.bz = (float)sprite_array->layer[i];
+		vert.cz = (float)sprite_array->layer[i];
+
 		pvr_prim(&vert, sizeof(vert));
 	}
 
@@ -295,7 +289,7 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 
 	//Easily lets us use the right index for each array
 		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
-	uint16_t *rotation_index, *flip_index, *frame_index, *z_index, *colour_index;
+	uint16_t *rotation_index, *flip_index, *frame_index, *colour_index;
 	uint8_t multi_scale = !!(sprite_array->options & CRAY_MULTI_SCALE);
 	uint16_t zero = 0;
 	float angle = 0;
@@ -304,8 +298,6 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 	uint8_t skip = 0;
 
 	uint16_t i, j;	//Indexes
-	if(sprite_array->options & CRAY_MULTI_LAYER){z_index = &i;}
-	else{z_index = &zero;}
 
 	if(sprite_array->options & CRAY_MULTI_FRAME){frame_index = &i;}
 	else{frame_index = &zero;}
@@ -333,9 +325,6 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 		}
 		//These if statements will trigger once if we have a single element (i == 0)
 			//and every time for a multi-list
-		if(*z_index == i){	//z
-			vert[0].z = (float)sprite_array->layer[*z_index];
-		}
 
 		if(*frame_index == i){	//frame
 			u0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
@@ -393,6 +382,8 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
 
+		vert[0].z = (float)sprite_array->layer[i];
+
 		//Update rotation part if needed
 		if(*rotation_index == i){
 			angle = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
@@ -442,11 +433,10 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
-	//--CR -D-Z
+	//--CR -D--
 	uint8_t multiple_rotation = (sprite_array->options >> 4) & 1;
 	uint8_t multiple_dims = (sprite_array->options >> 2) & 1;
 	uint8_t multiple_colour = (sprite_array->options >> 5) & 1;
-	uint8_t multiple_z = sprite_array->options & 1;
 
 	//All this just for rotations
 	uint16_t *rotation_index;
@@ -465,14 +455,19 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 	}
 	vert[3].flags = PVR_CMD_VERTEX_EOL;
 
+	//Unused param, set to 0
+	vert[0].oargb = 0;
+	for(i = 1; i < 4; i++){
+		vert[i].oargb = vert[0].oargb;
+	}
+
 	for(i = 0; i < sprite_array->list_size; i++){
 		if(sprite_array->colour[multiple_colour * i] >> 24 == 0){	//Don't draw alpha-less stuff
 			if(i != 0){continue;}	//For the first element, we need to initialise our vars, otherwise we just skip to the next element
 			skip = 1;
 		}
 		vert[0].argb = sprite_array->colour[multiple_colour * i];	//If only one colour, this is forced to colour zero
-		vert[0].oargb = 0;
-		vert[0].z = sprite_array->layer[multiple_z * i];
+		vert[0].z = sprite_array->layer[i];
 
 		vert[0].x = floor(sprite_array->coord[i].x);
 		vert[0].y = floor(sprite_array->coord[i].y);
@@ -507,7 +502,6 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 		for(j = 1; j < 4; j++){
 			vert[j].z = vert[0].z;
 			vert[j].argb = vert[0].argb;
-			vert[j].oargb = vert[0].oargb;
 		}
 
 		if(skip){
@@ -573,16 +567,10 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 	//Easily lets us use the right index for each array
 		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
-	uint16_t *rotation_index, *flip_index, *frame_index, *z_index;
+	uint16_t *rotation_index, *flip_index, *frame_index;
 	uint16_t i;	//The main loop's index
 	uint16_t zero = 0;
 	float rotation_under_360 = 0;
-	if(sprite_array->options & CRAY_MULTI_LAYER){
-		z_index = &i;
-	}
-	else{
-		z_index = &zero;
-	}
 
 	if(sprite_array->options & CRAY_MULTI_FRAME){
 		frame_index = &i;
@@ -618,11 +606,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 		//These if statements will trigger once if we have a single element (i == 0)
 			//and every time for a multi-list
 			//and some of them trigger if we just cropped a UV
-		if(*z_index == i){	//z
-			vert.az = (float)sprite_array->layer[*z_index];
-			vert.bz = (float)sprite_array->layer[*z_index];
-			vert.cz = (float)sprite_array->layer[*z_index];
-		}
 
 		if(*frame_index == i || cropped){	//frame
 			uvs[0] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
@@ -724,6 +707,10 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			vert.ax = vert.bx;
 			vert.ay = vert.dy;
 		}
+
+		vert.az = (float)sprite_array->layer[i];
+		vert.bz = (float)sprite_array->layer[i];
+		vert.cz = (float)sprite_array->layer[i];
 
 		//Verts c and d (Or 2 and 3) are swapped so its in Z order instead of "Backwards C" order
 		sprite_verts[0] = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
@@ -902,16 +889,10 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple_POLY_TEST(const crayon
 
 	//Easily lets us use the right index for each array
 		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
-	uint16_t *rotation_index, *flip_index, *frame_index, *z_index;
+	uint16_t *rotation_index, *flip_index, *frame_index;
 	uint16_t i;	//The main loop's index
 	uint16_t zero = 0;
 	float rotation_under_360 = 0;
-	if(sprite_array->options & CRAY_MULTI_LAYER){
-		z_index = &i;
-	}
-	else{
-		z_index = &zero;
-	}
 
 	if(sprite_array->options & CRAY_MULTI_FRAME){
 		frame_index = &i;
@@ -944,16 +925,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple_POLY_TEST(const crayon
 		//These if statements will trigger once if we have a single element (i == 0)
 			//and every time for a multi-list
 			//and some of them trigger if we just cropped a UV
-		if(*z_index == i){	//z
-			// vert.az = (float)sprite_array->layer[*z_index];
-			// vert.bz = (float)sprite_array->layer[*z_index];
-			// vert.cz = (float)sprite_array->layer[*z_index];
-			vert2[0].z = (float)sprite_array->layer[*z_index];
-			//Apply these to all verts
-			for(j = 1; j < 4; j++){
-				vert2[j].z = vert2[0].z;
-			}
-		}
 
 		if(*frame_index == i || cropped){	//frame
 			uvs[0] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
@@ -1054,6 +1025,12 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple_POLY_TEST(const crayon
 			vert.dy = vert.by + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_height / (float)camera->world_height));
 			vert.ax = vert.bx;
 			vert.ay = vert.dy;
+		}
+
+		vert2[0].z = (float)sprite_array->layer[i];
+		//Apply these to all verts
+		for(j = 1; j < 4; j++){
+			vert2[j].z = vert2[0].z;
 		}
 
 		//Verts c and d (Or 2 and 3) are swapped so its in Z order instead of "Backwards C" order

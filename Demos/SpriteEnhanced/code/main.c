@@ -158,6 +158,7 @@ int main(){
 	Dwarf_Draw_Flip.coord[1].y = Dwarf_Draw_Flip.coord[0].y;
 
 	Dwarf_Draw_Flip.layer[0] = 2;
+	Dwarf_Draw_Flip.layer[1] = 2;
 	Dwarf_Draw_Flip.flip[0] = 0;
 	Dwarf_Draw_Flip.flip[1] = 1;
 	Dwarf_Draw_Flip.rotation[0] = 0;
@@ -180,6 +181,9 @@ int main(){
 	Dwarf_Draw_Rotate.coord[3].y = Dwarf_Draw_Rotate.coord[2].y;
 
 	Dwarf_Draw_Rotate.layer[0] = 2;
+	Dwarf_Draw_Rotate.layer[1] = 2;
+	Dwarf_Draw_Rotate.layer[2] = 2;
+	Dwarf_Draw_Rotate.layer[3] = 2;
 	Dwarf_Draw_Rotate.flip[0] = 0;
 	Dwarf_Draw_Rotate.rotation[0] = 0;
 	Dwarf_Draw_Rotate.rotation[1] = 81;
@@ -206,6 +210,8 @@ int main(){
 	Dwarf_Draw_Scale.coord[2].y = Dwarf_Draw_Scale.coord[0].y;
 
 	Dwarf_Draw_Scale.layer[0] = 2;
+	Dwarf_Draw_Scale.layer[1] = 2;
+	Dwarf_Draw_Scale.layer[2] = 2;
 	Dwarf_Draw_Scale.flip[0] = 0;
 	Dwarf_Draw_Scale.rotation[0] = 0;
 	Dwarf_Draw_Scale.colour[0] = 0xFFFFFFFF;
@@ -225,6 +231,8 @@ int main(){
 	Dwarf_Draw_Frame.coord[2].y = Dwarf_Draw_Frame.coord[0].y;
 
 	Dwarf_Draw_Frame.layer[0] = 2;
+	Dwarf_Draw_Frame.layer[1] = 2;
+	Dwarf_Draw_Frame.layer[2] = 2;
 	Dwarf_Draw_Frame.flip[0] = 0;
 	Dwarf_Draw_Frame.rotation[0] = 0;
 	Dwarf_Draw_Frame.colour[0] = 0xFFFFFFFF;
@@ -247,6 +255,8 @@ int main(){
 	Dwarf_Draw_Colour_Blend.coord[2].y = Dwarf_Draw_Colour_Blend.coord[0].y;
 
 	Dwarf_Draw_Colour_Blend.layer[0] = 2;
+	Dwarf_Draw_Colour_Blend.layer[1] = 2;
+	Dwarf_Draw_Colour_Blend.layer[2] = 2;
 
 	Dwarf_Draw_Colour_Blend.colour[0] = 0xFF00FF00;	//Green
 	Dwarf_Draw_Colour_Blend.fade[0] = 0;
@@ -272,6 +282,8 @@ int main(){
 	Dwarf_Draw_Colour_Add.coord[2].y = Dwarf_Draw_Colour_Add.coord[0].y;
 
 	Dwarf_Draw_Colour_Add.layer[0] = 2;
+	Dwarf_Draw_Colour_Add.layer[1] = 2;
+	Dwarf_Draw_Colour_Add.layer[2] = 2;
 
 	Dwarf_Draw_Colour_Add.colour[0] = 0xFF0000FF;	//Blue
 	Dwarf_Draw_Colour_Add.fade[0] = 0;
@@ -303,6 +315,11 @@ int main(){
 	Dwarf_Draw_Mash.coord[5].y = Dwarf_Draw_Mash.coord[0].y;
 
 	Dwarf_Draw_Mash.layer[0] = 2;
+	Dwarf_Draw_Mash.layer[1] = 2;
+	Dwarf_Draw_Mash.layer[2] = 2;
+	Dwarf_Draw_Mash.layer[3] = 2;
+	Dwarf_Draw_Mash.layer[4] = 2;
+	Dwarf_Draw_Mash.layer[5] = 2;
 
 	Dwarf_Draw_Mash.flip[0] = 0;
 	Dwarf_Draw_Mash.flip[1] = 1;
