@@ -30,7 +30,8 @@ typedef struct crayon_viewport_t{
 	float world_movement_factor;
 
 	//Top left of where to render to on screen and dimensions
-		//For DC these can all be uint16_t's. For the PC port I think uint16_t is still fine even with larger monitors because a uint16_t is 65535 at most and that still supports 8K (And possibly higher)
+		//For DC these can all be uint16_t's. For the PC port I think uint16_t is still fine even with
+		//larger monitors because a uint16_t is 65535 at most and that still supports 8K (And possibly higher)
 	uint16_t window_x;
 	uint16_t window_y;
 	uint16_t window_width;

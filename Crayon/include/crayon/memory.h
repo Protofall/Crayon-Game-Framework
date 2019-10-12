@@ -54,7 +54,7 @@ extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, char
 extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id);
 
 //Set initial array sizes and options for your sprite_array
-//Option's format is TCCR (flip)SFZ
+//Option's format is TCCR (flip)SF-
 	//If T is set, we ignore the flip, frames and Left colour bits
 //If making an untextured array, set the spritesheet pointer to NULL
 extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
