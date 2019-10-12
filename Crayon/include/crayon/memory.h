@@ -140,4 +140,10 @@ extern uint8_t crayon_memory_set_layer(crayon_sprite_array_t * sprites, uint16_t
 extern uint8_t crayon_memory_set_frame_id(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value);
 extern uint8_t crayon_memory_set_frame_uv(crayon_sprite_array_t * sprites, uint16_t index, uint8_t frame_id);
 
+
+//--------------------------Misc--------------------------//
+
+extern void crayon_memory_move_camera_x(crayon_viewport_t * camera, float x);
+extern void crayon_memory_move_camera_y(crayon_viewport_t * camera, float y);
+
 #endif

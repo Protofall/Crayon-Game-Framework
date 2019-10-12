@@ -886,3 +886,13 @@ extern uint8_t crayon_memory_set_frame_uv(crayon_sprite_array_t * sprites, uint1
 	}
 	return 1;
 }
+
+extern void crayon_memory_move_camera_x(crayon_viewport_t * camera, float x){
+	camera->world_x += (x * camera->world_movement_factor);
+	return;
+}
+
+extern void crayon_memory_move_camera_y(crayon_viewport_t * camera, float y){
+	camera->world_y += (y * camera->world_movement_factor);
+	return;
+}

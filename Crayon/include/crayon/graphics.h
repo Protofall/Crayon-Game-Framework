@@ -69,6 +69,10 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode);
 
+//DELETE THIS LATER
+extern uint8_t crayon_graphics_camera_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode);
+
 //These will come in later
 // extern uint8_t crayon_graphics_camera_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	// uint8_t poly_list_mode);

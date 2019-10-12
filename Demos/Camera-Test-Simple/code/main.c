@@ -6,6 +6,8 @@
 #include <dc/maple.h>
 #include <dc/maple/controller.h> //For the "Press start to exit" thing
 
+#include <math.h>
+
 #if CRAYON_BOOT_MODE == 1
 	//For mounting the sd dir
 	#include <dc/sd.h>
@@ -443,7 +445,7 @@ int main(){
 	set_msg(instructions);
 
 	//World_movement_factor_adjustment
-	int8_t scale_adjustment = 1;
+	int8_t scale_adjustment[4] = {0};
 
 	//LTRB
 	uint8_t last_dir = 0;
@@ -463,32 +465,32 @@ int main(){
 		curr_thumb = thumbstick_to_dpad(st->joyx, st->joyy, 0.4);
 
 		if(curr_thumb & CONT_DPAD_LEFT){
-			current_camera->world_x += 1;
+			crayon_memory_move_camera_x(current_camera, -1);
 			last_dir = 0;
 		}
 		else if(curr_thumb & CONT_DPAD_RIGHT){
-			current_camera->world_x -= 1;
+			crayon_memory_move_camera_x(current_camera, 1);
 			last_dir = 2;
 		}
 
 		if(curr_thumb & CONT_DPAD_UP){
-			current_camera->world_y += 1;
+			crayon_memory_move_camera_y(current_camera, -1);
 			last_dir = 1;
 		}
 		else if(curr_thumb & CONT_DPAD_DOWN){
-			current_camera->world_y -= 1;
+			crayon_memory_move_camera_y(current_camera, 1);
 			last_dir = 3;
 		}
 
 
 		//Adjust the current world movement factor
-		if(st->buttons & CONT_DPAD_UP){
-			scale_adjustment++;
-			//Set the scale factor
+		if((st->buttons & CONT_DPAD_UP) && !(prev_btns[__dev->port] & CONT_DPAD_UP)){
+			scale_adjustment[current_camera_id]++;
+			current_camera->world_movement_factor = pow(2, scale_adjustment[current_camera_id]);
 		}
-		else if(st->buttons & CONT_DPAD_DOWN){
-			scale_adjustment--;
-			//Set the scale factor
+		else if((st->buttons & CONT_DPAD_DOWN) && !(prev_btns[__dev->port] & CONT_DPAD_DOWN)){
+			scale_adjustment[current_camera_id]--;
+			current_camera->world_movement_factor = pow(2, scale_adjustment[current_camera_id]);
 		}
 
 		if((st->buttons & CONT_A) && !(prev_btns[__dev->port] & CONT_A)){
@@ -510,16 +512,16 @@ int main(){
 		if((st->rtrig > 0xFF * 0.1) && (prev_trigs[__dev->port].y <= 0xFF * 0.1)){
 			switch(last_dir){
 				case 0:
-				current_camera->world_x += 1;
+				crayon_memory_move_camera_x(current_camera, -1);
 				break;
 				case 1:
-				current_camera->world_y += 1;
+				crayon_memory_move_camera_y(current_camera, -1);
 				break;
 				case 2:
-				current_camera->world_x -= 1;
+				crayon_memory_move_camera_x(current_camera, 1);
 				break;
 				case 3:
-				current_camera->world_y -= 1;
+				crayon_memory_move_camera_y(current_camera, 1);
 				break;
 			}
 		}
@@ -527,16 +529,16 @@ int main(){
 		if((st->ltrig > 0xFF * 0.1) && (prev_trigs[__dev->port].x <= 0xFF * 0.1)){
 			switch(last_dir){
 				case 0:
-				current_camera->world_x -= 1;
+				crayon_memory_move_camera_x(current_camera, 1);
 				break;
 				case 1:
-				current_camera->world_y -= 1;
+				crayon_memory_move_camera_y(current_camera, 1);
 				break;
 				case 2:
-				current_camera->world_x += 1;
+				crayon_memory_move_camera_x(current_camera, -1);
 				break;
 				case 3:
-				current_camera->world_y += 1;
+				crayon_memory_move_camera_y(current_camera, -1);
 				break;
 			}
 		}
