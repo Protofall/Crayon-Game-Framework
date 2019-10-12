@@ -232,12 +232,12 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			//I couldn't actually do that since the verts wouldn't be set if the rotation aren't checked
 			//Hence it just flows here naturally
 
-		vert.ax = trunc(sprite_array->coord[i].x);
-		vert.ay = trunc(sprite_array->coord[i].y);
-		vert.bx = vert.ax + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
+		vert.ax = floor(sprite_array->coord[i].x);
+		vert.ay = floor(sprite_array->coord[i].y);
+		vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
 		vert.by = vert.ay;
 		vert.cx = vert.bx;
-		vert.cy = vert.ay + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
+		vert.cy = vert.ay + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
 		vert.dx = vert.ax;
 		vert.dy = vert.cy;
 
@@ -251,12 +251,12 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 				//Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.ax = trunc(sprite_array->coord[i].x) + ((sprite_array->scale[i * multi_scale].y * diff) / 2);
-			vert.ay = trunc(sprite_array->coord[i].y) - ((sprite_array->scale[i * multi_scale].x * diff) / 2);
-			vert.bx = vert.ax + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
+			vert.ax = floor(sprite_array->coord[i].x) + ((sprite_array->scale[i * multi_scale].y * diff) / 2);
+			vert.ay = floor(sprite_array->coord[i].y) - ((sprite_array->scale[i * multi_scale].x * diff) / 2);
+			vert.bx = vert.ax + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
 			vert.by = vert.ay;
 			vert.cx = vert.bx;
-			vert.cy = vert.ay + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
+			vert.cy = vert.ay + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
 			vert.dx = vert.ax;
 			vert.dy = vert.cy;
 		}
@@ -384,12 +384,12 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 			vert[0].oargb = (a << 24) + (r << 16) + (g << 8) + b;
 		}
 
-		vert[0].x = trunc(sprite_array->coord[i].x);
-		vert[0].y = trunc(sprite_array->coord[i].y);
-		vert[1].x = vert[0].x + trunc(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
+		vert[0].x = floor(sprite_array->coord[i].x);
+		vert[0].y = floor(sprite_array->coord[i].y);
+		vert[1].x = vert[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
 		vert[1].y = vert[0].y;
 		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + trunc(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
+		vert[2].y = vert[0].y + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
 
@@ -474,12 +474,12 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 		vert[0].oargb = 0;
 		vert[0].z = sprite_array->layer[multiple_z * i];
 
-		vert[0].x = trunc(sprite_array->coord[i].x);
-		vert[0].y = trunc(sprite_array->coord[i].y);
-		vert[1].x = vert[0].x + trunc(sprite_array->scale[multiple_dims * i].x);	//If using one dim, multiple dims reduces it to the first value
+		vert[0].x = floor(sprite_array->coord[i].x);
+		vert[0].y = floor(sprite_array->coord[i].y);
+		vert[1].x = vert[0].x + floor(sprite_array->scale[multiple_dims * i].x);	//If using one dim, multiple dims reduces it to the first value
 		vert[1].y = vert[0].y;
 		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + trunc(sprite_array->scale[multiple_dims * i].y);
+		vert[2].y = vert[0].y + floor(sprite_array->scale[multiple_dims * i].y);
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
 
@@ -1186,8 +1186,8 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple_POLY_TEST(const crayon
 extern uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_mono_t *fm, uint8_t poly_list_mode,
 	float draw_x, float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number){
 
-	float x0 = trunc(draw_x);
-	float y0 = trunc(draw_y);
+	float x0 = floor(draw_x);
+	float y0 = floor(draw_y);
 	const float z = layer;
 
 	//x1 and y1 depend on the letter
@@ -1222,7 +1222,7 @@ extern uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_m
 			break;
 		}
 		if(string[i] == '\n'){	//This should be able to do a new line
-			x0 = trunc(draw_x);
+			x0 = floor(draw_x);
 			x1 = x0 + fm->char_width * scale_x;
 			y0 = y1;
 			y1 += fm->char_height * scale_y;
@@ -1259,8 +1259,8 @@ extern uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_m
 extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_prop_t *fp, uint8_t poly_list_mode,
 	float draw_x, float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number){
 
-	float x0 = trunc(draw_x);
-	float y0 = trunc(draw_y);
+	float x0 = floor(draw_x);
+	float y0 = floor(draw_y);
 	const float z = layer;
 	float x1 = x0;
 	float y1 = y0 + fp->char_height * scale_y;
@@ -1295,7 +1295,7 @@ extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_p
 			break;
 		}
 		if(string[i] == '\n'){	//This should be able to do a new line
-			x0 = trunc(draw_x);
+			x0 = floor(draw_x);
 			x1 = x0;
 			y0 = y1;
 			y1 += fp->char_height * scale_y;
