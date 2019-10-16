@@ -154,8 +154,12 @@ int main(){
 		crayon_memory_set_frame_uv(&Frames_Draw, i, i);
 	}
 
+	// crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
+	// uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
+	// uint8_t filter, uint8_t set_defaults);
+
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 1, CRAY_MULTI_SCALE, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 4, CRAY_MULTI_SCALE, PVR_FILTER_NONE, 0);
 	Dwarf_Draw.coord[0].x = 50;
 	Dwarf_Draw.coord[0].y = 20;
 	Dwarf_Draw.coord[1].x = Dwarf_Draw.coord[0].x;
@@ -176,6 +180,9 @@ int main(){
 	Dwarf_Draw.colour[0] = 0;
 	Dwarf_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 0, 0);
+	crayon_memory_set_frame_uv(&Dwarf_Draw, 1, 1);
+	crayon_memory_set_frame_uv(&Dwarf_Draw, 2, 2);
+	crayon_memory_set_frame_uv(&Dwarf_Draw, 3, 3);
 
 	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
 	crayon_memory_init_sprite_array(&Red_Man_Draw, &Man, 0, &Red_Man_P, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -305,6 +312,10 @@ int main(){
 			Frames_Draw.frame_id[1] = (Frames_Draw.frame_id[1] + 1) % Frames_Draw.animation->frame_count;
 			Frames_Draw.frame_id[2] = (Frames_Draw.frame_id[2] + 1) % Frames_Draw.animation->frame_count;
 			Frames_Draw.frame_id[3] = (Frames_Draw.frame_id[3] + 1) % Frames_Draw.animation->frame_count;
+		}
+
+		if(stats.frame_count % 10 == 0){
+			Dwarf_Draw.frame_id[0] = (Dwarf_Draw.frame_id[0] + 1) % Dwarf_Draw.animation->frame_count;
 		}
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
