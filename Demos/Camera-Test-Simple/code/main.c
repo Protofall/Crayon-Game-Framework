@@ -151,6 +151,80 @@ Y to hide these instructions");
 	return;
 }
 
+uint8_t james_direction = 0;	//0 = South, 1 = North, 2 = West, 3 = East
+uint32_t james_start_frame = 0;	//Frame he starts moving in a direction
+
+//0 for changing direction. 1 for same direction. 2 for standing still
+int8_t check_james_dir(vec2_f_t distance){
+	uint8_t x_dir, y_dir;
+	if(distance.y > 0){
+		y_dir = 0;
+	}
+	else if(distance.y < 0){
+		y_dir = 1;
+	}
+
+	if(distance.x < 0){
+		x_dir = 2;
+	}
+	else if(distance.x > 0){
+		x_dir = 3;
+	}
+
+	if(james_direction == 0 && james_direction == y_dir){return james_direction;}
+	if(james_direction == 1 && james_direction == y_dir){return james_direction;}
+	if(james_direction == 2 && james_direction == x_dir){return james_direction;}
+	if(james_direction == 3 && james_direction == x_dir){return james_direction;}
+
+	if(distance.y != 0){
+		return y_dir;
+	}
+	return x_dir;
+}
+
+void move_james(crayon_sprite_array_t * James, vec2_f_t distance, uint32_t current_frame){
+
+	if(distance.x == 0 && distance.y == 0){	//Stationary
+		James->frame_id[0] = (james_direction == 3) ? (3 * 2) : (3 * james_direction);
+		James->flip[0] = (james_direction == 3) ? 1 : 0;
+		return;
+	}
+
+	uint8_t direction = check_james_dir(distance);
+	
+	if(james_direction != direction){	//Changed direction
+		James->frame_id[0] = (direction == 3) ? (3 * 2) + 1 : (3 * direction) + 1;
+		James->flip[0] = (direction == 3) ? 1 : 0;
+		james_direction = direction;
+		james_start_frame = current_frame;
+	}
+	else{	//Still walking in the same direction
+		uint8_t time = (james_start_frame - current_frame) % 60;
+		uint8_t frame_offset;
+		if(time < 15){	//Right foot out
+			frame_offset = 1;
+		}
+		else if(time < 30){	//Both legs same pos
+			frame_offset = 0;
+		}
+		else if(time < 45){	//Left foot out
+			frame_offset = 2;
+		}
+		else{	//Both legs same pos
+			frame_offset = 0;
+		}
+
+		James->frame_id[0] = (direction == 3) ? (3 * 2) + frame_offset : (3 * direction) + frame_offset;
+		James->flip[0] = (direction == 3) ? 1 : 0;
+	}
+
+	//Movement code too
+	James->coord[0].x += distance.x;
+	James->coord[0].y += distance.y;
+
+	return;
+}
+
 pvr_init_params_t pvr_params = {
 		// Enable opaque, translucent and punch through polygons with size 16
 			//To better explain, the opb_sizes or Object Pointer Buffer sizes
@@ -190,8 +264,8 @@ int main(){
 		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
 	}
 
-	crayon_spritesheet_t Dwarf, Opaque, Man;
-	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw, Man_BG;
+	crayon_spritesheet_t Dwarf, Opaque, Man, Characters;
+	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw, Man_BG, James_Draw;
 	crayon_sprite_array_t Cam_BGs[4];
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
@@ -207,7 +281,8 @@ int main(){
 	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 1, "/files/Fonts/BIOS_font.dtex");
 	crayon_memory_load_spritesheet(&Dwarf, NULL, -1, "/files/Dwarf.dtex");
 	crayon_memory_load_spritesheet(&Opaque, NULL, -1, "/files/Opaque.dtex");
-	crayon_memory_load_spritesheet(&Man, &Red_Man_P, 2, "/files/Man.dtex");
+	crayon_memory_load_spritesheet(&Man, &Red_Man_P, 2, "/files/Man.dtex");	//Palette 3 will be reserved for Green Man
+	crayon_memory_load_spritesheet(&Characters, NULL, 4, "/files/Characters.dtex");	//Since it has 23 colours, we'll just use ARGB1555
 
 	fs_romdisk_unmount("/files");
 
@@ -215,8 +290,23 @@ int main(){
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
+	crayon_memory_init_sprite_array(&James_Draw, &Characters, 0, NULL, 1, 9, 0, PVR_FILTER_NONE, 0);
+	James_Draw.scale[0].x = 2;
+	James_Draw.scale[0].y = 2;
+	James_Draw.coord[0].x = 307;	//These are about the mid-point given sprite sizes and scale
+	James_Draw.coord[0].y = 220;
+	James_Draw.layer[0] = 16;
+	James_Draw.flip[0] = (james_direction == 3) ? 1 : 0;	//If facing East, use West sprite but flipped
+	James_Draw.rotation[0] = 0;
+	James_Draw.colour[0] = 0;
+	James_Draw.frame_id[0] = (james_direction == 3) ? 3 * 2 : 3 * james_direction;	//If facing East, use west sprite but flipped
+	uint8_t i;
+	for(i = 0; i < James_Draw.frames_used; i++){
+		crayon_memory_set_frame_uv(&James_Draw, i, i);
+	}
+
 	//Draws 4 faces and rotates between all 12 faces
-	crayon_memory_init_sprite_array(&Frames_Draw, &Opaque, 0, NULL, 4, 16, CRAY_MULTI_FRAME, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Frames_Draw, &Opaque, 0, NULL, 4, 12, CRAY_MULTI_FRAME, PVR_FILTER_NONE, 0);
 	Frames_Draw.scale[0].x = 3;
 	Frames_Draw.scale[0].y = 3;
 	Frames_Draw.coord[0].x = 380;
@@ -238,8 +328,7 @@ int main(){
 	Frames_Draw.frame_id[1] = 1;
 	Frames_Draw.frame_id[2] = 2;
 	Frames_Draw.frame_id[3] = 3;
-	uint8_t i;
-	for(i = 0; i < 12; i++){
+	for(i = 0; i < Frames_Draw.frames_used; i++){
 		crayon_memory_set_frame_uv(&Frames_Draw, i, i);
 	}
 
@@ -349,14 +438,14 @@ int main(){
 	Rainbow_Draw.coord[6].y = Rainbow_Draw.coord[5].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10;
 	Rainbow_Draw.coord[7].x = Rainbow_Draw.coord[4].x;
 	Rainbow_Draw.coord[7].y = Rainbow_Draw.coord[6].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10;
-	Rainbow_Draw.layer[0] = 17;
-	Rainbow_Draw.layer[1] = 17;
-	Rainbow_Draw.layer[2] = 17;
-	Rainbow_Draw.layer[3] = 17;
-	Rainbow_Draw.layer[4] = 17;
-	Rainbow_Draw.layer[5] = 17;
-	Rainbow_Draw.layer[6] = 17;
-	Rainbow_Draw.layer[7] = 17;
+	Rainbow_Draw.layer[0] = 14;
+	Rainbow_Draw.layer[1] = 14;
+	Rainbow_Draw.layer[2] = 14;
+	Rainbow_Draw.layer[3] = 14;
+	Rainbow_Draw.layer[4] = 14;
+	Rainbow_Draw.layer[5] = 14;
+	Rainbow_Draw.layer[6] = 14;
+	Rainbow_Draw.layer[7] = 14;
 	Rainbow_Draw.scale[0].x = 8;
 	Rainbow_Draw.scale[0].y = 8;
 	Rainbow_Draw.flip[0] = 0;
@@ -471,12 +560,15 @@ int main(){
 	uint8_t info_disp = 1;
 
 	pvr_stats_t stats;
+	pvr_get_stats(&stats);
 	uint8_t escape = 0;
 	uint32_t prev_btns[4] = {0};
 	vec2_u8_t prev_trigs[4] = {(vec2_u8_t){0,0}};
 	uint32_t curr_thumb = 0;
 	// uint32_t prev_thumb = 0;
+	vec2_f_t moved_on_frame;	//This is the distance to move the camera per frame. It makes moving James easier
 	while(!escape){
+		moved_on_frame = (vec2_f_t){0,0};
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
@@ -484,23 +576,22 @@ int main(){
 		curr_thumb = thumbstick_to_dpad(st->joyx, st->joyy, 0.4);
 
 		if(curr_thumb & CONT_DPAD_LEFT){
-			crayon_memory_move_camera_x(current_camera, -1);
+			moved_on_frame.x = -1;
 			last_dir = 0;
 		}
 		else if(curr_thumb & CONT_DPAD_RIGHT){
-			crayon_memory_move_camera_x(current_camera, 1);
+			moved_on_frame.x = 1;
 			last_dir = 2;
 		}
 
 		if(curr_thumb & CONT_DPAD_UP){
-			crayon_memory_move_camera_y(current_camera, -1);
+			moved_on_frame.y = -1;
 			last_dir = 1;
 		}
 		else if(curr_thumb & CONT_DPAD_DOWN){
-			crayon_memory_move_camera_y(current_camera, 1);
+			moved_on_frame.y = 1;
 			last_dir = 3;
 		}
-
 
 		//Adjust the current world movement factor
 		if((st->buttons & CONT_DPAD_UP) && !(prev_btns[__dev->port] & CONT_DPAD_UP)){
@@ -531,16 +622,16 @@ int main(){
 		if((st->rtrig > 0xFF * 0.1) && (prev_trigs[__dev->port].y <= 0xFF * 0.1)){
 			switch(last_dir){
 				case 0:
-				crayon_memory_move_camera_x(current_camera, -1);
+				moved_on_frame.x += -1;
 				break;
 				case 1:
-				crayon_memory_move_camera_y(current_camera, -1);
+				moved_on_frame.y += -1;
 				break;
 				case 2:
-				crayon_memory_move_camera_x(current_camera, 1);
+				moved_on_frame.x += 1;
 				break;
 				case 3:
-				crayon_memory_move_camera_y(current_camera, 1);
+				moved_on_frame.y += 1;
 				break;
 			}
 		}
@@ -548,16 +639,16 @@ int main(){
 		if((st->ltrig > 0xFF * 0.1) && (prev_trigs[__dev->port].x <= 0xFF * 0.1)){
 			switch(last_dir){
 				case 0:
-				crayon_memory_move_camera_x(current_camera, 1);
+				moved_on_frame.x += 1;
 				break;
 				case 1:
-				crayon_memory_move_camera_y(current_camera, 1);
+				moved_on_frame.y += 1;
 				break;
 				case 2:
-				crayon_memory_move_camera_x(current_camera, -1);
+				moved_on_frame.x += -1;
 				break;
 				case 3:
-				crayon_memory_move_camera_y(current_camera, -1);
+				moved_on_frame.y += -1;
 				break;
 			}
 		}
@@ -574,7 +665,17 @@ int main(){
 
 		if(escape){break;}
 
+		crayon_memory_move_camera_x(current_camera, moved_on_frame.x);
+		crayon_memory_move_camera_y(current_camera, moved_on_frame.y);
+
+		//To move the player the correct amount
+		moved_on_frame.x *= current_camera->world_movement_factor;
+		moved_on_frame.y *= current_camera->world_movement_factor;
+
 		pvr_scene_begin();
+
+		//Currently doesn't actually move you
+		move_james(&James_Draw, moved_on_frame, stats.frame_count);
 
 		pvr_get_stats(&stats);
 
@@ -604,6 +705,9 @@ int main(){
 			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
 			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
 			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
+
+			//THe player sprite
+			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
 
 			//Fonts aren't supported by cameras yet
 			// crayon_graphics_draw_text_prop("Tahoma\0", &Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id);
