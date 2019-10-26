@@ -307,6 +307,7 @@ int main(){
 			Red_Man_Draw.rotation[0] = 90;
 		}
 
+		//These only really work for 60FPS
 		if(stats.frame_count % 60 == 0){
 			Frames_Draw.frame_id[0] = (Frames_Draw.frame_id[0] + 1) % Frames_Draw.animation->frame_count;
 			Frames_Draw.frame_id[1] = (Frames_Draw.frame_id[1] + 1) % Frames_Draw.animation->frame_count;
