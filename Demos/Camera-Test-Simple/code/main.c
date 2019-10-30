@@ -156,30 +156,46 @@ uint32_t james_start_frame = 0;	//Frame he starts moving in a direction
 
 //0 for changing direction. 1 for same direction. 2 for standing still
 int8_t check_james_dir(vec2_f_t distance){
-	uint8_t x_dir, y_dir;
-	if(distance.y > 0){
+	if(distance.x == 0 && distance.y == 0){	//If not moving, return same way of facing
+		return james_direction;
+	}
+
+	uint8_t x_dir = 4, y_dir = 4;	//Defaults only stay if x or y is exactly 0
+	if(distance.y > 0){	//South
 		y_dir = 0;
 	}
-	else if(distance.y < 0){
+	else if(distance.y < 0){	//North
 		y_dir = 1;
 	}
 
-	if(distance.x < 0){
+	if(distance.x < 0){	//Right
 		x_dir = 2;
 	}
-	else if(distance.x > 0){
+	else if(distance.x > 0){	//Left
 		x_dir = 3;
 	}
 
+	//Note, this has biased towards top and bottom against left and right
+		//x_dir and y_dir are uninitialised if x or y is zero
+		//If player stands still. It really messes up
 	if(james_direction == 0 && james_direction == y_dir){return james_direction;}
 	if(james_direction == 1 && james_direction == y_dir){return james_direction;}
 	if(james_direction == 2 && james_direction == x_dir){return james_direction;}
 	if(james_direction == 3 && james_direction == x_dir){return james_direction;}
 
-	if(distance.y != 0){
+	//This should never trigger
+	if(x_dir > 3 || y_dir > 3){
+		//error_freeze("Fail");
+	}
+
+	//In an effort to forcce facing the direction your pointing in
+	if(y_dir < 4){
 		return y_dir;
 	}
-	return x_dir;
+	if(x_dir < 4){
+		return x_dir;
+	}
+	return 0;	//Should never get here
 }
 
 void move_james(crayon_sprite_array_t * James, vec2_f_t distance, uint32_t current_frame){
@@ -191,8 +207,9 @@ void move_james(crayon_sprite_array_t * James, vec2_f_t distance, uint32_t curre
 	}
 
 	uint8_t direction = check_james_dir(distance);
-	
+
 	if(james_direction != direction){	//Changed direction
+		//if(direction > 3){error_freeze("Fail2");}
 		James->frame_id[0] = (direction == 3) ? (3 * 2) + 1 : (3 * direction) + 1;
 		James->flip[0] = (direction == 3) ? 1 : 0;
 		james_direction = direction;
