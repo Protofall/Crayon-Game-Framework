@@ -516,14 +516,14 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode){
 
-	uint8_t crop_edges = (1 << 4) - 1;	//---- TBLR	-> LTRB
+	uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
 										//---- 1111 (Crop on all edges)
 
 	//DELETE THIS LATER. A basic optimisation for now
-	if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 0));}
-	if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 1));}
-	if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 2));}
-	if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 3));}
+	if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
+	if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
+	if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
+	if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
 
 	//Used for cropping
 	uint8_t bounds = 0;
@@ -1492,9 +1492,9 @@ extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){
 }
 
 //Verts order: Top left, Top right, bottom left, bottom right. Z order
-	//Return is of format "---- LTRB"
+	//Return is of format "---- BRTL"
 extern uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]){
-	uint8_t bounds = 0;	//---- TBLR (Top, Bottom, Left, Right)
+	uint8_t bounds = 0;
 	if(vS[0].y < vC[0].y || vS[1].y < vC[0].y){bounds |= (1 << 1);}
 	if(vS[2].y > vC[2].y || vS[3].y > vC[2].y){bounds |= (1 << 3);}
 	if(vS[0].x < vC[0].x || vS[2].x < vC[0].x){bounds |= (1 << 0);}

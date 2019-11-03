@@ -122,7 +122,7 @@ extern vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, fl
 extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
 
 //Returns a crop range to see which edges need to be cropped
-//---- LTRB (Left, Top, Right, Bottom)
+//---- BRTL (Bottom, Right, Top, Left)
 //NOTE: Verts must be passed in in Z order
 extern uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]);
 
