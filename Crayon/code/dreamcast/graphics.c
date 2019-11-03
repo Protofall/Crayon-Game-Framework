@@ -741,6 +741,15 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(2, rotation_val, flip_val)] - uvs[uv_index]);
 
+			// if(i == 0 && __GRAPHICS_DEBUG_VARIABLES[0] == 1){
+			// 	__GRAPHICS_DEBUG_VARIABLES[1] = uvs[uv_index];
+			// 	__GRAPHICS_DEBUG_VARIABLES[2] = uv_index;
+			// 	__GRAPHICS_DEBUG_VARIABLES[3] = selected_vert.x;
+			// 	__GRAPHICS_DEBUG_VARIABLES[4] = selected_vert.y;
+			// 	__GRAPHICS_DEBUG_VARIABLES[5] = texture_divider;	//Is at 8
+			// 	__GRAPHICS_DEBUG_VARIABLES[6] = texture_offset;		//Is at zero
+			// }
+
 			//Set the vert
 			crayon_graphics_set_sprite_vert_x(&vert, (4 + 0 - rotation_val) % 4, camera->window_x);
 			crayon_graphics_set_sprite_vert_x(&vert, (4 + 3 - rotation_val) % 4, camera->window_x);
@@ -816,6 +825,7 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	return 0;
 }
 
+//NOTE: THIS VERSION IS OLD AND CONTAINS SOME BUGS. crop_edges is in the wrong format and zoom in UV cropping is broken
 //Below is a function that does the same stuff as the simple camera, except its using polys and hence 32-bit UVs.
 	//This means all known cases of shimmering and jittering disapear
 extern uint8_t crayon_graphics_camera_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
@@ -1614,16 +1624,18 @@ extern float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_
     return dims.y;   //height
 }
 
+//Those world/window(dims) calculations are rounding to ints when they should be floats
+	//FIX THIS
 extern float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, vec2_f_t * scale, const crayon_viewport_t *camera){
 	switch(side){
 		case 0:
-		return (camera->world_width/camera->window_width) * (camera->window_x - vert->x)/scale->x;
+		return (camera->world_width/(float)camera->window_width) * (camera->window_x - vert->x)/scale->x;
 		case 1:
-		return (camera->world_height/camera->window_height) * (camera->window_y - vert->y)/scale->y;
+		return (camera->world_height/(float)camera->window_height) * (camera->window_y - vert->y)/scale->y;
 		case 2:
-		return (camera->world_width/camera->window_width) * (vert->x - (camera->window_x + camera->window_width))/scale->x;
+		return (camera->world_width/(float)camera->window_width) * (vert->x - (camera->window_x + camera->window_width))/scale->x;
 		case 3:
-		return (camera->world_height/camera->window_height) * (vert->y - (camera->window_y + camera->window_height))/scale->y;
+		return (camera->world_height/(float)camera->window_height) * (vert->y - (camera->window_y + camera->window_height))/scale->y;
 	}
 	return 0;	//Shouldn't get here
 }
