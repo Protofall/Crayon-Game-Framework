@@ -531,7 +531,8 @@ int main(){
 	Cam_BGs[3].colour[0] = 0xFF888888;
 
 	uint8_t current_camera_id = 0;
-	crayon_viewport_t cameras[4];
+	#define NUM_CAMERAS 4
+	crayon_viewport_t cameras[NUM_CAMERAS];
 	crayon_viewport_t * current_camera = &cameras[current_camera_id];
 
 	//This is the same as no camera
@@ -622,7 +623,7 @@ int main(){
 
 		if((st->buttons & CONT_A) && !(prev_btns[__dev->port] & CONT_A)){
 			current_camera_id += 1;
-			current_camera_id %= 4;
+			current_camera_id %= NUM_CAMERAS;
 			current_camera = &cameras[current_camera_id];
 		}
 
@@ -682,17 +683,15 @@ int main(){
 
 		if(escape){break;}
 
-		crayon_memory_move_camera_x(current_camera, moved_on_frame.x);
-		crayon_memory_move_camera_y(current_camera, moved_on_frame.y);
+		for(i = 0; i < NUM_CAMERAS; i++){
+			crayon_memory_move_camera_x(&cameras[i], moved_on_frame.x);
+			crayon_memory_move_camera_y(&cameras[i], moved_on_frame.y);
+		}
 
-		//To move the player the correct amount
-		moved_on_frame.x *= current_camera->world_movement_factor;
-		moved_on_frame.y *= current_camera->world_movement_factor;
+		//Currently doesn't actually move you. Just updates the way you face
+		move_james(&James_Draw, moved_on_frame, stats.frame_count);
 
 		pvr_scene_begin();
-
-		//Currently doesn't actually move you
-		move_james(&James_Draw, moved_on_frame, stats.frame_count);
 
 		pvr_get_stats(&stats);
 
@@ -787,6 +786,7 @@ int main(){
 	retVal += crayon_memory_free_spritesheet(&Dwarf);
 	retVal += crayon_memory_free_spritesheet(&Opaque);
 	retVal += crayon_memory_free_spritesheet(&Man);
+	retVal += crayon_memory_free_spritesheet(&Characters);
 
 	retVal += crayon_memory_free_mono_font_sheet(&BIOS);
 	retVal += crayon_memory_free_prop_font_sheet(&Tahoma);
@@ -796,6 +796,7 @@ int main(){
 	retVal += crayon_memory_free_palette(&Red_Man_P);
 	retVal += crayon_memory_free_palette(&Green_Man_P);
 
+	retVal += crayon_memory_free_sprite_array(&James_Draw);
 	retVal += crayon_memory_free_sprite_array(&Dwarf_Draw);
 	retVal += crayon_memory_free_sprite_array(&Rainbow_Draw);
 	retVal += crayon_memory_free_sprite_array(&Frames_Draw);
