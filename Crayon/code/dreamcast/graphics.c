@@ -373,6 +373,15 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 			vert[0].oargb = (a << 24) + (r << 16) + (g << 8) + b;
 		}
 
+		//Update rotation part if needed
+		if(*rotation_index == i){
+			angle = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
+			if(angle < 0){angle += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
+			angle = (angle * M_PI) / 180.0f;
+		}
+
+		if(skip){skip = 0; continue;}
+
 		vert[0].x = floor(sprite_array->coord[i].x);
 		vert[0].y = floor(sprite_array->coord[i].y);
 		vert[1].x = vert[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
@@ -383,13 +392,6 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 		vert[3].y = vert[2].y;
 
 		vert[0].z = (float)sprite_array->layer[i];
-
-		//Update rotation part if needed
-		if(*rotation_index == i){
-			angle = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
-			if(angle < 0){angle += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
-			angle = (angle * M_PI) / 180.0f;
-		}
 
 		//If we don't want to do rotations (Rotation == 0.0), then skip it
 		if(sprite_array->rotation[*rotation_index] != 0.0f){
@@ -413,10 +415,6 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 			vert[j].z = vert[0].z;
 		}
 
-		if(skip){
-			skip = 0;
-			continue;
-		}
 		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
 	}
 
@@ -433,13 +431,9 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
-	//--CR -D--
-	uint8_t multiple_rotation = (sprite_array->options >> 4) & 1;
-	uint8_t multiple_dims = (sprite_array->options >> 2) & 1;
-	uint8_t multiple_colour = (sprite_array->options >> 5) & 1;
-
 	//All this just for rotations
-	uint16_t *rotation_index;
+	uint16_t *rotation_index, *colour_index;
+	uint8_t multi_dim = !!(sprite_array->options & CRAY_MULTI_DIM);
 	uint16_t zero = 0;
 	float angle = 0;
 	float mid_x = 0;
@@ -447,8 +441,11 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 	uint8_t skip = 0;
 
 	uint16_t i, j;
-	if(multiple_rotation){rotation_index = &i;}
+	//--CR -D--
+	if(sprite_array->options & CRAY_MULTI_ROTATE){rotation_index = &i;}
 	else{rotation_index = &zero;}
+	if(sprite_array->options & CRAY_MULTI_COLOUR){colour_index = &i;}
+	else{colour_index = &zero;}
 
 	for(i = 0; i < 3; i++){
 		vert[i].flags = PVR_CMD_VERTEX;
@@ -462,21 +459,10 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 	}
 
 	for(i = 0; i < sprite_array->list_size; i++){
-		if(sprite_array->colour[multiple_colour * i] >> 24 == 0){	//Don't draw alpha-less stuff
+		if(sprite_array->colour[*colour_index] >> 24 == 0){	//Don't draw alpha-less stuff
 			if(i != 0){continue;}	//For the first element, we need to initialise our vars, otherwise we just skip to the next element
 			skip = 1;
 		}
-		vert[0].argb = sprite_array->colour[multiple_colour * i];	//If only one colour, this is forced to colour zero
-		vert[0].z = sprite_array->layer[i];
-
-		vert[0].x = floor(sprite_array->coord[i].x);
-		vert[0].y = floor(sprite_array->coord[i].y);
-		vert[1].x = vert[0].x + floor(sprite_array->scale[multiple_dims * i].x);	//If using one dim, multiple dims reduces it to the first value
-		vert[1].y = vert[0].y;
-		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + floor(sprite_array->scale[multiple_dims * i].y);
-		vert[3].x = vert[1].x;
-		vert[3].y = vert[2].y;
 
 		//Update rotation part if needed
 		if(*rotation_index == i){
@@ -484,6 +470,23 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 			if(angle < 0){angle += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
 			angle = (angle * M_PI) / 180.0f;	//Convert from degrees to ratians
 		}
+
+		if(*colour_index == i){
+			vert[0].argb = sprite_array->colour[i];
+		}
+
+		if(skip){skip = 0; continue;}
+
+		vert[0].z = sprite_array->layer[i];
+
+		vert[0].x = floor(sprite_array->coord[i].x);
+		vert[0].y = floor(sprite_array->coord[i].y);
+		vert[1].x = vert[0].x + floor(sprite_array->scale[multi_dim * i].x);	//If using one dim, multiple dims reduces it to the first value
+		vert[1].y = vert[0].y;
+		vert[2].x = vert[0].x;
+		vert[2].y = vert[0].y + floor(sprite_array->scale[multi_dim * i].y);
+		vert[3].x = vert[1].x;
+		vert[3].y = vert[2].y;
 
 		//Rotate the poly
 		if(sprite_array->rotation[*rotation_index] != 0.0f){
@@ -504,10 +507,6 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 			vert[j].argb = vert[0].argb;
 		}
 
-		if(skip){
-			skip = 0;
-			continue;
-		}
 		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
 	}
 	return 0;
@@ -713,7 +712,7 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			vert.ay = vert.dy;
 		}
 
-		//The first element if invisible now skips rendering
+		//The first element if invisible now skips cropping and rendering
 		if(i == 0 && sprite_array->visible[i] == 0){cropped = 0; continue;}
 
 		vert.az = (float)sprite_array->layer[i];
