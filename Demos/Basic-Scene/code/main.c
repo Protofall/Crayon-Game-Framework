@@ -153,6 +153,9 @@ int main(){
 	for(i = 0; i < 12; i++){
 		crayon_memory_set_frame_uv(&Frames_Draw, i, i);
 	}
+	for(i = 0; i < Frames_Draw.list_size; i++){
+		Frames_Draw.visible[i] = 1;
+	}
 
 	// crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
 	// uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
@@ -183,6 +186,9 @@ int main(){
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 1, 1);
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 2, 2);
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 3, 3);
+	for(i = 0; i < Dwarf_Draw.list_size; i++){
+		Dwarf_Draw.visible[i] = 1;
+	}
 
 	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
 	crayon_memory_init_sprite_array(&Red_Man_Draw, &Man, 0, &Red_Man_P, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -196,6 +202,9 @@ int main(){
 	Red_Man_Draw.colour[0] = 0;
 	Red_Man_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Red_Man_Draw, 0, 0);
+	for(i = 0; i < Red_Man_Draw.list_size; i++){
+		Red_Man_Draw.visible[i] = 1;
+	}
 
 	//Copy the red palette over and modify red with green
 	crayon_memory_clone_palette(&Red_Man_P, &Green_Man_P, 3);
@@ -213,6 +222,9 @@ int main(){
 	Green_Man_Draw.colour[0] = 0;
 	Green_Man_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Green_Man_Draw, 0, 0);
+	for(i = 0; i < Green_Man_Draw.list_size; i++){
+		Green_Man_Draw.visible[i] = 1;
+	}
 
 	//8 sprites, 1 frame, multi rotation and flip
 	crayon_memory_init_sprite_array(&Rainbow_Draw, &Opaque, 1, NULL, 8, 1, CRAY_MULTI_FLIP | CRAY_MULTI_ROTATE, PVR_FILTER_NONE, 0);
@@ -261,6 +273,9 @@ int main(){
 	Rainbow_Draw.colour[0] = 0;
 	Rainbow_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Rainbow_Draw, 0, 0);
+	for(i = 0; i < Rainbow_Draw.list_size; i++){
+		Rainbow_Draw.visible[i] = 1;
+	}
 
 	crayon_memory_init_sprite_array(&Man_BG, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Man_BG.coord[0].x = Red_Man_Draw.coord[0].x;
@@ -270,6 +285,9 @@ int main(){
 	Man_BG.scale[0].y = Red_Man_Draw.animation->frame_height * Red_Man_Draw.scale[0].y;
 	Man_BG.rotation[0] = 0;
 	Man_BG.colour[0] = 0xFF000000;
+	for(i = 0; i < Man_BG.list_size; i++){
+		Man_BG.visible[i] = 1;
+	}
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 

@@ -450,6 +450,7 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 
 	sprite_array->colour = (uint32_t *) malloc(((sprite_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint32_t));
 	sprite_array->rotation = (float *) malloc(((sprite_array->options >> 4) & 1 ? list_size: 1) * sizeof(float));
+	sprite_array->visible = (uint8_t *) malloc(list_size * sizeof(uint8_t));
 
 	if(ss){
 		sprite_array->frame_id = (uint8_t *) malloc(((sprite_array->options >> 1) & 1 ? list_size: 1) * sizeof(uint8_t));
@@ -490,6 +491,7 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 			if(i == 0 || ((sprite_array->options) & 1)){
 				sprite_array->layer[i] = 255;
 			}
+			sprite_array->visible[i] = 1;
 		}
 		for(i = 0; i < frames_used; i++){	//No "if" needed since this will always loop inbounds
 			sprite_array->frame_uv[i].x = 0;
@@ -591,16 +593,19 @@ extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_arr
 	if(sprite_array->flip){free(sprite_array->flip);}
 	if(sprite_array->rotation){free(sprite_array->rotation);}
 	if(sprite_array->layer){free(sprite_array->layer);}
+	if(sprite_array->visible){free(sprite_array->visible);}
 
 	//Set to NULL just incase user accidentally tries to free these arrays again
 	sprite_array->coord = NULL;
 	sprite_array->frame_id = NULL;
 	sprite_array->frame_uv = NULL;
 	sprite_array->colour = NULL;
+	sprite_array->fade = NULL;
 	sprite_array->scale = NULL;
 	sprite_array->flip = NULL;
 	sprite_array->rotation = NULL;
 	sprite_array->layer = NULL;
+	sprite_array->visible = NULL;
 
 	return 0;
 }

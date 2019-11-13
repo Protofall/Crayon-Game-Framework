@@ -155,7 +155,9 @@ int main(){
 	Logo_Draw.flip[0] = 0;
 	Logo_Draw.rotation[0] = 0;
 	Logo_Draw.colour[0] = 0;
+	Logo_Draw.fade[0] = 0;
 	Logo_Draw.frame_id[0] = 0;
+	Logo_Draw.visible[0] = 1;
 	crayon_memory_set_frame_uv(&Logo_Draw, 0, 0);
 
 	uint32_t colours[5];

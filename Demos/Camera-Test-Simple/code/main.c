@@ -317,6 +317,7 @@ int main(){
 	James_Draw.rotation[0] = 0;
 	James_Draw.colour[0] = 0;
 	James_Draw.frame_id[0] = (james_direction == 3) ? 3 * 2 : 3 * james_direction;	//If facing East, use west sprite but flipped
+	James_Draw.visible[0] = 1;
 	uint8_t i;
 	for(i = 0; i < James_Draw.frames_used; i++){
 		crayon_memory_set_frame_uv(&James_Draw, i, i);
@@ -348,6 +349,9 @@ int main(){
 	for(i = 0; i < Frames_Draw.frames_used; i++){
 		crayon_memory_set_frame_uv(&Frames_Draw, i, i);
 	}
+	for(i = 0; i < Frames_Draw.list_size; i++){
+		Frames_Draw.visible[i] = 1;
+	}
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
 	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 1, CRAY_MULTI_SCALE, PVR_FILTER_NONE, 0);
@@ -371,6 +375,9 @@ int main(){
 	Dwarf_Draw.colour[0] = 0;
 	Dwarf_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 0, 0);
+	for(i = 0; i < Dwarf_Draw.list_size; i++){
+		Dwarf_Draw.visible[i] = 1;
+	}
 
 	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
 	crayon_memory_init_sprite_array(&Red_Man_Draw, &Man, 0, &Red_Man_P, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -383,6 +390,7 @@ int main(){
 	Red_Man_Draw.rotation[0] = 450;
 	Red_Man_Draw.colour[0] = 0;
 	Red_Man_Draw.frame_id[0] = 0;
+	Red_Man_Draw.visible[0] = 1;
 	crayon_memory_set_frame_uv(&Red_Man_Draw, 0, 0);
 
 	//Copy the red palette over and modify red with green
@@ -436,6 +444,9 @@ int main(){
 	Green_Man_Draw.colour[0] = 0;
 	Green_Man_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Green_Man_Draw, 0, 0);
+	for(i = 0; i < Green_Man_Draw.list_size; i++){
+		Green_Man_Draw.visible[i] = 1;
+	}
 
 	//8 sprites, 1 frame, multi rotation and flip
 	crayon_memory_init_sprite_array(&Rainbow_Draw, &Opaque, 1, NULL, 8, 1, CRAY_MULTI_FLIP | CRAY_MULTI_ROTATE, PVR_FILTER_NONE, 0);
@@ -484,6 +495,9 @@ int main(){
 	Rainbow_Draw.colour[0] = 0;
 	Rainbow_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Rainbow_Draw, 0, 0);
+	for(i = 0; i < Rainbow_Draw.list_size; i++){
+		Rainbow_Draw.visible[i] = 1;
+	}
 
 	crayon_memory_init_sprite_array(&Man_BG, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Man_BG.coord[0].x = Red_Man_Draw.coord[0].x;
@@ -493,6 +507,7 @@ int main(){
 	Man_BG.scale[0].y = Red_Man_Draw.animation->frame_height * Red_Man_Draw.scale[0].y;
 	Man_BG.rotation[0] = 0;
 	Man_BG.colour[0] = 0xFF000000;
+	Man_BG.visible[0] = 1;
 
 	crayon_memory_init_sprite_array(&Cam_BGs[0], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Cam_BGs[0].coord[0].x = 0;
@@ -502,6 +517,7 @@ int main(){
 	Cam_BGs[0].scale[0].y = 480;
 	Cam_BGs[0].rotation[0] = 0;
 	Cam_BGs[0].colour[0] = 0xFF888888;
+	Cam_BGs[0].visible[0] = 1;
 
 	crayon_memory_init_sprite_array(&Cam_BGs[1], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Cam_BGs[1].coord[0].x = 140;
@@ -511,6 +527,7 @@ int main(){
 	Cam_BGs[1].scale[0].y = 300;
 	Cam_BGs[1].rotation[0] = 0;
 	Cam_BGs[1].colour[0] = 0xFF888888;
+	Cam_BGs[1].visible[0] = 1;
 
 	crayon_memory_init_sprite_array(&Cam_BGs[2], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Cam_BGs[2].coord[0].x = 160;
@@ -520,6 +537,7 @@ int main(){
 	Cam_BGs[2].scale[0].y = 240;
 	Cam_BGs[2].rotation[0] = 0;
 	Cam_BGs[2].colour[0] = 0xFF888888;
+	Cam_BGs[2].visible[0] = 1;
 
 	crayon_memory_init_sprite_array(&Cam_BGs[3], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Cam_BGs[3].coord[0].x = 0;
@@ -529,6 +547,7 @@ int main(){
 	Cam_BGs[3].scale[0].y = 480;
 	Cam_BGs[3].rotation[0] = 0;
 	Cam_BGs[3].colour[0] = 0xFF888888;
+	Cam_BGs[3].visible[0] = 1;
 
 	uint8_t current_camera_id = 0;
 	#define NUM_CAMERAS 4

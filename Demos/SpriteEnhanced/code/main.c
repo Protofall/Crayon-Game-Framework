@@ -166,6 +166,10 @@ int main(){
 	Dwarf_Draw_Flip.fade[0] = 0;
 	Dwarf_Draw_Flip.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Flip, 0, 0);
+	uint8_t i;
+	for(i = 0; i < Dwarf_Draw_Flip.list_size; i++){
+		Dwarf_Draw_Flip.visible[i] = 1;
+	}
 
 	crayon_memory_init_sprite_array(&Dwarf_Draw_Rotate, &Dwarf_SS, 0, NULL, 4, 1, CRAY_MULTI_ROTATE, PVR_FILTER_NONE, 0);
 	Dwarf_Draw_Rotate.scale[0].x = 1;
@@ -193,6 +197,9 @@ int main(){
 	Dwarf_Draw_Rotate.fade[0] = 0;
 	Dwarf_Draw_Rotate.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Rotate, 0, 0);
+	for(i = 0; i < Dwarf_Draw_Rotate.list_size; i++){
+		Dwarf_Draw_Rotate.visible[i] = 1;
+	}
 
 	crayon_memory_init_sprite_array(&Dwarf_Draw_Scale, &Dwarf_SS, 0, NULL, 3, 1, CRAY_MULTI_SCALE, PVR_FILTER_NONE, 0);
 	Dwarf_Draw_Scale.scale[0].x = 1;
@@ -218,6 +225,9 @@ int main(){
 	Dwarf_Draw_Scale.fade[0] = 0;
 	Dwarf_Draw_Scale.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Scale, 0, 0);
+	for(i = 0; i < Dwarf_Draw_Scale.list_size; i++){
+		Dwarf_Draw_Scale.visible[i] = 1;
+	}
 
 	crayon_memory_init_sprite_array(&Dwarf_Draw_Frame, &Dwarf_SS, 0, NULL, 3, 2, CRAY_MULTI_FRAME, PVR_FILTER_NONE, 0);
 	Dwarf_Draw_Frame.scale[0].x = 1;
@@ -242,6 +252,9 @@ int main(){
 	Dwarf_Draw_Frame.frame_id[2] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Frame, 0, 0);
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Frame, 1, 1);
+	for(i = 0; i < Dwarf_Draw_Frame.list_size; i++){
+		Dwarf_Draw_Frame.visible[i] = 1;
+	}
 
 	crayon_memory_init_sprite_array(&Dwarf_Draw_Colour_Blend, &Dwarf_SS, 0, NULL, 3, 1, CRAY_MULTI_COLOUR_BLEND, PVR_FILTER_NONE, 0);
 	Dwarf_Draw_Colour_Blend.scale[0].x = 1;
@@ -269,6 +282,9 @@ int main(){
 	Dwarf_Draw_Colour_Blend.rotation[0] = 0;
 	Dwarf_Draw_Colour_Blend.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Colour_Blend, 0, 0);
+	for(i = 0; i < Dwarf_Draw_Colour_Blend.list_size; i++){
+		Dwarf_Draw_Colour_Blend.visible[i] = 1;
+	}
 
 	crayon_memory_init_sprite_array(&Dwarf_Draw_Colour_Add, &Dwarf_SS, 0, NULL, 3, 1, CRAY_MULTI_COLOUR_ADD, PVR_FILTER_NONE, 0);
 	Dwarf_Draw_Colour_Add.scale[0].x = 1;
@@ -296,6 +312,9 @@ int main(){
 	Dwarf_Draw_Colour_Add.rotation[0] = 0;
 	Dwarf_Draw_Colour_Add.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Colour_Add, 0, 0);
+	for(i = 0; i < Dwarf_Draw_Colour_Add.list_size; i++){
+		Dwarf_Draw_Colour_Add.visible[i] = 1;
+	}
 
 	crayon_memory_init_sprite_array(&Dwarf_Draw_Mash, &Dwarf_SS, 0, NULL, 6, 2, CRAY_MULTI_FRAME + CRAY_MULTI_FLIP + CRAY_MULTI_ROTATE, PVR_FILTER_NONE, 0);
 	Dwarf_Draw_Mash.scale[0].x = 1;
@@ -346,6 +365,9 @@ int main(){
 	Dwarf_Draw_Mash.frame_id[5] = 1;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Mash, 0, 0);
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Mash, 1, 1);
+	for(i = 0; i < Dwarf_Draw_Mash.list_size; i++){
+		Dwarf_Draw_Mash.visible[i] = 1;
+	}
 
 	crayon_graphics_setup_palette(&BIOS_P);
 	while(1){

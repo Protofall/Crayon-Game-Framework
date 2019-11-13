@@ -71,6 +71,7 @@ int main(){
 	rotate.coord[0].y = (480 - rotate.scale[0].y) / 2.0f;
 	rotate.rotation[0] = 0;
 	rotate.colour[0] = 0xFFFFFFFF;
+	rotate.visible[0] = 1;
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 

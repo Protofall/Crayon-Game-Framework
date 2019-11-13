@@ -825,7 +825,6 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 	return 0;
 }
 
-//NOTE: THIS VERSION IS OLD AND CONTAINS SOME BUGS. crop_edges is in the wrong format and zoom in UV cropping is broken
 //Below is a function that does the same stuff as the simple camera, except its using polys and hence 32-bit UVs.
 	//This means all known cases of shimmering and jittering disapear
 extern uint8_t crayon_graphics_camera_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
@@ -834,14 +833,14 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple_POLY_TEST(const crayon
 		.flags = PVR_CMD_VERTEX_EOL
 	};
 
-	uint8_t crop_edges = (1 << 4) - 1;	//---- TBLR	-> LTRB
+	uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
 										//---- 1111 (Crop on all edges)
 
 	//DELETE THIS LATER. A basic optimisation for now
-	if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 0));}
-	if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 1));}
-	if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 2));}
-	if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 3));}
+	if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
+	if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
+	if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
+	if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
 
 	//Used for cropping
 	uint8_t bounds = 0;
@@ -1624,8 +1623,6 @@ extern float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_
     return dims.y;   //height
 }
 
-//Those world/window(dims) calculations are rounding to ints when they should be floats
-	//FIX THIS
 extern float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, vec2_f_t * scale, const crayon_viewport_t *camera){
 	switch(side){
 		case 0:

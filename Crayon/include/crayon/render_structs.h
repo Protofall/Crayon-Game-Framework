@@ -57,6 +57,7 @@ typedef struct crayon_sprite_array{
 
 	float *rotation;			//Poly uses angles to rotate on Z axis, sprite uses
 								//booleans/flip bits. Decide what type this should be...
+	uint8_t *visible;			//If 1 then the sprite is rendered. Else its skipped
 	uint16_t list_size;			//This tells the draw function how many sprites/polys to draw.
 	uint8_t frames_used;		//The number of frames you want to use. Minimum 1
 

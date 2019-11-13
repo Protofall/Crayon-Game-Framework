@@ -251,6 +251,7 @@ int main(){
 	Faces_Draw[0].colour[0] = 0xFFFFFFFF;
 	Faces_Draw[0].fade[0] = 0;
 	Faces_Draw[0].frame_id[0] = 0;
+	Faces_Draw[0].visible[0] = 1;
 	crayon_memory_set_frame_uv(&Faces_Draw[0], 0, 0);
 
 	crayon_memory_init_sprite_array(&Faces_Draw[1], &Faces_SS, 0, &Faces_P, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -264,6 +265,7 @@ int main(){
 	Faces_Draw[1].colour[0] = 0xFFFFFFFF;
 	Faces_Draw[1].fade[0] = 0;
 	Faces_Draw[1].frame_id[0] = 0;
+	Faces_Draw[1].visible[0] = 1;
 	crayon_memory_set_frame_uv(&Faces_Draw[1], 0, 1);
 
 	crayon_memory_init_sprite_array(&Faces_Draw[2], &Faces_SS, 0, &Faces_P, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -277,6 +279,7 @@ int main(){
 	Faces_Draw[2].colour[0] = 0xFFFFFFFF;
 	Faces_Draw[2].fade[0] = 0;
 	Faces_Draw[2].frame_id[0] = 0;
+	Faces_Draw[2].visible[0] = 1;
 	crayon_memory_set_frame_uv(&Faces_Draw[2], 0, 2);
 
 	frame_indexes[0] = 0;
@@ -294,6 +297,7 @@ int main(){
 	//The highlight box (Most of the details are set below)
 	crayon_memory_init_sprite_array(&Highlight_Draw, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Highlight_Draw.colour[0] = 0x88FF0000;
+	Highlight_Draw.visible[0] = 1;
 
 	uint8_t hide_msg = 0;
 	char msg[1024];
@@ -585,6 +589,7 @@ int main(){
 	crayon_memory_free_sprite_array(&Faces_Draw[0]);
 	crayon_memory_free_sprite_array(&Faces_Draw[1]);
 	crayon_memory_free_sprite_array(&Faces_Draw[2]);
+	crayon_memory_free_sprite_array(&Highlight_Draw);
 
 	pvr_shutdown();
 
