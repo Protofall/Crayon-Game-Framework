@@ -607,6 +607,11 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			//and every time for a multi-list
 			//and some of them trigger if we just cropped a UV
 
+		if(sprite_array->visible[i] == 0){
+			if(i != 0){continue;}
+			else{cropped = 1;}	//We need the defaults to be set on first loop
+		}
+
 		if(*frame_index == i || cropped){	//frame
 			uvs[0] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
 			uvs[1] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
@@ -707,6 +712,9 @@ extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_ar
 			vert.ax = vert.bx;
 			vert.ay = vert.dy;
 		}
+
+		//The first element if invisible now skips rendering
+		if(i == 0 && sprite_array->visible[i] == 0){cropped = 0; continue;}
 
 		vert.az = (float)sprite_array->layer[i];
 		vert.bz = (float)sprite_array->layer[i];
