@@ -289,6 +289,12 @@ int main(){
 		Man_BG.visible[i] = 1;
 	}
 
+	//Debugging stuff
+	// if(crayon_memory_extend_sprite_array(&Rainbow_Draw, 2, 1)){error_freeze("hi");}
+	// Rainbow_Draw.coord[8].x += 100;
+	// Rainbow_Draw.coord[9].x += 50;
+	// Rainbow_Draw.coord[9].y += 120;
+
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
 	crayon_graphics_setup_palette(&BIOS_P);

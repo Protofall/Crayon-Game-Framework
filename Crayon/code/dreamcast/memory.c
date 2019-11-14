@@ -431,7 +431,7 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 		sprite_array->animation = &ss->animation[animation_id];
 		sprite_array->palette = pal;
 		sprite_array->frames_used = frames_used;
-		sprite_array->options |= (1 << 7);	//Set the textured bit
+		sprite_array->options |= CRAY_HAS_TEXTURE;	//Set the textured bit
 	}
 	else{
 		sprite_array->spritesheet = NULL;	//For safety sake
@@ -488,9 +488,7 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 			if(i == 0 || ((sprite_array->options >> 1) & 1)){
 				sprite_array->frame_id[i] = 0;
 			}
-			if(i == 0 || ((sprite_array->options) & 1)){
-				sprite_array->layer[i] = 255;
-			}
+			sprite_array->layer[i] = 255;
 			sprite_array->visible[i] = 1;
 		}
 		for(i = 0; i < frames_used; i++){	//No "if" needed since this will always loop inbounds
@@ -531,6 +529,93 @@ extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1
 		}
 	}
 	return found;
+}
+
+extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t elements, uint8_t set_defaults){
+
+	void * holder;
+	uint16_t new_size = sprite_array->list_size + elements;
+	if(new_size <= sprite_array->list_size){return 1;}	//Overflow or adding zero elements
+
+	holder =  realloc(sprite_array->coord, new_size * sizeof(vec2_f_t));
+	if(holder != NULL){sprite_array->coord = holder;}
+	else{return 2;}
+
+	holder =  realloc(sprite_array->layer, new_size * sizeof(uint8_t));
+	if(holder != NULL){sprite_array->layer = holder;}
+	else{return 2;}
+
+	holder =  realloc(sprite_array->scale, ((sprite_array->options & CRAY_MULTI_SCALE) ? new_size: 1) * sizeof(vec2_f_t));
+	if(holder != NULL){sprite_array->scale = holder;}
+	else{return 2;}
+
+	holder =  realloc(sprite_array->colour, ((sprite_array->options & CRAY_MULTI_COLOUR) ? new_size: 1) * sizeof(uint32_t));
+	if(holder != NULL){sprite_array->colour = holder;}
+	else{return 2;}
+
+	holder =  realloc(sprite_array->rotation, ((sprite_array->options & CRAY_MULTI_ROTATE) ? new_size: 1) * sizeof(float));
+	if(holder != NULL){sprite_array->rotation = holder;}
+	else{return 2;}
+
+	holder =  realloc(sprite_array->visible, new_size * sizeof(uint8_t));
+	if(holder != NULL){sprite_array->visible = holder;}
+	else{return 2;}
+
+	if(sprite_array->options & CRAY_HAS_TEXTURE){
+		holder =  realloc(sprite_array->frame_id, ((sprite_array->options & CRAY_MULTI_FRAME) ? new_size: 1) * sizeof(uint8_t));
+		if(holder != NULL){sprite_array->frame_id = holder;}
+		else{return 2;}
+
+		holder =  realloc(sprite_array->fade, ((sprite_array->options & CRAY_MULTI_COLOUR) ? new_size: 1) * sizeof(uint8_t));
+		if(holder != NULL){sprite_array->fade = holder;}
+		else{return 2;}
+
+		holder =  realloc(sprite_array->flip, ((sprite_array->options & CRAY_MULTI_FLIP) ? new_size: 1) * sizeof(uint8_t));
+		if(holder != NULL){sprite_array->flip = holder;}
+		else{return 2;}
+	}
+
+	if(set_defaults){
+		crayon_memory_set_defaults_sprite_array(sprite_array, sprite_array->list_size, new_size - 1);
+	}
+
+	sprite_array->list_size = new_size;
+
+	return 0;
+}
+
+extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t start, uint16_t end){
+	uint8_t whole_list = (start == 0 && end == sprite_array->list_size - 1);
+	uint16_t i;
+	for(i = start; i <= end; i++){
+		sprite_array->coord[i].x = 0;
+		sprite_array->coord[i].y = 0;
+		if((whole_list && i == 0) || (sprite_array->options & CRAY_MULTI_COLOUR)){	//Multi things or first loop
+			sprite_array->colour[i] = 0xFFFFFFFF;
+			sprite_array->fade[i] = 0xFF;
+		}
+		if((whole_list && i == 0) || (sprite_array->options & CRAY_MULTI_ROTATE)){
+			sprite_array->rotation[i] = 0;
+		}
+		if((whole_list && i == 0) || (sprite_array->options & CRAY_MULTI_FLIP)){
+			sprite_array->flip[i] = 0;
+		}
+		if((whole_list && i == 0) || (sprite_array->options & CRAY_MULTI_SCALE)){
+			sprite_array->scale[i].x = 1;
+			sprite_array->scale[i].y = 1;
+		}
+		if((whole_list && i == 0) || (sprite_array->options & CRAY_MULTI_FRAME)){
+			sprite_array->frame_id[i] = 0;
+		}
+		sprite_array->layer[i] = 255;
+		sprite_array->visible[i] = 1;
+	}
+	if(whole_list){
+		for(i = 0; i < sprite_array->frames_used; i++){
+			sprite_array->frame_uv[i].x = 0;
+			sprite_array->frame_uv[i].y = 0;
+		}
+	}
 }
 
 //Free Texture and anim array

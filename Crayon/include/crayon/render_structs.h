@@ -79,6 +79,8 @@ typedef struct crayon_sprite_array{
 	crayon_spritesheet_t *spritesheet;
 	crayon_animation_t *animation;
 	crayon_palette_t *palette;	//Also ask if palettes can start at not multiples of 16 or 256
+
+	// crayon_references_t * references;	//UNUSED
 } crayon_sprite_array_t;
 
 #endif
