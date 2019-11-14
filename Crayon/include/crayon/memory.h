@@ -73,6 +73,12 @@ extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_
 //It returns 0 if colour1 wasn't found, otherwise it returns the number of "colour1"s that were swapped
 extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1, uint32_t colour2, uint8_t _continue);
 
+//WARNING. This function assumes the "indexes" list is sorted in ascending order (To save on computation time)
+	//If you pass in an unsorted list, idk what madness will happen
+//It will go through all the elements from the "indexes" list and remove them from the sprite array
+extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t *sprite_array, uint16_t * indexes,
+	uint16_t indexes_length);
+
 //Reallocs and extends with "elements" amount of new elements. If "set_defaults" is on then it sets the defaults
 extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t elements, uint8_t set_defaults);
 
