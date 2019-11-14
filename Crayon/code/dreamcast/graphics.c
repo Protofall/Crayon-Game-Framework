@@ -323,6 +323,12 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 			if(i != 0){continue;}	//For the first element, we need to initialise our vars, otherwise we just skip to the next element
 			skip = 1;
 		}
+
+		if(sprite_array->visible[i] == 0){
+			if(i != 0){continue;}
+			else{skip = 1;}	//We need the defaults to be set on first loop
+		}
+
 		//These if statements will trigger once if we have a single element (i == 0)
 			//and every time for a multi-list
 
@@ -462,6 +468,11 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 		if(sprite_array->colour[*colour_index] >> 24 == 0){	//Don't draw alpha-less stuff
 			if(i != 0){continue;}	//For the first element, we need to initialise our vars, otherwise we just skip to the next element
 			skip = 1;
+		}
+
+		if(sprite_array->visible[i] == 0){
+			if(i != 0){continue;}
+			else{skip = 1;}	//We need the defaults to be set on first loop
 		}
 
 		//Update rotation part if needed
