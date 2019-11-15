@@ -549,99 +549,107 @@ extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t 
 		}
 
 		if(elements_to_copy > 0){
-			// memmove(void *str1, const void *str2, size_t n);
-			//Have one for all the arrays
 			memmove(sprite_array->coord[array_index], sprite_array->coord[array_index + i], elements_to_copy * sizeof(vec2_f_t));
 			memmove(sprite_array->layer[array_index], sprite_array->layer[array_index + i], elements_to_copy * sizeof(uint8_t));
 			memmove(sprite_array->visible[array_index], sprite_array->visible[array_index + i], elements_to_copy * sizeof(uint8_t));
 
-			//For the rest of them check if they're multi before resizing them
-			;
+			if(sprite_array->options & CRAY_MULTI_COLOUR){
+				memmove(sprite_array->colour[array_index], sprite_array->colour[array_index + i], elements_to_copy * sizeof(uint32_t));
+			}
+			if(sprite_array->options & CRAY_MULTI_SCALE){
+				memmove(sprite_array->scale[array_index], sprite_array->scale[array_index + i], elements_to_copy * sizeof(vec2_f_t));
+			}
+			if(sprite_array->options & CRAY_MULTI_ROTATE){
+				memmove(sprite_array->rotation[array_index], sprite_array->rotation[array_index + i], elements_to_copy * sizeof(float));
+			}
+
+			if(sprite_array->options & CRAY_HAS_TEXTURE){
+				if(sprite_array->options & CRAY_MULTI_FLIP){
+					memmove(sprite_array->flip[array_index], sprite_array->flip[array_index + i], elements_to_copy * sizeof(uint8_t));
+				}
+				if(sprite_array->options & CRAY_MULTI_COLOUR){
+					memmove(sprite_array->fade[array_index], sprite_array->fade[array_index + i], elements_to_copy * sizeof(uint8_t));
+				}
+				if(sprite_array->options & CRAY_MULTI_FRAME){
+					memmove(sprite_array->frame_id[array_index], sprite_array->frame_id[array_index + i], elements_to_copy * sizeof(uint8_t));
+				}
+			}
 
 			//Lastly do this
 			array_index += elements_to_shift;
 		}
 	}
 
+	//Store this for the references later. (Might not be needed. dunno)
+	uint16_t old_size = sprite_array->list_size;
 
-	//Tactic
-		//Compare the ith and i+1th element offset. If its 1 nothing is moving, else the difference - 1 elements shift down
-		//to where array index is
-
-		//eg. 20 elements, remove 0, 5, 6, 7, 12 (Imagine a "20" on the end)
-		//(5 - 0) - 1 = 4 (Shift them to start)
-		//(6 - 5) - 1 = 0 (No shift)
-		//(7 - 6) - 1 = 0 (No shift)
-		//(12 - 7) - 1 = 4 (Sift them to just after the other 4 elements or where array_index is)
-		//Then outside the loop we do (20 - indexes[index_length-1]) - 1 = 7 (So sift them to start at index 8)
-
-		//Thats 5 potential shifts. Same number as length of thing
-
-		//Finally do a realloc
-
-
-	//Start from index 0 of s_a and go until the first missing element in indexes.
-		//Use memmove to copy from there to just before the next removed element. Keep doing this and then by the end
-		//the list will be in the same order, but with the requested elements removed. Then we realloc to free up some space
-
+	//Resize the arrays with realloc
+	if(crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t size)){return 1;}
 
 	//Later handle the references linked list here
-
-
-	// sprite_array->list_size -= indexes_length;
+	;
 
 	return 0;
 }
 
-extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t elements, uint8_t set_defaults){
-
+//Note, even if these pointers point to "NULL", it will instead behave like malloc
+	//So if I use this in the init function. Make sure to set all the pointers to NULL before sending them through here
+extern uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t size){
 	void * holder;
+
+	holder =  realloc(sprite_array->coord, size * sizeof(vec2_f_t));
+	if(holder != NULL){sprite_array->coord = holder;}
+	else{return 1;}
+
+	holder =  realloc(sprite_array->layer, size * sizeof(uint8_t));
+	if(holder != NULL){sprite_array->layer = holder;}
+	else{return 1;}
+
+	holder =  realloc(sprite_array->scale, ((sprite_array->options & CRAY_MULTI_SCALE) ? size: 1) * sizeof(vec2_f_t));
+	if(holder != NULL){sprite_array->scale = holder;}
+	else{return 1;}
+
+	holder =  realloc(sprite_array->colour, ((sprite_array->options & CRAY_MULTI_COLOUR) ? size: 1) * sizeof(uint32_t));
+	if(holder != NULL){sprite_array->colour = holder;}
+	else{return 1;}
+
+	holder =  realloc(sprite_array->rotation, ((sprite_array->options & CRAY_MULTI_ROTATE) ? size: 1) * sizeof(float));
+	if(holder != NULL){sprite_array->rotation = holder;}
+	else{return 1;}
+
+	holder =  realloc(sprite_array->visible, size * sizeof(uint8_t));
+	if(holder != NULL){sprite_array->visible = holder;}
+	else{return 1;}
+
+	if(sprite_array->options & CRAY_HAS_TEXTURE){
+		holder =  realloc(sprite_array->frame_id, ((sprite_array->options & CRAY_MULTI_FRAME) ? size: 1) * sizeof(uint8_t));
+		if(holder != NULL){sprite_array->frame_id = holder;}
+		else{return 1;}
+
+		holder =  realloc(sprite_array->fade, ((sprite_array->options & CRAY_MULTI_COLOUR) ? size: 1) * sizeof(uint8_t));
+		if(holder != NULL){sprite_array->fade = holder;}
+		else{return 1;}
+
+		holder =  realloc(sprite_array->flip, ((sprite_array->options & CRAY_MULTI_FLIP) ? size: 1) * sizeof(uint8_t));
+		if(holder != NULL){sprite_array->flip = holder;}
+		else{return 1;}
+	}
+
+	sprite_array->list_size = size;
+	
+	return 0;
+}
+
+extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t elements, uint8_t set_defaults){
 	elements += sprite_array->list_size;
 	if(elements <= sprite_array->list_size){return 1;}	//Overflow or adding zero elements
 
-	holder =  realloc(sprite_array->coord, elements * sizeof(vec2_f_t));
-	if(holder != NULL){sprite_array->coord = holder;}
-	else{return 2;}
-
-	holder =  realloc(sprite_array->layer, elements * sizeof(uint8_t));
-	if(holder != NULL){sprite_array->layer = holder;}
-	else{return 2;}
-
-	holder =  realloc(sprite_array->scale, ((sprite_array->options & CRAY_MULTI_SCALE) ? elements: 1) * sizeof(vec2_f_t));
-	if(holder != NULL){sprite_array->scale = holder;}
-	else{return 2;}
-
-	holder =  realloc(sprite_array->colour, ((sprite_array->options & CRAY_MULTI_COLOUR) ? elements: 1) * sizeof(uint32_t));
-	if(holder != NULL){sprite_array->colour = holder;}
-	else{return 2;}
-
-	holder =  realloc(sprite_array->rotation, ((sprite_array->options & CRAY_MULTI_ROTATE) ? elements: 1) * sizeof(float));
-	if(holder != NULL){sprite_array->rotation = holder;}
-	else{return 2;}
-
-	holder =  realloc(sprite_array->visible, elements * sizeof(uint8_t));
-	if(holder != NULL){sprite_array->visible = holder;}
-	else{return 2;}
-
-	if(sprite_array->options & CRAY_HAS_TEXTURE){
-		holder =  realloc(sprite_array->frame_id, ((sprite_array->options & CRAY_MULTI_FRAME) ? elements: 1) * sizeof(uint8_t));
-		if(holder != NULL){sprite_array->frame_id = holder;}
-		else{return 2;}
-
-		holder =  realloc(sprite_array->fade, ((sprite_array->options & CRAY_MULTI_COLOUR) ? elements: 1) * sizeof(uint8_t));
-		if(holder != NULL){sprite_array->fade = holder;}
-		else{return 2;}
-
-		holder =  realloc(sprite_array->flip, ((sprite_array->options & CRAY_MULTI_FLIP) ? elements: 1) * sizeof(uint8_t));
-		if(holder != NULL){sprite_array->flip = holder;}
-		else{return 2;}
-	}
+	uint16_t old_size = sprite_array->list_size;	//Needed for setting defaults
+	crayon_memory_allocate_sprite_array(sprite_array, elements);
 
 	if(set_defaults){
 		crayon_memory_set_defaults_sprite_array(sprite_array, sprite_array->list_size, elements - 1);
 	}
-
-	sprite_array->list_size = elements;
 
 	return 0;
 }

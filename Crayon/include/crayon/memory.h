@@ -79,6 +79,10 @@ extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1
 extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t *sprite_array, uint16_t * indexes,
 	uint16_t indexes_length);
 
+//Takes a sprite array and sets its size (Bigger or smaller). It doesn't handle value initialisation though
+	//INTERNAL USAGE
+extern uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t size);
+
 //Reallocs and extends with "elements" amount of new elements. If "set_defaults" is on then it sets the defaults
 extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t elements, uint8_t set_defaults);
 
