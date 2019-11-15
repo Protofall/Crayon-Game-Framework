@@ -565,30 +565,30 @@ extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t 
 			elements_to_shift = sprite_array->list_size - indexes[i] - 1;
 		}
 
-		if(elements_to_copy > 0){
-			memmove(sprite_array->coord[array_index], sprite_array->coord[array_index + i], elements_to_copy * sizeof(vec2_f_t));
-			memmove(sprite_array->layer[array_index], sprite_array->layer[array_index + i], elements_to_copy * sizeof(uint8_t));
-			memmove(sprite_array->visible[array_index], sprite_array->visible[array_index + i], elements_to_copy * sizeof(uint8_t));
+		if(elements_to_shift > 0){
+			memmove(&sprite_array->coord[array_index], &sprite_array->coord[array_index + i + 1], elements_to_shift * sizeof(vec2_f_t));
+			memmove(&sprite_array->layer[array_index], &sprite_array->layer[array_index + i + 1], elements_to_shift * sizeof(uint8_t));
+			memmove(&sprite_array->visible[array_index], &sprite_array->visible[array_index + i + 1], elements_to_shift * sizeof(uint8_t));
 
 			if(sprite_array->options & CRAY_MULTI_COLOUR){
-				memmove(sprite_array->colour[array_index], sprite_array->colour[array_index + i], elements_to_copy * sizeof(uint32_t));
+				memmove(&sprite_array->colour[array_index], &sprite_array->colour[array_index + i + 1], elements_to_shift * sizeof(uint32_t));
 			}
 			if(sprite_array->options & CRAY_MULTI_SCALE){
-				memmove(sprite_array->scale[array_index], sprite_array->scale[array_index + i], elements_to_copy * sizeof(vec2_f_t));
+				memmove(&sprite_array->scale[array_index], &sprite_array->scale[array_index + i + 1], elements_to_shift * sizeof(vec2_f_t));
 			}
 			if(sprite_array->options & CRAY_MULTI_ROTATE){
-				memmove(sprite_array->rotation[array_index], sprite_array->rotation[array_index + i], elements_to_copy * sizeof(float));
+				memmove(&sprite_array->rotation[array_index], &sprite_array->rotation[array_index + i + 1], elements_to_shift * sizeof(float));
 			}
 
 			if(sprite_array->options & CRAY_HAS_TEXTURE){
 				if(sprite_array->options & CRAY_MULTI_FLIP){
-					memmove(sprite_array->flip[array_index], sprite_array->flip[array_index + i], elements_to_copy * sizeof(uint8_t));
+					memmove(&sprite_array->flip[array_index], &sprite_array->flip[array_index + i + 1], elements_to_shift * sizeof(uint8_t));
 				}
 				if(sprite_array->options & CRAY_MULTI_COLOUR){
-					memmove(sprite_array->fade[array_index], sprite_array->fade[array_index + i], elements_to_copy * sizeof(uint8_t));
+					memmove(&sprite_array->fade[array_index], &sprite_array->fade[array_index + i + 1], elements_to_shift * sizeof(uint8_t));
 				}
 				if(sprite_array->options & CRAY_MULTI_FRAME){
-					memmove(sprite_array->frame_id[array_index], sprite_array->frame_id[array_index + i], elements_to_copy * sizeof(uint8_t));
+					memmove(&sprite_array->frame_id[array_index], &sprite_array->frame_id[array_index + i + 1], elements_to_shift * sizeof(uint8_t));
 				}
 			}
 
@@ -600,8 +600,8 @@ extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t 
 	//Store this for the references later. (Might not be needed. dunno)
 	uint16_t old_size = sprite_array->list_size;
 
-	//Resize the arrays with realloc
-	if(crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t size)){return 1;}
+	//Resize the arrays with realloc (MIGHT BE ABLE TO REUSE array_index HERE)
+	if(crayon_memory_allocate_sprite_array(sprite_array, sprite_array->list_size - indexes_length)){return 1;}
 
 	//Later handle the references linked list here
 	;
@@ -665,7 +665,7 @@ extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_a
 	crayon_memory_allocate_sprite_array(sprite_array, elements);
 
 	if(set_defaults){
-		crayon_memory_set_defaults_sprite_array(sprite_array, sprite_array->list_size, elements - 1);
+		crayon_memory_set_defaults_sprite_array(sprite_array, old_size, sprite_array->list_size - 1);
 	}
 
 	return 0;
