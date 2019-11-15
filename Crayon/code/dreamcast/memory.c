@@ -454,64 +454,9 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 		sprite_array->frame_uv = (vec2_u16_t *) malloc(frames_used * sizeof(vec2_u16_t));
 	}
 
-	// sprite_array->list_size = list_size;
-
-	// ((sprite_array->options >> 5) & 1)	//Extract the colour bit
-	// ((sprite_array->options >> 4) & 1)	//Extract the rotation bit
-	// ((sprite_array->options >> 3) & 1)	//Extract the flip bit
-	// ((sprite_array->options >> 2) & 1)	//Extract the scale bit
-	// ((sprite_array->options >> 1) & 1)	//Extract the frames_used bit
-
-	// sprite_array->coord = (vec2_f_t *) malloc(list_size * sizeof(vec2_f_t));
-	// sprite_array->layer = (uint8_t *) malloc(list_size * sizeof(uint8_t));
-	// sprite_array->scale = (vec2_f_t *) malloc(((sprite_array->options >> 2) & 1 ? list_size: 1) * sizeof(vec2_f_t));
-
-	// sprite_array->colour = (uint32_t *) malloc(((sprite_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint32_t));
-	// sprite_array->rotation = (float *) malloc(((sprite_array->options >> 4) & 1 ? list_size: 1) * sizeof(float));
-	// sprite_array->visible = (uint8_t *) malloc(list_size * sizeof(uint8_t));
-
-	// if(ss){
-	// 	sprite_array->frame_id = (uint8_t *) malloc(((sprite_array->options >> 1) & 1 ? list_size: 1) * sizeof(uint8_t));
-	// 	sprite_array->fade = (uint8_t *) malloc(((sprite_array->options >> 5) & 1 ? list_size: 1) * sizeof(uint8_t));
-	// 	sprite_array->flip = (uint8_t *) malloc(((sprite_array->options >> 3) & 1 ? list_size: 1) * sizeof(uint8_t));
-	// }
-	// else{
-	// 	sprite_array->frame_id = NULL;
-	// 	sprite_array->frame_uv = NULL;
-	// 	sprite_array->fade = NULL;
-	// 	sprite_array->flip = NULL;
-	// }
-
 	//Sets default values so everything is initialised
 	if(set_defaults){
-		uint16_t i;
-		for(i = 0; i < list_size; i++){
-			sprite_array->coord[i].x = 0;
-			sprite_array->coord[i].y = 0;
-			if(i == 0 || (sprite_array->options & CRAY_MULTI_COLOUR)){	//Multi things or first loop
-				sprite_array->colour[i] = 0xFFFFFFFF;
-				sprite_array->fade[i] = 0xFF;
-			}
-			if(i == 0 || (sprite_array->options & CRAY_MULTI_ROTATE)){
-				sprite_array->rotation[i] = 0;
-			}
-			if(i == 0 || (sprite_array->options & CRAY_MULTI_FLIP)){
-				sprite_array->flip[i] = 0;
-			}
-			if(i == 0 || (sprite_array->options & CRAY_MULTI_SCALE)){
-				sprite_array->scale[i].x = 1;
-				sprite_array->scale[i].y = 1;
-			}
-			if(i == 0 || (sprite_array->options & CRAY_MULTI_FRAME)){
-				sprite_array->frame_id[i] = 0;
-			}
-			sprite_array->layer[i] = 0xFF;
-			sprite_array->visible[i] = 1;
-		}
-		for(i = 0; i < frames_used; i++){	//No "if" needed since this will always loop inbounds
-			sprite_array->frame_uv[i].x = 0;
-			sprite_array->frame_uv[i].y = 0;
-		}
+		crayon_memory_set_defaults_sprite_array(sprite_array, 0, sprite_array->list_size - 1);
 	}
 
 	return;
@@ -696,7 +641,7 @@ extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprit
 		if((whole_list && i == 0) || (sprite_array->options & CRAY_MULTI_FRAME)){
 			sprite_array->frame_id[i] = 0;
 		}
-		sprite_array->layer[i] = 255;
+		sprite_array->layer[i] = 0xFF;
 		sprite_array->visible[i] = 1;
 	}
 	if(whole_list){
