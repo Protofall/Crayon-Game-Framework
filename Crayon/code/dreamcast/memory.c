@@ -459,6 +459,9 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 		crayon_memory_set_defaults_sprite_array(sprite_array, 0, sprite_array->list_size - 1);
 	}
 
+	//Start off with no references
+	sprite_array->references = NULL;
+
 	return;
 }
 
@@ -725,6 +728,14 @@ extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_arr
 	sprite_array->rotation = NULL;
 	sprite_array->layer = NULL;
 	sprite_array->visible = NULL;
+
+	//Free up the references linked list
+	crayon_references_t * curr_ref = sprite_array->references;
+	while(curr_ref != NULL){
+		curr_ref = curr_ref->next;
+		free(curr_ref->prev);
+	}
+	sprite_array->references = NULL;
 
 	return 0;
 }
