@@ -730,7 +730,7 @@ extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_arr
 	sprite_array->visible = NULL;
 
 	//Free up the references linked list
-	crayon_references_t * curr_ref = sprite_array->references;
+	crayon_sprite_array_references_t * curr_ref = sprite_array->references;
 	while(curr_ref != NULL){
 		curr_ref = curr_ref->next;
 		free(curr_ref->prev);

@@ -38,11 +38,11 @@ typedef struct crayon_viewport_t{
 	uint16_t window_height;
 } crayon_viewport_t;
 
-typedef struct crayon_references{
+typedef struct crayon_sprite_array_references{
 	uint16_t id;
-	struct crayon_references * next;
-	struct crayon_references * prev;
-} crayon_references_t;
+	struct crayon_sprite_array_references * next;
+	struct crayon_sprite_array_references * prev;
+} crayon_sprite_array_references_t;
 
 //This is designed for the multi-draw functions. If you want to draw a single thing with this struct
 //then I you'll still need to go through the multi-draw. It shouldn't be too much slower if any.
@@ -86,7 +86,7 @@ typedef struct crayon_sprite_array{
 	crayon_animation_t *animation;
 	crayon_palette_t *palette;	//Also ask if palettes can start at not multiples of 16 or 256
 
-	crayon_references_t * references;	//UNUSED
+	crayon_sprite_array_references_t * references;	//UNUSED
 } crayon_sprite_array_t;
 
 #endif

@@ -1,4 +1,4 @@
-# Camera-Test-Simple
+# Camera-Simple
 
 This is based on the Basic-Scene demo, but using cameras/viewports to show how it works. There are 4 cameras demo-ed here:
 - Full screen, no scale: Effectively the same as not even using a camera at all

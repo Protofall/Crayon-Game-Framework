@@ -63,6 +63,12 @@ extern uint32_t crayon_graphics_get_window_height(){
 extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t draw_mode){
 	if(camera == NULL){	//No Camera
+		//Make the default camera
+		// crayon_viewport_t default_camera = ;
+		// camera = default_camera;
+		//Then end if statement and everything uses the same logic
+
+
 		if(sprite_array->options & CRAY_HAS_TEXTURE){	//Textured
 			if(draw_mode & CRAY_DRAW_ENHANCED){	//Enhanced draw
 				return crayon_graphics_draw_sprites_enhanced(sprite_array, poly_list_mode);
