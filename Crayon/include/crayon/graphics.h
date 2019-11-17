@@ -4,6 +4,7 @@
 #include "texture_structs.h"  //For the spritehsheet and anim structs
 #include "render_structs.h"  //For the crayon_sprite_array struct
 #include "vector_structs.h"  //For the rotate function struct
+#include "memory.h"  //For the rotate function struct
 
 #include <stdlib.h>
 #include <string.h>	//For length of string
@@ -56,29 +57,22 @@ extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_a
 
 
 //poly_list mode is for the tr/pt/op render list macro we want to use.
-extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
-
 //The version with polygons (Use this if your spritesheet is bigger than 256 by 256)
 	//For DC this uses "poly mode"
-extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
+extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode);
 
 //This will draw untextured polys (Sprite_arrays with no texture set)
-extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, uint8_t poly_list_mode);
+extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode);
 
 //Like the other simple draw one, but this uses a camera to control where on screen to render and what region to show
-extern uint8_t crayon_graphics_camera_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode);
 
 //DELETE THIS LATER
-extern uint8_t crayon_graphics_camera_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+extern uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode);
-
-//These will come in later
-// extern uint8_t crayon_graphics_camera_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	// uint8_t poly_list_mode);
-
-// extern uint8_t crayon_graphics_camera_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	// uint8_t poly_list_mode);
 
 
 //------------------Drawing Fonts------------------//
