@@ -572,7 +572,7 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 		sprite_verts[3] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 
 		//If OOB then don't draw
-		if(crayon_graphics_check_oob(camera_verts, sprite_verts)){continue;}
+		if(crayon_graphics_check_oob(camera_verts, sprite_verts, CRAY_DRAW_SIMPLE)){continue;}
 
 		//If we don't need to crop at all, don't both doing the checks. bounds is zero by default
 		if(crop_edges){
@@ -902,7 +902,7 @@ extern uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite
 		sprite_verts[3] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 
 		//If OOB then don't draw
-		if(crayon_graphics_check_oob(camera_verts, sprite_verts)){continue;}
+		if(crayon_graphics_check_oob(camera_verts, sprite_verts, CRAY_DRAW_SIMPLE)){continue;}
 
 		//If we don't need to crop at all, don't both doing the checks. bounds is zero by default
 		if(crop_edges){
@@ -1365,39 +1365,38 @@ extern uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]){
 	return bounds;
 }
 
-//How to check if OOB
+//How to check if OOB for Simple mode (And Enhanced with no rotation)
 	//All verts are further away than one of the camera verts
-		//So if The left X vert of the camera is 150 and all the vX verts are less than 150 then its OOB
-//I don't think this works for non-90 degree rotations (Or rotations in general)
-	//Make a seperate function dedicated to handling rotated stuff
-extern uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4]){
-	uint8_t i;
+	//So if The left X vert of the camera is 150 and all the sprite X verts are less than 150 then its OOB
+//How to check if OOB for Enhanced mode
+	// -
+extern uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4], uint8_t mode){
+	if(mode == CRAY_DRAW_SIMPLE){	//Assumes Axis aligned and Z-order verts. Also used by enhanced when rotation is zero
+		if(vS[1].x < vC[0].x){
+			return 1;
+		}
+		//right verts
+		if(vS[0].x > vC[1].x){
+			return 1;
+		}
+		//top verts
+		if(vS[2].y < vC[0].y){
+			return 1;
+		}
+		//bottom verts
+		if(vS[0].y > vC[2].y){
+			return 1;
+		}
 
-	for(i = 0; i < 2; i++){
-		if(i % 2){
-			//left verts
-			if(vS[0].x < vC[i*2].x && vS[1].x < vC[i*2].x && vS[2].x < vC[i*2].x && vS[3].x < vC[i*2].x){
-				return 1;
-			}
-			//right verts
-			if(vS[0].x > vC[(i*2)+1].x && vS[1].x > vC[(i*2)+1].x && vS[2].x > vC[(i*2)+1].x && vS[3].x > vC[(i*2)+1].x){
-				return 1;
-			}
-		}
-		if(i < 2){
-			//top verts
-			if(vS[0].y < vC[i].y && vS[1].y < vC[i].y && vS[2].y < vC[i].y && vS[3].y < vC[i].y){
-				return 1;
-			}
-			//bottom verts
-			if(vS[0].y > vC[i+2].y && vS[1].y > vC[i+2].y && vS[2].y > vC[i+2].y && vS[3].y > vC[i+2].y){
-				return 1;
-			}
-		}
+		//No OOBs detected
+		return 0;
 	}
+	else{
+		;
 
-	//No OOBs detected
-	return 0;
+		//No OOBs detected
+		return 0;
+	}
 }
 
 extern uint8_t round_way(float value){
