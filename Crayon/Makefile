@@ -6,7 +6,7 @@ $(if $(PLATFORM),,$(error Please specify the target platform to compile Crayon\
   `ls code` for a list of platform names))
 
 LIB_NAME  := crayon
-CFLAGS    := $(KOS_CFLAGS) -Iinclude/crayon
+CFLAGS    := $(KOS_CFLAGS) -Wshadow -Iinclude/crayon
 
 SRC       := code/$(PLATFORM)
 LIB       := lib/$(PLATFORM)

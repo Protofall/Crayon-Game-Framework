@@ -16,7 +16,7 @@
 # CRAYON_PP_FLAGS:      (optional) Options to pass to the asset preprocessor
 
 PROJECT  := $(CRAYON_PROJ_NAME)
-CFLAGS   := $(CRAYON_PROJ_CFLAGS) $(KOS_CFLAGS) \
+CFLAGS   := $(CRAYON_PROJ_CFLAGS) $(KOS_CFLAGS) -Wshadow \
 	-I$(CRAYON_BASE)/include
 LDFLAGS  := $(CRAYON_PROJ_LDFLAGS) $(KOS_LDFLAGS) \
 	-L$(CRAYON_BASE)/lib/dreamcast
