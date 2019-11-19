@@ -81,38 +81,31 @@ pvr_init_params_t pvr_params = {
 		0
 };
 
-float g_deadspace;
-uint8_t g_htz, g_htz_adjustment;
 float width, height;
 crayon_font_mono_t BIOS_font;
-crayon_palette_t BIOS_P;	//Entry 0
 crayon_sprite_array_t fade_draw;
 
-void setup(){
-	pvr_init(&pvr_params);
+float g_deadspace;
 
-	width = crayon_graphics_get_window_width();
-	height = crayon_graphics_get_window_height();
-	g_deadspace = 0.4;
+uint8_t g_htz, g_htz_adjustment;
+uint8_t vga_enabled;
 
-	uint8_t vga_enabled = (vid_check_cable() == CT_VGA);
-	if(vga_enabled){
-		vid_set_mode(DM_640x480_VGA, PM_RGB565);	//60Hz
-		g_htz = 60;
-		g_htz_adjustment = 1;
-	}
-	else{
-		if(flashrom_get_region() == FLASHROM_REGION_EUROPE){
-			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
-			g_htz = 50;
-			g_htz_adjustment = 1.2;
-		}
-		else{
-			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
-			g_htz = 60;
-			g_htz_adjustment = 1;
-		}
-	}
+void init_fade_struct(){
+	crayon_memory_init_sprite_array(&fade_draw, NULL, 0, NULL, 1, 0, 0, PVR_FILTER_NONE, 0);
+	fade_draw.coord[0].x = 0;
+	fade_draw.coord[0].y = 0;
+	fade_draw.scale[0].x = width;
+	fade_draw.scale[0].y = height;
+	fade_draw.fade[0] = 254;
+	fade_draw.colour[0] = 0xFFFF0000;	//Full Black (Currently red for debugging)
+	fade_draw.rotation[0] = 0;
+	fade_draw.visible[0] = 1;
+	fade_draw.layer[0] = 255;
+}
+
+void htz_select(){
+	//If we have a VGA cable, then skip this screen
+	if(vga_enabled){return;}
 
 	#if CRAYON_BOOT_MODE == 0
 		crayon_memory_mount_romdisk("/cd/stuff.img", "/Setup");
@@ -124,34 +117,20 @@ void setup(){
 		#error "Invalid CRAYON_BOOT_MODE"
 	#endif
 
+	crayon_palette_t BIOS_P;		//Entry 0
+	crayon_palette_t BIOS_Red_P;	//Entry 1
+
 	crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 0, "/Setup/BIOS.dtex");
 
 	fs_romdisk_unmount("/Setup");
-
-	crayon_palette_t BIOS_P;		//Entry 0
-	crayon_palette_t BIOS_Red_P;	//Entry 1
 
 	//Make the red font
 	crayon_memory_clone_palette(&BIOS_P, &BIOS_Red_P, 1);
 	crayon_memory_swap_colour(&BIOS_Red_P, 0xFFAAAAAA, 0xFFFF0000, 0);
 
-	crayon_memory_init_sprite_array(&fade_draw, NULL, 0, NULL, 1, 0, 0, PVR_FILTER_NONE, 0);
-	fade_draw.coord[0].x = 0;
-	fade_draw.coord[0].y = 0;
-	fade_draw.scale[0].x = width;
-	fade_draw.scale[0].y = height;
-	fade_draw.fade[0] = 254;
-	fade_draw.colour[0] = 0xFFFF0000;	//Full Black (Currently red for debugging)
-	fade_draw.rotation[0] = 0;
-	fade_draw.visible[0] = 1;
-	fade_draw.layer[0] = 255;
-
 	//Set the palettes in PVR memory
 	crayon_graphics_setup_palette(&BIOS_P);	//0
 	crayon_graphics_setup_palette(&BIOS_Red_P);	//1
-
-	//If we have a VGA cable, then skip the option screen
-	// if(vga_enabled){return;}
 
 	uint16_t htz_head_x = (width - (2 * crayon_graphics_string_get_length_mono(&BIOS_font, "Select Refresh Rate", 0))) / 2;
 	uint16_t htz_head_y = 133;
@@ -203,21 +182,21 @@ void setup(){
 		//Don't really want players doing stuff when it fades out
 		if(counter >= 0){
 			MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-			// if(st->buttons & CONT_DPAD_LEFT){
-			// 	palette_50htz = &BIOS_Red_P.palette_id;	//0 is 50 Htz
-			// 	palette_60htz = &BIOS_P.palette_id;
-			// 	//Make "blip" sound
-			// }
-			// else if(st->buttons & CONT_DPAD_RIGHT){
-			// 	palette_50htz = &BIOS_P.palette_id;	//1 is 60 Htz
-			// 	palette_60htz = &BIOS_Red_P.palette_id;
-			// 	//Make "blip" sound
-			// }
+			if(st->buttons & CONT_DPAD_LEFT){
+				palette_50htz = &BIOS_Red_P.palette_id;	//0 is 50 Htz
+				palette_60htz = &BIOS_P.palette_id;
+				//Make "blip" sound
+			}
+			else if(st->buttons & CONT_DPAD_RIGHT){
+				palette_50htz = &BIOS_P.palette_id;	//1 is 60 Htz
+				palette_60htz = &BIOS_Red_P.palette_id;
+				//Make "blip" sound
+			}
 
-			// //Press A or Start to skip the countdown
-			// if((st->buttons & CONT_START) || (st->buttons & CONT_A)){
-			// 	counter = 0;
-			// }
+			//Press A or Start to skip the countdown
+			if((st->buttons & CONT_START) || (st->buttons & CONT_A)){
+				counter = 0;
+			}
 
 			MAPLE_FOREACH_END()
 		}
@@ -260,29 +239,33 @@ void setup(){
 	crayon_memory_free_palette(&BIOS_P);
 	crayon_memory_free_palette(&BIOS_Red_P);
 
-	crayon_memory_free_mono_font_sheet(&g_BIOS_font);
+	crayon_memory_free_mono_font_sheet(&BIOS_font);
 
 	return;
 }
 
+void crayon_graphics_init_display(){
+	pvr_init(&pvr_params);
 
-void set_default_screen(float * htz_adjustment){
-	*htz_adjustment = 1.0;
-	uint8_t region = flashrom_get_region();
-	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1
-		region = 0;	//Invalid region
-	}
+	width = crayon_graphics_get_window_width();
+	height = crayon_graphics_get_window_height();
 
-	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
-		vid_set_mode(DM_640x480_VGA, PM_RGB565);
+	vga_enabled = (vid_check_cable() == CT_VGA);
+	if(vga_enabled){
+		vid_set_mode(DM_640x480_VGA, PM_RGB565);	//60Hz
+		g_htz = 60;
+		g_htz_adjustment = 1;
 	}
-	else{	//Else its RGB. This handles composite, S-video, SCART, etc
-		if(region == FLASHROM_REGION_EUROPE){
+	else{
+		if(flashrom_get_region() == FLASHROM_REGION_EUROPE){
 			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
-			*htz_adjustment = 1.2;	//60/50Hz
+			g_htz = 50;
+			g_htz_adjustment = 1.2;
 		}
 		else{
 			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
+			g_htz = 60;
+			g_htz_adjustment = 1;
 		}
 	}
 
@@ -290,8 +273,6 @@ void set_default_screen(float * htz_adjustment){
 }
 
 int main(){
-	pvr_init(&pvr_params);	//Init the pvr system
-
 	#if CRAYON_BOOT_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
 		if(sdRes != 0){
@@ -299,23 +280,16 @@ int main(){
 		}
 	#endif
 
-	// float htz_adjustment;
-	// set_default_screen(&htz_adjustment);
-	setup();
+	g_deadspace = 0.4;
+
+	crayon_graphics_init_display();
+	init_fade_struct();
+	htz_select();
 
 	//load in assets here
+	;
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
-	// crayon_memory_init_sprite_array(&fade_draw, NULL, 0, NULL, 1, 0, 0, PVR_FILTER_NONE, 0);
-	// fade_draw.coord[0].x = 0;
-	// fade_draw.coord[0].y = 0;
-	// fade_draw.scale[0].x = 640;
-	// fade_draw.scale[0].y = 480;
-	// fade_draw.fade[0] = 255;
-	// fade_draw.colour[0] = 0xFFFF0000;	//Full Black (Currently red for debugging)
-	// fade_draw.rotation[0] = 0;
-	// fade_draw.visible[0] = 1;
-	// fade_draw.layer[0] = 255;
 
 	#if CRAYON_BOOT_MODE == 1
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
@@ -330,15 +304,21 @@ int main(){
 
 		pvr_scene_begin();
 
+
 		pvr_list_begin(PVR_LIST_TR_POLY);
 			// crayon_graphics_draw_sprites(&fade_draw, NULL, PVR_LIST_TR_POLY, CRAY_DRAW_SIMPLE);
 		pvr_list_finish();
 
+
 		pvr_list_begin(PVR_LIST_OP_POLY);
+			;
 		pvr_list_finish();
 
+
 		pvr_list_begin(PVR_LIST_PT_POLY);
+			;
 		pvr_list_finish();
+
 
 		pvr_scene_finish();
 	}
