@@ -4,6 +4,8 @@
 #include <dc/pvr.h>
 #include <stdint.h> //For the uintX_t types
 
+#include "vector_structs.h"
+
 //The palette has its own struct since users might want to share one palette across multiple textures
 typedef struct crayon_palette{
 	uint32_t *palette;		//Pointer to heap allocated palette (Its treated like an array of size "colour_count")
@@ -65,6 +67,9 @@ typedef struct crayon_font_prop{
 							//code in memory_free_prop_font_sheet()
 	uint8_t num_rows;
 	uint16_t num_chars;
+
+	//REMOVE THIS AND PUT IT IN THE FONTSTYLES LATER
+	vec2_s16_t char_spacing;
 } crayon_font_prop_t;
 
 //All chars have the same width and height
@@ -80,6 +85,9 @@ typedef struct crayon_font_mono{
 	uint8_t num_columns;
 	uint8_t num_rows;
 	uint16_t num_chars;	//Equal to num_columns * num_rows since without more infor, we can't guess
+
+	//REMOVE THIS AND PUT IT IN THE FONTSTYLES LATER
+	vec2_s16_t char_spacing;
 } crayon_font_mono_t;
 
 #endif

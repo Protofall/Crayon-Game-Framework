@@ -260,6 +260,9 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 		}
 	}
 
+	fp->char_spacing.x = 0;
+	fp->char_spacing.y = 0;
+
 	#undef ERROR
 
 	cleanup:
@@ -354,6 +357,9 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	// if(fscanf(sheet_file, "%u %u %u %u\n", &fm->char_width, &fm->char_height, &fm->num_columns, &fm->num_rows) != 4){
 		// ERROR(15);
 	// }
+
+	fm->char_spacing.x = 0;
+	fm->char_spacing.y = 0;
 
 	#undef ERROR
 

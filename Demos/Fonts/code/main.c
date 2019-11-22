@@ -161,11 +161,27 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 			crayon_graphics_draw_text_prop("Tahoma", &Tahoma, PVR_LIST_PT_POLY, 32, 32, 1, 1, 1, Tahoma_P.palette_id);
+
+			Tahoma.char_spacing.x = 16;
+			Tahoma.char_spacing.y = 32;
+			crayon_graphics_draw_text_prop("Here's another one\nBut this one is proportional\nStrange, isn't it?", &Tahoma, PVR_LIST_PT_POLY, 32, 332, 1, 1, 1, Tahoma_P.palette_id);
+			Tahoma.char_spacing.x = 0;
+			Tahoma.char_spacing.y = 0;
+
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 			crayon_graphics_draw_text_mono("BIOS", &BIOS, PVR_LIST_OP_POLY, 32, Tahoma.char_height + 32, 1, 1, 1, BIOS_P.palette_id);
-			crayon_graphics_draw_text_mono(version_msg, &BIOS, PVR_LIST_OP_POLY, 32, Tahoma.char_height + 32 + BIOS.char_height, 1, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono(version_msg, &BIOS, PVR_LIST_OP_POLY, 32, Tahoma.char_height + 32 + BIOS.char_height, 1, 1, 1,
+				BIOS_P.palette_id);
+
+			BIOS.char_spacing.x = 8;
+			BIOS.char_spacing.y = 8;
+			crayon_graphics_draw_text_mono("Modified spacing\nThis is a multi-line string\nFire at William", &BIOS, PVR_LIST_OP_POLY, 32,
+				Tahoma.char_height + 32 + (2 * BIOS.char_height), 1, 1, 1, BIOS_P.palette_id);
+			BIOS.char_spacing.x = 0;
+			BIOS.char_spacing.y = 0;
+
 		pvr_list_finish();
 
 		pvr_scene_finish();

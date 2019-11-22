@@ -1062,9 +1062,9 @@ extern uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_m
 		}
 		if(string[i] == '\n'){	//This should be able to do a new line
 			x0 = floor(draw_x);
-			x1 = x0 + fm->char_width * scale_x;
-			y0 = y1;
-			y1 += fm->char_height * scale_y;
+			x1 = x0 + floor(fm->char_width * scale_x);
+			y0 = y1 + floor(fm->char_spacing.y * scale_y);
+			y1 = y0 + floor(fm->char_height * scale_y);
 			i++;
 			continue;
 		}
@@ -1087,8 +1087,8 @@ extern uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_m
 		};
 		pvr_prim(&vert, sizeof(vert));
 
-		x0 = x1;
-		x1 += fm->char_width * scale_x;
+		x0 = x1 + (fm->char_spacing.x * scale_x);
+		x1 += floor((fm->char_width + fm->char_spacing.x) * scale_x);
 		i++;
 	}
 
@@ -1101,8 +1101,9 @@ extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_p
 	float x0 = floor(draw_x);
 	float y0 = floor(draw_y);
 	const float z = layer;
+	// float x1 = x0 - floor(fp->char_height * scale_x);
 	float x1 = x0;
-	float y1 = y0 + fp->char_height * scale_y;
+	float y1 = y0 + floor(fp->char_height * scale_y);
 	float v0 = 0;
 	float v1 = 0;
 	float percent_height = (float)fp->char_height / fp->texture_height;
@@ -1136,14 +1137,14 @@ extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_p
 		if(string[i] == '\n'){	//This should be able to do a new line
 			x0 = floor(draw_x);
 			x1 = x0;
-			y0 = y1;
-			y1 += fp->char_height * scale_y;
+			y0 = y1 + floor(fp->char_spacing.y * scale_y);
+			y1 = y0 + floor(fp->char_height * scale_y);
 			i++;
 			continue;
 		}
 		uint8_t distance_from_space = string[i] - ' ';
 
-		x1 += fp->char_width[distance_from_space] * scale_x;	//get the width of the display char
+		x1 = x0 + floor(fp->char_width[distance_from_space] * scale_x);	//get the width of the display char
 
 		u0 = (float)fp->char_x_coord[distance_from_space] / fp->texture_width;
 		u1 = u0 + ((float)fp->char_width[distance_from_space] / fp->texture_width);
@@ -1169,7 +1170,7 @@ extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_p
 		};
 		pvr_prim(&vert, sizeof(vert));
 
-		x0 = x1;
+		x0 = x1 + (fp->char_spacing.x * scale_x);
 		i++;
 	}
 

@@ -125,8 +125,6 @@ int main(){
 	crayon_font_mono_t BIOS;
 	crayon_palette_t BIOS_P;
 
-	crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
-
 	//Load the logo
 	#if CRAYON_BOOT_MODE == 2
 		crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
