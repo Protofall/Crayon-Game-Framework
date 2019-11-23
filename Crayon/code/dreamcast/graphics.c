@@ -1277,7 +1277,8 @@ extern uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_char
 extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char * string){
 	uint16_t current_length = 0;
 	uint16_t best_length = 0;
-	int i = 0;
+	
+	uint16_t i = 0;
 	while(1){
 		if(string[i] == '\0'){
 			if(current_length > best_length){
@@ -1300,6 +1301,8 @@ extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t 
 		i++;
 	}
 
+	if(i > 0){best_length -= fm->char_spacing.x;}	//Since we have char - 1 spaces
+
 	return best_length;
 }
 
@@ -1307,13 +1310,14 @@ extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t 
 	uint16_t current_length = 0;
 	uint16_t best_length = 0;
 
-	int i = 0;
+	uint8_t distance_from_space;
+
+	uint16_t i = 0;
 	while(1){
 		if(string[i] == '\0'){
 			if(current_length > best_length){
 				best_length = current_length;
 			}
-			current_length = 0;
 			break;
 		}
 		if(string[i] == '\n'){
@@ -1325,12 +1329,15 @@ extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t 
 			continue;
 		}
 
-		uint8_t distance_from_space = string[i] - ' ';
+		distance_from_space = string[i] - ' ';
 		current_length += fp->char_width[distance_from_space];
 		current_length += fp->char_spacing.x;
 
 		i++;
 	}
+
+	//Have one less one
+	if(i > 0){best_length -= fp->char_spacing.x;}	//Since we have char - 1 spaces
 
 	return best_length;
 }
