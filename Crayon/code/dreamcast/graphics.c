@@ -1327,7 +1327,7 @@ extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t 
 
 		uint8_t distance_from_space = string[i] - ' ';
 		current_length += fp->char_width[distance_from_space];
-		current_length += fm->char_spacingx;
+		current_length += fp->char_spacing.x;
 
 		i++;
 	}
