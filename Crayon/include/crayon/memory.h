@@ -68,10 +68,10 @@ extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_
 //------------------Modifying memory----------------//
 
 
-//This function attempts to search for colour1 in the palette and swaps it for colour2
-//If _continue is false then it only replaces the first instance of colour1, else it replaces all instances
-//It returns 0 if colour1 wasn't found, otherwise it returns the number of "colour1"s that were swapped
-extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1, uint32_t colour2, uint8_t _continue);
+//This function attempts to search for old in the palette and swaps it for new
+//If _continue is false then it only replaces the first instance of old, else it replaces all instances
+//It returns 0 if old wasn't found, otherwise it returns the number of "old"s that were swapped
+extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t old, uint32_t new, uint8_t _continue);
 
 //WARNING. This function assumes the "indexes" list is sorted in ascending order (To save on computation time)
 	//If you pass in an unsorted list, idk what madness will happen

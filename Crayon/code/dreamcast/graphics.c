@@ -1274,11 +1274,7 @@ extern uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_char
 	return 0;
 }
 
-extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char * string, uint8_t newlines){
-	if(!newlines){
-		return strlen(string) * fm->char_width;	//Since all chars are the same width, we can just do this
-	}
-
+extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char * string){
 	uint16_t current_length = 0;
 	uint16_t best_length = 0;
 	int i = 0;
@@ -1300,13 +1296,14 @@ extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t 
 		}
 
 		current_length += fm->char_width;
+		current_length += fm->char_spacing.x;
 		i++;
 	}
 
 	return best_length;
 }
 
-extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char * string, uint8_t newlines){
+extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char * string){
 	uint16_t current_length = 0;
 	uint16_t best_length = 0;
 
@@ -1320,18 +1317,17 @@ extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t 
 			break;
 		}
 		if(string[i] == '\n'){
-			if(newlines){
-				if(current_length > best_length){
-					best_length = current_length;
-				}
-				current_length = 0;
+			if(current_length > best_length){
+				best_length = current_length;
 			}
+			current_length = 0;
 			i++;
 			continue;
 		}
 
 		uint8_t distance_from_space = string[i] - ' ';
 		current_length += fp->char_width[distance_from_space];
+		current_length += fm->char_spacingx;
 
 		i++;
 	}

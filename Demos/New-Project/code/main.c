@@ -132,7 +132,7 @@ void htz_select(){
 	crayon_graphics_setup_palette(&BIOS_P);	//0
 	crayon_graphics_setup_palette(&BIOS_Red_P);	//1
 
-	uint16_t htz_head_x = (width - (2 * crayon_graphics_string_get_length_mono(&BIOS_font, "Select Refresh Rate", 0))) / 2;
+	uint16_t htz_head_x = (width - (2 * crayon_graphics_string_get_length_mono(&BIOS_font, "Select Refresh Rate"))) / 2;
 	uint16_t htz_head_y = 133;
 	uint16_t htz_option_y = htz_head_y + (BIOS_font.char_height * 2) + 80;
 

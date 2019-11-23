@@ -487,12 +487,12 @@ extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_
 	return;
 }
 
-extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t colour1, uint32_t colour2, uint8_t _continue){
+extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t old, uint32_t new, uint8_t _continue){
 	uint16_t i;
 	uint16_t found = 0;
 	for(i = 0; i < cp->colour_count; ++i){
-		if(cp->palette[i] == colour1){
-			cp->palette[i] = colour2;
+		if(cp->palette[i] == old){
+			cp->palette[i] = new;
 			found++;
 			if(!_continue){
 				break;

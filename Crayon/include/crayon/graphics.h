@@ -101,10 +101,9 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 	//This means characters like tabs are considerred illegal
 extern uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_chars);
 
-//This gets the drawn-length of a string using a certain font
-//If newlines is true then it will only return the longest line
-extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char * string, uint8_t newlines);	//UNTESTED
-extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char * string, uint8_t newlines);
+//This gets the drawn-length of a string using a certain font. But only the longest line
+extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char * string);
+extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char * string);
 
 
 //------------------Misc. Internal Functions------------------//
