@@ -62,6 +62,7 @@ extern uint32_t crayon_graphics_get_window_height(){
 //M is for draw mode (1 for enhanced, 0 for simple)
 extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t draw_mode){
+	if(sprite_array->list_size == 0){return 2;}	//Don't render nothing
 	crayon_viewport_t default_camera;
 	if(camera == NULL){	//No Camera, use the default one
 		crayon_memory_init_camera(&default_camera, (vec2_f_t){0, 0},

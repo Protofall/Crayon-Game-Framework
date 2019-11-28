@@ -71,7 +71,7 @@ extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_
 extern crayon_sprite_array_reference_t ** crayon_memory_get_sprite_array_refs(crayon_sprite_array_t *sprite_array,
 	uint16_t * indexes, uint16_t indexes_length);
 
-extern uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t lower, uint16_t upper);
+extern uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t lower, int32_t upper);
 
 extern void crayon_memory_remove_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t * indexes,
 	uint16_t indexes_length);
@@ -99,7 +99,7 @@ extern uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite
 extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t elements, uint8_t set_defaults);
 
 //Sets the defaults. If going from 0 to list_size - 1, this will also set the non-multis
-extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t start, uint16_t end);
+extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t start, int32_t end);
 
 
 //------------------Freeing memory------------------//

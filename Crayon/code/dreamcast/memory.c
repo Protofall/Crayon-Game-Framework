@@ -461,7 +461,7 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 	}
 
 	//Sets default values so everything is initialised
-	if(set_defaults){
+	if(set_defaults && list_size > 0){
 		crayon_memory_set_defaults_sprite_array(sprite_array, 0, sprite_array->list_size - 1);
 	}
 
@@ -523,7 +523,8 @@ extern crayon_sprite_array_reference_t ** crayon_memory_get_sprite_array_refs(cr
 
 //This would have issues if you try to re-add an existing reference or add before the last element
 	//However in the intended use, its only called by init for all elements and extend so this doesn't normally occur
-extern uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t lower, uint16_t upper){
+extern uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t lower, int32_t upper){
+	if(upper < 0 || sprite_array->list_size == 0){return 0;}	//Since this sorta is valid, we return 0
 	if(upper >= sprite_array->list_size || lower > upper){return 1;}
 
 	crayon_sprite_array_reference_t * prev_node = NULL;
@@ -695,44 +696,45 @@ extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t 
 
 //Note, even if these pointers point to "NULL", it will instead behave like malloc
 	//So if I use this in the init function. Make sure to set all the pointers to NULL before sending them through here
+	//Also the "size == 0" checks are there since zero-length sprite-arrays should be allowed to pass
 extern uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t size){
 	void * holder;
 
 	holder =  realloc(sprite_array->coord, size * sizeof(vec2_f_t));
-	if(holder != NULL){sprite_array->coord = holder;}
+	if(size == 0 || holder != NULL){sprite_array->coord = holder;}
 	else{return 1;}
 
 	holder =  realloc(sprite_array->layer, size * sizeof(uint8_t));
-	if(holder != NULL){sprite_array->layer = holder;}
+	if(size == 0 || holder != NULL){sprite_array->layer = holder;}
 	else{return 1;}
 
 	holder =  realloc(sprite_array->scale, ((sprite_array->options & CRAY_MULTI_SCALE) ? size: 1) * sizeof(vec2_f_t));
-	if(holder != NULL){sprite_array->scale = holder;}
+	if(size == 0 || holder != NULL){sprite_array->scale = holder;}
 	else{return 1;}
 
 	holder =  realloc(sprite_array->colour, ((sprite_array->options & CRAY_MULTI_COLOUR) ? size: 1) * sizeof(uint32_t));
-	if(holder != NULL){sprite_array->colour = holder;}
+	if(size == 0 || holder != NULL){sprite_array->colour = holder;}
 	else{return 1;}
 
 	holder =  realloc(sprite_array->rotation, ((sprite_array->options & CRAY_MULTI_ROTATE) ? size: 1) * sizeof(float));
-	if(holder != NULL){sprite_array->rotation = holder;}
+	if(size == 0 || holder != NULL){sprite_array->rotation = holder;}
 	else{return 1;}
 
 	holder =  realloc(sprite_array->visible, size * sizeof(uint8_t));
-	if(holder != NULL){sprite_array->visible = holder;}
+	if(size == 0 || holder != NULL){sprite_array->visible = holder;}
 	else{return 1;}
 
 	if(sprite_array->options & CRAY_HAS_TEXTURE){
 		holder =  realloc(sprite_array->frame_id, ((sprite_array->options & CRAY_MULTI_FRAME) ? size: 1) * sizeof(uint8_t));
-		if(holder != NULL){sprite_array->frame_id = holder;}
+		if(size == 0 || holder != NULL){sprite_array->frame_id = holder;}
 		else{return 1;}
 
 		holder =  realloc(sprite_array->fade, ((sprite_array->options & CRAY_MULTI_COLOUR) ? size: 1) * sizeof(uint8_t));
-		if(holder != NULL){sprite_array->fade = holder;}
+		if(size == 0 || holder != NULL){sprite_array->fade = holder;}
 		else{return 1;}
 
 		holder =  realloc(sprite_array->flip, ((sprite_array->options & CRAY_MULTI_FLIP) ? size: 1) * sizeof(uint8_t));
-		if(holder != NULL){sprite_array->flip = holder;}
+		if(size == 0 || holder != NULL){sprite_array->flip = holder;}
 		else{return 1;}
 	}
 
@@ -759,7 +761,8 @@ extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_a
 	return 0;
 }
 
-extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t start, uint16_t end){
+extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t start, int32_t end){
+	if(end < 0){end = 0;}	//For zero-length sprite arrays, this will default init everything except multis
 	uint8_t whole_list = (start == 0 && end == sprite_array->list_size - 1);
 	uint16_t i;
 	for(i = start; i <= end; i++){
