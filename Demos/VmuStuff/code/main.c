@@ -16,19 +16,20 @@
 	//For mounting the sd dir
 	#include <dc/sd.h>
 	#include <kos/blockdev.h>
-	#include <ext2/fs_ext2.h>
+	#include <fat/fs_fat.h>
 #endif
 
-#if CRAYON_BOOT_MODE == 1
-	#define MNT_MODE FS_EXT2_MOUNT_READWRITE	//Might manually change it so its not a define anymore
 
-	static void unmount_ext2_sd(){
-		fs_ext2_unmount("/sd");
-		fs_ext2_shutdown();
+#if CRAYON_BOOT_MODE == 1
+	#define MNT_MODE FS_FAT_MOUNT_READONLY
+
+	static void unmount_fat_sd(){
+		fs_fat_unmount("/sd");
+		fs_fat_shutdown();
 		sd_shutdown();
 	}
 
-	static int mount_ext2_sd(){
+	static int mount_fat_sd(){
 		kos_blockdev_t sd_dev;
 		uint8 partition_type;
 
@@ -43,22 +44,26 @@
 			return 2;
 		}
 
-		// Check to see if the MBR says that we have a Linux partition
-		if(partition_type != 0x83){
-			return 3;
-		}
+		// Check to see if the MBR says that we have a valid partition
+		// if(partition_type != 0x83){
+			//I don't know what value I should be comparing against, hence this check is disabled for now
+			// This: https://en.wikipedia.org/wiki/Partition_type
+				//Suggests there's multiple types for FAT...not sure how to handle this
+			// return 3;
+		// }
 
-		// Initialize fs_ext2 and attempt to mount the device
-		if(fs_ext2_init()){
+		// Initialize fs_fat and attempt to mount the device
+		if(fs_fat_init()){
 			return 4;
 		}
 
 		//Mount the SD card to the sd dir in the VFS
-		if(fs_ext2_mount("/sd", &sd_dev, MNT_MODE)){
+		if(fs_fat_mount("/sd", &sd_dev, MNT_MODE)){
 			return 5;
 		}
 		return 0;
 	}
+
 #endif
 
 pvr_ptr_t font_tex;
@@ -182,7 +187,7 @@ void draw_string(float x, float y, float z, uint8_t a, uint8_t r, uint8_t g, uin
 
 int main(){
 	#if CRAYON_BOOT_MODE == 1
-		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
+		int sdRes = mount_fat_sd();	//This function should be able to mount a FAT32 formatted sd card to the /sd dir	
 		if(sdRes == 0){
 			MS_options.sd_present = 1;
 		}
@@ -263,7 +268,7 @@ int main(){
 	font_init();
 
 	#if CRAYON_BOOT_MODE == 1
-		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
+		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
 	char buffer[70];
