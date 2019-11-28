@@ -65,6 +65,18 @@ extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_
 	vec2_u16_t window_coord, vec2_u16_t window_dim, float world_movement_factor);
 
 
+//------------------Sprite Array References----------------//
+
+
+extern crayon_sprite_array_reference_t ** crayon_memory_get_sprite_array_refs(crayon_sprite_array_t *sprite_array,
+	uint16_t * indexes, uint16_t indexes_length);
+
+extern uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t lower, uint16_t upper);
+
+extern void crayon_memory_remove_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t * indexes,
+	uint16_t indexes_length);
+
+
 //------------------Modifying memory----------------//
 
 

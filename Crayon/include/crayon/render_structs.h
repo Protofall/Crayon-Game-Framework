@@ -4,6 +4,7 @@
 #include "texture_structs.h"  //For the spritesheet and anim structs
 #include "vector_structs.h"
 
+#define CRAY_REF_LIST (1 << 0)	//Tells the functions that we want each element to have a reference node
 #define CRAY_MULTI_FRAME (1 << 1)
 #define CRAY_MULTI_SCALE (1 << 2)
 #define CRAY_MULTI_DIM (1 << 2)
@@ -38,11 +39,11 @@ typedef struct crayon_viewport_t{
 	uint16_t window_height;
 } crayon_viewport_t;
 
-typedef struct crayon_sprite_array_references{
+typedef struct crayon_sprite_array_reference{
 	uint16_t id;
-	struct crayon_sprite_array_references * next;
-	struct crayon_sprite_array_references * prev;
-} crayon_sprite_array_references_t;
+	struct crayon_sprite_array_reference * next;
+	struct crayon_sprite_array_reference * prev;	//Should remove this later
+} crayon_sprite_array_reference_t;
 
 //This is designed for the multi-draw functions. If you want to draw a single thing with this struct
 //then I you'll still need to go through the multi-draw. It shouldn't be too much slower if any.
@@ -67,13 +68,15 @@ typedef struct crayon_sprite_array{
 	uint16_t list_size;			//This tells the draw function how many sprites/polys to draw.
 	uint8_t frames_used;		//The number of frames you want to use. Minimum 1
 
-	uint8_t options;			//Format TCCR (flip)SF-, Basically some booleans options relating to
-								//fade/colour, rotation, flip, scale and frame_ids
+	uint8_t options;			//Format TCCR (Flip)SF(Ref), Basically some booleans options relating to
+								//fade/colour, rotation, flip, scale, frame_ids and the reference list
 								//If that bit is set to true, then we use the first element of
 								//arrays (except map) for all sub-textures
 								//Else we assume each sprite has its own unique value
 								//T stands for "Textured". Changes how we handle the struct
 									//Untextured polys only use The right Colour bit, Rotation and Scale
+								//If the bit for reference list is enabled, then init and expand will create
+									//new nodes for the new elements
 
 								//Note that the 1st colour bit tells it to use either Blend or Add
 								//mode when applying the colour
@@ -86,7 +89,7 @@ typedef struct crayon_sprite_array{
 	crayon_animation_t *animation;
 	crayon_palette_t *palette;	//Also ask if palettes can start at not multiples of 16 or 256
 
-	crayon_sprite_array_references_t * references;	//UNUSED
+	crayon_sprite_array_reference_t * head;
 } crayon_sprite_array_t;
 
 #endif

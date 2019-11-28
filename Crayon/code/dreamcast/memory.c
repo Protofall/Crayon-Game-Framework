@@ -465,8 +465,11 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 		crayon_memory_set_defaults_sprite_array(sprite_array, 0, sprite_array->list_size - 1);
 	}
 
-	//Start off with no references
-	sprite_array->references = NULL;
+	//Add the references if the user asked for them
+	sprite_array->head = NULL;
+	if(options & CRAY_REF_LIST){
+		crayon_memory_add_sprite_array_refs(sprite_array, 0, list_size - 1);
+	}
 
 	return;
 }
@@ -483,6 +486,134 @@ extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_
 	camera->window_y = window_coord.y;
 	camera->window_width = window_dim.x;
 	camera->window_height = window_dim.y;
+
+	return;
+}
+
+extern crayon_sprite_array_reference_t ** crayon_memory_get_sprite_array_refs(crayon_sprite_array_t *sprite_array,
+	uint16_t * indexes, uint16_t indexes_length){
+	crayon_sprite_array_reference_t ** list = malloc(sizeof(crayon_sprite_array_reference_t *) * indexes_length);
+	if(list == NULL){return NULL;}
+
+	//Set all to null, just incase a reference isn't found
+	uint16_t i;
+	for(i = 0; i < indexes_length; i++){
+		list[i] = NULL;
+	}
+
+	i = 0;
+	crayon_sprite_array_reference_t * walker = sprite_array->head;
+	while(walker != NULL && i < indexes_length){
+		if(walker->id > indexes[i]){	//Lets say we ask for 6, 7, 8, 9 but we only have 6, 8, 9 and 10
+										//When we get to 8 (In LL), thats > 7 so we check the next element which is 8
+										//8 is a number we are looking for so we add that in
+										//element 2 of "list" will be NULL due to the above for-loop
+			i++;
+			continue;
+		}
+		if(walker->id == indexes[i]){	//If the elements match, add it to the list
+			list[i] = walker;
+			i++;
+		}
+		walker = walker->next;
+	}
+
+	return list;
+}
+
+//This would have issues if you try to re-add an existing reference or add before the last element
+	//However in the intended use, its only called by init for all elements and extend so this doesn't normally occur
+extern uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t lower, uint16_t upper){
+	if(upper >= sprite_array->list_size || lower > upper){return 1;}
+
+	crayon_sprite_array_reference_t * prev_node = NULL;
+	crayon_sprite_array_reference_t * curr_node = sprite_array->head;
+
+	uint16_t i;
+
+	//This should handle an empty reference list case
+	if(sprite_array->head == NULL){
+		for(i = lower; i <= upper; i++){
+			//Setup new node
+			curr_node = (crayon_sprite_array_reference_t *)malloc(sizeof(crayon_sprite_array_reference_t));
+			if(curr_node == NULL){return 1;}
+			curr_node->prev = prev_node;
+			curr_node->next = NULL;
+			curr_node->id = i;
+
+			//Update head if needed
+			if(sprite_array->head == NULL){
+				sprite_array->head = curr_node;
+			}
+			else{
+				prev_node->next = curr_node;	//Because otheriwse prev_node == NULL and that has issues
+			}
+
+			//Update previous node
+			prev_node = curr_node;
+		}
+		return 0;
+	}
+
+	//This assumes we are always adding to the end
+	while(curr_node->next != NULL){
+		curr_node = curr_node->next;
+	}
+
+	crayon_sprite_array_reference_t * append_node = curr_node;
+	prev_node = append_node;
+
+	for(i = lower; i <= upper; i++){
+		//Setup new node
+		curr_node = (crayon_sprite_array_reference_t *)malloc(sizeof(crayon_sprite_array_reference_t));
+		if(curr_node == NULL){return 1;}
+		curr_node->prev = prev_node;
+		curr_node->next = NULL;
+		curr_node->id = i;
+
+		//Update head if needed
+		if(append_node->next == NULL){
+			append_node->next = curr_node;
+		}
+		else{
+			prev_node->next = curr_node;	//Because otheriwse prev_node == NULL and that has issues
+		}
+
+		//Update previous node
+		prev_node = curr_node;
+	}
+
+	return 0;
+}
+
+extern void crayon_memory_remove_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t * indexes,
+	uint16_t indexes_length){
+
+	uint16_t i_c = 0;	//The index for the next node to delete
+	crayon_sprite_array_reference_t * curr_node = sprite_array->head;
+	crayon_sprite_array_reference_t * delete_node;
+	while(curr_node != NULL){
+		if(i_c < indexes_length && curr_node->id == indexes[i_c]){	//Element we need to delete
+			if(curr_node->prev != NULL){	//If it had a previous
+				curr_node->prev->next = curr_node->next;
+			}
+			else{	//If it was the former head, set the new head
+				sprite_array->head = curr_node->next;
+			}
+
+			if(curr_node->next != NULL){	//If it has a next
+				curr_node->next->prev = curr_node->prev;
+			}
+
+			delete_node = curr_node;
+			curr_node = curr_node->next;
+			free(delete_node);
+			i_c++;
+			continue;
+		}
+		curr_node->id -= i_c;
+		curr_node = curr_node->next;
+	}
 
 	return;
 }
@@ -553,14 +684,11 @@ extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t 
 		}
 	}
 
-	//Store this for the references later. (Might not be needed. dunno)
-	uint16_t old_size = sprite_array->list_size;
-
 	//Resize the arrays with realloc (MIGHT BE ABLE TO REUSE array_index HERE)
 	if(crayon_memory_allocate_sprite_array(sprite_array, sprite_array->list_size - indexes_length)){return 2;}
 
-	//Later handle the references linked list here
-	;
+	//Handle the references linked list here
+	crayon_memory_remove_sprite_array_refs(sprite_array, indexes, indexes_length);
 
 	return 0;
 }
@@ -622,6 +750,10 @@ extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_a
 
 	if(set_defaults){
 		crayon_memory_set_defaults_sprite_array(sprite_array, old_size, sprite_array->list_size - 1);
+	}
+
+	if(sprite_array->options & CRAY_REF_LIST){
+		crayon_memory_add_sprite_array_refs(sprite_array, old_size, elements - 1);
 	}
 
 	return 0;
@@ -735,13 +867,20 @@ extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_arr
 	sprite_array->layer = NULL;
 	sprite_array->visible = NULL;
 
-	//Free up the references linked list
-	crayon_sprite_array_references_t * curr_ref = sprite_array->references;
-	while(curr_ref != NULL){
-		curr_ref = curr_ref->next;
-		free(curr_ref->prev);
+	//Free the references linked list (This should probably use the remove func)
+	crayon_sprite_array_reference_t * node = sprite_array->head;
+	while(node != NULL){
+		if(node->next == NULL){
+			free(node);
+			node = NULL;
+		}
+		else{
+			node = node->next;	//node->next is not null?
+			free(node->prev);	//Apparently this can be uninitialised? Must be an error elsewhere
+		}
 	}
-	sprite_array->references = NULL;
+
+	sprite_array->head = NULL;
 
 	return 0;
 }
