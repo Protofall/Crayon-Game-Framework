@@ -26,6 +26,9 @@ typedef struct dpal_header{
 	uint32_t color_count; //number of 32-bit ARGB palette entries
 } dpal_header_t;
 
+//This var's purpose is to make debugging the memory stuff such as the reference lists and other memory functions much easier
+float __MEMORY_DEBUG_VARIABLES[16];
+
 //------------------Checking memory------------------//
 
 //Gets the index of an animation
@@ -93,13 +96,15 @@ extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t 
 
 //Takes a sprite array and sets its size (Bigger or smaller). It doesn't handle value initialisation though
 	//INTERNAL USAGE
-extern uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t size);
+extern uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t size, uint8_t set_array_globals);
 
 //Reallocs and extends with "elements" amount of new elements. If "set_defaults" is on then it sets the defaults
 extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t elements, uint8_t set_defaults);
 
 //Sets the defaults. If going from 0 to list_size - 1, this will also set the non-multis
-extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t start, int32_t end);
+	//If enabled, set_array_globals will set frame_uv to zero and all of the potential multis that aren't set to multi
+extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t start, int32_t end,
+	uint8_t set_array_globals);
 
 
 //------------------Freeing memory------------------//

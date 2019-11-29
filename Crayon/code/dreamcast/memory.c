@@ -452,8 +452,18 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 	sprite_array->frame_uv = NULL;
 	sprite_array->fade = NULL;
 	sprite_array->flip = NULL;
-	
-	crayon_memory_allocate_sprite_array(sprite_array, list_size);
+
+	if(list_size == 0 && 0){
+		//Only allocate 1 unit of space to those whom *can* be multi, but aren't set to multi
+		if(!(options & (CRAY_MULTI_SCALE))){sprite_array->scale = malloc(sizeof(vec2_f_t));}
+		if(!(options & (CRAY_MULTI_COLOUR))){sprite_array->colour = malloc(sizeof(uint32_t)); sprite_array->fade = malloc(sizeof(uint8_t));}
+		if(!(options & (CRAY_MULTI_ROTATE))){sprite_array->rotation = malloc(sizeof(float));}
+		if(!(options & (CRAY_MULTI_FRAME))){sprite_array->frame_id = malloc(sizeof(uint8_t));}
+		if(!(options & (CRAY_MULTI_FLIP))){sprite_array->flip = malloc(sizeof(uint8_t));}
+	}
+	else{
+		crayon_memory_allocate_sprite_array(sprite_array, list_size, 1);
+	}
 
 	//Since allocate function doesn't do this one
 	if(ss){
@@ -461,8 +471,8 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 	}
 
 	//Sets default values so everything is initialised
-	if(set_defaults && list_size > 0){
-		crayon_memory_set_defaults_sprite_array(sprite_array, 0, sprite_array->list_size - 1);
+	if(set_defaults){
+		crayon_memory_set_defaults_sprite_array(sprite_array, 0, sprite_array->list_size - 1, 1);
 	}
 
 	//Add the references if the user asked for them
@@ -490,6 +500,26 @@ extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_
 	return;
 }
 
+//Example, only 2 elements in list and we give 0, 1.
+//We'd expect references with id's {0, 1}. But we're getting {0, 0}
+//Indexes length = 2
+/*
+	while: i = 0. Enters loop:
+		Enters while loop
+		if: walker->id == 0 which isn't greater than indexes[0] == 0
+		if: walker->id == indexes[0]
+			//The correct reference is added to list[0]
+			//i = 1;
+		go to next in list
+	while: i = 1. Enters loop:
+		if: walker->id == 1, indexes[1] == 1. Fails
+		if: walker->id == indexes[1]. True
+			//The correct element *should* be added...
+			//i++
+		go to next in list
+	while: i = 2. Fails
+	returns list
+*/
 extern crayon_sprite_array_reference_t ** crayon_memory_get_sprite_array_refs(crayon_sprite_array_t *sprite_array,
 	uint16_t * indexes, uint16_t indexes_length){
 	crayon_sprite_array_reference_t ** list = malloc(sizeof(crayon_sprite_array_reference_t *) * indexes_length);
@@ -686,7 +716,7 @@ extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t 
 	}
 
 	//Resize the arrays with realloc (MIGHT BE ABLE TO REUSE array_index HERE)
-	if(crayon_memory_allocate_sprite_array(sprite_array, sprite_array->list_size - indexes_length)){return 2;}
+	if(crayon_memory_allocate_sprite_array(sprite_array, sprite_array->list_size - indexes_length, 0)){return 2;}
 
 	//Handle the references linked list here
 	crayon_memory_remove_sprite_array_refs(sprite_array, indexes, indexes_length);
@@ -697,46 +727,76 @@ extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t 
 //Note, even if these pointers point to "NULL", it will instead behave like malloc
 	//So if I use this in the init function. Make sure to set all the pointers to NULL before sending them through here
 	//Also the "size == 0" checks are there since zero-length sprite-arrays should be allowed to pass
-extern uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t size){
+extern uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t size, uint8_t set_array_globals){
 	void * holder;
 
+	//1 per element (Set these every time)
+
 	holder =  realloc(sprite_array->coord, size * sizeof(vec2_f_t));
-	if(size == 0 || holder != NULL){sprite_array->coord = holder;}
-	else{return 1;}
+	if(size == 0 || holder != NULL){sprite_array->coord = holder;} else{return 1;}
 
 	holder =  realloc(sprite_array->layer, size * sizeof(uint8_t));
-	if(size == 0 || holder != NULL){sprite_array->layer = holder;}
-	else{return 1;}
-
-	holder =  realloc(sprite_array->scale, ((sprite_array->options & CRAY_MULTI_SCALE) ? size: 1) * sizeof(vec2_f_t));
-	if(size == 0 || holder != NULL){sprite_array->scale = holder;}
-	else{return 1;}
-
-	holder =  realloc(sprite_array->colour, ((sprite_array->options & CRAY_MULTI_COLOUR) ? size: 1) * sizeof(uint32_t));
-	if(size == 0 || holder != NULL){sprite_array->colour = holder;}
-	else{return 1;}
-
-	holder =  realloc(sprite_array->rotation, ((sprite_array->options & CRAY_MULTI_ROTATE) ? size: 1) * sizeof(float));
-	if(size == 0 || holder != NULL){sprite_array->rotation = holder;}
-	else{return 1;}
+	if(size == 0 || holder != NULL){sprite_array->layer = holder;} else{return 1;}
 
 	holder =  realloc(sprite_array->visible, size * sizeof(uint8_t));
-	if(size == 0 || holder != NULL){sprite_array->visible = holder;}
-	else{return 1;}
+	if(size == 0 || holder != NULL){sprite_array->visible = holder;} else{return 1;}
+
+	//MULTIs
+		//Cases where we *don't* realloc.
+			//Its an array_global and set_array_globals == 0
+				//if(!(!(options & MULTI) && set_array_globals == 0))
+				//OR we enter if(set_array_globals || its not a global)
+		//We only enter it if we change size
+
+
+		//If its both multi and global, then we allocate size, which isn't right...
+
+
+	//Allocate to 1 if non-multi and global
+
+	//Set to size if mutli
+
+	//else don't touch it
+
+	//RULEa (3/3 satisfied)
+		//We always alloc on set_array_globals (And in that case, we set to 1 if non-Multi or size if Multi)
+		//if set_array_globals is 0, we never update the non-Multis
+		//if we set size to zero and set_array_globals == 0, then it only enters if its multi and then it sets itself to zero
+
+	if((sprite_array->options & CRAY_MULTI_SCALE) || set_array_globals){
+		holder =  realloc(sprite_array->scale, ((sprite_array->options & CRAY_MULTI_SCALE) ? size: 1) * sizeof(vec2_f_t));
+		if(size == 0 || holder != NULL){sprite_array->scale = holder;} else{return 1;}
+	}
+
+	if((sprite_array->options & CRAY_MULTI_COLOUR) || set_array_globals){
+		holder =  realloc(sprite_array->colour, ((sprite_array->options & CRAY_MULTI_COLOUR) ? size: 1) * sizeof(uint32_t));
+		if(size == 0 || holder != NULL){sprite_array->colour = holder;} else{return 1;}
+	}
+
+	if((sprite_array->options & CRAY_MULTI_ROTATE) || set_array_globals){
+		holder =  realloc(sprite_array->rotation, ((sprite_array->options & CRAY_MULTI_ROTATE) ? size: 1) * sizeof(float));
+		if(size == 0 || holder != NULL){sprite_array->rotation = holder;} else{return 1;}
+	}
 
 	if(sprite_array->options & CRAY_HAS_TEXTURE){
-		holder =  realloc(sprite_array->frame_id, ((sprite_array->options & CRAY_MULTI_FRAME) ? size: 1) * sizeof(uint8_t));
-		if(size == 0 || holder != NULL){sprite_array->frame_id = holder;}
-		else{return 1;}
+		if((sprite_array->options & CRAY_MULTI_FRAME) || set_array_globals){
+			holder =  realloc(sprite_array->frame_id, ((sprite_array->options & CRAY_MULTI_FRAME) ? size: 1) * sizeof(uint8_t));
+			if(size == 0 || holder != NULL){sprite_array->frame_id = holder;} else{return 1;}
+		}
 
-		holder =  realloc(sprite_array->fade, ((sprite_array->options & CRAY_MULTI_COLOUR) ? size: 1) * sizeof(uint8_t));
-		if(size == 0 || holder != NULL){sprite_array->fade = holder;}
-		else{return 1;}
+		if((sprite_array->options & CRAY_MULTI_COLOUR) || set_array_globals){
+			holder =  realloc(sprite_array->fade, ((sprite_array->options & CRAY_MULTI_COLOUR) ? size: 1) * sizeof(uint8_t));
+			if(size == 0 || holder != NULL){sprite_array->fade = holder;} else{return 1;}
+		}
 
-		holder =  realloc(sprite_array->flip, ((sprite_array->options & CRAY_MULTI_FLIP) ? size: 1) * sizeof(uint8_t));
-		if(size == 0 || holder != NULL){sprite_array->flip = holder;}
-		else{return 1;}
+		if((sprite_array->options & CRAY_MULTI_FLIP) || set_array_globals){
+			holder =  realloc(sprite_array->flip, ((sprite_array->options & CRAY_MULTI_FLIP) ? size: 1) * sizeof(uint8_t));
+			if(size == 0 || holder != NULL){sprite_array->flip = holder;} else{return 1;}
+		}
 	}
+
+	//Maybe also set frame_uv if set defaults is true?
+	;
 
 	sprite_array->list_size = size;
 	
@@ -748,10 +808,10 @@ extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_a
 	if(elements <= sprite_array->list_size){return 1;}	//Overflow or adding zero elements
 
 	uint16_t old_size = sprite_array->list_size;	//Needed for setting defaults
-	crayon_memory_allocate_sprite_array(sprite_array, elements);
+	crayon_memory_allocate_sprite_array(sprite_array, elements, 0);
 
 	if(set_defaults){
-		crayon_memory_set_defaults_sprite_array(sprite_array, old_size, sprite_array->list_size - 1);
+		crayon_memory_set_defaults_sprite_array(sprite_array, old_size, sprite_array->list_size - 1, 0);
 	}
 
 	if(sprite_array->options & CRAY_REF_LIST){
@@ -761,39 +821,70 @@ extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_a
 	return 0;
 }
 
-extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t start, int32_t end){
-	if(end < 0){end = 0;}	//For zero-length sprite arrays, this will default init everything except multis
-	uint8_t whole_list = (start == 0 && end == sprite_array->list_size - 1);
+extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t start, int32_t end,
+	uint8_t set_array_globals){
+
 	uint16_t i;
-	for(i = start; i <= end; i++){
-		sprite_array->coord[i].x = 0;
-		sprite_array->coord[i].y = 0;
-		if((whole_list && i == 0) || (sprite_array->options & CRAY_MULTI_COLOUR)){	//Multi things or first loop
-			sprite_array->colour[i] = 0xFFFFFFFF;
-			sprite_array->fade[i] = 0xFF;
+
+	//If length is zero, only set the multis that aren't multi
+	if(sprite_array->list_size == 0 && set_array_globals){
+		if(!(sprite_array->options & CRAY_MULTI_COLOUR)){
+			sprite_array->colour[0] = 0xFFFFFFFF;
+			sprite_array->fade[0] = 0xFF;
 		}
-		if((whole_list && i == 0) || (sprite_array->options & CRAY_MULTI_ROTATE)){
-			sprite_array->rotation[i] = 0;
+		if(!(sprite_array->options & CRAY_MULTI_ROTATE)){
+			sprite_array->rotation[0] = 0;
 		}
-		if((whole_list && i == 0) || (sprite_array->options & CRAY_MULTI_FLIP)){
-			sprite_array->flip[i] = 0;
+		if(!(sprite_array->options & CRAY_MULTI_FLIP)){
+			sprite_array->flip[0] = 0;
 		}
-		if((whole_list && i == 0) || (sprite_array->options & CRAY_MULTI_SCALE)){
-			sprite_array->scale[i].x = 1;
-			sprite_array->scale[i].y = 1;
+		if(!(sprite_array->options & CRAY_MULTI_SCALE)){
+			sprite_array->scale[0].x = 1;
+			sprite_array->scale[0].y = 1;
 		}
-		if((whole_list && i == 0) || (sprite_array->options & CRAY_MULTI_FRAME)){
-			sprite_array->frame_id[i] = 0;
+		if(!(sprite_array->options & CRAY_MULTI_FRAME)){
+			sprite_array->frame_id[0] = 0;
 		}
-		sprite_array->layer[i] = 0xFF;
-		sprite_array->visible[i] = 1;
 	}
-	if(whole_list){
+	else{	//Add set_array_globals to this
+		for(i = start; i <= end; i++){
+			//Only set if Multi-and-size > 0 things or first loop
+			if((i == 0 && set_array_globals) || ((sprite_array->options & CRAY_MULTI_COLOUR))){
+				sprite_array->colour[i] = 0xFFFFFFFF;
+				sprite_array->fade[i] = 0xFF;
+			}
+			if((i == 0 && set_array_globals) || ((sprite_array->options & CRAY_MULTI_ROTATE))){
+				sprite_array->rotation[i] = 0;
+			}
+			if((i == 0 && set_array_globals) || ((sprite_array->options & CRAY_MULTI_FLIP))){
+				sprite_array->flip[i] = 0;
+			}
+			if((i == 0 && set_array_globals) || ((sprite_array->options & CRAY_MULTI_SCALE))){
+				sprite_array->scale[i].x = 1;
+				sprite_array->scale[i].y = 1;
+			}
+			if((i == 0 && set_array_globals) || ((sprite_array->options & CRAY_MULTI_FRAME))){
+				sprite_array->frame_id[i] = 0;
+			}
+
+			if(sprite_array->list_size != 0){	//Set if we have at least one element in list
+				sprite_array->coord[i].x = 0;
+				sprite_array->coord[i].y = 0;
+				sprite_array->layer[i] = 0xFF;
+				sprite_array->visible[i] = 1;
+			}
+		}
+	}
+
+	if(set_array_globals){
 		for(i = 0; i < sprite_array->frames_used; i++){
+			//Later replace this with the UVs for the first frame
 			sprite_array->frame_uv[i].x = 0;
 			sprite_array->frame_uv[i].y = 0;
 		}
 	}
+
+	return;
 }
 
 //Free Texture and anim array
