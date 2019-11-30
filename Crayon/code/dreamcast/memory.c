@@ -669,7 +669,7 @@ extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t old, ui
 extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t *sprite_array, uint16_t * indexes,
 	uint16_t indexes_length){
 
-	if(indexes_length == 0){return 1;}
+	if(indexes_length == 0 || sprite_array->list_size == 0){return 1;}
 
 	uint16_t array_index = indexes[0];	//Start from the first remove
 	uint16_t elements_to_shift;
@@ -677,6 +677,12 @@ extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t 
 	uint16_t i;
 	//Basically what we want to do is find all the gaps in the list and shift them down.
 	for(i = 0; i < indexes_length; i++){
+		//Incase you try to remove an element beyond the array (size 2, removing {0,1,2})
+		if(indexes[i] >= sprite_array->list_size){
+			i--;
+			break;
+		}
+
 		//Determine how many elements to copy over
 		if(i != indexes_length - 1){
 			elements_to_shift = indexes[i + 1] - indexes[i] - 1;
@@ -717,11 +723,13 @@ extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t 
 		}
 	}
 
+	//Replaced indexes_length with i to protect against removing too much
+
 	//Resize the arrays with realloc (MIGHT BE ABLE TO REUSE array_index HERE)
-	if(crayon_memory_allocate_sprite_array(sprite_array, sprite_array->list_size - indexes_length, 0)){return 2;}
+	if(crayon_memory_allocate_sprite_array(sprite_array, sprite_array->list_size - i, 0)){return 2;}
 
 	//Handle the references linked list here
-	crayon_memory_remove_sprite_array_refs(sprite_array, indexes, indexes_length);
+	crayon_memory_remove_sprite_array_refs(sprite_array, indexes, i);
 
 	return 0;
 }
