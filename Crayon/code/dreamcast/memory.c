@@ -522,7 +522,7 @@ extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_
 */
 extern crayon_sprite_array_reference_t ** crayon_memory_get_sprite_array_refs(crayon_sprite_array_t *sprite_array,
 	uint16_t * indexes, uint16_t indexes_length){
-	if(sprite_array->head == NULL;){return NULL;}	//Incase you call on a sprite array with no refs
+	if(sprite_array->head == NULL){return NULL;}	//Incase you call on a sprite array with no refs
 
 	crayon_sprite_array_reference_t ** list = malloc(sizeof(crayon_sprite_array_reference_t *) * indexes_length);
 	if(list == NULL){return NULL;}
