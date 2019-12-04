@@ -454,8 +454,7 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			//and some of them trigger if we just cropped a UV
 
 		if(sprite_array->visible[i] == 0){
-			if(i != 0){continue;}
-			else{cropped = 1;}	//We need the defaults to be set on first loop
+			if(i != 0){continue;}	//We need the defaults to be set on first loop
 		}
 
 		if(*frame_index == i || cropped){	//frame
@@ -463,17 +462,17 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			uvs[1] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
 			uvs[2] = uvs[0] + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
 			uvs[3] = uvs[1] + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
+			cropped = 0;	//Reset cropped from previous element
 		}
 
-		//Basically enter if first element or either the flip/rotate/frame changed or was cropped
+		//Basically enter if first element or either the flip/rotate/frame changed
 			//The multi_blah's are there to prevent checks on draw params that aren't multi/won't change
-		if(i == 0 || cropped || (multi_flip && (sprite_array->flip[i] != sprite_array->flip[i - 1])) ||
+		if(i == 0 || (multi_flip && (sprite_array->flip[i] != sprite_array->flip[i - 1])) ||
 			(multi_rotate && (sprite_array->rotation[i] != sprite_array->rotation[i - 1])) ||
 			(multi_frame &&
 			((sprite_array->frame_uv[i].x != sprite_array->frame_uv[i - 1].x) ||
 			(sprite_array->frame_uv[i].y != sprite_array->frame_uv[i - 1].y)))
 			){
-			cropped = 0;
 
 			//Is flipped?
 			if(sprite_array->flip[*flip_index] & (1 << 0)){flip_val = 1;}
@@ -487,38 +486,31 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 				//For sprite mode we can't simply "rotate" the verts, instead we need to change the uv
 				if(crayon_graphics_almost_equals(rotation_under_360, 90.0, 45.0)){
 					rotation_val = 1;
-					goto verts_rotated_90;
 				}
 				else if(crayon_graphics_almost_equals(rotation_under_360, 180.0, 45.0)){
 					rotation_val = 2;
-					goto verts_rotated_180;
 				}
 				else if(crayon_graphics_almost_equals(rotation_under_360, 270.0, 45.0)){
 					rotation_val = 3;
-					goto verts_rotated_270;
 				}
 				else{rotation_val = 0;}
 			}
 			else{rotation_val = 0;}
 		}
 
-		//Imagine a "goto verts_rotated_0;" for this little bit
-			//I couldn't actually do since it just flows here naturally
-		//NOTE: we don't need to floor the camera's window vars because they're all ints
-		vert.ax = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-		vert.ay = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
-		vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
-		vert.by = vert.ay;
-		vert.cx = vert.bx;
-		vert.cy = vert.ay + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_height / (float)camera->world_height));
-		vert.dx = vert.ax;
-		vert.dy = vert.cy;
-
 		//These blocks act as the rotation
-		if(0){
-			verts_rotated_90:	;	//The semi-colon is there because a label can't be followed by a declaration (Compiler thing)
-								//So instead we trick it and give an empty statement :P
-
+		if(rotation_val == 0){
+			//NOTE: we don't need to floor the camera's window vars because they're all ints
+			vert.ax = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.ay = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
+			vert.by = vert.ay;
+			vert.cx = vert.bx;
+			vert.cy = vert.ay + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_height / (float)camera->world_height));
+			vert.dx = vert.ax;
+			vert.dy = vert.cy;
+		}
+		else if(rotation_val == 1){
 			//Both vars are uint16_t and lengths can't be negative or more than 1024 (Largest texture size for DC)
 				//Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
@@ -532,9 +524,7 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			vert.cx = vert.dx;
 			vert.cy = vert.by;
 		}
-		if(0){
-			verts_rotated_180:	;
-
+		else if(rotation_val == 2){
 			vert.cx = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
 			vert.cy = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 			vert.dx = vert.cx + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
@@ -544,9 +534,7 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			vert.bx = vert.cx;
 			vert.by = vert.ay;
 		}
-		if(0){
-			verts_rotated_270:	;
-
+		else if(rotation_val == 3){
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
 			vert.bx = floor((floor(sprite_array->coord[i].x) - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
@@ -560,7 +548,7 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 		}
 
 		//The first element if invisible now skips cropping and rendering
-		if(i == 0 && sprite_array->visible[i] == 0){cropped = 0; continue;}
+		if(i == 0 && sprite_array->visible[i] == 0){continue;}
 
 		vert.az = (float)sprite_array->layer[i];
 		vert.bz = (float)sprite_array->layer[i];

@@ -453,17 +453,7 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 	sprite_array->fade = NULL;
 	sprite_array->flip = NULL;
 
-	if(list_size == 0 && 0){
-		//Only allocate 1 unit of space to those whom *can* be multi, but aren't set to multi
-		if(!(options & (CRAY_MULTI_SCALE))){sprite_array->scale = malloc(sizeof(vec2_f_t));}
-		if(!(options & (CRAY_MULTI_COLOUR))){sprite_array->colour = malloc(sizeof(uint32_t)); sprite_array->fade = malloc(sizeof(uint8_t));}
-		if(!(options & (CRAY_MULTI_ROTATE))){sprite_array->rotation = malloc(sizeof(float));}
-		if(!(options & (CRAY_MULTI_FRAME))){sprite_array->frame_id = malloc(sizeof(uint8_t));}
-		if(!(options & (CRAY_MULTI_FLIP))){sprite_array->flip = malloc(sizeof(uint8_t));}
-	}
-	else{
-		crayon_memory_allocate_sprite_array(sprite_array, list_size, 1);
-	}
+	crayon_memory_allocate_sprite_array(sprite_array, list_size, 1);
 
 	//Since allocate function doesn't do this one
 	if(ss){
