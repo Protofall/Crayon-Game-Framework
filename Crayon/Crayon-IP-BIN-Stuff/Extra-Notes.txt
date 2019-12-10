@@ -7,5 +7,10 @@ Also note there is an open source program called makeip, but there is no option 
 
 The .prt file is a preset file for Sizious' program to help speed up the process.
 
+------------------------
+
 MrNeo says the logo should be located "32 bytes into the 1st bootstrap"
 
+New tools for creating an IP.BIN without the Windows GUI:
+- https://gitlab.com/BBHoodsta/makeip OR https://github.com/sizious/ipbin-creator
+- https://github.com/sizious/logotools

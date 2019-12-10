@@ -125,6 +125,11 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp);
 //Frees a draw array
 extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array);
 
+//Quicksort implementation from: https://www.geeksforgeeks.org/quick-sort/
+extern void swap(uint16_t* a, uint16_t* b);
+extern int partition(uint16_t * arr, int low, int high);
+extern void quickSort(uint16_t * arr, int low, int high);	//Call with low = 0 and high = Index of last element
+
 
 //------------------Mounting romdisks------------------//
 
