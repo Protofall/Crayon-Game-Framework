@@ -887,7 +887,7 @@ extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprit
 	return;
 }
 
-extern void swap(uint16_t* a, uint16_t* b){
+extern void __crayon_memory_swap(uint16_t* a, uint16_t* b){
 	uint16_t t = *a;
 	*a = *b;
 	*b = t;
@@ -898,7 +898,7 @@ extern void swap(uint16_t* a, uint16_t* b){
 // array, and places all smaller (smaller than pivot) 
 // to left of pivot and all greater elements to right 
 // of pivot
-extern int partition(uint16_t * arr, int low, int high){
+extern int __crayon_memory_partition(uint16_t * arr, int low, int high){
 	int pivot = arr[high];	//Pivot
 	int i = (low - 1);	//Index of smaller element
 	int j;
@@ -907,10 +907,10 @@ extern int partition(uint16_t * arr, int low, int high){
 		//If current element is smaller than the pivot
 		if(arr[j] < pivot){
 			i++;	//Increment index of smaller element
-			swap(&arr[i], &arr[j]);
+			__crayon_memory_swap(&arr[i], &arr[j]);
 		} 
 	} 
-	swap(&arr[i + 1], &arr[high]);
+	__crayon_memory_swap(&arr[i + 1], &arr[high]);
 	return (i + 1);
 } 
   
@@ -918,15 +918,15 @@ extern int partition(uint16_t * arr, int low, int high){
 // arr[] --> Array to be sorted,
 // low  --> Starting index,
 // high  --> Ending index
-extern void quickSort(uint16_t * arr, int low, int high){
+extern void crayon_memory_quickSort(uint16_t * arr, int low, int high){
 	if(low < high){
 		//pi is partitioning index, arr[p] is now at right place
-		int pi = partition(arr, low, high);
+		int pi = __crayon_memory_partition(arr, low, high);
 
 		//Separately sort elements before
 		//partition and after partition
-		quickSort(arr, low, pi - 1);
-		quickSort(arr, pi + 1, high);
+		crayon_memory_quickSort(arr, low, pi - 1);
+		crayon_memory_quickSort(arr, pi + 1, high);
 	}
 }
 
