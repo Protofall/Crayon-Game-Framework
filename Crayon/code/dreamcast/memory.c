@@ -474,6 +474,84 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 	return;
 }
 
+extern void crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, crayon_sprite_array_t *src){
+	dest->options = src->options;
+	dest->filter = src->filter;
+
+	if(src->spritesheet != NULL){
+		dest->spritesheet = src->spritesheet;
+		dest->animation = src->animation;
+		dest->palette = src->palette;
+		dest->frames_used = src->frames_used;
+	}
+	else{
+		dest->spritesheet = NULL;	//For safety sake
+		dest->palette = NULL;
+	}
+
+	dest->coord = NULL;
+	dest->layer = NULL;
+	dest->scale = NULL;
+	dest->colour = NULL;
+	dest->rotation = NULL;
+	dest->visible = NULL;
+	dest->frame_id = NULL;
+	dest->frame_uv = NULL;
+	dest->fade = NULL;
+	dest->flip = NULL;
+
+	//Allocate space for the arrays, don't bother setting defaults
+	crayon_memory_allocate_sprite_array(dest, src->list_size, 0);
+
+	//Since allocate function doesn't do this one
+	if(dest->spritesheet){
+		dest->frame_uv = (vec2_u16_t *) malloc(dest->frames_used * sizeof(vec2_u16_t));
+	}
+
+	//Now copy over the actual data
+	uint16_t i;
+	for(i = 0; i < dest->list_size; i++){
+		dest->coord[i].x = src->coord[i].x;
+		dest->coord[i].y = src->coord[i].y;
+		dest->layer[i] = src->layer[i];
+		dest->visible[i] = src->visible[i];
+
+		if(i == 0 || (dest->options & CRAY_MULTI_SCALE)){
+			dest->scale[i].x = src->scale[i].x;
+			dest->scale[i].y = src->scale[i].y;
+		}
+
+		if(i == 0 || (dest->options & CRAY_MULTI_FLIP)){
+			dest->flip[i] = src->flip[i];
+		}
+
+		if(i == 0 || (dest->options & CRAY_MULTI_FRAME)){
+			dest->frame_id[i] = src->frame_id[i];
+		}
+
+		if(i == 0 || (dest->options & CRAY_MULTI_ROTATE)){
+			dest->rotation[i] = src->rotation[i];
+		}
+
+		if(i == 0 || (dest->options & CRAY_MULTI_COLOUR)){
+			dest->colour[i] = src->colour[i];
+			dest->fade[i] = src->fade[i];
+		}
+	}
+	for(i = 0; i < dest->frames_used; i++){
+		dest->frame_uv[i].x = src->frame_uv[i].x;
+		dest->frame_uv[i].y = src->frame_uv[i].y;
+	}
+
+	//And copy over the sprite_array (For now I'll add all elements if the user has the setting enabled)
+	dest->head = NULL;
+	if(dest->options & CRAY_REF_LIST){
+		crayon_memory_add_sprite_array_refs(dest, 0, dest->list_size - 1);
+	}
+
+	return;
+}
+
 extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_coord, vec2_u16_t world_dim,
 	vec2_u16_t window_coord, vec2_u16_t window_dim, float world_movement_factor){
 
@@ -914,19 +992,19 @@ extern int __crayon_memory_partition(uint16_t * arr, int low, int high){
 	return (i + 1);
 } 
   
-// The main function that implements QuickSort 
+// The main function that implements Quick Sort 
 // arr[] --> Array to be sorted,
 // low  --> Starting index,
 // high  --> Ending index
-extern void crayon_memory_quickSort(uint16_t * arr, int low, int high){
+extern void crayon_memory_quick_sort(uint16_t * arr, int low, int high){
 	if(low < high){
 		//pi is partitioning index, arr[p] is now at right place
 		int pi = __crayon_memory_partition(arr, low, high);
 
 		//Separately sort elements before
 		//partition and after partition
-		crayon_memory_quickSort(arr, low, pi - 1);
-		crayon_memory_quickSort(arr, pi + 1, high);
+		crayon_memory_quick_sort(arr, low, pi - 1);
+		crayon_memory_quick_sort(arr, pi + 1, high);
 	}
 }
 
