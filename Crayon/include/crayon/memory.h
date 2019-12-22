@@ -64,6 +64,7 @@ extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array,
 	uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
 	uint8_t filter, uint8_t set_defaults);
 
+//Note, we assume dest isn't initialised
 extern void crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, crayon_sprite_array_t *src);
 
 extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_coord, vec2_u16_t world_dim,

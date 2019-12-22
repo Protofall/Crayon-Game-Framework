@@ -500,8 +500,8 @@ extern void crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, crayon
 	dest->fade = NULL;
 	dest->flip = NULL;
 
-	//Allocate space for the arrays, don't bother setting defaults
-	crayon_memory_allocate_sprite_array(dest, src->list_size, 0);
+	//Allocate space for the arrays
+	crayon_memory_allocate_sprite_array(dest, src->list_size, 1);
 
 	//Since allocate function doesn't do this one
 	if(dest->spritesheet){
