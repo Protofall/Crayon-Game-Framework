@@ -109,6 +109,23 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 			textureformat |= ((sprite_array->palette->palette_id) << 25);	//Update the later to use KOS' macros
 	}
 
+	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
+	// 									//---- 1111 (Crop on all edges)
+
+	// //DELETE THIS LATER. A basic optimisation for now
+	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
+	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
+	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
+	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
+
+	//Used for cropping
+	// uint8_t bounds = 0;
+	// uint8_t cropped = 0;
+
+	//This var exist so we don't need to worry about constantly floor-ing the camera's world points
+		//The sprite points are also floor-ed before calculations are done
+	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x),floor(camera->world_y)};
+
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_poly_cxt_txr(&cxt, poly_list_mode, textureformat,
@@ -222,12 +239,12 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 
 		if(skip){skip = 0; continue;}
 
-		vert[0].x = floor(sprite_array->coord[i].x);
-		vert[0].y = floor(sprite_array->coord[i].y);
-		vert[1].x = vert[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
+		vert[0].x = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+		vert[0].y = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+		vert[1].x = vert[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
 		vert[1].y = vert[0].y;
 		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
+		vert[2].y = vert[0].y + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_height / (float)camera->world_height));
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
 
@@ -263,6 +280,23 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 
 extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode){
+
+	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
+	// 									//---- 1111 (Crop on all edges)
+
+	// //DELETE THIS LATER. A basic optimisation for now
+	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
+	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
+	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
+	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
+
+	//Used for cropping
+	// uint8_t bounds = 0;
+	// uint8_t cropped = 0;
+
+	//This var exist so we don't need to worry about constantly floor-ing the camera's world points
+		//The sprite points are also floor-ed before calculations are done
+	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x),floor(camera->world_y)};
 
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
@@ -326,12 +360,12 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 
 		vert[0].z = sprite_array->layer[i];
 
-		vert[0].x = floor(sprite_array->coord[i].x);
-		vert[0].y = floor(sprite_array->coord[i].y);
-		vert[1].x = vert[0].x + floor(sprite_array->scale[multi_dim * i].x);	//If using one dim, multiple dims reduces it to the first value
+		vert[0].x = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+		vert[0].y = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+		vert[1].x = vert[0].x + floor(sprite_array->scale[i * multi_dim].x * (camera->window_width / (float)camera->world_width));
 		vert[1].y = vert[0].y;
 		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + floor(sprite_array->scale[multi_dim * i].y);
+		vert[2].y = vert[0].y + floor(sprite_array->scale[i * multi_dim].y * (camera->window_height / (float)camera->world_height));
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
 

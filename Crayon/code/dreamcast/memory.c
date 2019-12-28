@@ -56,10 +56,10 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 
 	if(dtex_result){ERROR(dtex_result);}
 
-	uint8_t texture_format = (((1 << 3) - 1) & (ss->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
+	int16_t texture_format = (((1 << 3) - 1) & (ss->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
 
 	//Invalid format
-	if(texture_format < 0 && texture_format > 6){
+	if(texture_format < 0 || texture_format > 6){
 		ERROR(6);
 	}
 
@@ -166,10 +166,10 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	uint8_t dtex_result = crayon_memory_load_dtex(&fp->texture, &fp->texture_width, &fp->texture_height, &fp->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	uint8_t texture_format = (((1 << 3) - 1) & (fp->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
+	int16_t texture_format = (((1 << 3) - 1) & (fp->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
 
 	//Invalid format
-	if(texture_format < 0 && texture_format > 6){
+	if(texture_format < 0 || texture_format > 6){
 		ERROR(6);
 	}
 
@@ -304,10 +304,10 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	uint8_t dtex_result = crayon_memory_load_dtex(&fm->texture, &fm->texture_width, &fm->texture_height, &fm->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	uint8_t texture_format = (((1 << 3) - 1) & (fm->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
+	int16_t texture_format = (((1 << 3) - 1) & (fm->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
 
 	//Invalid format
-	if(texture_format < 0 && texture_format > 6){
+	if(texture_format < 0 || texture_format > 6){
 		ERROR(6);
 	}
 
