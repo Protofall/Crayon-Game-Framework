@@ -1369,6 +1369,83 @@ extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t 
 //---------------------------------------------------------------------//
 
 
+extern void crayon_graphics_transistion_init(crayon_transition_t * effect, crayon_sprite_array_t * sprite_array,
+	void (*f)(crayon_transition_t *, void *), uint16_t duration){
+
+	effect->f = f;
+
+	effect->state = CRAY_FADE_STATE_NONE;
+	effect->duration = duration;
+	effect->state_duration = 0;
+
+	effect->draw = sprite_array;
+	return;
+}
+
+extern void crayon_graphics_transistion_skip_to_state(crayon_transition_t * effect, void * params, uint8_t state){
+	if(state != CRAY_FADE_STATE_IN && state != CRAY_FADE_STATE_OUT){return;}
+	effect->state = state;
+	//This will also call the function with a value to visually set it to the state...maybe?
+	if(state == CRAY_FADE_STATE_IN){
+		effect->state_duration = 0;
+	}
+	else{	//Fade out
+		effect->state_duration = effect->duration;
+	}
+
+	(*effect->f)(effect, params);
+	effect->state = CRAY_FADE_STATE_NONE;
+	return;
+}
+
+extern void crayon_graphics_transistion_change_state(crayon_transition_t * effect, uint8_t state){
+	if(state != CRAY_FADE_STATE_IN && state != CRAY_FADE_STATE_OUT){return;}
+	effect->state = state;
+
+	if(state == CRAY_FADE_STATE_IN){
+		effect->state_duration = effect->duration;
+	}
+	else{	//Fade out
+		effect->state_duration = 0;
+	}
+
+	return;
+}
+
+extern void crayon_graphics_transistion_apply(crayon_transition_t * effect, void * params){
+	if(effect->state != CRAY_FADE_STATE_IN && effect->state != CRAY_FADE_STATE_OUT){return;}
+
+	if(effect->state == CRAY_FADE_STATE_IN){
+		effect->state_duration--;
+	}
+	else{
+		effect->state_duration++;
+	}
+
+	(*effect->f)(effect, params);
+
+	//The transition seems to have finished
+	if(crayon_graphics_transistion_resting_state(effect) != CRAY_FADE_NOT_RESTING){
+		effect->state = CRAY_FADE_STATE_NONE;
+	}
+
+	return;
+}
+
+extern uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t * effect){
+	if((effect->state == CRAY_FADE_STATE_OUT && effect->state_duration == effect->duration)){
+		return CRAY_FADE_RESTING_STATE_OUT;
+	}
+	else if(effect->state == CRAY_FADE_STATE_IN && effect->state_duration == 0){
+		return CRAY_FADE_RESTING_STATE_IN;
+	}
+	return CRAY_FADE_NOT_RESTING;
+}
+
+
+//---------------------------------------------------------------------//
+
+
 extern vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, float radians){
 	float sin_theta = sin(radians);
 	float cos_theta = cos(radians);

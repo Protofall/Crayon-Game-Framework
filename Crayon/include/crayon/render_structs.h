@@ -92,4 +92,27 @@ typedef struct crayon_sprite_array{
 	crayon_sprite_array_reference_t * head;
 } crayon_sprite_array_t;
 
+//Fade in means we're going from full effect, back to the scene (Entering a menu)
+//Fade out is reverse (Going back a menu)
+#define CRAY_FADE_STATE_NONE 0
+#define CRAY_FADE_STATE_IN 1
+#define CRAY_FADE_STATE_OUT 2
+
+//Used by crayon_graphics_transistion_resting_state() To tell if we've finished a
+//transition or not and where we are
+#define CRAY_FADE_NOT_RESTING 0
+#define CRAY_FADE_RESTING_STATE_IN 1
+#define CRAY_FADE_RESTING_STATE_OUT 2
+
+typedef struct crayon_transition{
+	uint8_t state;	//The state we are going to 0 for not fading, 1 for fade-in and 2 for fade-out
+	uint16_t duration;	//The time in frames it takes to complete the effect
+	uint16_t state_duration;	//The closer to 0, the closer we are to faded out
+								//The closer to "duration", the closer we are to faded in
+								//TL;DR 0 = finished faded in and "duration" = finished fadded out
+
+	crayon_sprite_array_t * draw;	//If you want you can pass a pointer to an array of them and use them in your function
+	void (*f)(struct crayon_transition * effect, void *);	//The function that applies the effect that the user requests
+} crayon_transition_t;
+
 #endif

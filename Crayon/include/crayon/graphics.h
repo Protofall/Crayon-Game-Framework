@@ -106,6 +106,33 @@ extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t 
 extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char * string);
 
 
+//------------------Transition Effects------------------//
+
+
+extern void crayon_graphics_transistion_init(crayon_transition_t * effect, crayon_sprite_array_t * sprite_array,
+	void (*f)(crayon_transition_t *, void *), uint16_t duration);
+		//Thats how you pass in a function. But unsure if that'll work if I want to add it as param for the struct
+		//Note: We assume the sprite_array is already initialised
+
+//This will skip to the end of a transition
+extern void crayon_graphics_transistion_skip_to_state(crayon_transition_t * effect, void * params, uint8_t state);
+
+//You'll need to call apply to see the change
+extern void crayon_graphics_transistion_change_state(crayon_transition_t * effect, uint8_t state);
+
+extern void crayon_graphics_transistion_apply(crayon_transition_t * effect, void * params);	//This will bring it close to either fade-in or fade-out
+
+//Returns NOT_RESTING if its not resting, RESTING_STATE_IN if its finished fading in and RESTING_STATE_OUT if its finished fading out
+extern uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t * effect);
+
+//This is just a call to the regular draw function
+// inline uint8_t crayon_graphics_draw_transistion(const crayon_transition_t * effect, const crayon_viewport_t * camera,
+// 	uint8_t poly_list_mode, uint8_t draw_mode){
+// 	return crayon_graphics_draw_sprites(effect->draw, camera, poly_list_mode, draw_mode);
+// }
+
+
+
 //------------------Misc. Internal Functions------------------//
 
 //Returns the point "center_x/y" rotated "radian" degrees around "orbit_x/y"
