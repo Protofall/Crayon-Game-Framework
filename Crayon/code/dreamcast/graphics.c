@@ -1370,13 +1370,15 @@ extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t 
 
 
 extern void crayon_graphics_transistion_init(crayon_transition_t * effect, crayon_sprite_array_t * sprite_array,
-	void (*f)(crayon_transition_t *, void *), uint16_t duration){
+	void (*f)(crayon_transition_t *, void *), uint32_t duration_in, uint32_t duration_out){
 
 	effect->f = f;
 
 	effect->state = CRAY_FADE_STATE_NONE;
-	effect->duration = duration;
-	effect->state_duration = 0;
+	effect->duration_fade_in = duration_in;
+	effect->duration_fade_out = duration_out;
+	effect->curr_duration = 0;
+	effect->prev_duration = 0;
 
 	effect->draw = sprite_array;
 	return;
@@ -1385,13 +1387,10 @@ extern void crayon_graphics_transistion_init(crayon_transition_t * effect, crayo
 extern void crayon_graphics_transistion_skip_to_state(crayon_transition_t * effect, void * params, uint8_t state){
 	if(state != CRAY_FADE_STATE_IN && state != CRAY_FADE_STATE_OUT){return;}
 	effect->state = state;
-	//This will also call the function with a value to visually set it to the state...maybe?
-	if(state == CRAY_FADE_STATE_IN){
-		effect->state_duration = 0;
-	}
-	else{	//Fade out
-		effect->state_duration = effect->duration;
-	}
+
+	//We set the duration to the end of the state we gave it
+	effect->curr_duration = (state == CRAY_FADE_STATE_IN) ? effect->duration_fade_in : effect->duration_fade_out;
+	effect->prev_duration = effect->curr_duration;
 
 	(*effect->f)(effect, params);
 	effect->state = CRAY_FADE_STATE_NONE;
@@ -1402,12 +1401,7 @@ extern void crayon_graphics_transistion_change_state(crayon_transition_t * effec
 	if(state != CRAY_FADE_STATE_IN && state != CRAY_FADE_STATE_OUT){return;}
 	effect->state = state;
 
-	if(state == CRAY_FADE_STATE_IN){
-		effect->state_duration = effect->duration;
-	}
-	else{	//Fade out
-		effect->state_duration = 0;
-	}
+	effect->curr_duration = 0;
 
 	return;
 }
@@ -1415,13 +1409,8 @@ extern void crayon_graphics_transistion_change_state(crayon_transition_t * effec
 extern void crayon_graphics_transistion_apply(crayon_transition_t * effect, void * params){
 	if(effect->state != CRAY_FADE_STATE_IN && effect->state != CRAY_FADE_STATE_OUT){return;}
 
-	if(effect->state == CRAY_FADE_STATE_IN){
-		effect->state_duration--;
-	}
-	else{
-		effect->state_duration++;
-	}
-
+	effect->prev_duration = effect->curr_duration;
+	effect->curr_duration++;
 	(*effect->f)(effect, params);
 
 	//The transition seems to have finished
@@ -1432,11 +1421,20 @@ extern void crayon_graphics_transistion_apply(crayon_transition_t * effect, void
 	return;
 }
 
+extern double crayon_graphics_transition_get_state_percentage(crayon_transition_t * effect){
+	if(effect->state == CRAY_FADE_STATE_IN){
+		return (effect->duration_fade_in - effect->curr_duration) / (double)effect->duration_fade_in;
+	}
+
+	//Fade out
+	return effect->curr_duration / (double)effect->duration_fade_out;
+}
+
 extern uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t * effect){
-	if((effect->state == CRAY_FADE_STATE_OUT && effect->state_duration == effect->duration)){
+	if((effect->state == CRAY_FADE_STATE_OUT && effect->curr_duration == effect->duration_fade_out)){
 		return CRAY_FADE_RESTING_STATE_OUT;
 	}
-	else if(effect->state == CRAY_FADE_STATE_IN && effect->state_duration == 0){
+	else if(effect->state == CRAY_FADE_STATE_IN && effect->curr_duration == effect->duration_fade_in){
 		return CRAY_FADE_RESTING_STATE_IN;
 	}
 	return CRAY_FADE_NOT_RESTING;

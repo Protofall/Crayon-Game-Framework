@@ -106,10 +106,11 @@ typedef struct crayon_sprite_array{
 
 typedef struct crayon_transition{
 	uint8_t state;	//The state we are going to 0 for not fading, 1 for fade-in and 2 for fade-out
-	uint16_t duration;	//The time in frames it takes to complete the effect
-	uint16_t state_duration;	//The closer to 0, the closer we are to faded out
-								//The closer to "duration", the closer we are to faded in
-								//TL;DR 0 = finished faded in and "duration" = finished fadded out
+	uint32_t duration_fade_in;	//The time in frames it takes to complete the effect fading in
+	uint32_t duration_fade_out;	//The time it takes to fade out
+	uint32_t curr_duration;	//It will start at zero and go up to either "duration_fade_in" or
+							//"duration_fade_out" depending on if its fading in or out
+	uint32_t prev_duration;	//Like above, but records the previous frame. Might be useful
 
 	crayon_sprite_array_t * draw;	//If you want you can pass a pointer to an array of them and use them in your function
 	void (*f)(struct crayon_transition * effect, void *);	//The function that applies the effect that the user requests

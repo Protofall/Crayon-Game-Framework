@@ -263,14 +263,14 @@ void crayon_graphics_init_display(){
 }
 
 void modify_fade_effect(crayon_transition_t * effect, void * params){
-	uint8_t fade = (effect->state_duration / (float)effect->duration) * 255;
-	effect->draw->colour[0] = crayon_assist_extract_bits(effect->draw->colour[0], 24, 0) + (fade << 24);
+	effect->draw->colour[0] = crayon_assist_extract_bits(effect->draw->colour[0], 24, 0) +
+		((uint8_t)(crayon_graphics_transition_get_state_percentage(effect) * 255) << 24);
 	return;
 }
 
 //To do the effect I'll just modify how many boxes are visible
 void modify_boxy_effect(crayon_transition_t * effect, void * params){
-	uint16_t num_visible = (effect->state_duration / (float)effect->duration) * effect->draw->list_size;
+	uint16_t num_visible = crayon_graphics_transition_get_state_percentage(effect) * effect->draw->list_size;
 	uint16_t i;
 	for(i = 0; i < effect->draw->list_size; i++){
 		effect->draw->visible[i] = (i < num_visible) ? 1 : 0;
@@ -375,8 +375,10 @@ int main(){
 	boxy_draw.colour[0] = 0xFF000000;
 	boxy_draw.rotation[0] = 0;
 
-	crayon_graphics_transistion_init(&effect[0], &fade_draw, modify_fade_effect, 5 * g_htz);
-	crayon_graphics_transistion_init(&effect[1], &boxy_draw, modify_boxy_effect, 2 * g_htz);
+	crayon_graphics_transistion_init(&effect[0], &fade_draw, modify_fade_effect, 5 * g_htz, 1 * g_htz);	//5 seconds to fade in, 1 to fade out
+	crayon_graphics_transistion_init(&effect[1], &boxy_draw, modify_boxy_effect, 2 * g_htz, 2 * g_htz);
+
+	//Fade out and fade in are reversed
 
 	//We want them both to start off as faded out (This is redundant due to below, but anyways)
 	crayon_graphics_transistion_skip_to_state(&effect[0], NULL, CRAY_FADE_STATE_OUT);
@@ -469,9 +471,10 @@ int main(){
 
 			crayon_graphics_draw_sprites(&scene_draw, NULL, PVR_LIST_OP_POLY, CRAY_DRAW_ENHANCED);
 
-			// sprintf(debug, "State: %d/ Progress %d / %d", effect[0].state, effect[0].state_duration, effect[0].duration);
+			sprintf(debug, "State: %d/ Progress %d, %d %d", effect[curr_effect].state, effect[curr_effect].curr_duration,
+				effect[curr_effect].duration_fade_in, effect[curr_effect].duration_fade_out);
 			// sprintf(debug, "Colour: 0x%x", fade_draw.colour[0]);
-			sprintf(debug, "Press A to fade in, B to fade out and X to swap effects");
+			// sprintf(debug, "Press A to fade in, B to fade out and X to swap effects");
 			crayon_graphics_draw_text_mono(debug, &BIOS_font, PVR_LIST_OP_POLY, 10, 10, 255, 1, 1, BIOS_P.palette_id);
 
 		pvr_list_finish();
