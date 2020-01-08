@@ -144,8 +144,9 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 	uint8_t multi_scale = !!(sprite_array->options & CRAY_MULTI_SCALE);
 	uint16_t zero = 0;
 	float angle = 0;
-	float mid_x = 0;
-	float mid_y = 0;
+	vec2_f_t mid = (vec2_f_t){0,0};
+	vec2_f_t scales = (vec2_f_t){camera->window_width / (float)camera->world_width,
+		camera->window_height / (float)camera->world_height};
 	uint8_t skip = 0;
 
 	uint16_t i, j;	//Indexes
@@ -239,31 +240,40 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 
 		if(skip){skip = 0; continue;}
 
-		vert[0].x = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-		vert[0].y = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
-		vert[1].x = vert[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
+		vert[0].z = sprite_array->layer[i];
+
+		vert[0].x = floor(sprite_array->coord[i].x) - world_coord.x;
+		vert[0].y = floor(sprite_array->coord[i].y) - world_coord.y;
+		vert[1].x = vert[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
 		vert[1].y = vert[0].y;
 		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_height / (float)camera->world_height));
+		vert[2].y = vert[0].y + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
-
-		vert[0].z = (float)sprite_array->layer[i];
 
 		//If we don't want to do rotations (Rotation == 0.0), then skip it
 		if(sprite_array->rotation[*rotation_index] != 0.0f){
 
 			//Gets the true midpoint
-			mid_x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
-			mid_y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
+			mid.x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
+			mid.y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
 
 			//Update the vert x and y positions
 			for(j = 0; j < 4; j++){
-				rotated_values = crayon_graphics_rotate_point((vec2_f_t){mid_x, mid_y}, (vec2_f_t){vert[j].x, vert[j].y}, angle);
+				rotated_values = crayon_graphics_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
 				vert[j].x = rotated_values.x;
 				vert[j].y = rotated_values.y;
 			}
 		}
+
+		//Apply the viewport scaling as well as the window offset
+		for(j = 0; j < 4; j++){
+			vert[j].x = floor(vert[j].x * scales.x) + camera->window_x;
+			vert[j].y = floor(vert[j].y * scales.y) + camera->window_y;
+		}
+
+		//Do OOB and culling calculations here
+		;
 
 		//Apply these to all verts
 		for(j = 1; j < 4; j++){
@@ -312,8 +322,9 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 	uint8_t multi_dim = !!(sprite_array->options & CRAY_MULTI_DIM);
 	uint16_t zero = 0;
 	float angle = 0;
-	float mid_x = 0;
-	float mid_y = 0;
+	vec2_f_t mid = (vec2_f_t){0,0};
+	vec2_f_t scales = (vec2_f_t){camera->window_width / (float)camera->world_width,
+		camera->window_height / (float)camera->world_height};
 	uint8_t skip = 0;
 
 	uint16_t i, j;
@@ -347,7 +358,7 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 
 		//Update rotation part if needed
 		if(*rotation_index == i){
-			angle = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
+			angle = fmod(sprite_array->rotation[i], 360.0);	//If angle is more than 360 degrees, this fixes that
 			if(angle < 0){angle += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
 			angle = (angle * M_PI) / 180.0f;	//Convert from degrees to ratians
 		}
@@ -360,28 +371,37 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 
 		vert[0].z = sprite_array->layer[i];
 
-		vert[0].x = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-		vert[0].y = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
-		vert[1].x = vert[0].x + floor(sprite_array->scale[i * multi_dim].x * (camera->window_width / (float)camera->world_width));
+		vert[0].x = floor(sprite_array->coord[i].x) - world_coord.x;
+		vert[0].y = floor(sprite_array->coord[i].y) - world_coord.y;
+		vert[1].x = vert[0].x + floor(sprite_array->scale[i * multi_dim].x);
 		vert[1].y = vert[0].y;
 		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + floor(sprite_array->scale[i * multi_dim].y * (camera->window_height / (float)camera->world_height));
+		vert[2].y = vert[0].y + floor(sprite_array->scale[i * multi_dim].y);
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
 
 		//Rotate the poly
 		if(sprite_array->rotation[*rotation_index] != 0.0f){
-			//Gets the midpoint
-			mid_x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
-			mid_y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
+			// //Gets the midpoint
+			mid.x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
+			mid.y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
 
 			//Rotate the verts around the midpoint
 			for(j = 0; j < 4; j++){
-				rotated_values = crayon_graphics_rotate_point((vec2_f_t){mid_x, mid_y}, (vec2_f_t){vert[j].x, vert[j].y}, angle);
+				rotated_values = crayon_graphics_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
 				vert[j].x = rotated_values.x;
 				vert[j].y = rotated_values.y;
 			}
 		}
+
+		//Apply the viewport scaling as well as the window offset
+		for(j = 0; j < 4; j++){
+			vert[j].x = floor(vert[j].x * scales.x) + camera->window_x;
+			vert[j].y = floor(vert[j].y * scales.y) + camera->window_y;
+		}
+
+		//Do OOB and culling calculations here
+		;
 
 		for(j = 1; j < 4; j++){
 			vert[j].z = vert[0].z;
@@ -390,6 +410,7 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 
 		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
 	}
+
 	return 0;
 }
 

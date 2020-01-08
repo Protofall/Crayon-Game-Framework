@@ -279,6 +279,7 @@ void set_indexes(uint16_t * indexes){
 }
 
 void modify_fade_effect(crayon_transition_t * effect, void * params){
+	if(params != NULL){return;}	//This only exists to make the compiler shut up
 	effect->draw->colour[0] = crayon_assist_extract_bits(effect->draw->colour[0], 24, 0) +
 		((uint8_t)(crayon_graphics_transition_get_curr_percentage(effect) * 255) << 24);
 	return;
@@ -286,6 +287,7 @@ void modify_fade_effect(crayon_transition_t * effect, void * params){
 
 //To do the effect I'll just modify how many boxes are visible
 void modify_boxy_effect(crayon_transition_t * effect, void * params){
+	if(params != NULL){return;}	//This only exists to make the compiler shut up
 	uint16_t num_visible = crayon_graphics_transition_get_curr_percentage(effect) * effect->draw->list_size;
 	uint16_t i;
 	for(i = 0; i < effect->draw->list_size; i++){
@@ -296,10 +298,12 @@ void modify_boxy_effect(crayon_transition_t * effect, void * params){
 
 //These two get modified together
 void modify_flash_effect(crayon_transition_t * effect, void * params){
+	if(params != NULL || effect == NULL){return;}	//This only exists to make the compiler shut up
 	return;
 }
 
 void modify_flower_effect(crayon_transition_t * effect, void * params){
+	if(params != NULL || effect == NULL){return;}	//This only exists to make the compiler shut up
 	return;
 }
 
@@ -500,7 +504,7 @@ int main(){
 		//Apply the effect
 		crayon_graphics_transistion_apply(&effect[curr_effect], NULL);
 
-		if(1 || curr_effect == 2){
+		if(curr_effect == 2){
 			Camera.window_y = (height - widescreen_height) / 2;
 			Camera.window_height = widescreen_height;
 		}
