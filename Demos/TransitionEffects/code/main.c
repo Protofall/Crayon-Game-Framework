@@ -262,19 +262,44 @@ void crayon_graphics_init_display(){
 	return;
 }
 
+void set_indexes(uint16_t * indexes){
+	#if CRAYON_BOOT_MODE == 0
+		FILE * fp = fopen("cd/boxy_indexes.bin", "rb");
+	#elif CRAYON_BOOT_MODE == 1
+		FILE * fp = fopen("sd/boxy_indexes.bin", "rb");
+	#elif CRAYON_BOOT_MODE == 2
+		FILE * fp = fopen("pc/boxy_indexes.bin", "rb");
+	#else
+		#error "Invalid CRAYON_BOOT_MODE"
+	#endif
+
+	fread(indexes, sizeof(uint16_t), 300, fp);
+	fclose(fp);
+	return;
+}
+
 void modify_fade_effect(crayon_transition_t * effect, void * params){
 	effect->draw->colour[0] = crayon_assist_extract_bits(effect->draw->colour[0], 24, 0) +
-		((uint8_t)(crayon_graphics_transition_get_state_percentage(effect) * 255) << 24);
+		((uint8_t)(crayon_graphics_transition_get_curr_percentage(effect) * 255) << 24);
 	return;
 }
 
 //To do the effect I'll just modify how many boxes are visible
 void modify_boxy_effect(crayon_transition_t * effect, void * params){
-	uint16_t num_visible = crayon_graphics_transition_get_state_percentage(effect) * effect->draw->list_size;
+	uint16_t num_visible = crayon_graphics_transition_get_curr_percentage(effect) * effect->draw->list_size;
 	uint16_t i;
 	for(i = 0; i < effect->draw->list_size; i++){
 		effect->draw->visible[i] = (i < num_visible) ? 1 : 0;
 	}
+	return;
+}
+
+//These two get modified together
+void modify_flash_effect(crayon_transition_t * effect, void * params){
+	return;
+}
+
+void modify_flower_effect(crayon_transition_t * effect, void * params){
 	return;
 }
 
@@ -356,19 +381,22 @@ int main(){
 	fade_draw.colour[0] = 0xFFFF0000;
 	fade_draw.rotation[0] = 0;
 	fade_draw.visible[0] = 1;
-	fade_draw.layer[0] = 255;
+	fade_draw.layer[0] = 250;
 
-	vec2_u16_t num_boxes_dims = (vec2_u16_t){width / 32, height / 32};
+	vec2_u16_t num_boxes_dims = (vec2_u16_t){width / 32, height / 32};	//20 and 15
 	uint16_t num_boxes = num_boxes_dims.x * num_boxes_dims.y;
+	uint16_t * indexes = malloc(sizeof(uint16_t) * 300);
+	set_indexes(indexes);
 	crayon_memory_init_sprite_array(&boxy_draw, NULL, 0, NULL, num_boxes, 0, 0, PVR_FILTER_NONE, 0);
 	for(j = 0; j < height / 32; j++){
 		for(i = 0; i < width / 32; i++){
-			boxy_draw.coord[i + (j * num_boxes_dims.x)].x = (i * 32);
-			boxy_draw.coord[i + (j * num_boxes_dims.x)].y = (j * 32);
-			boxy_draw.visible[i + (j * num_boxes_dims.x)] = 1;
-			boxy_draw.layer[i + (j * num_boxes_dims.x)] = 250;
+			boxy_draw.coord[indexes[i + (j * num_boxes_dims.x)]].x = (i * 32);
+			boxy_draw.coord[indexes[i + (j * num_boxes_dims.x)]].y = (j * 32);
+			boxy_draw.visible[indexes[i + (j * num_boxes_dims.x)]] = 1;
+			boxy_draw.layer[indexes[i + (j * num_boxes_dims.x)]] = 250;
 		}
 	}
+	free(indexes);
 	boxy_draw.scale[0].x = 32;
 	boxy_draw.scale[0].y = 32;
 	boxy_draw.fade[0] = 250;
@@ -386,6 +414,29 @@ int main(){
 
 	//Start the transition
 	crayon_graphics_transistion_change_state(&effect[curr_effect], CRAY_FADE_STATE_IN);
+
+	//For the 3rd effect
+	crayon_sprite_array_t letter_box_draw;
+	uint16_t widescreen_height = (2 * 180);
+	crayon_memory_init_sprite_array(&letter_box_draw, NULL, 0, NULL, 2, 0, 0, PVR_FILTER_NONE, 0);
+	letter_box_draw.scale[0].x = width;
+	letter_box_draw.scale[0].y = (height - widescreen_height) / 2;
+	letter_box_draw.colour[0] = 0xFF000000;
+	letter_box_draw.rotation[0] = 0;
+
+	letter_box_draw.coord[0].x = 0;
+	letter_box_draw.coord[0].y = 0;
+	letter_box_draw.visible[0] = 1;
+	letter_box_draw.layer[0] = 254;
+	letter_box_draw.coord[1].x = 0;
+	letter_box_draw.coord[1].y = letter_box_draw.scale[0].y + widescreen_height;
+	letter_box_draw.visible[1] = 1;
+	letter_box_draw.layer[1] = 254;
+
+	//The camera
+	crayon_viewport_t Camera;
+	crayon_memory_init_camera(&Camera, (vec2_f_t){0, 0}, (vec2_u16_t){width, height},
+		(vec2_u16_t){0, 0}, (vec2_u16_t){width, height}, 1);
 
 	//load in assets here
 	crayon_font_mono_t BIOS_font;
@@ -405,9 +456,6 @@ int main(){
 	crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 0, "/Setup/BIOS.dtex");
 
 	fs_romdisk_unmount("/Setup");
-
-
-
 
 	char debug[100];
 
@@ -452,6 +500,15 @@ int main(){
 		//Apply the effect
 		crayon_graphics_transistion_apply(&effect[curr_effect], NULL);
 
+		if(1 || curr_effect == 2){
+			Camera.window_y = (height - widescreen_height) / 2;
+			Camera.window_height = widescreen_height;
+		}
+		else{
+			Camera.window_y = 0;
+			Camera.window_height = height;
+		}
+
 		pvr_wait_ready();
 
 		pvr_scene_begin();
@@ -468,8 +525,11 @@ int main(){
 			if(curr_effect == 1){
 				crayon_graphics_draw_sprites(&boxy_draw, NULL, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
 			}
+			else if(curr_effect == 2){
+				crayon_graphics_draw_sprites(&letter_box_draw, NULL, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
+			}
 
-			crayon_graphics_draw_sprites(&scene_draw, NULL, PVR_LIST_OP_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&scene_draw, &Camera, PVR_LIST_OP_POLY, CRAY_DRAW_ENHANCED);
 
 			sprintf(debug, "State: %d/ Progress %d, %d %d", effect[curr_effect].state, effect[curr_effect].curr_duration,
 				effect[curr_effect].duration_fade_in, effect[curr_effect].duration_fade_out);
@@ -481,7 +541,9 @@ int main(){
 
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			;
+			if(curr_effect == 2){
+				;
+			}
 		pvr_list_finish();
 
 
@@ -491,6 +553,12 @@ int main(){
 	crayon_memory_free_sprite_array(&scene_draw);
 	crayon_memory_free_sprite_array(&fade_draw);
 	crayon_memory_free_sprite_array(&boxy_draw);
+
+	// crayon_memory_free_sprite_array(&multi_draw[0]);
+	// crayon_memory_free_sprite_array(&multi_draw[1]);
+	// crayon_memory_free_sprite_array(&multi_draw[2]);
+
+	crayon_memory_free_sprite_array(&letter_box_draw);
 
 	return 0;
 }

@@ -1421,13 +1421,22 @@ extern void crayon_graphics_transistion_apply(crayon_transition_t * effect, void
 	return;
 }
 
-extern double crayon_graphics_transition_get_state_percentage(crayon_transition_t * effect){
+extern double crayon_graphics_transition_get_curr_percentage(crayon_transition_t * effect){
 	if(effect->state == CRAY_FADE_STATE_IN){
 		return (effect->duration_fade_in - effect->curr_duration) / (double)effect->duration_fade_in;
 	}
 
 	//Fade out
 	return effect->curr_duration / (double)effect->duration_fade_out;
+}
+
+extern double crayon_graphics_transition_get_prev_percentage(crayon_transition_t * effect){
+	if(effect->state == CRAY_FADE_STATE_IN){
+		return (effect->duration_fade_in - effect->prev_duration) / (double)effect->duration_fade_in;
+	}
+
+	//Fade out
+	return effect->prev_duration / (double)effect->duration_fade_out;
 }
 
 extern uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t * effect){
