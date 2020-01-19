@@ -127,7 +127,6 @@ extern void crayon_graphics_transistion_apply(crayon_transition_t * effect, void
 extern double crayon_graphics_transition_get_curr_percentage(crayon_transition_t * effect);
 extern double crayon_graphics_transition_get_prev_percentage(crayon_transition_t * effect);
 
-//Returns NOT_RESTING if its not resting, RESTING_STATE_IN if its finished fading in and RESTING_STATE_OUT if its finished fading out
 extern uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t * effect);
 
 //This is just a call to the regular draw function

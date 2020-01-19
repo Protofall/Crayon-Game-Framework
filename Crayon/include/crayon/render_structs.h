@@ -100,12 +100,14 @@ typedef struct crayon_sprite_array{
 
 //Used by crayon_graphics_transistion_resting_state() To tell if we've finished a
 //transition or not and where we are
-#define CRAY_FADE_NOT_RESTING 0
-#define CRAY_FADE_RESTING_STATE_IN 1
-#define CRAY_FADE_RESTING_STATE_OUT 2
+#define CRAY_FADE_STATE_NOT_RESTING 0
+#define CRAY_FADE_STATE_RESTING_IN 1
+#define CRAY_FADE_STATE_RESTING_OUT 2
 
 typedef struct crayon_transition{
-	uint8_t state;	//The state we are going to 0 for not fading, 1 for fade-in and 2 for fade-out
+	uint8_t curr_state;	//The state we are going to 0 for not fading, 1 for fade-in and 2 for fade-out
+	uint8_t resting_state;	//Is NOT_RESTING if its not resting, RESTING_STATE_IN if its finished fading in
+							//and RESTING_STATE_OUT if its finished fading out
 	uint32_t duration_fade_in;	//The time in frames it takes to complete the effect fading in
 	uint32_t duration_fade_out;	//The time it takes to fade out
 	uint32_t curr_duration;	//It will start at zero and go up to either "duration_fade_in" or

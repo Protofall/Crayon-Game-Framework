@@ -1,14 +1,21 @@
 #include "savefile.h"
 
 //Note this assumes the vmu chosen is valid
+	//THIS CAN BE OPTIMISED
 uint8_t crayon_savefile_check_for_save(crayon_savefile_details_t * savefile_details, int8_t savefile_port, int8_t savefile_slot){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
 	int pkg_size;
 	FILE *fp;
-	char savename[32];
 
-	sprintf(savename, "/vmu/%c%d/", savefile_port + 97, savefile_slot);
+	//Only 25 charaters allowed at max (26 if you include '\0')
+	//port gets converted to a, b, c or d. unit is unit
+	//Its more efficient to do it this way than with sprintf
+	char savename[32] = "/vmu/";
+	savename[5] = savefile_port + 'a';
+	savename[6] = savefile_slot + '0';
+	savename[7] = '/';
+	savename[8] = '\0';
 	strcat(savename, savefile_details->save_name);
 
 	//File DNE
@@ -16,12 +23,13 @@ uint8_t crayon_savefile_check_for_save(crayon_savefile_details_t * savefile_deta
 		return 1;
 	}
 
-	fseek(fp, 0, SEEK_SET);
 	fseek(fp, 0, SEEK_END);
 	pkg_size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	pkg_out = (uint8 *)malloc(pkg_size);
+	//Surely instead of doing the below I can just read the header and hence the app id?
+
+	pkg_out = (uint8_t *)malloc(pkg_size);
 	fread(pkg_out, pkg_size, 1, fp);
 	fclose(fp);
 
@@ -174,9 +182,20 @@ void crayon_savefile_free_eyecatch(crayon_savefile_details_t * savefile_details)
 	return;
 }
 
-uint8_t crayon_savefile_get_valid_memcards(crayon_savefile_details_t * savefile_details){
+void crayon_savefile_update_valid_saves(crayon_savefile_details_t * savefile_details, uint8_t modes){
 	maple_device_t *vmu;
-	uint8_t valid_memcards = 0;	//a1a2b1b2c1c2d1d2
+	uint8_t valid_saves = 0;	//a1a2b1b2c1c2d1d2
+	uint8_t valid_memcards = 0;
+
+	uint8_t get_saves = 0;
+	uint8_t get_memcards = 0;
+
+	if(modes & CRAY_SAVEFILE_UPDATE_MODE_SAVE_PRESENT){
+		get_saves = 1;
+	}
+	if(modes & CRAY_SAVEFILE_UPDATE_MODE_MEMCARD_PRESENT){
+		get_memcards = 1;
+	}
 
 	int i, j;
 	for(i = 0; i <= 3; i++){
@@ -187,62 +206,27 @@ uint8_t crayon_savefile_get_valid_memcards(crayon_savefile_details_t * savefile_
 			}
 
 			//Check if a save file DNE
-			if(crayon_savefile_check_for_save(savefile_details, i, j)){
-				//Check if there's enough free space for a savefile
+			if(crayon_savefile_check_for_save(savefile_details, i, j)){	//Returns 1 if DNE
+				if(!get_memcards){continue;}
+
+				//If we have enough space for a new savefile
 				vmu = maple_enum_dev(i, j);
-				if(vmufs_free_blocks(vmu) < crayon_savefile_get_save_block_count(savefile_details)){
-					continue;
+				if(vmufs_free_blocks(vmu) >= crayon_savefile_get_save_block_count(savefile_details)){
+					crayon_savefile_set_vmu_bit(&valid_memcards, i, j);
 				}
 			}
-
-			//If we get to here, this VMU is valid
-			crayon_savefile_set_vmu_bit(&valid_memcards, i, j);	//Sets wrong bit
+			else{
+				if(!get_saves){continue;}
+				crayon_savefile_set_vmu_bit(&valid_saves, i, j);
+				crayon_savefile_set_vmu_bit(&valid_memcards, i, j);
+			}
 		}
 	}
 
-	return valid_memcards;
-}
+	if(get_saves){savefile_details->valid_saves = valid_saves;}
+	if(get_memcards){savefile_details->valid_memcards = valid_memcards;}
 
-uint8_t crayon_savefile_get_valid_saves(crayon_savefile_details_t * savefile_details){
-	uint8_t valid_saves = 0;	//a1a2b1b2c1c2d1d2
-
-	int i, j;
-	for(i = 0; i <= 3; i++){
-		for(j = 1; j <= 2; j++){
-			//Check if device is a memory card
-			if(crayon_savefile_check_for_device(i, j, MAPLE_FUNC_MEMCARD)){
-				continue;
-			}
-
-			//Check if savefile DNE
-			if(crayon_savefile_check_for_save(savefile_details, i, j)){
-				continue;
-			}
-
-			crayon_savefile_set_vmu_bit(&valid_saves, i, j);
-		}
-	}
-
-	return valid_saves;
-}
-
-uint8_t crayon_savefile_get_valid_screens(){
-	uint8_t valid_screens = 0;	//a1a2b1b2c1c2d1d2
-
-	int i, j;
-	for(i = 0; i <= 3; i++){
-		for(j = 1; j <= 2; j++){
-			//Check if device has an LCD
-			if(crayon_savefile_check_for_device(i, j, MAPLE_FUNC_LCD)){
-				continue;
-			}
-
-			//If we got here, we have a screen
-			crayon_savefile_set_vmu_bit(&valid_screens, i, j);
-		}
-	}
-
-	return valid_screens;
+	return;
 }
 
 uint8_t crayon_savefile_get_valid_function(uint32_t function){
@@ -268,6 +252,11 @@ uint8_t crayon_savefile_get_valid_function(uint32_t function){
 	//Also don't try and and load the eyecatcher first otherwise the eyecatch_type will be overwritten
 uint8_t crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefile_details,  uint8_t * savefile_data, size_t savefile_size,
 	uint8_t icon_anim_count, uint16_t icon_anim_speed, char * desc_long, char * desc_short, char * app_id, char * save_name){
+
+	if(icon_anim_count > 3){
+		return 1;
+	}
+
 	savefile_details->savefile_data = savefile_data;
 	savefile_details->savefile_size = savefile_size;
 	savefile_details->icon_anim_count = icon_anim_count;
@@ -279,16 +268,12 @@ uint8_t crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefi
 	strcpy(savefile_details->app_id, app_id);
 	strcpy(savefile_details->save_name, save_name);
 
-	savefile_details->valid_memcards = crayon_savefile_get_valid_memcards(savefile_details);
-	savefile_details->valid_saves = crayon_savefile_get_valid_saves(savefile_details);
+	crayon_savefile_update_valid_saves(savefile_details, CRAY_SAVEFILE_UPDATE_MODE_BOTH);
 	savefile_details->valid_vmu_screens = crayon_savefile_get_valid_screens();
 
 	savefile_details->savefile_port = -1;
 	savefile_details->savefile_slot = -1;
 
-	if(icon_anim_count > 3){
-		return 1;
-	}
 	return 0;
 }
 
@@ -297,7 +282,6 @@ uint8_t crayon_savefile_load(crayon_savefile_details_t * savefile_details){
 	uint8 *pkg_out;
 	int pkg_size;
 	FILE *fp;
-	char savename[32];
 
 	//If you call everying in the right order, this is redundant. But just incase you didn't, here it is
 	//Also we use device and not save because the rest of the load code can automatically check if a save exists so its faster this way
@@ -306,8 +290,14 @@ uint8_t crayon_savefile_load(crayon_savefile_details_t * savefile_details){
 		return 1;
 	}
 
-	//Only 25 chara allowed at max (26 if you include '\0')
-	sprintf(savename, "/vmu/%c%d/", savefile_details->savefile_port + 97, savefile_details->savefile_slot);	//port gets converted to a, b, c or d. unit is unit
+	//Only 25 charaters allowed at max (26 if you include '\0')
+	//port gets converted to a, b, c or d. unit is unit
+	//Its more efficient to do it this way than with sprintf
+	char savename[32] = "/vmu/";
+	savename[5] = savefile_details->savefile_port + 'a';
+	savename[6] = savefile_details->savefile_slot + '0';
+	savename[7] = '/';
+	savename[8] = '\0';
 	strcat(savename, savefile_details->save_name);
 
 	//If the savefile DNE, this will fail
@@ -315,12 +305,11 @@ uint8_t crayon_savefile_load(crayon_savefile_details_t * savefile_details){
 		return 2;
 	}
 
-	fseek(fp, 0, SEEK_SET);
 	fseek(fp, 0, SEEK_END);
 	pkg_size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	pkg_out = (uint8 *)malloc(pkg_size);
+	pkg_out = (uint8_t *)malloc(pkg_size);
 	fread(pkg_out, pkg_size, 1, fp);
 	fclose(fp);
 
@@ -351,7 +340,6 @@ uint8_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	int pkg_size;
 	FILE *fp;
 	file_t f;
-	char savename[32];
 	maple_device_t *vmu;
 	uint16_t blocks_freed = 0;
 	uint8_t rv = 0;
@@ -359,7 +347,13 @@ uint8_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	vmu = maple_enum_dev(savefile_details->savefile_port, savefile_details->savefile_slot);
 
 	//Only 25 charaters allowed at max (26 if you include '\0')
-	sprintf(savename, "/vmu/%c%d/", savefile_details->savefile_port + 97, savefile_details->savefile_slot);	//port gets converted to a, b, c or d. unit is unit
+	//port gets converted to a, b, c or d. unit is unit
+	//Its more efficient to do it this way than with sprintf
+	char savename[32] = "/vmu/";
+	savename[5] = savefile_details->savefile_port + 'a';
+	savename[6] = savefile_details->savefile_slot + '0';
+	savename[7] = '/';
+	savename[8] = '\0';
 	strcat(savename, savefile_details->save_name);
 
 	int filesize = savefile_details->savefile_size;

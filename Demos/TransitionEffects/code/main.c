@@ -93,147 +93,6 @@ float g_deadspace;
 uint8_t g_htz, g_htz_adjustment;
 uint8_t vga_enabled;
 
-// void htz_select(){
-// 	//If we have a VGA cable, then skip this screen
-// 	if(vga_enabled){return;}
-
-// 	#if CRAYON_BOOT_MODE == 0
-// 		crayon_memory_mount_romdisk("/cd/stuff.img", "/Setup");
-// 	#elif CRAYON_BOOT_MODE == 1
-// 		crayon_memory_mount_romdisk("/sd/stuff.img", "/Setup");
-// 	#elif CRAYON_BOOT_MODE == 2
-// 		crayon_memory_mount_romdisk("/pc/stuff.img", "/Setup");
-// 	#else
-// 		#error "Invalid CRAYON_BOOT_MODE"
-// 	#endif
-
-// 	crayon_palette_t BIOS_P;		//Entry 0
-// 	crayon_palette_t BIOS_Red_P;	//Entry 1
-
-// 	crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 0, "/Setup/BIOS.dtex");
-
-// 	fs_romdisk_unmount("/Setup");
-
-// 	//Make the red font
-// 	crayon_memory_clone_palette(&BIOS_P, &BIOS_Red_P, 1);
-// 	crayon_memory_swap_colour(&BIOS_Red_P, 0xFFAAAAAA, 0xFFFF0000, 0);
-
-// 	//Set the palettes in PVR memory
-// 	crayon_graphics_setup_palette(&BIOS_P);	//0
-// 	crayon_graphics_setup_palette(&BIOS_Red_P);	//1
-
-// 	uint16_t htz_head_x = (width - (2 * crayon_graphics_string_get_length_mono(&BIOS_font, "Select Refresh Rate"))) / 2;
-// 	uint16_t htz_head_y = 133;
-// 	uint16_t htz_option_y = htz_head_y + (BIOS_font.char_height * 2) + 80;
-
-// 	//Set the palettes for each option
-// 		//Red is highlighted, white is normal
-// 	int8_t * palette_50htz,* palette_60htz;
-
-// 	if(g_htz == 50){	//For highlights
-// 		palette_50htz = &BIOS_Red_P.palette_id;
-// 		palette_60htz = &BIOS_P.palette_id;
-// 	}
-// 	else{
-// 		palette_50htz = &BIOS_P.palette_id;
-// 		palette_60htz = &BIOS_Red_P.palette_id;
-// 	}
-	
-// 	int16_t counter = g_htz  * 11;	//Set this to 11 secs (So current fps * 11)
-// 									//We choose 11 seconds because the fade-in takes 1 second
-
-// 	uint8_t fade_frame_count = 0;
-// 	float fade_cap = g_htz * 1.0;	//1 second, 60 or 50 frames
-
-// 	//While counting || fade is not full alpha
-// 	while(counter > 0 || crayon_assist_extract_bits(fade_draw.colour[0], 8, 24) != 0xFF){
-
-// 		//Update the fade-in/out effects
-// 		counter--;
-// 		if(counter < 0){	//Fading out
-// 			if(crayon_assist_extract_bits(fade_draw.colour[0], 8, 24) == 0){
-// 				//Have another sound, not a blip, but some acceptance thing
-// 			}
-// 			// fade = 0xFF * (fade_frame_count / fade_cap);
-// 			fade_draw.colour[0] = (uint32_t)(0xFF * (fade_frame_count / fade_cap)) << 24;
-// 			fade_frame_count++;
-// 		}
-// 		else if(crayon_assist_extract_bits(fade_draw.colour[0], 8, 24) > 0){	//fading in
-// 			// fade = 0xFF - (0xFF * (fade_frame_count / fade_cap));
-// 			fade_draw.colour[0] = (uint32_t)(0xFF - (0xFF * (fade_frame_count / fade_cap))) << 24;
-// 			fade_frame_count++;
-// 		}
-// 		else{	//10 seconds of choice
-// 			fade_frame_count = 0;
-// 		}
-
-// 		pvr_wait_ready();	//Need vblank for inputs
-
-// 		//Don't really want players doing stuff when it fades out
-// 		if(counter >= 0){
-// 			MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
-// 			if(st->buttons & CONT_DPAD_LEFT){
-// 				palette_50htz = &BIOS_Red_P.palette_id;	//0 is 50 Htz
-// 				palette_60htz = &BIOS_P.palette_id;
-// 				//Make "blip" sound
-// 			}
-// 			else if(st->buttons & CONT_DPAD_RIGHT){
-// 				palette_50htz = &BIOS_P.palette_id;	//1 is 60 Htz
-// 				palette_60htz = &BIOS_Red_P.palette_id;
-// 				//Make "blip" sound
-// 			}
-
-// 			//Press A or Start to skip the countdown
-// 			if((st->buttons & CONT_START) || (st->buttons & CONT_A)){
-// 				counter = 0;
-// 			}
-
-// 			MAPLE_FOREACH_END()
-// 		}
-
-// 		pvr_scene_begin();
-
-// 		pvr_list_begin(PVR_LIST_TR_POLY);
-
-// 			//The fading in/out effect
-// 			if(crayon_assist_extract_bits(fade_draw.colour[0], 8, 24)){
-// 				crayon_graphics_draw_sprites(&fade_draw, NULL, PVR_LIST_TR_POLY, CRAY_DRAW_SIMPLE);
-// 			}
-
-// 		pvr_list_finish();
-
-// 		pvr_list_begin(PVR_LIST_OP_POLY);
-
-// 			crayon_graphics_draw_text_mono("Select Refresh Rate", &BIOS_font, PVR_LIST_OP_POLY, htz_head_x, htz_head_y, 50, 2, 2,
-// 				BIOS_P.palette_id);
-// 			crayon_graphics_draw_text_mono("50Hz", &BIOS_font, PVR_LIST_OP_POLY, 40, htz_option_y, 50, 2, 2, *palette_50htz);
-// 			crayon_graphics_draw_text_mono("60Hz", &BIOS_font, PVR_LIST_OP_POLY, 480, htz_option_y, 50, 2, 2, *palette_60htz);
-
-// 		pvr_list_finish();
-
-// 		pvr_scene_finish();
-
-// 	}
-
-// 	if(g_htz == 50 && *palette_60htz == BIOS_Red_P.palette_id){
-// 		g_htz = 60;
-// 		g_htz_adjustment = 1;
-// 		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
-// 	}
-// 	else if(g_htz == 60 && *palette_50htz == BIOS_Red_P.palette_id){
-// 		g_htz = 50;
-// 		g_htz_adjustment = 1.2;
-// 		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);
-// 	}
-
-// 	crayon_memory_free_palette(&BIOS_P);
-// 	crayon_memory_free_palette(&BIOS_Red_P);
-
-// 	crayon_memory_free_mono_font_sheet(&BIOS_font);
-
-// 	return;
-// }
-
 void crayon_graphics_init_display(){
 	pvr_init(&pvr_params);
 
@@ -262,7 +121,7 @@ void crayon_graphics_init_display(){
 	return;
 }
 
-void set_indexes(uint16_t * indexes){
+void set_indexes(uint16_t * indexes, uint16_t size){
 	#if CRAYON_BOOT_MODE == 0
 		FILE * fp = fopen("cd/boxy_indexes.bin", "rb");
 	#elif CRAYON_BOOT_MODE == 1
@@ -273,7 +132,7 @@ void set_indexes(uint16_t * indexes){
 		#error "Invalid CRAYON_BOOT_MODE"
 	#endif
 
-	fread(indexes, sizeof(uint16_t), 300, fp);
+	fread(indexes, sizeof(uint16_t), size, fp);
 	fclose(fp);
 	return;
 }
@@ -389,8 +248,8 @@ int main(){
 
 	vec2_u16_t num_boxes_dims = (vec2_u16_t){width / 32, height / 32};	//20 and 15
 	uint16_t num_boxes = num_boxes_dims.x * num_boxes_dims.y;
-	uint16_t * indexes = malloc(sizeof(uint16_t) * 300);
-	set_indexes(indexes);
+	uint16_t * indexes = malloc(sizeof(uint16_t) * num_boxes);
+	set_indexes(indexes, num_boxes);
 	crayon_memory_init_sprite_array(&boxy_draw, NULL, 0, NULL, num_boxes, 0, 0, PVR_FILTER_NONE, 0);
 	for(j = 0; j < height / 32; j++){
 		for(i = 0; i < width / 32; i++){
@@ -481,14 +340,14 @@ int main(){
 		for(i = 0; i < 4; i++){
 			//Press A to fade in
 			if((curr_btns[i] & CONT_A) && !(prev_btns[i] & CONT_A)){
-				if(effect[curr_effect].state == CRAY_FADE_STATE_NONE){
+				if(effect[curr_effect].resting_state == CRAY_FADE_STATE_RESTING_OUT){
 					crayon_graphics_transistion_change_state(&effect[curr_effect], CRAY_FADE_STATE_IN);
 				}
 			}
 
 			//Press B to fade out
 			if((curr_btns[i] & CONT_B) && !(prev_btns[i] & CONT_B)){
-				if(effect[curr_effect].state == CRAY_FADE_STATE_NONE){
+				if(effect[curr_effect].resting_state == CRAY_FADE_STATE_RESTING_IN){
 					crayon_graphics_transistion_change_state(&effect[curr_effect], CRAY_FADE_STATE_OUT);
 				}
 			}
@@ -535,8 +394,8 @@ int main(){
 
 			crayon_graphics_draw_sprites(&scene_draw, &Camera, PVR_LIST_OP_POLY, CRAY_DRAW_ENHANCED);
 
-			sprintf(debug, "State: %d/ Progress %d, %d %d", effect[curr_effect].state, effect[curr_effect].curr_duration,
-				effect[curr_effect].duration_fade_in, effect[curr_effect].duration_fade_out);
+			sprintf(debug, "State: %d %d. Progress %d, %d %d", effect[curr_effect].curr_state, effect[curr_effect].resting_state,
+				effect[curr_effect].curr_duration, effect[curr_effect].duration_fade_in, effect[curr_effect].duration_fade_out);
 			// sprintf(debug, "Colour: 0x%x", fade_draw.colour[0]);
 			// sprintf(debug, "Press A to fade in, B to fade out and X to swap effects");
 			crayon_graphics_draw_text_mono(debug, &BIOS_font, PVR_LIST_OP_POLY, 10, 10, 255, 1, 1, BIOS_P.palette_id);

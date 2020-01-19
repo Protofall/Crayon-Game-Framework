@@ -261,7 +261,7 @@ int main(){
 	uint16_t save_res = 0;
 	if(savefile_details.valid_memcards){
 		save_res = crayon_savefile_save(&savefile_details);
-		savefile_details.valid_saves = crayon_savefile_get_valid_saves(&savefile_details);
+		crayon_savefile_update_valid_saves(&savefile_details, CRAY_SAVEFILE_UPDATE_MODE_SAVE_PRESENT);	//Updating the save
 	}
 
 	pvr_init_defaults();	//Init kos
@@ -276,6 +276,10 @@ int main(){
 		sprintf(buffer, "Save created\nUses %d blocks and has %d frames of\nanimation",
 		crayon_savefile_get_save_block_count(&savefile_details),
 		savefile_details.icon_anim_count);
+
+		// sprintf(buffer, "Save created\nUses %d blocks and has %d frames of\nanimation. %8d %8d",
+		// crayon_savefile_get_save_block_count(&savefile_details),
+		// savefile_details.icon_anim_count, savefile_details.valid_memcards, savefile_details.valid_saves);
 	}
 	else{
 		sprintf(buffer, "It failed with code %d", res);

@@ -1395,7 +1395,8 @@ extern void crayon_graphics_transistion_init(crayon_transition_t * effect, crayo
 
 	effect->f = f;
 
-	effect->state = CRAY_FADE_STATE_NONE;
+	effect->curr_state = CRAY_FADE_STATE_NONE;
+	effect->resting_state = CRAY_FADE_STATE_NONE;
 	effect->duration_fade_in = duration_in;
 	effect->duration_fade_out = duration_out;
 	effect->curr_duration = 0;
@@ -1407,20 +1408,22 @@ extern void crayon_graphics_transistion_init(crayon_transition_t * effect, crayo
 
 extern void crayon_graphics_transistion_skip_to_state(crayon_transition_t * effect, void * params, uint8_t state){
 	if(state != CRAY_FADE_STATE_IN && state != CRAY_FADE_STATE_OUT){return;}
-	effect->state = state;
+	effect->curr_state = state;
 
 	//We set the duration to the end of the state we gave it
 	effect->curr_duration = (state == CRAY_FADE_STATE_IN) ? effect->duration_fade_in : effect->duration_fade_out;
 	effect->prev_duration = effect->curr_duration;
 
 	(*effect->f)(effect, params);
-	effect->state = CRAY_FADE_STATE_NONE;
+	effect->resting_state = ((state == CRAY_FADE_STATE_OUT)) ? CRAY_FADE_STATE_RESTING_OUT : CRAY_FADE_STATE_RESTING_IN;
+	effect->curr_state = CRAY_FADE_STATE_NONE;
 	return;
 }
 
 extern void crayon_graphics_transistion_change_state(crayon_transition_t * effect, uint8_t state){
 	if(state != CRAY_FADE_STATE_IN && state != CRAY_FADE_STATE_OUT){return;}
-	effect->state = state;
+	effect->curr_state = state;
+	effect->resting_state = CRAY_FADE_STATE_NOT_RESTING;
 
 	effect->curr_duration = 0;
 
@@ -1428,22 +1431,30 @@ extern void crayon_graphics_transistion_change_state(crayon_transition_t * effec
 }
 
 extern void crayon_graphics_transistion_apply(crayon_transition_t * effect, void * params){
-	if(effect->state != CRAY_FADE_STATE_IN && effect->state != CRAY_FADE_STATE_OUT){return;}
+	if(effect->curr_state != CRAY_FADE_STATE_IN && effect->curr_state != CRAY_FADE_STATE_OUT){return;}
 
 	effect->prev_duration = effect->curr_duration;
 	effect->curr_duration++;
 	(*effect->f)(effect, params);
 
-	//The transition seems to have finished
-	if(crayon_graphics_transistion_resting_state(effect) != CRAY_FADE_NOT_RESTING){
-		effect->state = CRAY_FADE_STATE_NONE;
+	//Check if the transition has finished
+	if((effect->curr_state == CRAY_FADE_STATE_OUT && effect->curr_duration == effect->duration_fade_out)){
+		effect->resting_state = CRAY_FADE_STATE_RESTING_OUT;
+		effect->curr_state = CRAY_FADE_STATE_NONE;
+	}
+	else if(effect->curr_state == CRAY_FADE_STATE_IN && effect->curr_duration == effect->duration_fade_in){
+		effect->resting_state = CRAY_FADE_STATE_RESTING_IN;
+		effect->curr_state = CRAY_FADE_STATE_NONE;
+	}
+	else{
+		effect->resting_state = CRAY_FADE_STATE_NOT_RESTING;
 	}
 
 	return;
 }
 
 extern double crayon_graphics_transition_get_curr_percentage(crayon_transition_t * effect){
-	if(effect->state == CRAY_FADE_STATE_IN){
+	if(effect->curr_state == CRAY_FADE_STATE_IN){
 		return (effect->duration_fade_in - effect->curr_duration) / (double)effect->duration_fade_in;
 	}
 
@@ -1452,22 +1463,12 @@ extern double crayon_graphics_transition_get_curr_percentage(crayon_transition_t
 }
 
 extern double crayon_graphics_transition_get_prev_percentage(crayon_transition_t * effect){
-	if(effect->state == CRAY_FADE_STATE_IN){
+	if(effect->curr_state == CRAY_FADE_STATE_IN){
 		return (effect->duration_fade_in - effect->prev_duration) / (double)effect->duration_fade_in;
 	}
 
 	//Fade out
 	return effect->prev_duration / (double)effect->duration_fade_out;
-}
-
-extern uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t * effect){
-	if((effect->state == CRAY_FADE_STATE_OUT && effect->curr_duration == effect->duration_fade_out)){
-		return CRAY_FADE_RESTING_STATE_OUT;
-	}
-	else if(effect->state == CRAY_FADE_STATE_IN && effect->curr_duration == effect->duration_fade_in){
-		return CRAY_FADE_RESTING_STATE_IN;
-	}
-	return CRAY_FADE_NOT_RESTING;
 }
 
 
