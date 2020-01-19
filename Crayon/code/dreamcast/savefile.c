@@ -1,7 +1,7 @@
 #include "savefile.h"
 
 //Note this assumes the vmu chosen is valid
-	//THIS CAN BE OPTIMISED
+	//THIS CAN BE OPTIMISED. But when I fopen() a vmu file it automatically caches the entire file.
 uint8_t crayon_savefile_check_for_save(crayon_savefile_details_t * savefile_details, int8_t savefile_port, int8_t savefile_slot){
 	vmu_pkg_t pkg;
 	uint8 *pkg_out;
@@ -27,8 +27,6 @@ uint8_t crayon_savefile_check_for_save(crayon_savefile_details_t * savefile_deta
 	pkg_size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	//Surely instead of doing the below I can just read the header and hence the app id?
-
 	pkg_out = (uint8_t *)malloc(pkg_size);
 	fread(pkg_out, pkg_size, 1, fp);
 	fclose(fp);
@@ -41,6 +39,7 @@ uint8_t crayon_savefile_check_for_save(crayon_savefile_details_t * savefile_deta
 	if(strcmp(pkg.app_id, savefile_details->app_id)){
 		return 2;
 	}
+
 	return 0;
 }
 

@@ -129,6 +129,8 @@ extern double crayon_graphics_transition_get_prev_percentage(crayon_transition_t
 
 extern uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t * effect);
 
+// #define crayon_savefile_get_valid_screens(effect, camera, poly_list_mode, draw_mode)  crayon_graphics_draw_sprites(effect->draw, camera, poly_list_mode, draw_mode)
+
 //This is just a call to the regular draw function
 // inline uint8_t crayon_graphics_draw_transistion(const crayon_transition_t * effect, const crayon_viewport_t * camera,
 // 	uint8_t poly_list_mode, uint8_t draw_mode){
