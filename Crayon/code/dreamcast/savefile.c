@@ -184,7 +184,7 @@ void crayon_savefile_free_eyecatch(crayon_savefile_details_t * savefile_details)
 void crayon_savefile_update_valid_saves(crayon_savefile_details_t * savefile_details, uint8_t modes){
 	maple_device_t *vmu;
 	uint8_t valid_saves = 0;	//a1a2b1b2c1c2d1d2
-	uint8_t valid_memcards = 0;
+	uint8_t valid_memcards = 0;	//Note: These are memcards that either can or do contain savefiles
 
 	uint8_t get_saves = 0;
 	uint8_t get_memcards = 0;
@@ -204,8 +204,8 @@ void crayon_savefile_update_valid_saves(crayon_savefile_details_t * savefile_det
 				continue;
 			}
 
-			//Check if a save file DNE
-			if(crayon_savefile_check_for_save(savefile_details, i, j)){	//Returns 1 if DNE
+			//Check if a save file DNE. Returns 1 if DNE
+			if(crayon_savefile_check_for_save(savefile_details, i, j)){
 				if(!get_memcards){continue;}
 
 				//If we have enough space for a new savefile
@@ -215,9 +215,8 @@ void crayon_savefile_update_valid_saves(crayon_savefile_details_t * savefile_det
 				}
 			}
 			else{
-				if(!get_saves){continue;}
-				crayon_savefile_set_vmu_bit(&valid_saves, i, j);
-				crayon_savefile_set_vmu_bit(&valid_memcards, i, j);
+				if(get_memcards){crayon_savefile_set_vmu_bit(&valid_memcards, i, j);}
+				if(get_saves){crayon_savefile_set_vmu_bit(&valid_saves, i, j);}
 			}
 		}
 	}
