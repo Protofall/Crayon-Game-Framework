@@ -197,28 +197,7 @@ Here are some setup guides for installing KOS. I recommend downloading the lates
 + http://gamedev.allusion.net/softprj/kos/setup-linux.php (Mac setup is very similar to this)
 + http://gamedev.allusion.net/softprj/kos/setup-wsl.php
 
-For Crayon Utilities:
-+ `git clone https://github.com/Protofall/Crayon-Utilities.git` OR `git@github.com:Protofall/Crayon-Utilities.git`
-+ Build the tools as you need them. Crayon doesn't directly use them (Yet)
-
-For cdi4dc:
-
-+ `git clone https://github.com/Kazade/img4dc.git` OR `git clone git@github.com:Kazade/img4dc.git`
-+ `cd img4dc`
-+ `cmake .`
-+ `make`
-
-
-For texconv:
-
-+ `sudo apt-get install qt5-default qtbase5-dev`
-+ `git clone https://github.com/tvspelsfreak/texconv` OR `git clone git@github.com:tvspelsfreak/texconv.git`
-+ `cd texconv`
-+ `qmake`
-+ `make`
-
-Copy the executables for texconv and cdi4dc into a directory whose path is listed in the `~/.profile` file (Or add you own directory path)
-
+Once that's done, go into the `Crayon` folder and run `./init.sh` which installs the rest of the pre-requisites. Note you will need to change the bash script slightly if your terminal doesn't source from `~/.profile`.
 
 NOTE: SCONS ISN'T REQUIRED RIGHT NOW AND MAY BE DUMPED IN THE FUTURE. DON'T BOTHER INSTALLING FOR NOW
 Crayon also uses SConstruct as an alternative to makefiles due to its enhanced ability. If you don't already have it installed, run this command
@@ -237,8 +216,6 @@ If I remembered that correctly, now you should have an up and running Crayon fra
 ### Random notes
 
 Force vid_set_mode(DM_640x480_VGA, PM_RGB565); for VGA mode...I think RGB888 might not be compatible with the pvr system (Only RGB565)
-
-Sprite mode might only be able to reliably do a maximum dimension of 256 by 256 textures. Any larger could cause "Jitter" effects due to 16-bit UV inaccuracy
 
 ### Useful for identifying colour count
 
