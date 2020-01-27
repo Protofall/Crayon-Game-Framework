@@ -15,7 +15,7 @@ fi
 
 line="export CRAYON_BASE=\"$script_dir\""
 
-# echo "$line" >> ~/.profile
+echo "$line" >> ~/.profile
 
 #Build the dreamcast version of Crayon
 make PLATFORM=dreamcast
@@ -36,55 +36,67 @@ temp_dir="$script_dir/temp"
 
 #Install cdi4dc
 repo_path="$temp_dir/img4dc"
-sudo apt-get install cmake
-git clone https://github.com/Kazade/img4dc.git "$repo_path"
-if [ -d "$repo_path" ]; then
-	cd "$repo_path"
-	echo "$(pwd)"
-	cmake .
-	make
-	cp "cdi4dc/cdi4dc" "$bins"
-	cd "$user_dir"
+if [ ! -d "$repo_path" ]; then
+	sudo apt-get install cmake
+	git clone https://github.com/Kazade/img4dc.git "$repo_path"
+	if [ -d "$repo_path" ]; then
+		cd "$repo_path"
+		echo "$(pwd)"
+		cmake .
+		make
+		cp "cdi4dc/cdi4dc" "$bins"
+		cd "$user_dir"
+	fi
 fi
 
 #Install texconv
 repo_path="$temp_dir/texconv"
-sudo apt-get install qt5-default qtbase5-dev
-git clone https://github.com/tvspelsfreak/texconv "$repo_path"
-if [ -d "$repo_path" ]; then
-	cd "$repo_path"
-	qmake
-	make
-	cp "texconv" "$bins"
-	cd "$user_dir"
+if [ ! -d "$repo_path" ]; then
+	sudo apt-get install qt5-default qtbase5-dev
+	git clone https://github.com/tvspelsfreak/texconv "$repo_path"
+	if [ -d "$repo_path" ]; then
+		cd "$repo_path"
+		qmake
+		make
+		cp "texconv" "$bins"
+		cd "$user_dir"
+	fi
 fi
 
 #Install texturepacker
-#-
+dpkg-query -l 'texturepacker' > "$temp_dir/garbage.txt"
+res=$?
+rm "$temp_dir/garbage.txt"
+if [ $res == 1 ]; then
+	wget -O "$temp_dir/texturepacker.deb" "https://www.codeandweb.com/download/texturepacker/5.2.0/TexturePacker-5.2.0-ubuntu64.deb"
+	sudo apt install "$temp_dir/texturepacker.deb"
+fi
 
 #Install Crayon-Utilities (clone in same dir as Crayon, compile the exeutables then copy them to bins)
 repo_path="$temp_dir/crayon-utilities"
-sudo apt-get install libpng-dev
-git clone https://github.com/Protofall/Crayon-Utilities "$repo_path"
-if [ -d "$repo_path" ]; then
-	cd "$repo_path"
+if [ ! -d "$repo_path" ]; then
+	sudo apt-get install libpng-dev
+	git clone https://github.com/Protofall/Crayon-Utilities "$repo_path"
+	if [ -d "$repo_path" ]; then
+		cd "$repo_path"
 
-	cd "VmuEyeCatchCreator"
-	make
-	cp "VmuEyeCatchCreator" "$bins"
-	cd "../"
+		cd "VmuEyeCatchCreator"
+		make
+		cp "VmuEyeCatchCreator" "$bins"
+		cd "../"
 
-	cd "VmuLcdIconCreator"
-	make
-	cp "VmuLcdIconCreator" "$bins"
-	cd "../"
+		cd "VmuLcdIconCreator"
+		make
+		cp "VmuLcdIconCreator" "$bins"
+		cd "../"
 
-	cd "VmuSFIconCreator"
-	make
-	cp "VmuSFIconCreator" "$bins"
-	cd "../"
+		cd "VmuSFIconCreator"
+		make
+		cp "VmuSFIconCreator" "$bins"
+		cd "../"
 
-	cd "$user_dir"
+		cd "$user_dir"
+	fi
 fi
 
 echo "--Crayon Installed--"

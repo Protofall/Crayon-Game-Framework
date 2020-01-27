@@ -206,6 +206,7 @@ Crayon also uses SConstruct as an alternative to makefiles due to its enhanced a
 
 For TexturePacker:
 + Go onto their website https://www.codeandweb.com/texturepacker/download
+	+ (Or use the direct download link https://www.codeandweb.com/download/texturepacker/5.2.0/TexturePacker-5.2.0-ubuntu64.deb)
 + Download the free installer file (For WSL/Dreamcast choose the Linux .deb file)
 + Install it
 + Run it once, read the legal stuff (Or not) and type "agree"
