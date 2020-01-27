@@ -261,10 +261,10 @@ uint8_t crayon_savefile_init_savefile_details(crayon_savefile_details_t * savefi
 	savefile_details->icon_anim_speed = icon_anim_speed;
 	savefile_details->eyecatch_type = VMUPKG_EC_NONE;	//The default
 
-	strcpy(savefile_details->desc_long, desc_long);
-	strcpy(savefile_details->desc_short, desc_short);
-	strcpy(savefile_details->app_id, app_id);
-	strcpy(savefile_details->save_name, save_name);
+	strlcpy(savefile_details->desc_long, desc_long, 32);
+	strlcpy(savefile_details->desc_short, desc_short, 16);
+	strlcpy(savefile_details->app_id, app_id, 16);
+	strlcpy(savefile_details->save_name, save_name, 26);
 
 	crayon_savefile_update_valid_saves(savefile_details, CRAY_SAVEFILE_UPDATE_MODE_BOTH);
 	savefile_details->valid_vmu_screens = crayon_savefile_get_valid_screens();
@@ -296,7 +296,7 @@ uint8_t crayon_savefile_load(crayon_savefile_details_t * savefile_details){
 	savename[6] = savefile_details->savefile_slot + '0';
 	savename[7] = '/';
 	savename[8] = '\0';
-	strcat(savename, savefile_details->save_name);
+	strlcat(savename, savefile_details->save_name, 32);
 
 	//If the savefile DNE, this will fail
 	if(!(fp = fopen(savename, "rb"))){
@@ -363,8 +363,8 @@ uint8_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	memcpy(data, savefile_details->savefile_data, savefile_details->savefile_size);
 
 	sprintf(pkg.desc_long, savefile_details->desc_long);
-	strcpy(pkg.desc_short, savefile_details->desc_short);
-	strcpy(pkg.app_id, savefile_details->app_id);
+	strlcpy(pkg.desc_short, savefile_details->desc_short, 16);
+	strlcpy(pkg.app_id, savefile_details->app_id, 16);
 	pkg.icon_cnt = savefile_details->icon_anim_count;
 	pkg.icon_anim_speed = savefile_details->icon_anim_speed;
 	memcpy(pkg.icon_pal, savefile_details->icon_palette, 32);
