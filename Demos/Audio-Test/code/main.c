@@ -259,7 +259,7 @@ int main(){
 	//Note last param is ignored for streaming
 	if(audio_create_source(&sourceMusic, &infoMusic, (vec2_f_t){0,0}, AL_FALSE, 0.5, 1, AUDIO_FREE_DATA) == AL_FALSE){return -1;}
 
-	audio_play_source(&sourceFX);
+	// audio_play_source(&sourceFX);
 	// audio_play_source(&sourceMusic);
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
@@ -309,9 +309,12 @@ int main(){
 			// sprintf(BUFFER, "%d, %d, %p, %.2f\n%.2f, %d, %.2f, %.2f\n%d", infoFX.streaming, infoFX.data_type, sourceFX.info,
 				// sourceFX.position.x, sourceFX.position.y,
 				// sourceFX.looping, sourceFX.volume, sourceFX.speed, sourceFX.num_buffers);
-			sprintf(BUFFER, "CONTROLS: \n-A starts the Streaming piano music\n-B stops it (bugged)\n-X pauses it\n-Y unpauses it");
+			audio_update_source_state(_audio_streamer_source);
+			sprintf(BUFFER, "CONTROLS: \n-A starts the Streaming piano music\n-B stops it (bugged?)\n-X pauses it\n-Y unpauses it\nCMD %d\n%d", _audio_streamer_source->source_state, _audio_streamer_stopping);
 			crayon_graphics_draw_text_mono(BUFFER, &BIOS_font, PVR_LIST_OP_POLY, 32, 100, 50, 2, 2, BIOS_P.palette_id);
 			// crayon_graphics_draw_text_mono(BUFFER, &B2, PVR_LIST_OP_POLY, 32, 100, 50, 2, 2, B2_P.palette_id);
+
+			//Chosing stop when stopped sets the state, but it never gets cleared. Maybe the thread is locked
 
 		pvr_list_finish();
 

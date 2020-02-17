@@ -66,6 +66,7 @@ ALCdevice * _al_device;
 //Since it only makes sense to stream one audio source (The music). I've hard coded it to only use one
 uint8_t         _audio_streamer_command;	//Should only be accessed with a mutex
 uint8_t         _audio_streamer_thd_active;	//Says if the streamer thread is currently active or not
+uint8_t         _audio_streamer_stopping;	//Only used for non-looping
 pthread_t       _audio_streamer_thd_id;	//Currently unused
 pthread_mutex_t _audio_streamer_lock;	//We lock the streamer command and thd_active vars
 
@@ -131,8 +132,6 @@ uint8_t audio_set_source_looping(audio_source_t * source, ALboolean looping);
 ALboolean audio_test_error(ALCenum * error, char * msg);
 
 void al_list_audio_devices(const ALCchar *devices);
-
-inline ALenum to_al_format(short channels, short samples);	//Unused
 
 bool is_big_endian();
 
