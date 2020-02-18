@@ -246,11 +246,13 @@ int main(){
 
 	//load in assets here
 	//Setup chopper sound effect
-	if(audio_load_WAV_file_info("/cd/test.wav", &infoFX, AUDIO_NOT_STREAMING) == AL_FALSE){return -1;}
+	if(audio_load_WAV_file_info("/cd/wololo.wav", &infoFX, AUDIO_NOT_STREAMING) == AL_FALSE){return -1;}
+	// if(audio_load_WAV_file_info("/cd/test.wav", &infoFX, AUDIO_NOT_STREAMING) == AL_FALSE){return -1;}
 	if(audio_test_error(&error, "loading wav file") == AL_TRUE){return -1;}
 	
 	//Create the source for playback
-	if(audio_create_source(&sourceFX, &infoFX, (vec2_f_t){0,0}, AL_TRUE, 0.25, 1, AUDIO_FREE_DATA) == AL_FALSE){return -1;}
+	if(audio_create_source(&sourceFX, &infoFX, (vec2_f_t){0,0}, AL_FALSE, 0.5, 1, AUDIO_FREE_DATA) == AL_FALSE){return -1;}
+	// if(audio_create_source(&sourceFX, &infoFX, (vec2_f_t){0,0}, AL_TRUE, 0.25, 1, AUDIO_FREE_DATA) == AL_FALSE){return -1;}
 
 	//Setup music
 	if(audio_load_WAV_file_info("/cd/The-Haunted-House.wav", &infoMusic, AUDIO_STREAMING) == AL_FALSE){return -1;}
@@ -309,8 +311,8 @@ int main(){
 			// sprintf(BUFFER, "%d, %d, %p, %.2f\n%.2f, %d, %.2f, %.2f\n%d", infoFX.streaming, infoFX.data_type, sourceFX.info,
 				// sourceFX.position.x, sourceFX.position.y,
 				// sourceFX.looping, sourceFX.volume, sourceFX.speed, sourceFX.num_buffers);
-			audio_update_source_state(_audio_streamer_source);
-			sprintf(BUFFER, "CONTROLS: \n-A starts the Streaming piano music\n-B stops it (bugged?)\n-X pauses it\n-Y unpauses it\nCMD %d\n%d", _audio_streamer_source->source_state, _audio_streamer_stopping);
+			audio_update_source_state(&sourceMusic);
+			sprintf(BUFFER, "CONTROLS: \n-A starts the Streaming piano music\n-B stops it (bugged?)\n-X pauses it\n-Y unpauses it\nSTATE %d\n%d", sourceMusic.state, _audio_streamer_stopping);
 			crayon_graphics_draw_text_mono(BUFFER, &BIOS_font, PVR_LIST_OP_POLY, 32, 100, 50, 2, 2, BIOS_P.palette_id);
 			// crayon_graphics_draw_text_mono(BUFFER, &B2, PVR_LIST_OP_POLY, 32, 100, 50, 2, 2, B2_P.palette_id);
 

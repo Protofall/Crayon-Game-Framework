@@ -36,6 +36,10 @@ typedef struct audio_info{
 	ALvoid * data;	//Is NULL when in streaming mode or when the user decides to free it up
 	ALsizei size, freq;
 	ALenum format;
+
+	//Move the buffer info to here
+	// ALuint * buff_id;
+	// uint8_t srcs_cnt;	//Keeps a record of how many sources are using this info and buffer
 } audio_info_t;
 
 typedef struct audio_source{
@@ -47,13 +51,14 @@ typedef struct audio_source{
 	float volume;	//Gain
 	float speed;	//Pitch
 
-	uint8_t num_buffers;
-	ALuint * buffer_id;	//Each source can use 1 or more buffers (Hard-code streaming to use 4 buffers, else only 1?)
-	ALuint source_id;	//The source it uses
-	ALint source_state;
+	uint8_t buffer_cnt;	//Number of buffers
+	ALuint * buff_id;	//Each source can use 1 or more buffers (Hard-code streaming to use 4 buffers, else only 1?)
+	ALuint src_id;	//The source it uses
+	ALint state;
 } audio_source_t;
 
-ALCcontext * _al_context;	//We only need one for all audio
+//We only need one of each for all audio
+ALCcontext * _al_context;
 ALCdevice * _al_device;
 
 #define AUDIO_COMMAND_NONE 0
@@ -70,7 +75,7 @@ uint8_t         _audio_streamer_stopping;	//Only used for non-looping
 pthread_t       _audio_streamer_thd_id;	//Currently unused
 pthread_mutex_t _audio_streamer_lock;	//We lock the streamer command and thd_active vars
 
-FILE *          _audio_streamer_fp;	//If a pointer to the file/data on disc
+FILE*           _audio_streamer_fp;	//If a pointer to the file/data on disc
 audio_source_t* _audio_streamer_source;	//Is null if none are streaming, otherwise points to the streaming struct
 										//And this contains a pointer to the info struct
 audio_info_t*   _audio_streamer_info;
@@ -113,7 +118,7 @@ ALboolean audio_prep_stream_buffers();
 void * audio_stream_player(void * args);	//This function is called by a pthread
 
 void audio_WAVE_buffer_fill(ALvoid * data);
-// void audio_CDDA_buffer_fill(ALvoid * data);
+void audio_CDDA_buffer_fill(ALvoid * data);
 
 //----------------------ADJUSTMENT---------------------//
 
