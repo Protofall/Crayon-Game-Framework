@@ -38,8 +38,9 @@ typedef struct audio_info{
 	ALenum format;
 
 	//Move the buffer info to here
+	// uint8_t buff_cnt;	//Number of buffers
 	// ALuint * buff_id;
-	// uint8_t srcs_cnt;	//Keeps a record of how many sources are using this info and buffer
+	// uint8_t srcs_attached;	//Keeps a record of how many sources are using this info and buffer
 } audio_info_t;
 
 typedef struct audio_source{
@@ -51,7 +52,7 @@ typedef struct audio_source{
 	float volume;	//Gain
 	float speed;	//Pitch
 
-	uint8_t buffer_cnt;	//Number of buffers
+	uint8_t buff_cnt;	//Number of buffers
 	ALuint * buff_id;	//Each source can use 1 or more buffers (Hard-code streaming to use 4 buffers, else only 1?)
 	ALuint src_id;	//The source it uses
 	ALint state;

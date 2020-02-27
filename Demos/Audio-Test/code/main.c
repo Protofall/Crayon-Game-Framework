@@ -274,7 +274,6 @@ int main(){
 	char BUFFER[512];
 	uint32_t previous_input[4] = {0};
 	while(1){
-		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
 			if((st->buttons & CONT_A) && !(previous_input[__dev->port] & CONT_A)){
@@ -296,6 +295,7 @@ int main(){
 		previous_input[__dev->port] = st->buttons;
 		MAPLE_FOREACH_END()
 
+		pvr_wait_ready();
 
 		pvr_scene_begin();
 

@@ -204,7 +204,7 @@ ALboolean audio_free_source(audio_source_t * source){
 	}
 
 	alDeleteSources(1, &source->src_id);
-	alDeleteBuffers(source->buffer_cnt, source->buff_id);	//1st param is number of buffers
+	alDeleteBuffers(source->buff_cnt, source->buff_id);	//1st param is number of buffers
 
 	//So we can later know there isn't a streamer presents
 	if(source == _audio_streamer_source){
@@ -293,11 +293,11 @@ ALboolean audio_create_source(audio_source_t * source, audio_info_t * info, vec2
 	*/
 
 	//1 buffer normally, but "AUDIO_STREAMING_NUM_BUFFERS" for streaming
-	source->buffer_cnt = (info->streaming == AUDIO_STREAMING) ? AUDIO_STREAMING_NUM_BUFFERS : 1;
+	source->buff_cnt = (info->streaming == AUDIO_STREAMING) ? AUDIO_STREAMING_NUM_BUFFERS : 1;
 
 	//Generate the buffers
-	source->buff_id = malloc(sizeof(ALuint) * source->buffer_cnt);
-	alGenBuffers(source->buffer_cnt, source->buff_id);	//Generating "source->buffer_cnt" buffers. 2nd param is a pointer to an array
+	source->buff_id = malloc(sizeof(ALuint) * source->buff_cnt);
+	alGenBuffers(source->buff_cnt, source->buff_id);	//Generating "source->buff_cnt" buffers. 2nd param is a pointer to an array
 															//of ALuint values which will store the names of the new buffers
 															//Seems "buffer" is just an ID and doesn't actually contain the data?
 	if(audio_test_error(&error, "buffer generation") == AL_TRUE){return AL_FALSE;}
@@ -452,7 +452,7 @@ ALboolean audio_prep_stream_buffers(){
 
 	// Fill all the buffers with audio data from the wave file
 	uint8_t i;
-	for(i = 0; i < _audio_streamer_source->buffer_cnt; i++){
+	for(i = 0; i < _audio_streamer_source->buff_cnt; i++){
 		data = malloc(AUDIO_STREAMING_DATA_CHUNK_SIZE);
 		audio_WAVE_buffer_fill(data);	//data array is filled with song info
 		alBufferData(_audio_streamer_source->buff_id[i], _audio_streamer_source->info->format, data, AUDIO_STREAMING_DATA_CHUNK_SIZE, _audio_streamer_source->info->freq);
