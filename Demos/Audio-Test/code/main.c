@@ -251,15 +251,15 @@ int main(){
 	if(audio_test_error(&error, "loading wav file") == AL_TRUE){return -1;}
 	
 	//Create the source for playback
-	if(audio_create_source(&sourceFX, &infoFX, (vec2_f_t){0,0}, AL_FALSE, 0.5, 1, AUDIO_FREE_DATA) == AL_FALSE){return -1;}
-	// if(audio_create_source(&sourceFX, &infoFX, (vec2_f_t){0,0}, AL_TRUE, 0.25, 1, AUDIO_FREE_DATA) == AL_FALSE){return -1;}
+	if(audio_create_source(&sourceFX, &infoFX, (vec2_f_t){0,0}, AL_FALSE, 0.5, 1) == AL_FALSE){return -1;}
+	// if(audio_create_source(&sourceFX, &infoFX, (vec2_f_t){0,0}, AL_TRUE, 0.25, 1) == AL_FALSE){return -1;}
 
 	//Setup music
 	if(audio_load_WAV_file_info("/cd/The-Haunted-House.wav", &infoMusic, AUDIO_STREAMING) == AL_FALSE){return -1;}
 	if(audio_test_error(&error, "loading wav file") == AL_TRUE){return -1;}
 
 	//Note last param is ignored for streaming
-	if(audio_create_source(&sourceMusic, &infoMusic, (vec2_f_t){0,0}, AL_FALSE, 0.5, 1, AUDIO_FREE_DATA) == AL_FALSE){return -1;}
+	if(audio_create_source(&sourceMusic, &infoMusic, (vec2_f_t){0,0}, AL_FALSE, 0.5, 1) == AL_FALSE){return -1;}
 
 	// audio_play_source(&sourceFX);
 	// audio_play_source(&sourceMusic);
