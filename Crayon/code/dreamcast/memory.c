@@ -576,12 +576,6 @@ extern uint8_t crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, cra
 		}
 	}
 
-	//Since the rest of the stuff doesn't really matter for empty arrays
-	if(src->list_size == 0){
-		dest->list_size = src->list_size;
-		return 0;
-	}
-
 	//First param is there to not throw errors when we init an empty list
 	if(crayon_memory_allocate_sprite_array(dest, src->list_size, 1)){
 		//An allocation error occured. Free the arrays that were allocated
