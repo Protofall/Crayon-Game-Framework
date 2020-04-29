@@ -60,12 +60,12 @@ extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palet
 //Option's format is TCCR (flip)SF-
 	//If T is set, we ignore the flip, frames and Left colour bits
 //If making an untextured array, set the spritesheet pointer to NULL
-extern void crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
+extern uint8_t crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
 	uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
 	uint8_t filter, uint8_t set_defaults);
 
 //Note, we assume dest isn't initialised
-extern void crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, crayon_sprite_array_t *src);
+extern uint8_t crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, crayon_sprite_array_t *src);
 
 extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_coord, vec2_u16_t world_dim,
 	vec2_u16_t window_coord, vec2_u16_t window_dim, float world_movement_factor);
