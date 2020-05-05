@@ -410,8 +410,9 @@ extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, char
 	return result;
 }
 
-extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id){
+extern uint8_t crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id){
 	copy->palette = malloc(original->colour_count * sizeof(uint32_t));
+	if(copy->palette == NULL){return 1;}
 	copy->colour_count = original->colour_count;
 	copy->bpp = original->bpp;
 	copy->palette_id = palette_id;
@@ -420,60 +421,9 @@ extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palet
 	for(i = 0; i < copy->colour_count; i++){	//Goes through the palette and adds in all values
 		copy->palette[i] = original->palette[i];
 	}
-	return;
+
+	return 0;
 }
-
-// extern uint8_t crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
-// 	uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
-// 	uint8_t filter, uint8_t set_defaults){
-	
-// 	sprite_array->options = options;
-// 	sprite_array->filter = filter;
-
-// 	if(ss){
-// 		sprite_array->spritesheet = ss;
-// 		sprite_array->animation = &ss->animation[animation_id];
-// 		sprite_array->palette = pal;
-// 		sprite_array->frames_used = frames_used;
-// 		sprite_array->options |= CRAY_HAS_TEXTURE;	//Set the textured bit
-// 	}
-// 	else{
-// 		sprite_array->spritesheet = NULL;	//For safety sake
-// 		sprite_array->palette = NULL;
-// 	}
-
-// 	sprite_array->coord = NULL;
-// 	sprite_array->layer = NULL;
-// 	sprite_array->scale = NULL;
-// 	sprite_array->colour = NULL;
-// 	sprite_array->rotation = NULL;
-// 	sprite_array->visible = NULL;
-// 	sprite_array->frame_id = NULL;
-// 	sprite_array->frame_uv = NULL;
-// 	sprite_array->fade = NULL;
-// 	sprite_array->flip = NULL;
-
-// 	//First param is there to not throw errors when we init an empty list
-// 	crayon_memory_allocate_sprite_array(sprite_array, list_size, 1);
-
-// 	//Since allocate function doesn't do this one
-// 	if(ss){
-// 		sprite_array->frame_uv = (vec2_u16_t *) malloc(frames_used * sizeof(vec2_u16_t));
-// 	}
-
-// 	//Sets default values so everything is initialised
-// 	if(set_defaults){
-// 		crayon_memory_set_defaults_sprite_array(sprite_array, 0, sprite_array->list_size - 1, 1);
-// 	}
-
-// 	//Add the references if the user asked for them
-// 	sprite_array->head = NULL;
-// 	if(options & CRAY_REF_LIST){
-// 		crayon_memory_add_sprite_array_refs(sprite_array, 0, list_size - 1);
-// 	}
-
-// 	return 0;
-// }
 
 extern uint8_t crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
 	uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
@@ -1344,6 +1294,16 @@ extern float crayon_memory_get_rotation(crayon_sprite_array_t * sprites, uint16_
 	return 0;
 }
 
+extern uint8_t crayon_memory_get_visibility(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+	if(index < sprites->list_size){
+		if(error){*error = 0;}
+		return sprites->visible[index];
+	}
+	if(error){*error = 1;}
+	perror("Your index is outside this array");
+	return 0;
+}
+
 extern uint8_t crayon_memory_get_layer(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
 	if(index < sprites->list_size){
 		if(error){*error = 0;}
@@ -1400,7 +1360,6 @@ extern uint8_t crayon_memory_set_coords(crayon_sprite_array_t * sprites, uint16_
 }
 
 extern uint8_t crayon_memory_set_colour(crayon_sprite_array_t * sprites, uint16_t index, uint32_t value){
-	// if(((sprites->options & CRAY_MULTI_COLOUR) && index == 0) || index < sprites->list_size){
 	if(index == 0 || ((sprites->options & CRAY_MULTI_COLOUR) && index < sprites->list_size)){
 		sprites->colour[index] = value;
 		return 0;
@@ -1455,6 +1414,15 @@ extern uint8_t crayon_memory_set_flip(crayon_sprite_array_t * sprites, uint16_t 
 extern uint8_t crayon_memory_set_rotation(crayon_sprite_array_t * sprites, uint16_t index, float value){
 	if(index == 0 || ((sprites->options & CRAY_MULTI_ROTATE) && index < sprites->list_size)){
 		sprites->rotation[index] = value;
+		return 0;
+	}
+	return 1;
+}
+
+
+extern uint8_t crayon_memory_set_visibility(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value){
+	if(index < sprites->list_size){
+		sprites->visible[index] = value;
 		return 0;
 	}
 	return 1;

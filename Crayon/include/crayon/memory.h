@@ -54,7 +54,7 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, char *path);
 
 //This will make a new palette struct thats a copy of another one.
-extern void crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id);
+extern uint8_t crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id);
 
 //Set initial array sizes and options for your sprite_array
 //Option's format is TCCR (flip)SF-
@@ -159,6 +159,7 @@ extern float crayon_memory_get_scale_y(crayon_sprite_array_t * sprites, uint16_t
 extern vec2_f_t crayon_memory_get_scales(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
 extern uint8_t crayon_memory_get_flip(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
 extern float crayon_memory_get_rotation(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
+extern uint8_t crayon_memory_get_visibility(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
 extern uint8_t crayon_memory_get_layer(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
 extern uint8_t crayon_memory_get_frame_id(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
 extern vec2_u16_t crayon_memory_get_frame_uv(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
@@ -166,7 +167,6 @@ extern vec2_u16_t crayon_memory_get_frame_uv(crayon_sprite_array_t * sprites, ui
 
 //------------------Render Struct Setters------------------//
 
-//UNTESTED
 extern uint8_t crayon_memory_set_coord_x(crayon_sprite_array_t * sprites, uint16_t index, float value);
 extern uint8_t crayon_memory_set_coord_y(crayon_sprite_array_t * sprites, uint16_t index, float value);
 extern uint8_t crayon_memory_set_coords(crayon_sprite_array_t * sprites, uint16_t index, vec2_f_t value);
@@ -177,6 +177,7 @@ extern uint8_t crayon_memory_set_scale_y(crayon_sprite_array_t * sprites, uint16
 extern uint8_t crayon_memory_set_scales(crayon_sprite_array_t * sprites, uint16_t index, vec2_f_t value);
 extern uint8_t crayon_memory_set_flip(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value);
 extern uint8_t crayon_memory_set_rotation(crayon_sprite_array_t * sprites, uint16_t index, float value);
+extern uint8_t crayon_memory_set_visibility(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value);
 extern uint8_t crayon_memory_set_layer(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value);
 extern uint8_t crayon_memory_set_frame_id(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value);
 extern uint8_t crayon_memory_set_frame_uv(crayon_sprite_array_t * sprites, uint16_t index, uint8_t frame_id);
