@@ -10,6 +10,9 @@
 #include <string.h>	//For length of string
 #include <math.h>
 
+//For region and htz stuff
+#include <dc/flashrom.h>
+
 #define CRAY_OP_LIST PVR_LIST_OP_POLY	//No alpha
 #define CRAY_TR_LIST PVR_LIST_TR_POLY	//Alpha is either full on or off
 #define CRAY_PT_LIST PVR_LIST_PT_POLY	//Varying alpha
@@ -31,6 +34,14 @@
 	//Since I currently can't print any text while rendering an object, instead I can set vars to
 	//this variable and render them later since this is global
 float __GRAPHICS_DEBUG_VARIABLES[16];
+
+uint16_t __htz;
+float __htz_adjustment;
+
+#define CRAYON_ENABLE_OP (1 << 0)
+#define CRAYON_ENABLE_TR (1 << 1)
+#define CRAYON_ENABLE_PT (1 << 2)
+void crayon_graphics_init(uint8_t poly_modes);
 
 //Sets a palette for a spritesheet
 extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);

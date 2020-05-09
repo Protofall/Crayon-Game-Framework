@@ -1,5 +1,39 @@
 #include "graphics.h"
 
+void crayon_graphics_init(uint8_t poly_modes){
+	pvr_init_params_t pvr_params;
+	pvr_params.opb_sizes[0] = (poly_modes & CRAYON_ENABLE_OP) ? PVR_BINSIZE_16 : PVR_BINSIZE_0;
+	pvr_params.opb_sizes[1] = PVR_BINSIZE_0;
+	pvr_params.opb_sizes[2] = (poly_modes & CRAYON_ENABLE_TR) ? PVR_BINSIZE_16 : PVR_BINSIZE_0;
+	pvr_params.opb_sizes[3] = PVR_BINSIZE_0;
+	pvr_params.opb_sizes[4] = (poly_modes & CRAYON_ENABLE_PT) ? PVR_BINSIZE_16 : PVR_BINSIZE_0;
+
+	pvr_params.vertex_buf_size = 512 * 1024;
+	pvr_params.dma_enabled = 0;
+	pvr_params.fsaa_enabled = 0;	//Horizontal scaling (?)
+	pvr_params.autosort_disabled = 0;
+
+	pvr_init(&pvr_params);
+
+	if(vid_check_cable() == CT_VGA){
+		vid_set_mode(DM_640x480_VGA, PM_RGB565);	//60Hz
+		__htz = 60;
+		__htz_adjustment = 1;
+	}
+	else if(flashrom_get_region() == FLASHROM_REGION_EUROPE){
+		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
+		__htz = 50;
+		__htz_adjustment = 1.2;
+	}
+	else{
+		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
+		__htz = 60;
+		__htz_adjustment = 1;
+	}
+
+	return;
+}
+
 //There are 4 palettes for 8BPP and 64 palettes for 4BPP
 extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
 	if(cp->palette_id < 0 || cp->bpp < 0 || cp->bpp * cp->palette_id >= 1024){	//Invalid format/palette not properly set
