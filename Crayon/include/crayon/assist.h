@@ -14,7 +14,7 @@
 extern char * crayon_get_version();
 
 //Takes two strings and returns a string which is source2 appended to source1
-extern uint8_t crayon_assist_append_extension(char ** dest, char * source1, char * source2);
+extern uint8_t crayon_assist_combine_strings(char ** dest, char * source1, char * source2);
 
 //Searches for the last '.' in a string and makes copy, but with "extension" after it
 //Note that "." is not a valid source and will result in an error (Since there's nothing before the '.')
@@ -31,6 +31,10 @@ extern uint8_t crayon_assist_read_file(void ** buffer, char * path, size_t size_
 	//The last char point will be set to te last char read if pointer != NULL
 	//this is useful for checking why it stopped reading a number
 extern uint32_t crayon_assist_fgeti(FILE * f, int16_t * last_char);
+
+//This function instead finds the next number and modifies the parameter to add in it.
+	//If the EOF is found before a number, then this returns 0
+extern int crayon_assist_fget_next_int(FILE * f, int * number);
 
 // If given bit_length = 5 and offset = 2 we will return the bit_length bit offset to the left by offset
 // For example if we give it number = 90 = 01011010 then we return 10110 = 22

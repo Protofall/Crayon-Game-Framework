@@ -10,7 +10,7 @@ extern int16_t crayon_memory_get_animation_id(char * name, crayon_spritesheet_t 
 	return -1;
 }
 
-extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *texture_width, uint16_t *texture_height, uint32_t *format,
+extern uint8_t crayon_memory_load_dtex(crayon_txr_ptr_t *dtex, uint16_t *texture_width, uint16_t *texture_height, uint32_t *format,
 	char *texture_path){
 
 	if(*dtex != NULL){return 1;}
@@ -48,108 +48,121 @@ extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *texture_width,
 
 extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_t *cp, int8_t palette_id, char *path){
 	uint8_t result = 0;
-	FILE *sheet_file = NULL;
+	uint16_t i = 0;
+
+	FILE * txt_file = NULL;
+	char * palette_path = NULL;
+	char * txt_path = NULL;
+
+	ss->texture = NULL;
+	cp->palette = NULL;
+	ss->animation = NULL;
 
 	#define ERROR(n) {result = (n); goto cleanup;}
 
 	// Load texture
 	//---------------------------------------------------------------------------
 
-	ss->texture = NULL;
 	uint8_t dtex_result = crayon_memory_load_dtex(&ss->texture, &ss->texture_width, &ss->texture_height, &ss->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	int16_t texture_format = (((1 << 3) - 1) & (ss->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
-
-	//Invalid format
-	if(texture_format < 0 || texture_format > 6){
-		ERROR(7);
-	}
+	uint8_t texture_format = crayon_assist_extract_bits(ss->texture_format, 3, 27);	//Extract the Pixel format
 
 	uint8_t bpp = 0;
-	if(texture_format == 5){
+	if(texture_format > 6){	//Invalid format
+		ERROR(7);
+	}
+	else if(texture_format == 5){
 		bpp = 4;
 	}
 	else if(texture_format == 6){
 		bpp = 8;
 	}
-	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
-		char * palette_path = NULL;
-		crayon_assist_append_extension(&palette_path, path, ".pal");
 
-		cp->palette = NULL;
-		int resultPal = crayon_memory_load_palette(cp, bpp, palette_path);
-			//The function will modify the palette and colour count. Also it sends the BPP through
+	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
+		if(crayon_assist_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
+
+		int resultPal = crayon_memory_load_palette(cp, bpp, palette_id, palette_path);
+		//The function will modify the palette and colour count. Also it sends the BPP through
+		if(resultPal){ERROR(9 + resultPal);}
 		free(palette_path);
-		cp->palette_id = palette_id;
-		if(resultPal){ERROR(8 + resultPal);}
+		palette_path = NULL;
 	}
 
-	char * txt_path = NULL;
 	if(crayon_assist_change_extension(&txt_path, path, "txt")){ERROR(14);}
 
-	sheet_file = fopen(txt_path, "rb");
+	txt_file = fopen(txt_path, "rb");
+	if(!txt_file){ERROR(16);}
 	free(txt_path);
-	if(!sheet_file){ERROR(15);}
+	txt_path = NULL;
 
-	int uint8_holder;	//Can't really read straight into uint8_t's so this is the work around :(
-	fscanf(sheet_file, "%d\n", &uint8_holder);
-	ss->animation_count = uint8_holder;
+	int number_holder;
+	if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(17);}
+	ss->animation_count = number_holder;
 
-	ss->animation = (crayon_animation_t *) malloc(sizeof(crayon_animation_t) * ss->animation_count);
-	if(!ss->animation){ERROR(16);}
+	ss->animation = malloc(sizeof(crayon_animation_t) * ss->animation_count);
+	if(!ss->animation){ERROR(18);}
 	
-	uint16_t i;
-	int8_t scanned;
 	char anim_name_part;
 	int16_t count;
-	uint16_t sprite_index = 0;
-	for(i = 0; i < ss->animation_count * 2; i++){
-		if(i % 2 == 0){
-			//Check the length of the name
-			anim_name_part = '0';
-			count = -1;
-			while(anim_name_part != '\n'){
-				anim_name_part = getc(sheet_file);
-				count++;
-			}
-			ss->animation[sprite_index].name = (char *) malloc((count + 1) * sizeof(char));
+	for(i = 0; i < ss->animation_count; i++){
+		ss->animation[i].name = NULL;
 
-			fseek(sheet_file, -count - 1, SEEK_CUR);  //Go back so we can store the name
-			fread(ss->animation[sprite_index].name, sizeof(uint8_t), count, sheet_file);
-			ss->animation[sprite_index].name[count] = '\0';	//Add the null-terminator
+		//Check the length of the name
+		count = 0;
+		while((anim_name_part = getc(txt_file)) != '\n'){
+			count++;
 		}
-		else{
-			scanned = fscanf(sheet_file, "%hu %hu %hu %hu %hu %hu %d\n",
-								&ss->animation[sprite_index].x,
-								&ss->animation[sprite_index].y,
-								&ss->animation[sprite_index].sheet_width,
-								&ss->animation[sprite_index].sheet_height,
-								&ss->animation[sprite_index].frame_width,
-								&ss->animation[sprite_index].frame_height,
-								&uint8_holder);
-			ss->animation[sprite_index].frame_count = uint8_holder;
-			if(scanned != 7){
-				free(ss->animation);
-				ERROR(17);	//Possible Mem-leak place
-			}
-			sprite_index++;
-		}
+
+		ss->animation[i].name = malloc((count + 1) * sizeof(char));
+		if(!ss->animation[i].name){ERROR(19);}
+
+		fseek(txt_file, -count - 1, SEEK_CUR);  //Go back so we can store the name
+
+		//Store the name
+		fread(ss->animation[i].name, sizeof(char), count, txt_file);
+		ss->animation[i].name[count] = '\0';
+
+		//Store the rest of the info
+		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(20);}
+		ss->animation[i].x = number_holder;
+		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(21);}
+		ss->animation[i].y = number_holder;
+		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(22);}
+		ss->animation[i].sheet_width = number_holder;
+		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(23);}
+		ss->animation[i].sheet_height = number_holder;
+		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(24);}
+		ss->animation[i].frame_width = number_holder;
+		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(25);}
+		ss->animation[i].frame_height = number_holder;
+		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(26);}
+		ss->animation[i].frame_count = number_holder;
 	}
 
 	#undef ERROR
 
 	cleanup:
 
-	if(sheet_file){fclose(sheet_file);} //May need to enclode this in an if "res >= 12" if statement
+	if(txt_file){fclose(txt_file);} //May need to enclode this in an if "res >= 12" if statement
 
 	//If a failure occured somewhere
-	// if(result && ss->texture){pvr_mem_free(ss->texture);}
+	if(result){
+		if(ss->texture){pvr_mem_free(ss->texture);}
+		if(cp->palette){free(cp->palette);}
 
-	//If we allocated memory for the palette and error out
-	if(result && cp->palette != NULL){
-		free(cp->palette);
+		//Cleanup any names that were given
+		if(ss->animation){
+			uint16_t j;
+			for(j = 0; j <= i; j++){
+				if(ss->animation[j].name){free(ss->animation[j].name);}
+			}
+			free(ss->animation);
+		}
 	}
+
+	if(palette_path){free(palette_path);}
+	if(txt_path){free(palette_path);}
 
 	return result;
 }
@@ -158,95 +171,84 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	uint8_t result = 0;
 	fp->chars_per_row = NULL;
 	fp->char_width = NULL;
-	FILE *sheet_file = NULL;
+	fp->char_x_coord = NULL;
+	fp->texture = NULL;
+
+	cp->palette = NULL;
+	FILE * txt_file = NULL;
+
+	char * palette_path = NULL;
+	char * txt_path = NULL;
 
 	#define ERROR(n) {result = (n); goto cleanup;}
 
 	// Load texture
 	//---------------------------------------------------------------------------
 
-	fp->texture = NULL;
 	uint8_t dtex_result = crayon_memory_load_dtex(&fp->texture, &fp->texture_width, &fp->texture_height, &fp->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	int16_t texture_format = (((1 << 3) - 1) & (fp->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
-
-	//Invalid format
-	if(texture_format < 0 || texture_format > 6){
-		ERROR(7);
-	}
+	uint8_t texture_format = crayon_assist_extract_bits(fp->texture_format, 3, 27);	//Extract the Pixel format
 
 	uint8_t bpp = 0;
-	if(texture_format == 5){
+	if(texture_format > 6){	//Invalid format
+		ERROR(7);
+	}
+	else if(texture_format == 5){
 		bpp = 4;
 	}
 	else if(texture_format == 6){
 		bpp = 8;
 	}
+
 	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
-		char * palette_path = NULL;
-		crayon_assist_append_extension(&palette_path, path, ".pal");
+		if(crayon_assist_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
 
-		cp->palette = NULL;
-		int resultPal = crayon_memory_load_palette(cp, bpp, palette_path);
-			//The function will modify the palette and colour count. Also it sends the BPP through
+		//The function will load the palette and colour count. With the specified BPP
+		int resultPal = crayon_memory_load_palette(cp, bpp, palette_id, palette_path);
+		if(resultPal){ERROR(9 + resultPal);}
 		free(palette_path);
-		cp->palette_id = palette_id;
-		if(resultPal){ERROR(8 + resultPal);}
+		palette_path = NULL;
 	}
 
-	char * txt_path = NULL;
-	if(crayon_assist_change_extension(&txt_path, path, "txt")){ERROR(14);}
+	if(crayon_assist_change_extension(&txt_path, path, "txt")){ERROR(15);}
 
-	sheet_file = fopen(txt_path, "rb");
+	txt_file = fopen(txt_path, "rb");
+	if(!txt_file){ERROR(16);}
 	free(txt_path);
-	if(!sheet_file){ERROR(15);}
+	txt_path = NULL;
 
-	int uint8_holder;
-	if(fscanf(sheet_file, "%d\n", &uint8_holder) != 1){
-		ERROR(16);
-	}
-	fp->char_height = uint8_holder;
+	int number_holder;
+	if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(17);}
+	fp->char_height = number_holder;
 
-	if(fscanf(sheet_file, "%d", &uint8_holder) != 1){
-		ERROR(17);
-	}
+	if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(18);}
+	fp->num_rows = number_holder;
 
-	fp->num_rows = uint8_holder;
-
-
-	fp->chars_per_row = (uint8_t *) malloc((fp->num_rows)*sizeof(uint8_t));
-	if(fp->chars_per_row == NULL){ERROR(18);}
+	fp->chars_per_row = malloc(fp->num_rows * sizeof(uint8_t));
+	if(!fp->chars_per_row){ERROR(19);}
 
 	fp->num_chars = 0;
 	int i;
 	for(i = 0; i < fp->num_rows; i++){
-		int8_t res = fscanf(sheet_file, "%d", &uint8_holder);
-		fp->chars_per_row[i] = uint8_holder;
+		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(20);}
+		fp->chars_per_row[i] = number_holder;
 		fp->num_chars += fp->chars_per_row[i];
-		if(res != 1){
-			ERROR(19);
-		}
 	}
-	fscanf(sheet_file, "\n");	//Getting to the next line
 
-	fp->char_width = (uint8_t *) malloc((fp->num_chars)*sizeof(uint8_t));
-	if(fp->char_width == NULL){ERROR(20);}
+	fp->char_width = malloc((fp->num_chars) * sizeof(uint8_t));
+	if(!fp->char_width){ERROR(21);}
 
-	i = 0;	//Might be redundant
 	for(i = 0; i < fp->num_chars; i++){
-		int8_t res = fscanf(sheet_file, "%d", &uint8_holder);
-		fp->char_width[i] = uint8_holder;
-		if(res != 1){
-			ERROR(21);
-		}
+		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(22);}
+		fp->char_width[i] = number_holder;
 	}
 
 	//This section geterates the x coordinates for each char
-	fp->char_x_coord = (uint8_t *) malloc((fp->num_chars)*sizeof(uint8_t));
-	if(fp->char_x_coord == NULL){ERROR(22);}
+	fp->char_x_coord = malloc((fp->num_chars) * sizeof(uint8_t));
+	if(!fp->char_x_coord){ERROR(23);}
 
-	i = 0;	//Might be redundant
+	//This for loop generates the x positions in the texture for each character
 	int chars_counted_in_row = 0;
 	int current_row = 0;
 	for(i = 0; i < fp->num_chars; i++){
@@ -257,12 +259,14 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 			fp->char_x_coord[i] = fp->char_x_coord[i - 1] + fp->char_width[i - 1];	//nth element = (n-1)th element's width + x pos
 		}
 		chars_counted_in_row++;
+
 		if(chars_counted_in_row == fp->chars_per_row[current_row]){	//When we reach the end of the row, reset our counters
 			current_row++;
 			chars_counted_in_row = 0;
 		}
 	}
 
+	//Spacing when rendering the text
 	fp->char_spacing.x = 0;
 	fp->char_spacing.y = 0;
 
@@ -270,36 +274,31 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 
 	cleanup:
 
-	if(sheet_file){fclose(sheet_file);}
+	if(txt_file){fclose(txt_file);}
 
-	// If a failure occured somewhere
-	// if(result && fp->texture){pvr_mem_free(fp->texture);}
-
-	//If we allocated memory for the palette and error out
+	//If an error occured, free these things
 	if(result){
-		if(result && cp->palette != NULL){
-			free(cp->palette);
-		}
-		if(fp->chars_per_row != NULL){
-			free(fp->chars_per_row);
-		}
-
-		if(fp->char_width != NULL){
-			free(fp->char_width);
-		}
-		if(fp->char_x_coord != NULL){
-			free(fp->char_x_coord);
-		}
+		if(fp->texture){pvr_mem_free(fp->texture);}
+		if(cp->palette){free(cp->palette);}
+		if(fp->chars_per_row){free(fp->chars_per_row);}
+		if(fp->char_width){free(fp->char_width);}
+		if(fp->char_x_coord){free(fp->char_x_coord);}
 	}
+
+	if(palette_path){free(palette_path);}
+	if(txt_path){free(palette_path);}
 
 	return result;
 }
 
 extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, int8_t palette_id, char *path){
 	uint8_t result = 0;
-	FILE *sheet_file = NULL;
+	FILE * txt_file = NULL;
 
 	#define ERROR(n) {result = (n); goto cleanup;}
+
+	char * palette_path = NULL;
+	char * txt_path = NULL;
 
 	// Load texture
 	//---------------------------------------------------------------------------
@@ -308,59 +307,49 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	uint8_t dtex_result = crayon_memory_load_dtex(&fm->texture, &fm->texture_width, &fm->texture_height, &fm->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	int16_t texture_format = (((1 << 3) - 1) & (fm->texture_format >> (28 - 1)));	//Extract bits 27 - 29, Pixel format
-
-	//Invalid format
-	if(texture_format < 0 || texture_format > 6){
-		ERROR(7);
-	}
+	uint8_t texture_format = crayon_assist_extract_bits(fm->texture_format, 3, 27);	//Extract the Pixel format
 
 	uint8_t bpp = 0;
-	if(texture_format == 5){
+	if(texture_format > 6){	//Invalid format
+		ERROR(7);
+	}
+	else if(texture_format == 5){
 		bpp = 4;
 	}
 	else if(texture_format == 6){
 		bpp = 8;
 	}
+
 	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
-		char * palette_path = NULL;
-		crayon_assist_append_extension(&palette_path, path, ".pal");
+		if(crayon_assist_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
 		
 		cp->palette = NULL;
-		int resultPal = crayon_memory_load_palette(cp, bpp, palette_path);
-			//The function will modify the palette and colour count. Also it sends the BPP through
+		//The function will load the palette and colour count. With the specified BPP
+		uint8_t resultPal = crayon_memory_load_palette(cp, bpp, palette_id, palette_path);
+		if(resultPal){ERROR(9 + resultPal);}
 		free(palette_path);
-		cp->palette_id = palette_id;
-		if(resultPal){ERROR(8 + resultPal);}
+		palette_path = NULL;
 	}
 
-	char * txt_path = NULL;
-	if(crayon_assist_change_extension(&txt_path, path, "txt")){ERROR(14);}
+	if(crayon_assist_change_extension(&txt_path, path, "txt")){ERROR(15);}
 
-	sheet_file = fopen(txt_path, "rb");
+	//Read the info file ( Format "NUM1\sNUM2\sNUM3\sNUM4\n" )
+	txt_file = fopen(txt_path, "rb");
+	if(!txt_file){ERROR(16);}
 	free(txt_path);
-	if(!sheet_file){ERROR(15);}
+	txt_path = NULL;
 
-	int test1, test2, test3, test4;
-	if(fscanf(sheet_file, "%d %d %d %d\n", &test1, &test2, &test3, &test4) != 4){	//Storing them in into since hhu looks for one char...
-		ERROR(16);
-	}
-
-	fm->char_width = test1;
-	fm->char_height = test2;
-	fm->num_columns = test3;
-	fm->num_rows = test4;
+	int number;
+	if(crayon_assist_fget_next_int(txt_file, &number)){ERROR(17);}
+	fm->char_width = number;
+	if(crayon_assist_fget_next_int(txt_file, &number)){ERROR(18);}
+	fm->char_height = number;
+	if(crayon_assist_fget_next_int(txt_file, &number)){ERROR(19);}
+	fm->num_columns = number;
+	if(crayon_assist_fget_next_int(txt_file, &number)){ERROR(20);}
+	fm->num_rows = number;
 
 	fm->num_chars = fm->num_columns * fm->num_rows;	//The number of chars *may* be less than this, but it won't be fatal
-
-	//Attempt to come back here and read the whole file directly into the vars
-	// if(fscanf(sheet_file, "%hhu %hhu %hhu %hhu\n", fm->char_width, fm->char_height, fm->num_columns, fm->num_rows) != 4){
-	// if(fscanf(sheet_file, "%hhu %hhu %hhu %hhu\n", &fm->char_width, &fm->char_height, &fm->num_columns, &fm->num_rows) != 4){
-	// if(fscanf(sheet_file, "%d %d %d %d\n", &fm->char_width, &fm->char_height, &fm->num_columns, &fm->num_rows) != 4){
-	// if(fscanf(sheet_file, "%hhd %hhd %hhd %hhd\n", &fm->char_width, &fm->char_height, &fm->num_columns, &fm->num_rows) != 4){
-	// if(fscanf(sheet_file, "%u %u %u %u\n", &fm->char_width, &fm->char_height, &fm->num_columns, &fm->num_rows) != 4){
-		// ERROR(15);
-	// }
 
 	fm->char_spacing.x = 0;
 	fm->char_spacing.y = 0;
@@ -369,43 +358,43 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 
 	cleanup:
 
-	if(sheet_file){fclose(sheet_file);}
+	if(txt_file){fclose(txt_file);}
 
-	// If a failure occured somewhere
-	// if(result && fm->texture){pvr_mem_free(fm->texture);}
+	//If a failure occured somewhere after loading texture
+	if(result && fm->texture){pvr_mem_free(fm->texture);}
 
 	//If we allocated memory for the palette and error out
-	if(result && cp->palette != NULL){
-		free(cp->palette);
-	}
+	if(result && cp->palette){free(cp->palette);}
+
+	if(palette_path){free(palette_path);}
+	if(txt_path){free(palette_path);}
 
 	return result;
 }
 
-extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, char *path){
+extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, int8_t palette_id, char *path){
 	uint8_t result = 0;
 	#define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
 	
-	FILE *palette_file = fopen(path, "rb");
+	FILE * palette_file = fopen(path, "rb");
 	if(!palette_file){PAL_ERROR(1);}
 
 	dpal_header_t dpal_header;
 	if(fread(&dpal_header, sizeof(dpal_header), 1, palette_file) != 1){PAL_ERROR(2);}
 
-	if(memcmp(dpal_header.magic, "DPAL", 4) | !dpal_header.color_count){PAL_ERROR(3);}
+	if(memcmp(dpal_header.magic, "DPAL", 4) || dpal_header.color_count == 0){PAL_ERROR(3);}
 
 	cp->palette = malloc(dpal_header.color_count * sizeof(uint32_t));
 	if(!cp->palette){PAL_ERROR(4);}
 
-	if(fread(cp->palette, sizeof(uint32_t), dpal_header.color_count,
-		palette_file) != dpal_header.color_count){PAL_ERROR(5);}
+	if(fread(cp->palette, sizeof(uint32_t), dpal_header.color_count, palette_file) !=
+		dpal_header.color_count){PAL_ERROR(5);}
 
 	#undef PAL_ERROR
 
 	cp->colour_count = dpal_header.color_count;
 	cp->bpp = bpp;
-	cp->palette_id = -1;	//In the ss, prop and mono font load functions this doesn't matter
-							//But if used on its own I think this should stay
+	cp->palette_id = palette_id;
 
 	PAL_cleanup:
 
@@ -1108,11 +1097,9 @@ extern uint8_t crayon_memory_free_mono_font_sheet(crayon_font_mono_t *fm){
 }
 
 extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
-	if(cp){
-		if(cp->palette){
-			free(cp->palette);
-			return 0;
-		}
+	if(cp && cp->palette){
+		free(cp->palette);
+		return 0;
 	}
 	return 1;
 }

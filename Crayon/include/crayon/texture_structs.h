@@ -6,6 +6,9 @@
 
 #include "vector_structs.h"
 
+//Later when I do ports, the code will be easier to work with
+#define crayon_txr_ptr_t pvr_ptr_t
+
 //The palette has its own struct since users might want to share one palette across multiple textures
 typedef struct crayon_palette{
 	uint32_t *palette;		//Pointer to heap allocated palette (Its treated like an array of size "colour_count")
@@ -28,7 +31,7 @@ typedef struct crayon_animation{
 
 //For pre-processing. An anim file is in the format "width, height, frame count"
 typedef struct crayon_spritesheet{
-	pvr_ptr_t texture;
+	crayon_txr_ptr_t texture;
 	char *name;	//UNUSED. Might be useful for when it comes time to un-mount a romdisk, otherwise I don't think its needed
 	uint16_t texture_width;	//The spritesheet's width
 	uint16_t texture_height;
@@ -55,7 +58,7 @@ num_rows num_chars_row_1 num_chars_row_2 (etc)
 */
 
 typedef struct crayon_font_prop{
-	pvr_ptr_t texture;
+	crayon_txr_ptr_t texture;
 	uint16_t texture_width;
 	uint16_t texture_height;
 	uint32_t texture_format;		//The raw dtex type value
@@ -75,7 +78,7 @@ typedef struct crayon_font_prop{
 //All chars have the same width and height
 //Info file format: "char_width char_height num_columns num_rows"
 typedef struct crayon_font_mono{
-	pvr_ptr_t texture;
+	crayon_txr_ptr_t texture;
 	uint16_t texture_width;
 	uint16_t texture_height;
 	uint32_t texture_format;		//The raw dtex type value

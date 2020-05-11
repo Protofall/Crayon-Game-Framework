@@ -38,7 +38,7 @@ extern int16_t crayon_memory_get_animation_id(char * name, crayon_spritesheet_t 
 //------------------Allocating memory------------------//
 
 //Reads a file, loads it into a dtex
-extern uint8_t crayon_memory_load_dtex(pvr_ptr_t *dtex, uint16_t *texture_width, uint16_t *texture_height, uint32_t *format,
+extern uint8_t crayon_memory_load_dtex(crayon_txr_ptr_t *dtex, uint16_t *texture_width, uint16_t *texture_height, uint32_t *format,
 	char *texture_path);
 
 //Loads a "crayon_spritesheet" spritesheet into memory
@@ -51,7 +51,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, int8_t palette_id, char *path);
 
 //If given a valid path and a crayon_palette object, it will populate the palette object with the correct data
-extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, char *path);
+extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, int8_t palette_id, char *path);
 
 //This will make a new palette struct thats a copy of another one.
 extern uint8_t crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id);

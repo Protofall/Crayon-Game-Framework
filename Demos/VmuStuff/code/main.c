@@ -66,7 +66,7 @@
 
 #endif
 
-pvr_ptr_t font_tex;
+crayon_txr_ptr_t font_tex;
 uint8_t error = 0;
 
 //Init font
