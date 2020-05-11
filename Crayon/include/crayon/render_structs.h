@@ -42,7 +42,6 @@ typedef struct crayon_viewport_t{
 typedef struct crayon_sprite_array_reference{
 	uint16_t id;
 	struct crayon_sprite_array_reference * next;
-	struct crayon_sprite_array_reference * prev;	//Should remove this later
 } crayon_sprite_array_reference_t;
 
 //This is designed for the multi-draw functions. If you want to draw a single thing with this struct

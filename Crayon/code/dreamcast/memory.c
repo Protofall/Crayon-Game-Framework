@@ -657,9 +657,9 @@ extern uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite
 	if(sprite_array->head == NULL){
 		for(i = lower; i <= upper; i++){
 			//Setup new node
-			curr_node = (crayon_sprite_array_reference_t *)malloc(sizeof(crayon_sprite_array_reference_t));
-			if(curr_node == NULL){return 1;}
-			curr_node->prev = prev_node;
+			curr_node = malloc(sizeof(crayon_sprite_array_reference_t));
+			if(!curr_node){return 1;}
+
 			curr_node->next = NULL;
 			curr_node->id = i;
 
@@ -682,26 +682,16 @@ extern uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite
 		curr_node = curr_node->next;
 	}
 
-	crayon_sprite_array_reference_t * append_node = curr_node;
-	prev_node = append_node;
-
+	prev_node = curr_node;
 	for(i = lower; i <= upper; i++){
 		//Setup new node
-		curr_node = (crayon_sprite_array_reference_t *)malloc(sizeof(crayon_sprite_array_reference_t));
-		if(curr_node == NULL){return 1;}
-		curr_node->prev = prev_node;
+		curr_node = malloc(sizeof(crayon_sprite_array_reference_t));
+		if(!curr_node){return 1;}
+
 		curr_node->next = NULL;
 		curr_node->id = i;
 
-		//Update head if needed
-		if(append_node->next == NULL){
-			append_node->next = curr_node;
-		}
-		else{
-			prev_node->next = curr_node;	//Because otheriwse prev_node == NULL and that has issues
-		}
-
-		//Update previous node
+		prev_node->next = curr_node;
 		prev_node = curr_node;
 	}
 
@@ -711,20 +701,18 @@ extern uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite
 extern void crayon_memory_remove_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t * indexes,
 	uint16_t indexes_length){
 
-	uint16_t i_c = 0;	//The index for the next node to delete
+	uint16_t i_c = 0;	//The index for the "indexes" array. Also used to adjust the id's of the nodes
 	crayon_sprite_array_reference_t * curr_node = sprite_array->head;
+	crayon_sprite_array_reference_t * prev_node = NULL;
 	crayon_sprite_array_reference_t * delete_node;
 	while(curr_node != NULL){
 		if(i_c < indexes_length && curr_node->id == indexes[i_c]){	//Element we need to delete
-			if(curr_node->prev != NULL){	//If it had a previous
-				curr_node->prev->next = curr_node->next;
+			//Remove this current node from the list
+			if(prev_node != NULL){
+				prev_node->next = curr_node->next;
 			}
-			else{	//If it was the former head, set the new head
+			if(sprite_array->head == curr_node){
 				sprite_array->head = curr_node->next;
-			}
-
-			if(curr_node->next != NULL){	//If it has a next
-				curr_node->next->prev = curr_node->prev;
 			}
 
 			delete_node = curr_node;
@@ -733,7 +721,10 @@ extern void crayon_memory_remove_sprite_array_refs(crayon_sprite_array_t *sprite
 			i_c++;
 			continue;
 		}
+
+		//Else we keep curr_node and adjust its id
 		curr_node->id -= i_c;
+		prev_node = curr_node;
 		curr_node = curr_node->next;
 	}
 
@@ -1130,15 +1121,17 @@ extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_arr
 	sprite_array->visible = NULL;
 
 	//Free the references linked list (This should probably use the remove func)
-	crayon_sprite_array_reference_t * node = sprite_array->head;
-	while(node != NULL){
-		if(node->next == NULL){
-			free(node);
-			node = NULL;
+	crayon_sprite_array_reference_t * curr_node = sprite_array->head;
+	crayon_sprite_array_reference_t * prev_node;
+	while(curr_node != NULL){
+		if(curr_node->next == NULL){
+			free(curr_node);
+			curr_node = NULL;
 		}
 		else{
-			node = node->next;	//node->next is not null?
-			free(node->prev);	//Apparently this can be uninitialised? Must be an error elsewhere
+			prev_node = curr_node;
+			curr_node = curr_node->next;
+			free(prev_node);
 		}
 	}
 
