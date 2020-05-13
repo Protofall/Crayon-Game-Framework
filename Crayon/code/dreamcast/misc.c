@@ -1,6 +1,6 @@
-#include "assist.h"
+#include "misc.h"
 
-extern char * crayon_get_version(){
+extern char * crayon_misc_get_version(){
 	char * version = malloc(sizeof(char) * 16);
 	if(!version){
 		return NULL;
@@ -11,7 +11,7 @@ extern char * crayon_get_version(){
 	return version;
 }
 
-extern uint8_t crayon_assist_combine_strings(char ** dest, char * source1, char * source2){
+extern uint8_t crayon_misc_combine_strings(char ** dest, char * source1, char * source2){
 	if(!source1 || !source2){
 		return 1;
 	}
@@ -29,7 +29,7 @@ extern uint8_t crayon_assist_combine_strings(char ** dest, char * source1, char 
 	return 0;
 }
 
-extern uint8_t crayon_assist_change_extension(char ** dest, char * source, char * extension){
+extern uint8_t crayon_misc_change_extension(char ** dest, char * source, char * extension){
 	if(!source || !extension){
 		return 1;
 	}
@@ -60,8 +60,8 @@ extern uint8_t crayon_assist_change_extension(char ** dest, char * source, char 
 
 //For example, call this like so (Assuming file is 12 bytes long)
 // uint8_t *my_stuff;
-// crayon_assist_read_file((void *) &my_stuff, "romdisk/read_data.txt", 12);
-extern uint8_t crayon_assist_read_file(void ** buffer, char * path, size_t size_bytes, uint8_t allocated){
+// crayon_misc_read_file((void *) &my_stuff, "romdisk/read_data.txt", 12);
+extern uint8_t crayon_misc_read_file(void ** buffer, char * path, size_t size_bytes, uint8_t allocated){
 	if(!allocated){
 		*buffer = malloc(size_bytes);
 	}
@@ -75,7 +75,7 @@ extern uint8_t crayon_assist_read_file(void ** buffer, char * path, size_t size_
 	return 0;
 }
 
-extern uint32_t crayon_assist_fgeti(FILE * f, int16_t * last_char){
+extern uint32_t crayon_misc_fgeti(FILE * f, int16_t * last_char){
 	uint32_t n = 0;
 	int16_t d;	//EOF is -1 so we can't use a uint8_t
 	for(d = 0; d < 10; d = fgetc(f) - '0'){
@@ -87,7 +87,7 @@ extern uint32_t crayon_assist_fgeti(FILE * f, int16_t * last_char){
 	return n;
 }
 
-extern int crayon_assist_fget_next_int(FILE * f, int * number){
+extern int crayon_misc_fget_next_int(FILE * f, int * number){
 	*number = 0;
 	uint8_t negative = 0;
 	uint8_t started = 0;
@@ -116,10 +116,10 @@ extern int crayon_assist_fget_next_int(FILE * f, int * number){
 	return 0;
 }
 
-extern uint32_t crayon_assist_extract_bits(uint32_t number, uint8_t bit_length, uint8_t offset){
+extern uint32_t crayon_misc_extract_bits(uint32_t number, uint8_t bit_length, uint8_t offset){
 	return (((1 << bit_length) - 1) & (number >> offset));
 }
 
-extern uint32_t crayon_assist_insert_bits(uint32_t number_1, uint32_t number_2, uint8_t bit_length, uint8_t offset){
+extern uint32_t crayon_misc_insert_bits(uint32_t number_1, uint32_t number_2, uint8_t bit_length, uint8_t offset){
 	return (number_1 & ~(((1UL << bit_length) - 1) << offset)) | (number_2 << offset);
 }

@@ -3,7 +3,7 @@
 
 #include "texture_structs.h"  //For the spritehseet and animation structs
 #include "render_structs.h"  //For the crayon_sprite_array struct
-#include "assist.h"
+#include "misc.h"
 
 #include <stdio.h>
 #include <stdlib.h>

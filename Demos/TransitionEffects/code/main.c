@@ -139,7 +139,7 @@ void set_indexes(uint16_t * indexes, uint16_t size){
 
 void modify_fade_effect(crayon_transition_t * effect, void * params){
 	if(params != NULL){return;}	//This only exists to make the compiler shut up
-	effect->draw->colour[0] = crayon_assist_extract_bits(effect->draw->colour[0], 24, 0) +
+	effect->draw->colour[0] = crayon_misc_extract_bits(effect->draw->colour[0], 24, 0) +
 		((uint8_t)(crayon_graphics_transition_get_curr_percentage(effect) * 255) << 24);
 	return;
 }

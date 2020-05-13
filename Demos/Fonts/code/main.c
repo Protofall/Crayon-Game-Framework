@@ -149,7 +149,7 @@ int main(){
 		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
-	char * version = crayon_get_version();
+	char * version = crayon_misc_get_version();
 	char version_msg[60];
 	strcpy(version_msg, "Crayon version number: ");
 	strcat(version_msg, version);

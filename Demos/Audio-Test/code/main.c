@@ -101,19 +101,19 @@ void htz_select(){
 	float fade_cap = g_htz * 1.0;	//1 second, 60 or 50 frames
 
 	//While counting || fade is not full alpha
-	while(counter > 0 || crayon_assist_extract_bits(fade_draw.colour[0], 8, 24) != 0xFF){
+	while(counter > 0 || crayon_misc_extract_bits(fade_draw.colour[0], 8, 24) != 0xFF){
 
 		//Update the fade-in/out effects
 		counter--;
 		if(counter < 0){	//Fading out
-			if(crayon_assist_extract_bits(fade_draw.colour[0], 8, 24) == 0){
+			if(crayon_misc_extract_bits(fade_draw.colour[0], 8, 24) == 0){
 				//Have another sound, not a blip, but some acceptance thing
 			}
 			// fade = 0xFF * (fade_frame_count / fade_cap);
 			fade_draw.colour[0] = (uint32_t)(0xFF * (fade_frame_count / fade_cap)) << 24;
 			fade_frame_count++;
 		}
-		else if(crayon_assist_extract_bits(fade_draw.colour[0], 8, 24) > 0){	//fading in
+		else if(crayon_misc_extract_bits(fade_draw.colour[0], 8, 24) > 0){	//fading in
 			// fade = 0xFF - (0xFF * (fade_frame_count / fade_cap));
 			fade_draw.colour[0] = (uint32_t)(0xFF - (0xFF * (fade_frame_count / fade_cap))) << 24;
 			fade_frame_count++;
@@ -151,7 +151,7 @@ void htz_select(){
 		pvr_list_begin(PVR_LIST_TR_POLY);
 
 			//The fading in/out effect
-			if(crayon_assist_extract_bits(fade_draw.colour[0], 8, 24)){
+			if(crayon_misc_extract_bits(fade_draw.colour[0], 8, 24)){
 				crayon_graphics_draw_sprites(&fade_draw, NULL, PVR_LIST_TR_POLY, CRAY_DRAW_SIMPLE);
 			}
 

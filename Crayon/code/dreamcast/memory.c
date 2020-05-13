@@ -66,7 +66,7 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	uint8_t dtex_result = crayon_memory_load_dtex(&ss->texture, &ss->texture_width, &ss->texture_height, &ss->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	uint8_t texture_format = crayon_assist_extract_bits(ss->texture_format, 3, 27);	//Extract the Pixel format
+	uint8_t texture_format = crayon_misc_extract_bits(ss->texture_format, 3, 27);	//Extract the Pixel format
 
 	uint8_t bpp = 0;
 	if(texture_format > 6){	//Invalid format
@@ -80,7 +80,7 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	}
 
 	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
-		if(crayon_assist_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
+		if(crayon_misc_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
 
 		int resultPal = crayon_memory_load_palette(cp, bpp, palette_id, palette_path);
 		//The function will modify the palette and colour count. Also it sends the BPP through
@@ -89,7 +89,7 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 		palette_path = NULL;
 	}
 
-	if(crayon_assist_change_extension(&txt_path, path, "txt")){ERROR(14);}
+	if(crayon_misc_change_extension(&txt_path, path, "txt")){ERROR(14);}
 
 	txt_file = fopen(txt_path, "rb");
 	if(!txt_file){ERROR(16);}
@@ -97,7 +97,7 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	txt_path = NULL;
 
 	int number_holder;
-	if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(17);}
+	if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(17);}
 	ss->animation_count = number_holder;
 
 	ss->animation = malloc(sizeof(crayon_animation_t) * ss->animation_count);
@@ -124,19 +124,19 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 		ss->animation[i].name[count] = '\0';
 
 		//Store the rest of the info
-		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(20);}
+		if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(20);}
 		ss->animation[i].x = number_holder;
-		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(21);}
+		if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(21);}
 		ss->animation[i].y = number_holder;
-		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(22);}
+		if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(22);}
 		ss->animation[i].sheet_width = number_holder;
-		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(23);}
+		if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(23);}
 		ss->animation[i].sheet_height = number_holder;
-		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(24);}
+		if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(24);}
 		ss->animation[i].frame_width = number_holder;
-		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(25);}
+		if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(25);}
 		ss->animation[i].frame_height = number_holder;
-		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(26);}
+		if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(26);}
 		ss->animation[i].frame_count = number_holder;
 	}
 
@@ -188,7 +188,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	uint8_t dtex_result = crayon_memory_load_dtex(&fp->texture, &fp->texture_width, &fp->texture_height, &fp->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	uint8_t texture_format = crayon_assist_extract_bits(fp->texture_format, 3, 27);	//Extract the Pixel format
+	uint8_t texture_format = crayon_misc_extract_bits(fp->texture_format, 3, 27);	//Extract the Pixel format
 
 	uint8_t bpp = 0;
 	if(texture_format > 6){	//Invalid format
@@ -202,7 +202,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	}
 
 	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
-		if(crayon_assist_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
+		if(crayon_misc_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
 
 		//The function will load the palette and colour count. With the specified BPP
 		int resultPal = crayon_memory_load_palette(cp, bpp, palette_id, palette_path);
@@ -211,7 +211,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 		palette_path = NULL;
 	}
 
-	if(crayon_assist_change_extension(&txt_path, path, "txt")){ERROR(15);}
+	if(crayon_misc_change_extension(&txt_path, path, "txt")){ERROR(15);}
 
 	txt_file = fopen(txt_path, "rb");
 	if(!txt_file){ERROR(16);}
@@ -219,10 +219,10 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	txt_path = NULL;
 
 	int number_holder;
-	if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(17);}
+	if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(17);}
 	fp->char_height = number_holder;
 
-	if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(18);}
+	if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(18);}
 	fp->num_rows = number_holder;
 
 	fp->chars_per_row = malloc(fp->num_rows * sizeof(uint8_t));
@@ -231,7 +231,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	fp->num_chars = 0;
 	int i;
 	for(i = 0; i < fp->num_rows; i++){
-		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(20);}
+		if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(20);}
 		fp->chars_per_row[i] = number_holder;
 		fp->num_chars += fp->chars_per_row[i];
 	}
@@ -240,7 +240,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	if(!fp->char_width){ERROR(21);}
 
 	for(i = 0; i < fp->num_chars; i++){
-		if(crayon_assist_fget_next_int(txt_file, &number_holder)){ERROR(22);}
+		if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(22);}
 		fp->char_width[i] = number_holder;
 	}
 
@@ -307,7 +307,7 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	uint8_t dtex_result = crayon_memory_load_dtex(&fm->texture, &fm->texture_width, &fm->texture_height, &fm->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	uint8_t texture_format = crayon_assist_extract_bits(fm->texture_format, 3, 27);	//Extract the Pixel format
+	uint8_t texture_format = crayon_misc_extract_bits(fm->texture_format, 3, 27);	//Extract the Pixel format
 
 	uint8_t bpp = 0;
 	if(texture_format > 6){	//Invalid format
@@ -321,7 +321,7 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	}
 
 	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
-		if(crayon_assist_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
+		if(crayon_misc_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
 		
 		cp->palette = NULL;
 		//The function will load the palette and colour count. With the specified BPP
@@ -331,7 +331,7 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 		palette_path = NULL;
 	}
 
-	if(crayon_assist_change_extension(&txt_path, path, "txt")){ERROR(15);}
+	if(crayon_misc_change_extension(&txt_path, path, "txt")){ERROR(15);}
 
 	//Read the info file ( Format "NUM1\sNUM2\sNUM3\sNUM4\n" )
 	txt_file = fopen(txt_path, "rb");
@@ -340,13 +340,13 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	txt_path = NULL;
 
 	int number;
-	if(crayon_assist_fget_next_int(txt_file, &number)){ERROR(17);}
+	if(crayon_misc_fget_next_int(txt_file, &number)){ERROR(17);}
 	fm->char_width = number;
-	if(crayon_assist_fget_next_int(txt_file, &number)){ERROR(18);}
+	if(crayon_misc_fget_next_int(txt_file, &number)){ERROR(18);}
 	fm->char_height = number;
-	if(crayon_assist_fget_next_int(txt_file, &number)){ERROR(19);}
+	if(crayon_misc_fget_next_int(txt_file, &number)){ERROR(19);}
 	fm->num_columns = number;
-	if(crayon_assist_fget_next_int(txt_file, &number)){ERROR(20);}
+	if(crayon_misc_fget_next_int(txt_file, &number)){ERROR(20);}
 	fm->num_rows = number;
 
 	fm->num_chars = fm->num_columns * fm->num_rows;	//The number of chars *may* be less than this, but it won't be fatal

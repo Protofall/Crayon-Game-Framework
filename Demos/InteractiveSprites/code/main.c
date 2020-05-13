@@ -137,19 +137,19 @@ void set_msg_option(char * buffer, uint8_t option, uint8_t sub_option, uint8_t s
 	case 1:
 		switch(sub_option){
 		case 0:
-			holder_value_u8 = crayon_assist_extract_bits(crayon_memory_get_colour(&Faces_Draw[sprite], 0, NULL), 8, 24);
+			holder_value_u8 = crayon_misc_extract_bits(crayon_memory_get_colour(&Faces_Draw[sprite], 0, NULL), 8, 24);
 			sprintf(buffer, "Option: Colour. Sub-Option: Alpha. Value: 0x%x", holder_value_u8);
 			break;
 		case 1:
-			holder_value_u8 = crayon_assist_extract_bits(crayon_memory_get_colour(&Faces_Draw[sprite], 0, NULL), 8, 16);
+			holder_value_u8 = crayon_misc_extract_bits(crayon_memory_get_colour(&Faces_Draw[sprite], 0, NULL), 8, 16);
 			sprintf(buffer, "Option: Colour. Sub-Option: Red. Value: 0x%x", holder_value_u8);
 			break;
 		case 2:
-			holder_value_u8 = crayon_assist_extract_bits(crayon_memory_get_colour(&Faces_Draw[sprite], 0, NULL), 8, 8);
+			holder_value_u8 = crayon_misc_extract_bits(crayon_memory_get_colour(&Faces_Draw[sprite], 0, NULL), 8, 8);
 			sprintf(buffer, "Option: Colour. Sub-Option: Green. Value: 0x%x", holder_value_u8);
 			break;
 		case 3:
-			holder_value_u8 = crayon_assist_extract_bits(crayon_memory_get_colour(&Faces_Draw[sprite], 0, NULL), 8, 0);
+			holder_value_u8 = crayon_misc_extract_bits(crayon_memory_get_colour(&Faces_Draw[sprite], 0, NULL), 8, 0);
 			sprintf(buffer, "Option: Colour. Sub-Option: Blue. Value: 0x%x", holder_value_u8);
 			break;
 		}
@@ -381,24 +381,24 @@ int main(){
 					holder_value_u32 = crayon_memory_get_colour(&Faces_Draw[sprite], 0, NULL);
 					switch(sub_option){
 					case 0:
-						holder_value_u8 = crayon_assist_extract_bits(holder_value_u32, 8, 24);
+						holder_value_u8 = crayon_misc_extract_bits(holder_value_u32, 8, 24);
 						if(holder_value_u8 < 0xFF){holder_value_u8++;}
-						holder_value_u32 = crayon_assist_insert_bits(holder_value_u32, holder_value_u8, 8, 24);
+						holder_value_u32 = crayon_misc_insert_bits(holder_value_u32, holder_value_u8, 8, 24);
 						break;
 					case 1:
-						holder_value_u8 = crayon_assist_extract_bits(holder_value_u32, 8, 16);
+						holder_value_u8 = crayon_misc_extract_bits(holder_value_u32, 8, 16);
 						if(holder_value_u8 < 0xFF){holder_value_u8++;}
-						holder_value_u32 = crayon_assist_insert_bits(holder_value_u32, holder_value_u8, 8, 16);
+						holder_value_u32 = crayon_misc_insert_bits(holder_value_u32, holder_value_u8, 8, 16);
 						break;
 					case 2:
-						holder_value_u8 = crayon_assist_extract_bits(holder_value_u32, 8, 8);
+						holder_value_u8 = crayon_misc_extract_bits(holder_value_u32, 8, 8);
 						if(holder_value_u8 < 0xFF){holder_value_u8++;}
-						holder_value_u32 = crayon_assist_insert_bits(holder_value_u32, holder_value_u8, 8, 8);
+						holder_value_u32 = crayon_misc_insert_bits(holder_value_u32, holder_value_u8, 8, 8);
 						break;
 					case 3:
-						holder_value_u8 = crayon_assist_extract_bits(holder_value_u32, 8, 0);
+						holder_value_u8 = crayon_misc_extract_bits(holder_value_u32, 8, 0);
 						if(holder_value_u8 < 0xFF){holder_value_u8++;}
-						holder_value_u32 = crayon_assist_insert_bits(holder_value_u32, holder_value_u8, 8, 0);
+						holder_value_u32 = crayon_misc_insert_bits(holder_value_u32, holder_value_u8, 8, 0);
 						break;
 					}
 					crayon_memory_set_colour(&Faces_Draw[sprite], 0, holder_value_u32);
@@ -459,24 +459,24 @@ int main(){
 					holder_value_u32 = crayon_memory_get_colour(&Faces_Draw[sprite], 0, NULL);
 					switch(sub_option){
 					case 0:
-						holder_value_u8 = crayon_assist_extract_bits(holder_value_u32, 8, 24);
+						holder_value_u8 = crayon_misc_extract_bits(holder_value_u32, 8, 24);
 						if(holder_value_u8 > 0){holder_value_u8--;}
-						holder_value_u32 = crayon_assist_insert_bits(holder_value_u32, holder_value_u8, 8, 24);
+						holder_value_u32 = crayon_misc_insert_bits(holder_value_u32, holder_value_u8, 8, 24);
 						break;
 					case 1:
-						holder_value_u8 = crayon_assist_extract_bits(holder_value_u32, 8, 16);
+						holder_value_u8 = crayon_misc_extract_bits(holder_value_u32, 8, 16);
 						if(holder_value_u8 > 0){holder_value_u8--;}
-						holder_value_u32 = crayon_assist_insert_bits(holder_value_u32, holder_value_u8, 8, 16);
+						holder_value_u32 = crayon_misc_insert_bits(holder_value_u32, holder_value_u8, 8, 16);
 						break;
 					case 2:
-						holder_value_u8 = crayon_assist_extract_bits(holder_value_u32, 8, 8);
+						holder_value_u8 = crayon_misc_extract_bits(holder_value_u32, 8, 8);
 						if(holder_value_u8 > 0){holder_value_u8--;}
-						holder_value_u32 = crayon_assist_insert_bits(holder_value_u32, holder_value_u8, 8, 8);
+						holder_value_u32 = crayon_misc_insert_bits(holder_value_u32, holder_value_u8, 8, 8);
 						break;
 					case 3:
-						holder_value_u8 = crayon_assist_extract_bits(holder_value_u32, 8, 0);
+						holder_value_u8 = crayon_misc_extract_bits(holder_value_u32, 8, 0);
 						if(holder_value_u8 > 0){holder_value_u8--;}
-						holder_value_u32 = crayon_assist_insert_bits(holder_value_u32, holder_value_u8, 8, 0);
+						holder_value_u32 = crayon_misc_insert_bits(holder_value_u32, holder_value_u8, 8, 0);
 						break;
 					}
 					crayon_memory_set_colour(&Faces_Draw[sprite], 0, holder_value_u32);
@@ -562,7 +562,7 @@ int main(){
 		Highlight_Draw.coord[0].x = Faces_Draw[sprite].coord[0].x - 2;
 		Highlight_Draw.coord[0].y = Faces_Draw[sprite].coord[0].y - 2;
 		Highlight_Draw.rotation[0] = Faces_Draw[sprite].rotation[0];
-		// Highlight_Draw.colour[0] = crayon_assist_insert_bits(crayon_assist_extract_bits(Faces_Draw[sprite].colour[0], 24, 0), crayon_assist_extract_bits(Faces_Draw[sprite].colour[0], 24, 0), 8, 24);
+		// Highlight_Draw.colour[0] = crayon_misc_insert_bits(crayon_misc_extract_bits(Faces_Draw[sprite].colour[0], 24, 0), crayon_misc_extract_bits(Faces_Draw[sprite].colour[0], 24, 0), 8, 24);
 
 		pvr_scene_begin();
 
