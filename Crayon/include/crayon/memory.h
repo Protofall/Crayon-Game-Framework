@@ -32,7 +32,6 @@ float __MEMORY_DEBUG_VARIABLES[16];
 //------------------Checking memory------------------//
 
 //Gets the index of an animation
-	//UNTESTED
 extern int16_t crayon_memory_get_animation_id(char * name, crayon_spritesheet_t * ss);
 
 //------------------Allocating memory------------------//
@@ -127,6 +126,9 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp);
 
 //Frees a draw array
 extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array);
+
+//Frees the texture itself
+inline void crayon_memory_free_txr(crayon_txr_ptr_t * ptr);
 
 //Quicksort implementation from: https://www.geeksforgeeks.org/quick-sort/
 extern void __crayon__memory_swap(uint16_t* a, uint16_t* b);

@@ -41,7 +41,7 @@ extern uint8_t crayon_memory_load_dtex(crayon_txr_ptr_t *dtex, uint16_t *texture
 	DTEX_cleanup:
 
 	if(texture_file){fclose(texture_file);}
-	if(dtex_result && *dtex != NULL){pvr_mem_free(*dtex);}
+	if(dtex_result && *dtex != NULL){crayon_memory_free_txr(*dtex);}
 
 	return dtex_result;
 }
@@ -55,8 +55,8 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	char * txt_path = NULL;
 
 	ss->texture = NULL;
-	cp->palette = NULL;
 	ss->animation = NULL;
+	if(cp){cp->palette = NULL;}
 
 	#define ERROR(n) {result = (n); goto cleanup;}
 
@@ -148,7 +148,7 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 
 	//If a failure occured somewhere
 	if(result){
-		if(ss->texture){pvr_mem_free(ss->texture);}
+		if(ss->texture){crayon_memory_free_txr(ss->texture);}
 		if(cp->palette){free(cp->palette);}
 
 		//Cleanup any names that were given
@@ -174,7 +174,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	fp->char_x_coord = NULL;
 	fp->texture = NULL;
 
-	cp->palette = NULL;
+	if(cp){cp->palette = NULL;}
 	FILE * txt_file = NULL;
 
 	char * palette_path = NULL;
@@ -278,7 +278,7 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 
 	//If an error occured, free these things
 	if(result){
-		if(fp->texture){pvr_mem_free(fp->texture);}
+		if(fp->texture){crayon_memory_free_txr(fp->texture);}
 		if(cp->palette){free(cp->palette);}
 		if(fp->chars_per_row){free(fp->chars_per_row);}
 		if(fp->char_width){free(fp->char_width);}
@@ -293,17 +293,19 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 
 extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, int8_t palette_id, char *path){
 	uint8_t result = 0;
+	
+	fm->texture = NULL;
+	if(cp){cp->palette = NULL;}
 	FILE * txt_file = NULL;
-
-	#define ERROR(n) {result = (n); goto cleanup;}
 
 	char * palette_path = NULL;
 	char * txt_path = NULL;
 
+	#define ERROR(n) {result = (n); goto cleanup;}
+
 	// Load texture
 	//---------------------------------------------------------------------------
 
-	fm->texture = NULL;
 	uint8_t dtex_result = crayon_memory_load_dtex(&fm->texture, &fm->texture_width, &fm->texture_height, &fm->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
@@ -361,7 +363,7 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	if(txt_file){fclose(txt_file);}
 
 	//If a failure occured somewhere after loading texture
-	if(result && fm->texture){pvr_mem_free(fm->texture);}
+	if(result && fm->texture){crayon_memory_free_txr(fm->texture);}
 
 	//If we allocated memory for the palette and error out
 	if(result && cp->palette){free(cp->palette);}
@@ -1061,7 +1063,7 @@ extern uint8_t crayon_memory_free_spritesheet(crayon_spritesheet_t *ss){
 		//name is unused so we don't free it
 		//free(ss->name);
 
-		pvr_mem_free(ss->texture);
+		crayon_memory_free_txr(ss->texture);
 
 		return 0;
 	}
@@ -1073,7 +1075,7 @@ extern uint8_t crayon_memory_free_prop_font_sheet(crayon_font_prop_t *fp){
 		free(fp->char_x_coord);
 		free(fp->char_width);
 		free(fp->chars_per_row);
-		pvr_mem_free(fp->texture);
+		crayon_memory_free_txr(fp->texture);
 		return 0;
 	}
 	return 1;
@@ -1081,7 +1083,7 @@ extern uint8_t crayon_memory_free_prop_font_sheet(crayon_font_prop_t *fp){
 
 extern uint8_t crayon_memory_free_mono_font_sheet(crayon_font_mono_t *fm){
 	if(fm){
-		pvr_mem_free(fm->texture);
+		crayon_memory_free_txr(fm->texture);
 		return 0;
 	}
 	return 1;
@@ -1138,6 +1140,10 @@ extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_arr
 	sprite_array->head = NULL;
 
 	return 0;
+}
+
+inline void crayon_memory_free_txr(crayon_txr_ptr_t * ptr){
+	pvr_mem_free(ptr);
 }
 
 extern uint8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint){
