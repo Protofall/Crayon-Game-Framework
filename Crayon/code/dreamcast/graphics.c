@@ -1,6 +1,6 @@
 #include "graphics.h"
 
-void crayon_graphics_init(uint8_t poly_modes){
+extern uint8_t crayon_graphics_init(uint8_t poly_modes){
 	pvr_init_params_t pvr_params;
 	pvr_params.opb_sizes[0] = (poly_modes & CRAYON_ENABLE_OP) ? PVR_BINSIZE_16 : PVR_BINSIZE_0;
 	pvr_params.opb_sizes[1] = PVR_BINSIZE_0;
@@ -31,7 +31,11 @@ void crayon_graphics_init(uint8_t poly_modes){
 		__htz_adjustment = 1;
 	}
 
-	return;
+	return 0;
+}
+
+extern void crayon_graphics_shutdown(){
+	pvr_shutdown();
 }
 
 //There are 4 palettes for 8BPP and 64 palettes for 4BPP

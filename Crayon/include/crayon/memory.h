@@ -13,6 +13,9 @@
 #include <zlib/zlib.h>
 extern int zlib_getlength(char *filename);	//Because zlib.h won't declare it for us
 
+//This is set in crayon_init(). Its the /cd/, /sd/ or /pc/ before every file access
+char * __base_path;
+
 typedef struct dtex_header{
 	uint8_t magic[4]; //magic number "DTEX"
 	uint16_t   width; //texture width in pixels

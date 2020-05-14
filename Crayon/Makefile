@@ -28,10 +28,10 @@ clean:
 # Targets
 #------------------------------------------------------------------------------
 
+#NOTE: "dir" is not same as bash's dir. This is makefile specific and it takes
+#a filename and returns the path section. So here thats just "$(LIB)"
 $(LIB)/lib$(LIB_NAME).a: $(OBJS)
-	@mkdir -p $(dir $@)	#Dir is not same as bash's dir. This is makefile specific
-						#And it takes a filename and returns the path section
-						#So here thats just "$(LIB)"
+	@mkdir -p $(dir $@)
 	rm -f $@
 	$(KOS_AR) rcs $@ $^
 

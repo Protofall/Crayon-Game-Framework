@@ -41,7 +41,8 @@ float __htz_adjustment;
 #define CRAYON_ENABLE_OP (1 << 0)
 #define CRAYON_ENABLE_TR (1 << 1)
 #define CRAYON_ENABLE_PT (1 << 2)
-void crayon_graphics_init(uint8_t poly_modes);
+extern uint8_t crayon_graphics_init(uint8_t poly_modes);
+extern void crayon_graphics_shutdown();
 
 //Sets a palette for a spritesheet
 extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
