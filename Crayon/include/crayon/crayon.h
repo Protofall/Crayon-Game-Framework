@@ -20,6 +20,7 @@ uint8_t __sd_present;
 #define CRAYON_BOOT_SD 1		//For DC this is /sd/
 #define CRAYON_BOOT_PC_LAN 2	//For DC this is /pc/
 
+//Give this and shutdown the weak attribute like KOS and try to automatically call them
 extern uint8_t crayon_init(uint8_t platform, uint8_t boot_mode);
 
 //NEED TO HANDLE RETURN CODES BETTER

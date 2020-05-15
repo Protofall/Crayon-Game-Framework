@@ -15,10 +15,13 @@
 extern char * crayon_misc_get_version();
 
 //Takes two strings and returns a string which is source2 appended to source1
+	//The user passes a reference to an un-allocated char pointer for the first parameter.
+	//The user is also responsible for free-ing dest
 extern uint8_t crayon_misc_combine_strings(char ** dest, char * source1, char * source2);
 
-//Searches for the last '.' in a string and makes copy, but with "extension" after it
-//Note that "." is not a valid source and will result in an error (Since there's nothing before the '.')
+//Searches for the last '.' in a string and makes copy, but with "extension" after that '.'
+//Note that '.' is not a valid source and will result in an error (Since there's nothing before the '.')
+	//dest is handled like the above function handles it
 extern uint8_t crayon_misc_change_extension(char ** dest, char * source, char * extension);
 
 //UNTESTED
@@ -33,8 +36,8 @@ extern uint8_t crayon_misc_read_file(void ** buffer, char * path, size_t size_by
 	//this is useful for checking why it stopped reading a number
 extern uint32_t crayon_misc_fgeti(FILE * f, int16_t * last_char);
 
-//This function instead finds the next number and modifies the parameter to add in it.
-	//If the EOF is found before a number, then this returns 0
+//This function instead finds the next number and modifies the parameter to it's value
+	//If the EOF is found before a number it returns 1, else it returns 0
 extern int crayon_misc_fget_next_int(FILE * f, int * number);
 
 // If given bit_length = 5 and offset = 2 we will return the bit_length bit offset to the left by offset
