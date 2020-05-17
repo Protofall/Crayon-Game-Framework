@@ -362,7 +362,7 @@ uint8_t crayon_savefile_save(crayon_savefile_details_t * savefile_details){
 	}
 	memcpy(data, savefile_details->savefile_data, savefile_details->savefile_size);
 
-	sprintf(pkg.desc_long, savefile_details->desc_long);	//convert to strlcpy(). Is it 32 chars?
+	strlcpy(pkg.desc_long, savefile_details->desc_long, 32);
 	strlcpy(pkg.desc_short, savefile_details->desc_short, 16);
 	strlcpy(pkg.app_id, savefile_details->app_id, 16);
 	pkg.icon_cnt = savefile_details->icon_anim_count;
