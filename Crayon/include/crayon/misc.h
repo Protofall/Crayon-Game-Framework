@@ -47,4 +47,15 @@ extern uint32_t crayon_misc_extract_bits(uint32_t number, uint8_t bit_length, ui
 //This simply insets your second number into the first number. I don't know what happens if number_2 is too long...
 extern uint32_t crayon_misc_insert_bits(uint32_t number_1, uint32_t number_2, uint8_t bit_length, uint8_t offset);
 
+
+//THE FUNCTIONS BELOW CAME FROM DREAMHAL
+// https://github.com/Moopthehedgehog/DreamHAL/blob/master/modules/simple_print.c
+
+//NOTE: "out_string" is expected to be at least 12 characters long (10 for number, 1 for sign, 1 for \0 )
+	//For unsigned you can get away with 11 since there's no sign
+
+extern char * crayon_misc_uint_to_string(unsigned int in_number, char* out_string);
+
+extern char * crayon_misc_int_to_string(int in_number, char* out_string);
+
 #endif

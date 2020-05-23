@@ -1,7 +1,7 @@
 #include "crayon.h"
 
 extern uint8_t crayon_init(uint8_t platform, uint8_t boot_mode){
-	__base_path = NULL;
+	__game_base_path = NULL;
 	if(platform != CRAYON_PLATFORM_DREAMCAST){
 		fprintf(stderr, "ERROR: Unsupported platform: %d\n", platform);
 		return 1;
@@ -13,8 +13,8 @@ extern uint8_t crayon_init(uint8_t platform, uint8_t boot_mode){
 	}
 
 	//For (platform == PC) I'll need to make sure the malloc is larger (Get the OS base path first then malloc)
-	__base_path = malloc(5 * sizeof(char));
-	if(!__base_path){
+	__game_base_path = malloc(5 * sizeof(char));
+	if(!__game_base_path){
 		return 1;
 	}
 
@@ -23,7 +23,7 @@ extern uint8_t crayon_init(uint8_t platform, uint8_t boot_mode){
 		"/sd/",
 		"/pc/"
 	};
-	strcpy(__base_path, paths[boot_mode]);
+	strcpy(__game_base_path, paths[boot_mode]);
 
 	if(boot_mode == CRAYON_BOOT_SD){
 		__sd_present = 1;
@@ -58,7 +58,7 @@ extern uint8_t crayon_init(uint8_t platform, uint8_t boot_mode){
 
 	crayon_init_end1:
 
-	free(__base_path);
+	free(__game_base_path);
 
 	return 1;
 }
@@ -102,7 +102,7 @@ extern uint8_t crayon_sd_mount_fat(){
 
 
 extern void crayon_shutdown(){
-	free(__base_path);
+	free(__game_base_path);
 
 	if(__sd_present){
 		crayon_sd_unmount_fat();

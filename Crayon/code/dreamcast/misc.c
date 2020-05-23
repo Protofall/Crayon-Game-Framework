@@ -6,8 +6,16 @@ extern char * crayon_misc_get_version(){
 		return NULL;
 	}
 
-	// sprintf(version, "%d.%d.%d", CRAYON_MAJOR_NUMBER, CRAYON_MINOR_NUMBER, CRAYON_PATCH_NUMBER);
-	sprintf(version, "%d.%d.%d-dev", CRAYON_MAJOR_NUMBER, CRAYON_MINOR_NUMBER, CRAYON_PATCH_NUMBER);
+	char major_ver[12];
+	char minor_ver[12];
+	char patch_ver[12];
+
+	crayon_misc_int_to_string(CRAYON_MAJOR_NUMBER, major_ver);
+	crayon_misc_int_to_string(CRAYON_MINOR_NUMBER, minor_ver);
+	crayon_misc_int_to_string(CRAYON_PATCH_NUMBER, patch_ver);
+
+	// sprintf(version, "%s.%s.%s", major_ver, minor_ver, patch_ver);
+	sprintf(version, "%s.%s.%s-dev", major_ver, minor_ver, patch_ver);
 	return version;
 }
 
@@ -34,26 +42,29 @@ extern uint8_t crayon_misc_change_extension(char ** dest, char * source, char * 
 		return 1;
 	}
 
-	uint16_t i;
-	uint16_t source_length = strlen(source);
-	for(i = source_length - 1; i > 0; i--){	//Find the beginning of the extension (Works backwards to find last full stop)
-		if(source[i] == '.'){i++; break;}
+	char * dot_pos = strchr(source, '.');
+	//No dot present
+	if(!dot_pos){
+		return 1;
 	}
 
-	//There was no dot present, therefore we stop
-	if(i == 0){
+	//Get the offset of the dot
+	uint16_t src_length = 1 + (dot_pos - source);
+
+	//Dot at the start of the string (eg ".bashrc") isn't valid
+	if(src_length == 1){
 		return 1;
 	}
 
 	uint8_t ext_length = strlen(extension);
-	*dest = malloc(sizeof(char) * (i + ext_length + 1));
+	*dest = malloc(sizeof(char) * (src_length + ext_length + 1));
 	if(!(*dest)){
 		return 1;
 	}
 
 	//Add the part of the source we're keeping then the extension
-	memcpy((*dest), source, i);
-	memcpy((*dest + i), extension, ext_length + 1);
+	memcpy((*dest), source, src_length);
+	memcpy((*dest + src_length), extension, ext_length + 1);
 
 	return 0;
 }
@@ -122,4 +133,69 @@ extern uint32_t crayon_misc_extract_bits(uint32_t number, uint8_t bit_length, ui
 
 extern uint32_t crayon_misc_insert_bits(uint32_t number_1, uint32_t number_2, uint8_t bit_length, uint8_t offset){
 	return (number_1 & ~(((1UL << bit_length) - 1) << offset)) | (number_2 << offset);
+}
+
+// Convert unsigned int to string
+// 'out_string' buffer is assumed to be large enough.
+// Requires an 11-byte output buffer for the string.
+// The biggest decimal number is 4294967295, which is 10 characters‬ (excluding null term).
+// Returns pointer to out_string.
+extern char * crayon_misc_uint_to_string(unsigned int in_number, char* out_string){
+	int i;
+
+	out_string[10] = '\0'; // Null term
+
+	for(i = 9; i >= 0; i--){
+		if((!in_number) && (i < 9)){
+			memmove(out_string, &(out_string[i + 1]), 11-i); // realign string with beginning
+			return out_string;
+		}
+		else{
+			out_string[i] = (in_number % 10) + '0';
+		}
+		in_number /= 10;
+	}
+
+	return out_string;
+}
+
+// Convert signed int to string
+// 'out_string' buffer is assumed to be large enough.
+// Requires a 12-byte output buffer for the string.
+// The longest signed decimal numbers are 10 characters‬ (excluding null term and sign).
+// Returns pointer to out_string.
+extern char * crayon_misc_int_to_string(int in_number, char* out_string){
+	int i;
+	int need_neg = 0;
+	int neg = 0;
+
+	out_string[11] = '\0'; // Null term
+
+	if(in_number < 0){
+		need_neg = 1;
+		neg = 1;
+	}
+
+	// 10 digits for the number, plus one char for the potential (-) sign
+	for(i = 10; i >= 0; i--){
+		if(need_neg && (!in_number) && (i < 10)){
+			out_string[i] = '-';
+			need_neg = 0;
+		}
+		else if((!in_number) && (i < 10)){
+			memmove(out_string, &(out_string[i + 1]), 12-i); // realign string with beginning
+			return out_string;
+		}
+		else{
+			if(neg){
+				out_string[i] = (-(in_number % 10)) + '0'; // mod of negative number is still negative
+			}
+			else{
+				out_string[i] = (in_number % 10) + '0';
+			}
+		}
+		in_number /= 10;
+	}
+
+	return out_string;
 }
