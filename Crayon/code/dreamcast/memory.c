@@ -369,7 +369,7 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	if(result && cp->palette){free(cp->palette);}
 
 	if(palette_path){free(palette_path);}
-	if(txt_path){free(palette_path);}
+	if(txt_path){free(txt_path);}
 
 	return result;
 }

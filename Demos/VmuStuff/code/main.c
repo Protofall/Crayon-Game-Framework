@@ -89,7 +89,7 @@ void font_init(){
 	#endif
 	if(!texture_file){error |= (1 << 0);}
 	fseek(texture_file, header_size, SEEK_SET);	//Move file pointer forwards 0x109 or 265 bytes
-	char * wfont = (char *)malloc(file_size - header_size);
+	char * wfont = malloc(file_size - header_size);
 	if(!wfont){error |= (1 << 1);}
 	fread(wfont, (file_size - header_size), 1, texture_file);
 	fclose(texture_file);

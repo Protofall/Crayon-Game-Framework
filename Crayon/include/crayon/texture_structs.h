@@ -62,17 +62,21 @@ typedef struct crayon_font_prop{
 	uint16_t texture_width;
 	uint16_t texture_height;
 	uint32_t texture_format;		//The raw dtex type value
-	uint8_t *char_width;	//Num elements equal to num_chars
+
 	uint8_t char_height;
+
+	uint8_t num_rows;
+	uint16_t num_chars;
+
+	vec2_s16_t char_spacing;	//Renamed this to default spacing and make another one in the fontsheet struct
+
+	//Everything above here is general font stuff, below is specific to prop fonts
+
+	uint8_t *char_width;	//Num elements equal to num_chars
 	uint8_t *chars_per_row;	//Total of array is num_rows
 	uint8_t *char_x_coord;	//If you want to use fontsheets with dimensions > 256
 							//then bump this up to a uint16_t and modify the load
 							//code in memory_free_prop_font_sheet()
-	uint8_t num_rows;
-	uint16_t num_chars;
-
-	//REMOVE THIS AND PUT IT IN THE FONTSTYLES LATER
-	vec2_s16_t char_spacing;
 } crayon_font_prop_t;
 
 //All chars have the same width and height
@@ -82,15 +86,45 @@ typedef struct crayon_font_mono{
 	uint16_t texture_width;
 	uint16_t texture_height;
 	uint32_t texture_format;		//The raw dtex type value
-	uint8_t char_width;
+
 	uint8_t char_height;
 
-	uint8_t num_columns;
 	uint8_t num_rows;
 	uint16_t num_chars;	//Equal to num_columns * num_rows since without more infor, we can't guess
 
-	//REMOVE THIS AND PUT IT IN THE FONTSTYLES LATER
-	vec2_s16_t char_spacing;
+	vec2_s16_t char_spacing;	//Renamed this to default spacing and make another one in the fontsheet struct
+
+	//Everything above here is general font stuff, below is specific to mono fonts
+
+	uint8_t char_width;
+
+	uint8_t num_columns;
 } crayon_font_mono_t;
+
+
+
+//Later replace the above structs with these ones and provide a new font loader struct That will call
+//one of the existing two based on whether its mono or proportionally spaced
+	//THEN LATER MAKE THE FONT SYTLE STRUCT A SEPERATE THING AND MAYBE A FONT RENDER STRUCT THATS INTERNAL
+
+// //Mono-spaced specific info
+// typedef struct __crayon_font_mono_info{
+// 	;
+// } __crayon_font_mono_info_t;
+
+// //Proportionally-spaced specific info
+// typedef struct __crayon_font_prop_info{
+// 	;
+// } __crayon_font_prop_info_t;
+
+// typedef struct crayon_font_info{
+// 	uint8_t type;	//0 == mono, 1 == prop
+// 	//Add shared vars here
+// 	;
+// 	union {
+// 		__crayon_font_mono_info_t m;
+// 		__crayon_font_prop_info_t p;
+// 	};
+// } crayon_font_info_t;
 
 #endif

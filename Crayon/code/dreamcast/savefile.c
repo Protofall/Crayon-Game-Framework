@@ -163,11 +163,13 @@ uint8_t crayon_savefile_load_eyecatch(crayon_savefile_details_t * savefile_detai
 		case 2048:
 			savefile_details->eyecatch_type = VMUPKG_EC_16COL; break;
 		default:
+			fclose(eyecatch_data_file);
 			return 2;
 	}
 
 	savefile_details->eyecatch_data = (uint8_t *) malloc(size_data);
 	if(fread(savefile_details->eyecatch_data, size_data, 1, eyecatch_data_file) != 1){
+		fclose(eyecatch_data_file);
 		return 4;
 	}
 	fclose(eyecatch_data_file);
