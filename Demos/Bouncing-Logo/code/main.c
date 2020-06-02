@@ -2,72 +2,13 @@
 #include <crayon/memory.h>
 #include <crayon/graphics.h>
 #include <crayon/crayon.h>
+#include <crayon/debug.h>
 
 //For the controller
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
 
-// #if CRAYON_BOOT_MODE == 1
-// 	//For mounting the sd dir
-// 	#include <dc/sd.h>
-// 	#include <kos/blockdev.h>
-// 	#include <fat/fs_fat.h>
-// #endif
-
-
-// #if CRAYON_BOOT_MODE == 1
-// 	#define MNT_MODE FS_FAT_MOUNT_READONLY
-
-// 	static void unmount_fat_sd(){
-// 		fs_fat_unmount("/sd");
-// 		fs_fat_shutdown();
-// 		sd_shutdown();
-// 	}
-
-// 	static int mount_fat_sd(){
-// 		kos_blockdev_t sd_dev;
-// 		uint8 partition_type;
-
-// 		// Initialize the sd card if its present
-// 		if(sd_init()){
-// 			return 1;
-// 		}
-
-// 		// Grab the block device for the first partition on the SD card. Note that
-// 		// you must have the SD card formatted with an MBR partitioning scheme
-// 		if(sd_blockdev_for_partition(0, &sd_dev, &partition_type)){
-// 			return 2;
-// 		}
-
-// 		// Check to see if the MBR says that we have a valid partition
-// 		// if(partition_type != 0x83){
-// 			//I don't know what value I should be comparing against, hence this check is disabled for now
-// 			// This: https://en.wikipedia.org/wiki/Partition_type
-// 				//Suggests there's multiple types for FAT...not sure how to handle this
-// 			// return 3;
-// 		// }
-
-// 		// Initialize fs_fat and attempt to mount the device
-// 		if(fs_fat_init()){
-// 			return 4;
-// 		}
-
-// 		//Mount the SD card to the sd dir in the VFS
-// 		if(fs_fat_mount("/sd", &sd_dev, MNT_MODE)){
-// 			return 5;
-// 		}
-// 		return 0;
-// 	}
-
-// #endif
-
 int main(){
-	// #if CRAYON_BOOT_MODE == 1
-	// 	int sdRes = mount_fat_sd();	//This function should be able to mount a FAT32 formatted sd card to the /sd dir	
-	// 	if(sdRes != 0){
-	// 		error_freeze("SD card couldn't be mounted: %d", sdRes);
-	// 	}
-	// #endif
 
 	//Note:, first parameter is ignore for now since Crayon is only on Dreamcast ATM
 	if(crayon_init(CRAYON_PLATFORM_DREAMCAST, CRAYON_BOOT_MODE)){
@@ -80,38 +21,41 @@ int main(){
 	crayon_sprite_array_t Logo_Draw;
 	crayon_palette_t Logo_P;
 
-	crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
-
+	uint8_t error = 0;
 	//Load the logo
 	#if CRAYON_BOOT_MODE == 2
-		crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
+		error = crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
 	#elif CRAYON_BOOT_MODE == 1
-		crayon_memory_mount_romdisk("/sd/stuff.img", "/files");
+		error = crayon_memory_mount_romdisk("/sd/stuff.img", "/files");
 	#elif CRAYON_BOOT_MODE == 0
-		crayon_memory_mount_romdisk("/cd/stuff.img", "/files");
+		error = crayon_memory_mount_romdisk("/cd/stuff.img", "/files");
 	#else
 		#error Invalid CRAYON_BOOT_MODE value
 	#endif
 
+	if(error){error_freeze("Error mounting romdisk");}
+
 	//Load the asset
-	crayon_memory_load_spritesheet(&Logo, &Logo_P, 0, "/files/logo.dtex");
+	error = crayon_memory_load_spritesheet(&Logo, &Logo_P, 0, "/files/logo.dtex");
 
 	fs_romdisk_unmount("/files");
+	if(error){error_freeze("Unable to load spritesheet");}
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	crayon_memory_init_sprite_array(&Logo_Draw, &Logo, 0, &Logo_P, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Logo_Draw.coord[0].x = (crayon_graphics_get_window_width() - Logo.animation[0].frame_width) / 2;
-	Logo_Draw.coord[0].y = (crayon_graphics_get_window_height() - Logo.animation[0].frame_height) / 2;
-	Logo_Draw.layer[0] = 2;
-	Logo_Draw.scale[0].x = 1;
-	Logo_Draw.scale[0].y = 1;
-	Logo_Draw.flip[0] = 0;
-	Logo_Draw.rotation[0] = 0;
-	Logo_Draw.colour[0] = 0;
-	Logo_Draw.fade[0] = 0;
-	Logo_Draw.frame_id[0] = 0;
-	Logo_Draw.visible[0] = 1;
-	crayon_memory_set_frame_uv(&Logo_Draw, 0, 0);
+	error = crayon_memory_init_sprite_array(&Logo_Draw, &Logo, 0, &Logo_P, 1, 1, 0, PVR_FILTER_NONE, 0);
+	if(error){error_freeze("Can't create logo sprite array");}
+	error += crayon_memory_set_coord_x(&Logo_Draw, 0, (crayon_graphics_get_window_width() - Logo.animation[0].frame_width) / 2);
+	error += crayon_memory_set_coord_y(&Logo_Draw, 0, (crayon_graphics_get_window_height() - Logo.animation[0].frame_height) / 2);
+	error += crayon_memory_set_layer(&Logo_Draw, 0, 2);
+	error += crayon_memory_set_scale_x(&Logo_Draw, 0, 1);
+	error += crayon_memory_set_scale_y(&Logo_Draw, 0, 1);
+	error += crayon_memory_set_flip(&Logo_Draw, 0, 0);
+	error += crayon_memory_set_rotation(&Logo_Draw, 0, 0);
+	error += crayon_memory_set_colour(&Logo_Draw, 0, 0xFFFFFFFF);
+	error += crayon_memory_set_frame_id(&Logo_Draw, 0, 0);
+	error += crayon_memory_set_visibility(&Logo_Draw, 0, 1);
+	error += crayon_memory_set_frame_uv(&Logo_Draw, 0, 0);
+	if(error){error_freeze("Can't set variables of sprite array");}
 
 	uint32_t colours[5];
 	colours[0] = Logo_P.palette[1];	//Orange
@@ -123,7 +67,7 @@ int main(){
 	uint8_t begin = 0;
 	uint8_t moving = 0;
 	//__htz is set in cryaon_init()
-	float shrink_time = 2.5 * __htz;	//Time it takes to shrink (In seconds, htz_adjust fixes for 50Hz)
+	float shrink_time = 2.5 * __htz;	//Time it takes to shrink (In seconds, __htz fixes for 50Hz)
 
 	//Positive is bottom right, negative is top left
 	int8_t x_dir = rand() % 2;
