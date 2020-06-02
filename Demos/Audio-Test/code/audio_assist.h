@@ -31,6 +31,9 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 
+//For setting variables as unused for the time being
+#define UNUSED(x) (void)(x)
+
 #define AUDIO_NOT_STREAMING 0
 #define AUDIO_STREAMING 1
 
@@ -66,8 +69,8 @@ typedef struct audio_source{
 } audio_source_t;
 
 //We only need one of each for all audio
-ALCcontext * _al_context;
-ALCdevice * _al_device;
+ALCcontext * __al_context;
+ALCdevice * __al_device;
 
 #define AUDIO_COMMAND_NONE 0
 #define AUDIO_COMMAND_PLAY 1
@@ -77,17 +80,18 @@ ALCdevice * _al_device;
 #define AUDIO_COMMAND_END 5	//This will terminate the streamer thread
 
 //Since it only makes sense to stream one audio source (The music). I've hard coded it to only use one
-volatile uint8_t _audio_streamer_command;	//Should only be accessed with a mutex
-volatile uint8_t _audio_streamer_thd_active;	//Says if the streamer thread is currently active or not
-volatile uint8_t _audio_streamer_stopping;	//Only used for non-looping
-pthread_t        _audio_streamer_thd_id;
-pthread_mutex_t  _audio_streamer_lock;	//We lock the streamer command and thd_active vars
+volatile uint8_t __audio_streamer_command;	//Should only be accessed with a mutex
+volatile uint8_t __audio_streamer_thd_active;	//Says if the streamer thread is currently active or not
+volatile uint8_t __audio_streamer_stopping;	//Only used for non-looping
+pthread_t        __audio_streamer_thd_id;
+pthread_mutex_t  __audio_streamer_lock;	//We lock the streamer command and thd_active vars
 
-FILE*            _audio_streamer_fp;	//If a pointer to the file/data on disc
-audio_source_t*  _audio_streamer_source;	//Is null if none are streaming, otherwise points to the streaming struct
+FILE*            __audio_streamer_fp;	//If a pointer to the file/data on disc
+audio_source_t*  __audio_streamer_source;	//Is null if none are streaming, otherwise points to the streaming struct
 										//And this contains a pointer to the info struct
-audio_info_t*    _audio_streamer_info;
+audio_info_t*    __audio_streamer_info;
 
+//1MB of buffer space?
 #define AUDIO_STREAMING_NUM_BUFFERS 16	//4 is the bare minimum, but its safer to have more so you don't run out
 #define AUDIO_STREAMING_DATA_CHUNK_SIZE (1024 * 64)
 #define WAV_HDR_SIZE 44

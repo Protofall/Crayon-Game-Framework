@@ -156,7 +156,6 @@ extern uint8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint);
 
 
 // For ease of use, you can access the array directly if you want
-	//UNTESTED
 extern float crayon_memory_get_coord_x(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
 extern float crayon_memory_get_coord_y(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);
 extern vec2_f_t crayon_memory_get_coords(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error);

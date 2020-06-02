@@ -88,7 +88,7 @@ pvr_init_params_t pvr_params = {
 
 void set_screen(float * htz_adjustment){
 	*htz_adjustment = 1.0;
-	uint8_t region = flashrom_get_region();
+	int8_t region = flashrom_get_region();
 	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1
 		region = 0;	//Invalid region
 	}

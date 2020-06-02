@@ -5,8 +5,6 @@
 #include <crayon/savefile.h>
 
 //This file exist just to make the main file a little bit more clean
-
-//+ save icon should be 2 blocks long
 typedef struct minesweeper_savefile{
 	uint8_t options;	//XXXH LOSQ (Refresh rate (Hz), Language, OS, Sound, Questions)
 	uint16_t times[6];	//First 3 are Single player, last 3 are multiplayer

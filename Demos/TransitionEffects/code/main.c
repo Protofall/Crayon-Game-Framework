@@ -1,6 +1,7 @@
 //Crayon libraries
 #include <crayon/memory.h>
 #include <crayon/graphics.h>
+#include <crayon/crayon.h>
 
 //For region and htz stuff
 #include <dc/flashrom.h>
@@ -63,64 +64,6 @@
 
 #endif
 
-//Change this to only give room for PT list (Since other ones aren't used)
-pvr_init_params_t pvr_params = {
-		// Enable opaque, translucent and punch through polygons with size 16
-			//To better explain, the opb_sizes or Object Pointer Buffer sizes
-			//Work like this: Set to zero to disable. Otherwise the higher the
-			//number the more space used (And more efficient under higher loads)
-			//The lower the number, the less space used and less efficient under
-			//high loads. You can choose 0, 8, 16 or 32
-		{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16 },
-
-		// Vertex buffer size 512K
-		512 * 1024,
-
-		// No DMA
-		0,
-
-		// No FSAA
-		0,
-
-		// Translucent Autosort enabled
-		0
-};
-
-float width, height;
-
-float g_deadspace;
-
-uint8_t g_htz, g_htz_adjustment;
-uint8_t vga_enabled;
-
-void crayon_graphics_init_display(){
-	pvr_init(&pvr_params);
-
-	width = crayon_graphics_get_window_width();
-	height = crayon_graphics_get_window_height();
-
-	vga_enabled = (vid_check_cable() == CT_VGA);
-	if(vga_enabled){
-		vid_set_mode(DM_640x480_VGA, PM_RGB565);	//60Hz
-		g_htz = 60;
-		g_htz_adjustment = 1;
-	}
-	else{
-		if(flashrom_get_region() == FLASHROM_REGION_EUROPE){
-			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
-			g_htz = 50;
-			g_htz_adjustment = 1.2;
-		}
-		else{
-			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
-			g_htz = 60;
-			g_htz_adjustment = 1;
-		}
-	}
-
-	return;
-}
-
 void set_indexes(uint16_t * indexes, uint16_t size){
 	#if CRAYON_BOOT_MODE == 0
 		FILE * fp = fopen("cd/boxy_indexes.bin", "rb");
@@ -174,10 +117,9 @@ int main(){
 		}
 	#endif
 
-	g_deadspace = 0.4;
-
-	crayon_graphics_init_display();
-	// htz_select();
+	crayon_graphics_init(CRAYON_ENABLE_OP | CRAYON_ENABLE_TR | CRAYON_ENABLE_PT);
+	uint32_t width = crayon_graphics_get_window_width();
+	uint32_t height = crayon_graphics_get_window_height();
 
 	uint16_t i, j;
 
@@ -266,8 +208,8 @@ int main(){
 	boxy_draw.colour[0] = 0xFF000000;
 	boxy_draw.rotation[0] = 0;
 
-	crayon_graphics_transistion_init(&effect[0], &fade_draw, modify_fade_effect, 5 * g_htz, 1 * g_htz);	//5 seconds to fade in, 1 to fade out
-	crayon_graphics_transistion_init(&effect[1], &boxy_draw, modify_boxy_effect, 2 * g_htz, 2 * g_htz);
+	crayon_graphics_transistion_init(&effect[0], &fade_draw, modify_fade_effect, 5 * __htz, 1 * __htz);	//5 seconds to fade in, 1 to fade out
+	crayon_graphics_transistion_init(&effect[1], &boxy_draw, modify_boxy_effect, 2 * __htz, 2 * __htz);
 
 	//Fade out and fade in are reversed
 
@@ -396,9 +338,9 @@ int main(){
 
 			sprintf(debug, "State: %d %d. Progress %d, %d %d", effect[curr_effect].curr_state, effect[curr_effect].resting_state,
 				effect[curr_effect].curr_duration, effect[curr_effect].duration_fade_in, effect[curr_effect].duration_fade_out);
-			// sprintf(debug, "Colour: 0x%x", fade_draw.colour[0]);
-			// sprintf(debug, "Press A to fade in, B to fade out and X to swap effects");
 			crayon_graphics_draw_text_mono(debug, &BIOS_font, PVR_LIST_OP_POLY, 10, 10, 255, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono("Press A to fade in, B to fade out and X to swap effects", &BIOS_font,
+				PVR_LIST_OP_POLY, 10, 30, 255, 1, 1, BIOS_P.palette_id);
 
 		pvr_list_finish();
 
@@ -422,6 +364,8 @@ int main(){
 	// crayon_memory_free_sprite_array(&multi_draw[2]);
 
 	crayon_memory_free_sprite_array(&letter_box_draw);
+
+	crayon_shutdown();
 
 	return 0;
 }

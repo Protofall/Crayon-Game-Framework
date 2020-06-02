@@ -1,7 +1,8 @@
 //Crayon libraries
 #include <crayon/memory.h>
 #include <crayon/graphics.h>
-#include <crayon/assist.h>
+#include <crayon/misc.h>
+#include <crayon/debug.h>
 
 //For region and htz stuff
 #include <dc/flashrom.h>
@@ -63,29 +64,6 @@
 	}
 
 #endif
-
-//Change this to only give room for PT list (Since other ones aren't used)
-pvr_init_params_t pvr_params = {
-		// Enable opaque, translucent and punch through polygons with size 16
-			//To better explain, the opb_sizes or Object Pointer Buffer sizes
-			//Work like this: Set to zero to disable. Otherwise the higher the
-			//number the more space used (And more efficient under higher loads)
-			//The lower the number, the less space used and less efficient under
-			//high loads. You can choose 0, 8, 16 or 32
-		{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16 },
-
-		// Vertex buffer size 512K
-		512 * 1024,
-
-		// No DMA
-		0,
-
-		// No FSAA
-		0,
-
-		// Translucent Autosort enabled
-		0
-};
 
 float thumbstick_int_to_float(int joy){
 	float ret_val;	//Range from -1 to 1
@@ -188,32 +166,7 @@ void set_msg_sprite(char * buffer, uint8_t sprite){
 	return;
 }
 
-void set_screen(float * htz_adjustment){
-	*htz_adjustment = 1.0;
-	uint8_t region = flashrom_get_region();
-	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1
-		region = 0;	//Invalid region
-	}
-
-	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
-		vid_set_mode(DM_640x480_VGA, PM_RGB565);
-	}
-	else{	//Else its RGB. This handles composite, S-video, SCART, etc
-		if(region == FLASHROM_REGION_EUROPE){
-			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
-			*htz_adjustment = 1.2;	//60/50Hz
-		}
-		else{
-			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
-		}
-	}
-
-	return;
-}
-
 int main(){
-	pvr_init(&pvr_params);	//Init the pvr system
-
 	#if CRAYON_BOOT_MODE == 1
 		int sdRes = mount_fat_sd();	//This function should be able to mount a FAT32 formatted sd card to the /sd dir	
 		if(sdRes != 0){
@@ -221,8 +174,7 @@ int main(){
 		}
 	#endif
 
-	float htz_adjustment;
-	set_screen(&htz_adjustment);
+	crayon_graphics_init(CRAYON_ENABLE_OP | CRAYON_ENABLE_PT | CRAYON_ENABLE_TR);
 
 	//load in assets here
 	crayon_sprite_array_t Highlight_Draw;
@@ -230,10 +182,14 @@ int main(){
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Faces_P, BIOS_P;
 
-	#if CRAYON_BOOT_MODE == 1
-		crayon_memory_mount_romdisk("/sd/stuff.img", "/stuff");
-	#else
+	#if CRAYON_BOOT_MODE == 0
 		crayon_memory_mount_romdisk("/cd/stuff.img", "/stuff");
+	#elif CRAYON_BOOT_MODE == 1
+		crayon_memory_mount_romdisk("/sd/stuff.img", "/stuff");
+	#elif CRAYON_BOOT_MODE == 2
+		crayon_memory_mount_romdisk("/pc/stuff.img", "/stuff");
+	#else
+		#error "Invalid crayon boot mode"
 	#endif
 
 	crayon_memory_load_spritesheet(&Faces_SS, &Faces_P, 0, "/stuff/opaque.dtex");
@@ -245,47 +201,29 @@ int main(){
 		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
-	crayon_memory_init_sprite_array(&Faces_Draw[0], &Faces_SS, 0, &Faces_P, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Faces_Draw[0].layer[0] = 50;
-	Faces_Draw[0].scale[0].x = 4;
-	Faces_Draw[0].scale[0].y = 4;
-	Faces_Draw[0].coord[0].x = (2*640/6.0) - (crayon_graphics_get_draw_element_height(&Faces_Draw[0],0) / 2.0);
-	Faces_Draw[0].coord[0].y = 240 - (crayon_graphics_get_draw_element_height(&Faces_Draw[0],0) / 2.0);
-	Faces_Draw[0].flip[0] = 0;
-	Faces_Draw[0].rotation[0] = 0;
-	Faces_Draw[0].colour[0] = 0xFFFFFFFF;
-	Faces_Draw[0].fade[0] = 0;
-	Faces_Draw[0].frame_id[0] = 0;
-	Faces_Draw[0].visible[0] = 1;
-	crayon_memory_set_frame_uv(&Faces_Draw[0], 0, 0);
+	uint8_t error = 0;
+	uint8_t i;
+	for(i = 0; i < 3; i++){
+		error = crayon_memory_init_sprite_array(&Faces_Draw[i], &Faces_SS, 0, &Faces_P, 1, 1, 0, PVR_FILTER_NONE, 0);
+		if(error){break;}
+		error += crayon_memory_set_layer(&Faces_Draw[i], 0, 50);
+		error += crayon_memory_set_scale_x(&Faces_Draw[i], 0, 4);
+		error += crayon_memory_set_scale_y(&Faces_Draw[i], 0, 4);
+		error += crayon_memory_set_coord_x(&Faces_Draw[i], 0,
+			((2 + i) * 640 / 6.0) - (crayon_graphics_get_draw_element_height(&Faces_Draw[0], 0) / 2.0));
+		error += crayon_memory_set_coord_y(&Faces_Draw[i], 0,
+			240 - (crayon_graphics_get_draw_element_height(&Faces_Draw[0], 0) / 2.0));
+		error += crayon_memory_set_flip(&Faces_Draw[i], 0, 0);
+		error += crayon_memory_set_rotation(&Faces_Draw[i], 0, 0);
+		error += crayon_memory_set_colour(&Faces_Draw[i], 0, 0xFFFFFFFF);
+		error += crayon_memory_set_fade(&Faces_Draw[i], 0, 0);
+		error += crayon_memory_set_frame_id(&Faces_Draw[i], 0, 0);
+		error += crayon_memory_set_visibility(&Faces_Draw[i], 0, 1);
+		error += crayon_memory_set_frame_uv(&Faces_Draw[i], 0, 0 + i);
+		if(error){break;}
+	}
 
-	crayon_memory_init_sprite_array(&Faces_Draw[1], &Faces_SS, 0, &Faces_P, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Faces_Draw[1].layer[0] = 50;
-	Faces_Draw[1].scale[0].x = 4;
-	Faces_Draw[1].scale[0].y = 4;
-	Faces_Draw[1].coord[0].x = (3*640/6.0) - (crayon_graphics_get_draw_element_height(&Faces_Draw[0],0) / 2.0);
-	Faces_Draw[1].coord[0].y = Faces_Draw[0].coord[0].y;
-	Faces_Draw[1].flip[0] = 0;
-	Faces_Draw[1].rotation[0] = 0;
-	Faces_Draw[1].colour[0] = 0xFFFFFFFF;
-	Faces_Draw[1].fade[0] = 0;
-	Faces_Draw[1].frame_id[0] = 0;
-	Faces_Draw[1].visible[0] = 1;
-	crayon_memory_set_frame_uv(&Faces_Draw[1], 0, 1);
-
-	crayon_memory_init_sprite_array(&Faces_Draw[2], &Faces_SS, 0, &Faces_P, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Faces_Draw[2].layer[0] = 50;
-	Faces_Draw[2].scale[0].x = 4;
-	Faces_Draw[2].scale[0].y = 4;
-	Faces_Draw[2].coord[0].x = (4*640/6.0) - (crayon_graphics_get_draw_element_height(&Faces_Draw[0],0) / 2.0);
-	Faces_Draw[2].coord[0].y = Faces_Draw[0].coord[0].y;
-	Faces_Draw[2].flip[0] = 0;
-	Faces_Draw[2].rotation[0] = 0;
-	Faces_Draw[2].colour[0] = 0xFFFFFFFF;
-	Faces_Draw[2].fade[0] = 0;
-	Faces_Draw[2].frame_id[0] = 0;
-	Faces_Draw[2].visible[0] = 1;
-	crayon_memory_set_frame_uv(&Faces_Draw[2], 0, 2);
+	if(error){error_freeze("An error in sprite arrays occurred");}
 
 	frame_indexes[0] = 0;
 	frame_indexes[1] = 1;
@@ -300,9 +238,11 @@ int main(){
 	uint8_t escape = 0;
 
 	//The highlight box (Most of the details are set below)
-	crayon_memory_init_sprite_array(&Highlight_Draw, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Highlight_Draw.colour[0] = 0x88FF0000;
-	Highlight_Draw.visible[0] = 1;
+	error = crayon_memory_init_sprite_array(&Highlight_Draw, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	if(error){error_freeze("An error in sprite arrays occurred");}
+	error += crayon_memory_set_colour(&Highlight_Draw, 0, 0x88FF0000);
+	error += crayon_memory_set_visibility(&Highlight_Draw, 0, 1);
+	if(error){error_freeze("An error in sprite arrays occurred");}
 
 	uint8_t hide_msg = 0;
 	char msg[1024];
@@ -555,13 +495,13 @@ int main(){
 			prev_trigs[__dev->port].y = st->rtrig;
 		MAPLE_FOREACH_END()
 
-		if(Faces_Draw[sprite].layer[0] > 1){Highlight_Draw.layer[0] = Faces_Draw[sprite].layer[0] - 1;}
-		else{Highlight_Draw.layer[0] = 1;}
-		Highlight_Draw.scale[0].x = crayon_graphics_get_draw_element_width(&Faces_Draw[sprite], 0) + 4;
-		Highlight_Draw.scale[0].y = crayon_graphics_get_draw_element_height(&Faces_Draw[sprite], 0) + 4;
-		Highlight_Draw.coord[0].x = Faces_Draw[sprite].coord[0].x - 2;
-		Highlight_Draw.coord[0].y = Faces_Draw[sprite].coord[0].y - 2;
-		Highlight_Draw.rotation[0] = Faces_Draw[sprite].rotation[0];
+		if(crayon_memory_get_layer(&Faces_Draw[sprite], 0, NULL) > 1){crayon_memory_set_layer(&Highlight_Draw, 0, crayon_memory_get_layer(&Faces_Draw[sprite], 0, NULL) - 1);}
+		else{crayon_memory_set_layer(&Highlight_Draw, 0, 1);}
+		crayon_memory_set_scale_x(&Highlight_Draw, 0, crayon_graphics_get_draw_element_width(&Faces_Draw[sprite], 0) + 4);
+		crayon_memory_set_scale_y(&Highlight_Draw, 0, crayon_graphics_get_draw_element_height(&Faces_Draw[sprite], 0) + 4);
+		crayon_memory_set_coord_x(&Highlight_Draw, 0, crayon_memory_get_coord_x(&Faces_Draw[sprite], 0, NULL) - 2);
+		crayon_memory_set_coord_y(&Highlight_Draw, 0, crayon_memory_get_coord_y(&Faces_Draw[sprite], 0, NULL) - 2);
+		crayon_memory_set_rotation(&Highlight_Draw, 0, crayon_memory_get_rotation(&Faces_Draw[sprite], 0, NULL));
 		// Highlight_Draw.colour[0] = crayon_misc_insert_bits(crayon_misc_extract_bits(Faces_Draw[sprite].colour[0], 24, 0), crayon_misc_extract_bits(Faces_Draw[sprite].colour[0], 24, 0), 8, 24);
 
 		pvr_scene_begin();

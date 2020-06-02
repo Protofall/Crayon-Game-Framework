@@ -22,7 +22,7 @@ LDFLAGS  := $(CRAYON_PROJ_LDFLAGS) $(KOS_LDFLAGS) \
 	-L$(CRAYON_BASE)/lib/dreamcast
 
 #ALdc needs to be before lm for some reason
-LIBS     := $(CRAYON_PROJ_LIBS) -lcrayon -lALdc -lm $(KOS_LIBS)
+LIBS     := -lcrayon $(CRAYON_PROJ_LIBS) -lALdc -lm $(KOS_LIBS)
 IP_BIN   := $(CRAYON_IP_BIN)$(if $(CRAYON_IP_BIN),,$(CRAYON_BASE)/IP.BIN)
 BUILD    := $(CRAYON_BUILD_DIR)
 

@@ -58,55 +58,7 @@
 	}
 #endif
 
-//Change this to only give room for PT list (Since other ones aren't used)
-pvr_init_params_t pvr_params = {
-		// Enable opaque, translucent and punch through polygons with size 16
-			//To better explain, the opb_sizes or Object Pointer Buffer sizes
-			//Work like this: Set to zero to disable. Otherwise the higher the
-			//number the more space used (And more efficient under higher loads)
-			//The lower the number, the less space used and less efficient under
-			//high loads. You can choose 0, 8, 16 or 32
-		{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16 },
-
-		// Vertex buffer size 512K
-		512 * 1024,
-
-		// No DMA
-		0,
-
-		// No FSAA
-		0,
-
-		// Translucent Autosort enabled
-		0
-};
-
-void set_screen(float * htz_adjustment){
-	*htz_adjustment = 1.0;
-	uint8_t region = flashrom_get_region();
-	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1
-		region = 0;	//Invalid region
-	}
-
-	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
-		vid_set_mode(DM_640x480_VGA, PM_RGB565);
-	}
-	else{	//Else its RGB. This handles composite, S-video, SCART, etc
-		if(region == FLASHROM_REGION_EUROPE){
-			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
-			*htz_adjustment = 1.2;	//60/50Hz
-		}
-		else{
-			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
-		}
-	}
-
-	return;
-}
-
 int main(){
-	pvr_init(&pvr_params);	//Init the pvr system
-
 	#if CRAYON_BOOT_MODE == 1
 		int sdRes = mount_ext2_sd();	//This function should be able to mount an ext2 formatted sd card to the /sd dir	
 		if(sdRes != 0){
@@ -114,14 +66,13 @@ int main(){
 		}
 	#endif
 
-	float htz_adjustment;
-	set_screen(&htz_adjustment);
+	crayon_graphics_init(CRAYON_ENABLE_OP | CRAYON_ENABLE_TR | CRAYON_ENABLE_PT);
 
-	crayon_spritesheet_t Man, Opaque;
+	crayon_spritesheet_t Man_SS, Opaque_SS;
 	crayon_palette_t Man_P;
 	crayon_sprite_array_t Man_Draw, Opaque_Blend_Draw, Opaque_Add_Draw;
 
-	crayon_font_mono_t BIOS;
+	crayon_font_mono_t BIOS_Font;
 	crayon_palette_t BIOS_P;
 
 	crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
@@ -138,9 +89,9 @@ int main(){
 	#endif
 
 	//Load the asset
-	crayon_memory_load_spritesheet(&Man, &Man_P, 0, "/files/Man.dtex");
-	crayon_memory_load_spritesheet(&Opaque, NULL, -1, "/files/Opaque.dtex");
-	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 6, "/files/Fonts/BIOS_font.dtex");	//REMOVE LATER
+	crayon_memory_load_spritesheet(&Man_SS, &Man_P, 0, "/files/Man.dtex");
+	crayon_memory_load_spritesheet(&Opaque_SS, NULL, -1, "/files/Opaque.dtex");
+	crayon_memory_load_mono_font_sheet(&BIOS_Font, &BIOS_P, 6, "/files/Fonts/BIOS_font.dtex");	//REMOVE LATER
 
 	fs_romdisk_unmount("/files");
 
@@ -148,7 +99,7 @@ int main(){
 		unmount_ext2_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
-	crayon_memory_init_sprite_array(&Man_Draw, &Man, 0, &Man_P, 1, 1, 0, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Man_Draw, &Man_SS, 0, &Man_P, 1, 1, 0, PVR_FILTER_NONE, 0);
 	Man_Draw.layer[0] = 2;
 	Man_Draw.scale[0].x = 7;
 	Man_Draw.scale[0].y = 7;
@@ -162,7 +113,7 @@ int main(){
 	Man_Draw.visible[0] = 1;
 	crayon_memory_set_frame_uv(&Man_Draw, 0, 0);
 
-	crayon_memory_init_sprite_array(&Opaque_Blend_Draw, &Opaque, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_BLEND, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Opaque_Blend_Draw, &Opaque_SS, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_BLEND, PVR_FILTER_NONE, 0);
 	Opaque_Blend_Draw.scale[0].x = 12;
 	Opaque_Blend_Draw.scale[0].y = 12;
 	Opaque_Blend_Draw.coord[0].x = 0;
@@ -184,7 +135,7 @@ int main(){
 	}
 	crayon_memory_set_frame_uv(&Opaque_Blend_Draw, 0, 0);
 
-	crayon_memory_init_sprite_array(&Opaque_Add_Draw, &Opaque, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_ADD, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Opaque_Add_Draw, &Opaque_SS, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_ADD, PVR_FILTER_NONE, 0);
 	Opaque_Add_Draw.scale[0].x = 12;
 	Opaque_Add_Draw.scale[0].y = 12;
 	Opaque_Add_Draw.coord[0].x = 0;
@@ -230,7 +181,7 @@ int main(){
 		pvr_list_begin(PVR_LIST_OP_POLY);
 			crayon_graphics_draw_sprites(&Opaque_Blend_Draw, NULL, PVR_LIST_OP_POLY, CRAY_DRAW_ENHANCED);
 			crayon_graphics_draw_sprites(&Opaque_Add_Draw, NULL, PVR_LIST_OP_POLY, CRAY_DRAW_ENHANCED);
-			crayon_graphics_draw_text_mono(buffer, &BIOS, PVR_LIST_OP_POLY, 280, 360, 30, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono(buffer, &BIOS_Font, PVR_LIST_OP_POLY, 280, 360, 30, 1, 1, BIOS_P.palette_id);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
@@ -251,10 +202,10 @@ int main(){
 	crayon_memory_free_sprite_array(&Opaque_Blend_Draw);
 	crayon_memory_free_sprite_array(&Opaque_Add_Draw);
 
-	crayon_memory_free_mono_font_sheet(&BIOS);
+	crayon_memory_free_mono_font_sheet(&BIOS_Font);
 
-	crayon_memory_free_spritesheet(&Man);
-	crayon_memory_free_spritesheet(&Opaque);
+	crayon_memory_free_spritesheet(&Man_SS);
+	crayon_memory_free_spritesheet(&Opaque_SS);
 
 	crayon_memory_free_palette(&Man_P);
 	crayon_memory_free_palette(&BIOS_P);

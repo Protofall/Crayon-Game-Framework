@@ -1,126 +1,78 @@
 //Crayon libraries
 #include <crayon/memory.h>
 #include <crayon/graphics.h>
-
-//For region and htz stuff
-#include <dc/flashrom.h>
+#include <crayon/crayon.h>
 
 //For the controller
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
 
-#if CRAYON_BOOT_MODE == 1
-	//For mounting the sd dir
-	#include <dc/sd.h>
-	#include <kos/blockdev.h>
-	#include <fat/fs_fat.h>
-#endif
+// #if CRAYON_BOOT_MODE == 1
+// 	//For mounting the sd dir
+// 	#include <dc/sd.h>
+// 	#include <kos/blockdev.h>
+// 	#include <fat/fs_fat.h>
+// #endif
 
 
-#if CRAYON_BOOT_MODE == 1
-	#define MNT_MODE FS_FAT_MOUNT_READONLY
+// #if CRAYON_BOOT_MODE == 1
+// 	#define MNT_MODE FS_FAT_MOUNT_READONLY
 
-	static void unmount_fat_sd(){
-		fs_fat_unmount("/sd");
-		fs_fat_shutdown();
-		sd_shutdown();
-	}
+// 	static void unmount_fat_sd(){
+// 		fs_fat_unmount("/sd");
+// 		fs_fat_shutdown();
+// 		sd_shutdown();
+// 	}
 
-	static int mount_fat_sd(){
-		kos_blockdev_t sd_dev;
-		uint8 partition_type;
+// 	static int mount_fat_sd(){
+// 		kos_blockdev_t sd_dev;
+// 		uint8 partition_type;
 
-		// Initialize the sd card if its present
-		if(sd_init()){
-			return 1;
-		}
+// 		// Initialize the sd card if its present
+// 		if(sd_init()){
+// 			return 1;
+// 		}
 
-		// Grab the block device for the first partition on the SD card. Note that
-		// you must have the SD card formatted with an MBR partitioning scheme
-		if(sd_blockdev_for_partition(0, &sd_dev, &partition_type)){
-			return 2;
-		}
+// 		// Grab the block device for the first partition on the SD card. Note that
+// 		// you must have the SD card formatted with an MBR partitioning scheme
+// 		if(sd_blockdev_for_partition(0, &sd_dev, &partition_type)){
+// 			return 2;
+// 		}
 
-		// Check to see if the MBR says that we have a valid partition
-		// if(partition_type != 0x83){
-			//I don't know what value I should be comparing against, hence this check is disabled for now
-			// This: https://en.wikipedia.org/wiki/Partition_type
-				//Suggests there's multiple types for FAT...not sure how to handle this
-			// return 3;
-		// }
+// 		// Check to see if the MBR says that we have a valid partition
+// 		// if(partition_type != 0x83){
+// 			//I don't know what value I should be comparing against, hence this check is disabled for now
+// 			// This: https://en.wikipedia.org/wiki/Partition_type
+// 				//Suggests there's multiple types for FAT...not sure how to handle this
+// 			// return 3;
+// 		// }
 
-		// Initialize fs_fat and attempt to mount the device
-		if(fs_fat_init()){
-			return 4;
-		}
+// 		// Initialize fs_fat and attempt to mount the device
+// 		if(fs_fat_init()){
+// 			return 4;
+// 		}
 
-		//Mount the SD card to the sd dir in the VFS
-		if(fs_fat_mount("/sd", &sd_dev, MNT_MODE)){
-			return 5;
-		}
-		return 0;
-	}
+// 		//Mount the SD card to the sd dir in the VFS
+// 		if(fs_fat_mount("/sd", &sd_dev, MNT_MODE)){
+// 			return 5;
+// 		}
+// 		return 0;
+// 	}
 
-#endif
-
-//Change this to only give room for PT list (Since other ones aren't used)
-pvr_init_params_t pvr_params = {
-		// Enable opaque, translucent and punch through polygons with size 16
-			//To better explain, the opb_sizes or Object Pointer Buffer sizes
-			//Work like this: Set to zero to disable. Otherwise the higher the
-			//number the more space used (And more efficient under higher loads)
-			//The lower the number, the less space used and less efficient under
-			//high loads. You can choose 0, 8, 16 or 32
-		{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16 },
-
-		// Vertex buffer size 512K
-		512 * 1024,
-
-		// No DMA
-		0,
-
-		// No FSAA
-		0,
-
-		// Translucent Autosort enabled
-		0
-};
-
-void set_screen(float * htz_adjustment){
-	*htz_adjustment = 1.0;
-	uint8_t region = flashrom_get_region();
-	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1
-		region = 0;	//Invalid region
-	}
-
-	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
-		vid_set_mode(DM_640x480_VGA, PM_RGB565);
-	}
-	else{	//Else its RGB. This handles composite, S-video, SCART, etc
-		if(region == FLASHROM_REGION_EUROPE){
-			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
-			*htz_adjustment = 1.2;	//60/50Hz
-		}
-		else{
-			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
-		}
-	}
-
-	return;
-}
+// #endif
 
 int main(){
-	pvr_init(&pvr_params);	//Init the pvr system
+	// #if CRAYON_BOOT_MODE == 1
+	// 	int sdRes = mount_fat_sd();	//This function should be able to mount a FAT32 formatted sd card to the /sd dir	
+	// 	if(sdRes != 0){
+	// 		error_freeze("SD card couldn't be mounted: %d", sdRes);
+	// 	}
+	// #endif
 
-	#if CRAYON_BOOT_MODE == 1
-		int sdRes = mount_fat_sd();	//This function should be able to mount a FAT32 formatted sd card to the /sd dir	
-		if(sdRes != 0){
-			error_freeze("SD card couldn't be mounted: %d", sdRes);
-		}
-	#endif
-
-	float htz_adjustment;
-	set_screen(&htz_adjustment);
+	//Note:, first parameter is ignore for now since Crayon is only on Dreamcast ATM
+	if(crayon_init(CRAYON_PLATFORM_DREAMCAST, CRAYON_BOOT_MODE)){
+		error_freeze("Crayon failed to initialise");
+	}
 
 	srand(time(0));	//Set the seed for rand()
 
@@ -146,14 +98,10 @@ int main(){
 
 	fs_romdisk_unmount("/files");
 
-	#if CRAYON_BOOT_MODE == 1
-		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
-	#endif
-
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
 	crayon_memory_init_sprite_array(&Logo_Draw, &Logo, 0, &Logo_P, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Logo_Draw.coord[0].x = (640 - Logo.animation[0].frame_width) / 2;
-	Logo_Draw.coord[0].y = (480 - Logo.animation[0].frame_height) / 2;
+	Logo_Draw.coord[0].x = (crayon_graphics_get_window_width() - Logo.animation[0].frame_width) / 2;
+	Logo_Draw.coord[0].y = (crayon_graphics_get_window_height() - Logo.animation[0].frame_height) / 2;
 	Logo_Draw.layer[0] = 2;
 	Logo_Draw.scale[0].x = 1;
 	Logo_Draw.scale[0].y = 1;
@@ -174,7 +122,8 @@ int main(){
 
 	uint8_t begin = 0;
 	uint8_t moving = 0;
-	float shrink_time = 2.5 * 60;	//Time it takes to shrink (In seconds, htz_adjust fixes for 50Hz)
+	//__htz is set in cryaon_init()
+	float shrink_time = 2.5 * __htz;	//Time it takes to shrink (In seconds, htz_adjust fixes for 50Hz)
 
 	//Positive is bottom right, negative is top left
 	int8_t x_dir = rand() % 2;
@@ -186,13 +135,21 @@ int main(){
 	float new_width = crayon_graphics_get_draw_element_width(&Logo_Draw, 0);
 	float new_height = crayon_graphics_get_draw_element_height(&Logo_Draw, 0);
 
-	while(1){
+	uint8_t loop = 1;
+	while(loop){
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 			//If any button is pressed, start the game (Doesn't check thumbstick)
 			if(st->buttons || st->ltrig > 255 * 0.1 || st->rtrig > 255 * 0.1){
 				begin = 1;
 			}
+
+			//Press all 4 facebuttons at once to exit
+			if(st->buttons & (CONT_A | CONT_B | CONT_X | CONT_Y)){
+				loop = 0;
+				break;
+			}
+
 		MAPLE_FOREACH_END()
 
 		//Make the object bounce around
@@ -218,18 +175,19 @@ int main(){
 			//colours Dark Blue, Purple, Pink, Orange, vright Green, Yellow
 
 			//Movement
-			Logo_Draw.coord[0].x += 1.5 * htz_adjustment * x_dir;
-			Logo_Draw.coord[0].y += 1.5 * htz_adjustment * y_dir;
+			//NOTE: __htz_adjustment is set in crayon_graphics_init() or crayon_init()
+			Logo_Draw.coord[0].x += 1.5 * __htz_adjustment * x_dir;
+			Logo_Draw.coord[0].y += 1.5 * __htz_adjustment * y_dir;
 		}
 
 		//Shrinking process
 		if(begin && Logo_Draw.scale[0].x > 0.4 && Logo_Draw.scale[0].y > 0.3){
-			Logo_Draw.scale[0].x -= (0.6/shrink_time) * htz_adjustment;
-			Logo_Draw.scale[0].y -= (0.7/shrink_time) * htz_adjustment;
+			Logo_Draw.scale[0].x -= (0.6/shrink_time) * __htz_adjustment;
+			Logo_Draw.scale[0].y -= (0.7/shrink_time) * __htz_adjustment;
 			new_width = crayon_graphics_get_draw_element_width(&Logo_Draw, 0);
 			new_height = crayon_graphics_get_draw_element_height(&Logo_Draw, 0);
-			Logo_Draw.coord[0].x = (640 - new_width) / 2;
-			Logo_Draw.coord[0].y = (480 - new_height) / 2;
+			Logo_Draw.coord[0].x = (crayon_graphics_get_window_width() - new_width) / 2;
+			Logo_Draw.coord[0].y = (crayon_graphics_get_window_height() - new_height) / 2;
 		}
 		else{
 			if(begin){
@@ -252,6 +210,8 @@ int main(){
 
 	crayon_memory_free_spritesheet(&Logo);
 	crayon_memory_free_palette(&Logo_P);
+
+	crayon_shutdown();
 
 	return 0;
 }

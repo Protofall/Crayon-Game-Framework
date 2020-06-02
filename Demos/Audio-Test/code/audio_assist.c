@@ -68,13 +68,14 @@ static void sleep_ms(int milliseconds){
 
 
 uint8_t audio_init(){
-	_audio_streamer_source = NULL;
-	_audio_streamer_fp = NULL;
-	_audio_streamer_stopping = 0;
-	_audio_streamer_command = AUDIO_COMMAND_NONE;
-	_audio_streamer_thd_active = 0;
+	__audio_streamer_source = NULL;
+	__audio_streamer_info = NULL;
+	__audio_streamer_fp = NULL;
+	__audio_streamer_stopping = 0;
+	__audio_streamer_command = AUDIO_COMMAND_NONE;
+	__audio_streamer_thd_active = 0;
 
-	ALboolean enumeration;
+	ALboolean enumeration;	//Should this be a ALCboolean instead?
 	ALfloat listenerOri[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };	//Double check what these vars mean
 	ALCenum error;
 
@@ -88,16 +89,20 @@ uint8_t audio_init(){
 	//Chooses the preferred/default device
 	const ALCchar *defaultDeviceName;
 	defaultDeviceName = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
-	_al_device = alcOpenDevice(defaultDeviceName);
-	if(!_al_device){
+	if(!defaultDeviceName){
+		fprintf(stderr, "unable to get default device name\n");
+		return 1;
+	}
+	__al_device = alcOpenDevice(defaultDeviceName);
+	if(!__al_device){
 		fprintf(stderr, "unable to open default device\n");
 		return 1;
 	}
 
 	alGetError();	//This resets the error state
 
-	_al_context = alcCreateContext(_al_device, NULL);
-	if(!alcMakeContextCurrent(_al_context)){
+	__al_context = alcCreateContext(__al_device, NULL);
+	if(!alcMakeContextCurrent(__al_context)){
 		fprintf(stderr, "failed to make default context\n");
 		goto error1;
 	}
@@ -114,7 +119,7 @@ uint8_t audio_init(){
 	if(audio_test_error(&error, "listener orientation") == AL_TRUE){goto error2;}
 
 	// Init the mutex for the streamer thread
-	if(pthread_mutex_init(&_audio_streamer_lock, NULL) != 0){
+	if(pthread_mutex_init(&__audio_streamer_lock, NULL) != 0){
 		printf("Mutex init failed\n");
 		goto error2;
 	}
@@ -123,10 +128,10 @@ uint8_t audio_init(){
 
 	error2:
 	alcMakeContextCurrent(NULL);
-	alcDestroyContext(_al_context);
+	alcDestroyContext(__al_context);
 
 	error1:
-	alcCloseDevice(_al_device);
+	alcCloseDevice(__al_device);
 
 	return 1;
 }
@@ -134,28 +139,28 @@ uint8_t audio_init(){
 void audio_shutdown(){
 	//Just incase it hasn't finished shutting down yet
 	uint8_t status = 0;
-	pthread_mutex_lock(&_audio_streamer_lock);
-	if(_audio_streamer_thd_active == 1){
+	pthread_mutex_lock(&__audio_streamer_lock);
+	if(__audio_streamer_thd_active == 1){
 		status = 1;
-		_audio_streamer_command = AUDIO_COMMAND_END;
+		__audio_streamer_command = AUDIO_COMMAND_END;
 	}
-	pthread_mutex_unlock(&_audio_streamer_lock);
+	pthread_mutex_unlock(&__audio_streamer_lock);
 	if(status){	//Note, if it has already terminated, then this does nothing
-		pthread_join(_audio_streamer_thd_id, NULL);
+		pthread_join(__audio_streamer_thd_id, NULL);
 	}
-	pthread_mutex_destroy(&_audio_streamer_lock);
+	pthread_mutex_destroy(&__audio_streamer_lock);
 
 	// al_context = alcGetCurrentContext();	//With only one device/context, this line might not be required
-	// _al_device = alcGetContextsDevice(al_context);
+	// __al_device = alcGetContextsDevice(al_context);
 	alcMakeContextCurrent(NULL);
-	alcDestroyContext(_al_context);
-	alcCloseDevice(_al_device);
+	alcDestroyContext(__al_context);
+	alcCloseDevice(__al_device);
 
 	return;
 }
 
 ALboolean audio_load_WAV_file_info(const char * filename, audio_info_t * info, uint8_t mode){
-	if((mode & AUDIO_STREAMING) && (_audio_streamer_info != NULL || _audio_streamer_fp != NULL)){
+	if((mode & AUDIO_STREAMING) && (__audio_streamer_info != NULL || __audio_streamer_fp != NULL)){
 		return AL_FALSE;
 	}
 
@@ -195,15 +200,18 @@ ALboolean audio_load_WAV_file_info(const char * filename, audio_info_t * info, u
 	fread(buffer, 4, sizeof(char), in);
 	info->size = (ALsizei) convert_to_int(buffer, 4);	//This isn't the true size
 
-	ALvoid * data = NULL;;
+	ALvoid * data = NULL;
 	if(info->streaming == AUDIO_NOT_STREAMING){
 		data = (ALvoid*) malloc(info->size * sizeof(char));
-		if(data == NULL){goto error1;}
+		if(data == NULL){
+			// error_freeze("Couldn't allocate data memory");
+			goto error1;
+		}
 		fread(data, info->size, sizeof(char), in);
 		fclose(in);
 	}
 	else{
-		_audio_streamer_fp = in;
+		__audio_streamer_fp = in;
 	}
 
 	if(chan == 1){
@@ -218,21 +226,30 @@ ALboolean audio_load_WAV_file_info(const char * filename, audio_info_t * info, u
 	info->srcs_attached = 0;
 	info->buff_cnt = (info->streaming == AUDIO_STREAMING) ? AUDIO_STREAMING_NUM_BUFFERS : 1;
 	info->buff_id = malloc(sizeof(ALuint) * info->buff_cnt);
-	if(info->buff_id == NULL){if(data){free(data)}; return AL_FALSE;}
+	if(info->buff_id == NULL){
+		// error_freeze("Couldn't allocate buff ids"); 
+		goto error2;
+	}
 	alGenBuffers(info->buff_cnt, info->buff_id);	//Generating "info->buff_cnt" buffers. 2nd param is a pointer to an array
 													//of ALuint values which will store the names of the new buffers
 													//Seems "buff_id" doesn't actually contain the data?
-	if(audio_test_error(&error, "buffer generation") == AL_TRUE){goto error2;}
+	if(audio_test_error(&error, "buffer generation") == AL_TRUE){
+		// error_freeze("Couldn't gen buffers");
+		goto error3;
+	}
 
 	//Filling the buffer for non-streamers
 	if(info->streaming == AUDIO_NOT_STREAMING){
 		alBufferData(info->buff_id[0], info->format, data, info->size, info->freq);	//Fill the buffer with PCM data
-		if(audio_test_error(&error, "buffer copy") == AL_TRUE){goto error3;}
+		if(audio_test_error(&error, "buffer copy") == AL_TRUE){
+			// error_freeze("Couldn't fill buffers"); 
+			goto error4;
+		}
 
 		free(data);
 	}
 	else{
-		_audio_streamer_info = info;
+		__audio_streamer_info = info;
 	}
 
 	printf("Loaded WAV file!\n");
@@ -243,12 +260,17 @@ ALboolean audio_load_WAV_file_info(const char * filename, audio_info_t * info, u
 	//--------------------
 
 
-	error3:
+	error4:
 	alDeleteBuffers(info->buff_cnt, info->buff_id);
 
-	error2:
+	error3:
 	free(info->buff_id);
+
+	error2:
 	if(data){free(data);}
+	if(info->streaming == AUDIO_STREAMING){
+		fclose(in);
+	}
 	return AL_FALSE;
 
 	error1:
@@ -258,7 +280,7 @@ ALboolean audio_load_WAV_file_info(const char * filename, audio_info_t * info, u
 
 //Currently unimplemented
 ALboolean audio_load_CDDA_track_info(uint8_t drive, uint8_t track, audio_info_t * info, uint8_t mode){
-	if(mode & AUDIO_STREAMING && (_audio_streamer_source != NULL || _audio_streamer_fp != NULL)){
+	if(mode & AUDIO_STREAMING && (__audio_streamer_source != NULL || __audio_streamer_fp != NULL)){
 		return AL_FALSE;
 	}
 
@@ -272,7 +294,7 @@ ALboolean audio_load_CDDA_track_info(uint8_t drive, uint8_t track, audio_info_t 
 }
 
 ALboolean audio_load_OGG_file_info(const char * path, audio_info_t * info, uint8_t mode){
-	if(mode & AUDIO_STREAMING && (_audio_streamer_source != NULL || _audio_streamer_fp != NULL)){
+	if(mode & AUDIO_STREAMING && (__audio_streamer_source != NULL || __audio_streamer_fp != NULL)){
 		return AL_FALSE;
 	}
 
@@ -291,18 +313,18 @@ ALboolean audio_free_info(audio_info_t * info){
 
 	if(info->streaming == AUDIO_STREAMING){
 		//We haven't tried to free the source yet
-		if(_audio_streamer_thd_active && _audio_streamer_command != AUDIO_COMMAND_END){
+		if(__audio_streamer_thd_active && __audio_streamer_command != AUDIO_COMMAND_END){
 			return AL_FALSE;
 		}
 		//The sleep time might need adjusting
 		//Loop purpose is to make sure streamer has stopped working before we continue
-		while(_audio_streamer_thd_active && _audio_streamer_command == AUDIO_COMMAND_END){
+		while(__audio_streamer_thd_active && __audio_streamer_command == AUDIO_COMMAND_END){
 			sleep_ms(10);
 		}
 
-		fclose(_audio_streamer_fp);
-		_audio_streamer_fp = NULL;
-		_audio_streamer_info = NULL;
+		fclose(__audio_streamer_fp);
+		__audio_streamer_fp = NULL;
+		__audio_streamer_info = NULL;
 	}
 
 	alDeleteBuffers(info->buff_cnt, info->buff_id);	//1st param is number of buffers
@@ -317,12 +339,12 @@ ALboolean audio_free_source(audio_source_t * source){
 	}
 
 	//So we can later know there isn't a streamer presents
-	if(source == _audio_streamer_source){
-		pthread_mutex_lock(&_audio_streamer_lock);
-		if(_audio_streamer_thd_active == 1){
-			_audio_streamer_command = AUDIO_COMMAND_END;	//Doesn't matter what we said before, we want it to terminate now
+	if(source == __audio_streamer_source){
+		pthread_mutex_lock(&__audio_streamer_lock);
+		if(__audio_streamer_thd_active == 1){
+			__audio_streamer_command = AUDIO_COMMAND_END;	//Doesn't matter what we said before, we want it to terminate now
 		}
-		pthread_mutex_unlock(&_audio_streamer_lock);
+		pthread_mutex_unlock(&__audio_streamer_lock);
 	}
 	else{	//Streamer thread will handle this itself
 		alDeleteSources(1, &source->src_id);
@@ -341,16 +363,16 @@ ALboolean audio_create_source(audio_source_t * source, audio_info_t * info, vec2
 	}
 
 	if(info->streaming == AUDIO_STREAMING){
-		if(_audio_streamer_source != NULL){return AL_FALSE;}
+		if(__audio_streamer_source != NULL){return AL_FALSE;}
 
-		pthread_mutex_lock(&_audio_streamer_lock);
-		if(_audio_streamer_thd_active == 1){	//There's already a streamer thread
-			pthread_mutex_unlock(&_audio_streamer_lock);
+		pthread_mutex_lock(&__audio_streamer_lock);
+		if(__audio_streamer_thd_active == 1){	//There's already a streamer thread
+			pthread_mutex_unlock(&__audio_streamer_lock);
 			return AL_FALSE;
 		}
-		pthread_mutex_unlock(&_audio_streamer_lock);
+		pthread_mutex_unlock(&__audio_streamer_lock);
 		
-		_audio_streamer_source = source;
+		__audio_streamer_source = source;
 	}
 
 	source->info = info;
@@ -408,15 +430,15 @@ ALboolean audio_create_source(audio_source_t * source, audio_info_t * info, vec2
 		if(audio_test_error(&error, "buffer binding") == AL_TRUE){return AL_FALSE;}
 	}
 	else{	//We start the streamer thread
-		if(pthread_create(&_audio_streamer_thd_id, NULL, audio_stream_player, NULL)){
+		if(pthread_create(&__audio_streamer_thd_id, NULL, audio_stream_player, NULL)){
 			printf("Failed to create streamer thread\n");
 			return AL_FALSE;
 		}
 		else{	//The threaded function already does this, but incase you try to change the state right after doing this and
 				//somehow the threaded function hasn't run yet, this will allow it to do so
-			pthread_mutex_lock(&_audio_streamer_lock);
-			_audio_streamer_thd_active = 1;
-			pthread_mutex_unlock(&_audio_streamer_lock);
+			pthread_mutex_lock(&__audio_streamer_lock);
+			__audio_streamer_thd_active = 1;
+			pthread_mutex_unlock(&__audio_streamer_lock);
 		}
 	}
 
@@ -442,17 +464,17 @@ ALboolean audio_play_source(audio_source_t * source){
 
 	ALCenum error;
 	ALboolean ret_val;
-	if(source == _audio_streamer_source){
-		pthread_mutex_lock(&_audio_streamer_lock);
-		if(_audio_streamer_thd_active == 1){
-			if(_audio_streamer_command == AUDIO_COMMAND_NONE){
-				_audio_streamer_command = AUDIO_COMMAND_PLAY;
+	if(source == __audio_streamer_source){
+		pthread_mutex_lock(&__audio_streamer_lock);
+		if(__audio_streamer_thd_active == 1){
+			if(__audio_streamer_command == AUDIO_COMMAND_NONE){
+				__audio_streamer_command = AUDIO_COMMAND_PLAY;
 				ret_val = AL_TRUE;
 			}
 			else{ret_val = AL_FALSE;}
 		}
 		else{ret_val = AL_FALSE;}	//This should never occur
-		pthread_mutex_unlock(&_audio_streamer_lock);
+		pthread_mutex_unlock(&__audio_streamer_lock);
 		return ret_val;
 	}
 	alSourcePlay(source->src_id);	//If called on a source that is already playing, it will restart from the beginning
@@ -465,9 +487,9 @@ ALboolean audio_pause_source(audio_source_t * source){
 
 	ALCenum error;
 	ALboolean ret_val;
-	if(source == _audio_streamer_source){
-		pthread_mutex_lock(&_audio_streamer_lock);
-		if(_audio_streamer_thd_active == 1 && _audio_streamer_command == AUDIO_COMMAND_NONE){
+	if(source == __audio_streamer_source){
+		pthread_mutex_lock(&__audio_streamer_lock);
+		if(__audio_streamer_thd_active == 1 && __audio_streamer_command == AUDIO_COMMAND_NONE){
 			ret_val = AL_TRUE;
 		}
 		else{ret_val = AL_FALSE;}
@@ -479,10 +501,10 @@ ALboolean audio_pause_source(audio_source_t * source){
 		}
 
 		if(ret_val == AL_TRUE){
-			_audio_streamer_command = AUDIO_COMMAND_PAUSE;
+			__audio_streamer_command = AUDIO_COMMAND_PAUSE;
 		}
 
-		pthread_mutex_unlock(&_audio_streamer_lock);
+		pthread_mutex_unlock(&__audio_streamer_lock);
 		return ret_val;
 	}
 	alSourcePause(source->src_id);
@@ -495,9 +517,9 @@ ALboolean audio_unpause_source(audio_source_t * source){
 
 	ALCenum error;
 	ALboolean ret_val;
-	if(source == _audio_streamer_source){
-		pthread_mutex_lock(&_audio_streamer_lock);
-		if(_audio_streamer_thd_active == 1 && _audio_streamer_command == AUDIO_COMMAND_NONE){
+	if(source == __audio_streamer_source){
+		pthread_mutex_lock(&__audio_streamer_lock);
+		if(__audio_streamer_thd_active == 1 && __audio_streamer_command == AUDIO_COMMAND_NONE){
 			ret_val = AL_TRUE;
 		}
 		else{ret_val = AL_FALSE;}
@@ -509,10 +531,10 @@ ALboolean audio_unpause_source(audio_source_t * source){
 		}
 
 		if(ret_val == AL_TRUE){
-			_audio_streamer_command = AUDIO_COMMAND_UNPAUSE;
+			__audio_streamer_command = AUDIO_COMMAND_UNPAUSE;
 		}
 
-		pthread_mutex_unlock(&_audio_streamer_lock);
+		pthread_mutex_unlock(&__audio_streamer_lock);
 		return ret_val;
 	}
 	alSourcePlay(source->src_id);
@@ -525,17 +547,17 @@ ALboolean audio_stop_source(audio_source_t * source){
 
 	ALCenum error;
 	ALboolean ret_val;
-	if(source == _audio_streamer_source){
-		pthread_mutex_lock(&_audio_streamer_lock);
-		if(_audio_streamer_thd_active == 1){
-			if(_audio_streamer_command == AUDIO_COMMAND_NONE){
-				_audio_streamer_command = AUDIO_COMMAND_STOP;
+	if(source == __audio_streamer_source){
+		pthread_mutex_lock(&__audio_streamer_lock);
+		if(__audio_streamer_thd_active == 1){
+			if(__audio_streamer_command == AUDIO_COMMAND_NONE){
+				__audio_streamer_command = AUDIO_COMMAND_STOP;
 				ret_val = AL_TRUE;
 			}
 			else{ret_val = AL_FALSE;}
 		}
 		else{ret_val = AL_FALSE;}	//This should never occur
-		pthread_mutex_unlock(&_audio_streamer_lock);
+		pthread_mutex_unlock(&__audio_streamer_lock);
 		return ret_val;
 	}
 	alSourceStop(source->src_id);
@@ -549,7 +571,7 @@ ALboolean audio_streamer_buffer_fill(ALuint id){
 	data = malloc(AUDIO_STREAMING_DATA_CHUNK_SIZE);
 
 	//data array is filled with song info
-	switch(_audio_streamer_info->data_type){
+	switch(__audio_streamer_info->data_type){
 	case AUDIO_DATA_TYPE_WAV:
 		audio_WAV_buffer_fill(data);
 		break;
@@ -564,11 +586,11 @@ ALboolean audio_streamer_buffer_fill(ALuint id){
 		return AL_FALSE;
 	}
 
-	alBufferData(id, _audio_streamer_info->format, data, AUDIO_STREAMING_DATA_CHUNK_SIZE, _audio_streamer_info->freq);
+	alBufferData(id, __audio_streamer_info->format, data, AUDIO_STREAMING_DATA_CHUNK_SIZE, __audio_streamer_info->freq);
 	free(data);
 
 	if(audio_test_error(&error, "loading wav file") == AL_TRUE){return AL_FALSE;}
-	alSourceQueueBuffers(_audio_streamer_source->src_id, 1, &id);	//last parameter is a pointer to an array
+	alSourceQueueBuffers(__audio_streamer_source->src_id, 1, &id);	//last parameter is a pointer to an array
 	if(audio_test_error(&error, "queue-ing buffer") == AL_TRUE){return AL_FALSE;}
 
 	return AL_TRUE;
@@ -578,8 +600,8 @@ ALboolean audio_prep_stream_buffers(){
 	// Fill all the buffers with audio data from the wave file
 	uint8_t i;
 	ALboolean res;
-	for(i = 0; i < _audio_streamer_info->buff_cnt; i++){
-		res = audio_streamer_buffer_fill(_audio_streamer_info->buff_id[i]);
+	for(i = 0; i < __audio_streamer_info->buff_cnt; i++){
+		res = audio_streamer_buffer_fill(__audio_streamer_info->buff_id[i]);
 		if(res == AL_FALSE){return AL_FALSE;}
 	}
 
@@ -591,12 +613,12 @@ ALboolean audio_prep_stream_buffers(){
 void * audio_stream_player(void * args){
 	(void)args;	//This only exists to make the compiler shut up
 
-	pthread_mutex_lock(&_audio_streamer_lock);
-	_audio_streamer_thd_active = 1;
-	pthread_mutex_unlock(&_audio_streamer_lock);
+	pthread_mutex_lock(&__audio_streamer_lock);
+	__audio_streamer_thd_active = 1;
+	pthread_mutex_unlock(&__audio_streamer_lock);
 
 	//Queue up all buffers for the source with the beginning of the song
-	if(audio_prep_stream_buffers() == AL_FALSE){_audio_streamer_thd_active = 0; return NULL;}
+	if(audio_prep_stream_buffers() == AL_FALSE){__audio_streamer_thd_active = 0; return NULL;}
 
 	uint8_t command;
 
@@ -607,11 +629,11 @@ void * audio_stream_player(void * args){
 	uint8_t refresh_buffers = 0;
 
 	// ALfloat speed, new_speed;
-	// alGetSourcef(_audio_streamer_source->src_id, AL_PITCH, &speed);
+	// alGetSourcef(__audio_streamer_source->src_id, AL_PITCH, &speed);
 	// new_speed = speed;
 
 	//NOTE: This doesn't really account for playback speed very well
-	// int sleep_time = (_audio_streamer_info->freq / AUDIO_STREAMING_DATA_CHUNK_SIZE) * 1000 / speed;
+	// int sleep_time = (__audio_streamer_info->freq / AUDIO_STREAMING_DATA_CHUNK_SIZE) * 1000 / speed;
 
 	//Different play states
 	// AL_STOPPED
@@ -627,72 +649,72 @@ void * audio_stream_player(void * args){
 	// the buffer(s).
 
 	while(1){
-		pthread_mutex_lock(&_audio_streamer_lock);
-		command = _audio_streamer_command;
-		_audio_streamer_command = AUDIO_COMMAND_NONE;
-		pthread_mutex_unlock(&_audio_streamer_lock);
+		pthread_mutex_lock(&__audio_streamer_lock);
+		command = __audio_streamer_command;
+		__audio_streamer_command = AUDIO_COMMAND_NONE;
+		pthread_mutex_unlock(&__audio_streamer_lock);
 
 		//If source update is false then that means the source has been removed before this thread has finished
 		//Its not harmful though since if its false the statement is never entered and we exit when we check the command
 			//Next two conditions basically detect when it naturally stops playing (Non-looping) and it will reset the buffers
-		if(audio_update_source_state(_audio_streamer_source) == AL_TRUE &&
-			_audio_streamer_source->state == AL_STOPPED && _audio_streamer_stopping == 1){
+		if(audio_update_source_state(__audio_streamer_source) == AL_TRUE &&
+			__audio_streamer_source->state == AL_STOPPED && __audio_streamer_stopping == 1){
 
-			fseek(_audio_streamer_fp, WAV_HDR_SIZE, SEEK_SET);
+			fseek(__audio_streamer_fp, WAV_HDR_SIZE, SEEK_SET);
 			refresh_buffers = 1;
-			_audio_streamer_stopping = 0;
+			__audio_streamer_stopping = 0;
 		}
 
 		//If the user changed the playback speed, we'll update our sleep time
-		// alGetSourcef(_audio_streamer_source->src_id, AL_PITCH, &new_speed);
+		// alGetSourcef(__audio_streamer_source->src_id, AL_PITCH, &new_speed);
 		// if(new_speed != speed){
-		// 	sleep_time = (_audio_streamer_info->freq / AUDIO_STREAMING_DATA_CHUNK_SIZE) * 1000 / speed;
+		// 	sleep_time = (__audio_streamer_info->freq / AUDIO_STREAMING_DATA_CHUNK_SIZE) * 1000 / speed;
 		// 	speed = new_speed;
 		// }
 
 		if(command > AUDIO_COMMAND_END){command = AUDIO_COMMAND_NONE;}
 		if(command == AUDIO_COMMAND_PLAY || command == AUDIO_COMMAND_UNPAUSE){
-			if(_audio_streamer_source->state == AL_PLAYING){	//If we play during playing then we reset
-				alSourceStop(_audio_streamer_source->src_id);
-				fseek(_audio_streamer_fp, WAV_HDR_SIZE, SEEK_SET);
+			if(__audio_streamer_source->state == AL_PLAYING){	//If we play during playing then we reset
+				alSourceStop(__audio_streamer_source->src_id);
+				fseek(__audio_streamer_fp, WAV_HDR_SIZE, SEEK_SET);
 				refresh_buffers = 1;
 				starting = 1;
 			}
 			else{
-				alSourcePlay(_audio_streamer_source->src_id);
+				alSourcePlay(__audio_streamer_source->src_id);
 				//Don't need to refresh buffers since they should already be prep-d
 			}
 			
 			// printf("STARTING\n");
 		}
 		else if(command == AUDIO_COMMAND_PAUSE){
-			alSourcePause(_audio_streamer_source->src_id);
+			alSourcePause(__audio_streamer_source->src_id);
 		}
 		else if(command == AUDIO_COMMAND_STOP){
-			alSourceStop(_audio_streamer_source->src_id);	//All buffers should now be unqueued unless your Nvidia driver sucks
-			fseek(_audio_streamer_fp, WAV_HDR_SIZE, SEEK_SET);	//Reset to beginning
+			alSourceStop(__audio_streamer_source->src_id);	//All buffers should now be unqueued unless your Nvidia driver sucks
+			fseek(__audio_streamer_fp, WAV_HDR_SIZE, SEEK_SET);	//Reset to beginning
 			refresh_buffers = 1;
 			// printf("STOPPING\n");
 		}
 		else if(command == AUDIO_COMMAND_END){break;}
 
-		// if(_audio_streamer_source->state == AL_PLAYING){printf("STATE: PLAYING\n");}
-		// else if(_audio_streamer_source->state == AL_STOPPED){printf("STATE: STOPPED\n");}
-		// else if(_audio_streamer_source->state == AL_PAUSED){printf("STATE: PAUSED\n");}
-		// else if(_audio_streamer_source->state == AL_STREAMING){printf("STATE: STREAMING\n");}	//Never seem to see these
-		// else if(_audio_streamer_source->state == AL_INITIAL){printf("STATE: INITIAL\n");}
-		// else if(_audio_streamer_source->state == AL_UNDETERMINED){printf("STATE: UNDETERMINED\n");}	//Never seem to see these
+		// if(__audio_streamer_source->state == AL_PLAYING){printf("STATE: PLAYING\n");}
+		// else if(__audio_streamer_source->state == AL_STOPPED){printf("STATE: STOPPED\n");}
+		// else if(__audio_streamer_source->state == AL_PAUSED){printf("STATE: PAUSED\n");}
+		// else if(__audio_streamer_source->state == AL_STREAMING){printf("STATE: STREAMING\n");}	//Never seem to see these
+		// else if(__audio_streamer_source->state == AL_INITIAL){printf("STATE: INITIAL\n");}
+		// else if(__audio_streamer_source->state == AL_UNDETERMINED){printf("STATE: UNDETERMINED\n");}	//Never seem to see these
 		// else{printf("STATE: Unknown\n");}	//Never seem to see these
 
 		//So we don't waste time doing stuff when stopped
 			//I've never seen the second condition before
-		if(_audio_streamer_source->state == AL_PLAYING || _audio_streamer_source->state == AL_STREAMING ||
+		if(__audio_streamer_source->state == AL_PLAYING || __audio_streamer_source->state == AL_STREAMING ||
 			refresh_buffers){
 			// printf("I AM CHECKING THE PROCESSED BUFFERS\n");
 
 			// Buffer queuing loop must operate in a new thread
 			iBuffersProcessed = 0;
-			alGetSourcei(_audio_streamer_source->src_id, AL_BUFFERS_PROCESSED, &iBuffersProcessed);
+			alGetSourcei(__audio_streamer_source->src_id, AL_BUFFERS_PROCESSED, &iBuffersProcessed);
 
 			// if(iBuffersProcessed > 0){
 			// 	printf("I AM ACTUALLY PROCESSING %d BUFFERS\n", iBuffersProcessed);
@@ -701,11 +723,11 @@ void * audio_stream_player(void * args){
 			// For each processed buffer, remove it from the source queue, read the next chunk of
 			// audio data from the file, fill the buffer with new data, and add it to the source queue
 			// But we don't read if we're currently playing, but the audio is ending
-			while(iBuffersProcessed && !_audio_streamer_stopping){
+			while(iBuffersProcessed && !__audio_streamer_stopping){
 				// Remove the buffer from the queue (uiBuffer contains the buffer ID for the dequeued buffer)
 				//The unqueue operation will only take place if all n (1) buffers can be removed from the queue.
 				uiBuffer = 0;
-				alSourceUnqueueBuffers(_audio_streamer_source->src_id, 1, &uiBuffer);
+				alSourceUnqueueBuffers(__audio_streamer_source->src_id, 1, &uiBuffer);
 
 				audio_streamer_buffer_fill(uiBuffer);
 
@@ -715,7 +737,7 @@ void * audio_stream_player(void * args){
 		refresh_buffers = 0;
 
 		if(starting){
-			alSourcePlay(_audio_streamer_source->src_id);
+			alSourcePlay(__audio_streamer_source->src_id);
 			starting = 0;
 		}
 
@@ -734,32 +756,32 @@ void * audio_stream_player(void * args){
 	}
 
 	//Shutdown the system
-	audio_stop_source(_audio_streamer_source);	//This will de-queue all of the queue-d buffers
+	audio_stop_source(__audio_streamer_source);	//This will de-queue all of the queue-d buffers
 
 	//Free the source
-	alDeleteSources(1, &_audio_streamer_source->src_id);
+	alDeleteSources(1, &__audio_streamer_source->src_id);
 
 	//Tell the world we're done
-	pthread_mutex_lock(&_audio_streamer_lock);
-	_audio_streamer_thd_active = 0;
-	_audio_streamer_source = NULL;
-	_audio_streamer_command = AUDIO_COMMAND_NONE;
-	pthread_mutex_unlock(&_audio_streamer_lock);
+	pthread_mutex_lock(&__audio_streamer_lock);
+	__audio_streamer_thd_active = 0;
+	__audio_streamer_source = NULL;
+	__audio_streamer_command = AUDIO_COMMAND_NONE;
+	pthread_mutex_unlock(&__audio_streamer_lock);
 
 	return 0;
 }
 
 void audio_WAV_buffer_fill(ALvoid * data){
-	int spare = (_audio_streamer_source->info->size + WAV_HDR_SIZE) - ftell(_audio_streamer_fp);	//This is how much data in the entire file
-	int read = fread(data, 1, (AUDIO_STREAMING_DATA_CHUNK_SIZE < spare) ? AUDIO_STREAMING_DATA_CHUNK_SIZE : spare, _audio_streamer_fp);
+	int spare = (__audio_streamer_source->info->size + WAV_HDR_SIZE) - ftell(__audio_streamer_fp);	//This is how much data in the entire file
+	int read = fread(data, 1, (AUDIO_STREAMING_DATA_CHUNK_SIZE < spare) ? AUDIO_STREAMING_DATA_CHUNK_SIZE : spare, __audio_streamer_fp);
 	if(read < AUDIO_STREAMING_DATA_CHUNK_SIZE){
-		fseek(_audio_streamer_fp, WAV_HDR_SIZE, SEEK_SET);	//Skips the header, beginning of body
-		if(_audio_streamer_source->looping){	//Fill from beginning
-			fread(&((char*)data)[read], AUDIO_STREAMING_DATA_CHUNK_SIZE - read, 1, _audio_streamer_fp);
+		fseek(__audio_streamer_fp, WAV_HDR_SIZE, SEEK_SET);	//Skips the header, beginning of body
+		if(__audio_streamer_source->looping){	//Fill from beginning
+			fread(&((char*)data)[read], AUDIO_STREAMING_DATA_CHUNK_SIZE - read, 1, __audio_streamer_fp);
 		}
 		else{	//Fill with zeroes/silence
 			memset(&((char *)data)[read], 0, AUDIO_STREAMING_DATA_CHUNK_SIZE - read);
-			_audio_streamer_stopping = 1;	//It will take a second before the source state goes to stopped
+			__audio_streamer_stopping = 1;	//It will take a second before the source state goes to stopped
 			//Can't reset the file pointer yet since its kinda used above
 		}
 	}
