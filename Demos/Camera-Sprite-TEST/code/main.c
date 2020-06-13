@@ -286,12 +286,12 @@ int main(){
 		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
 	}
 
-	crayon_spritesheet_t Dwarf, Opaque, Man, Characters;
-	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw, Man_BG, James_Draw;
+	crayon_spritesheet_t Dwarf;
+	crayon_sprite_array_t Dwarf_Draw;
 	crayon_sprite_array_t Cam_BGs[4];
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
-	crayon_palette_t Tahoma_P, BIOS_P, Red_Man_P, Green_Man_P;
+	crayon_palette_t Tahoma_P, BIOS_P;
 
 	#if CRAYON_BOOT_MODE == 1
 		crayon_memory_mount_romdisk("/sd/colourMod.img", "/files");
@@ -302,9 +302,6 @@ int main(){
 	crayon_memory_load_prop_font_sheet(&Tahoma, &Tahoma_P, 0, "/files/Fonts/Tahoma_font.dtex");
 	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 1, "/files/Fonts/BIOS_font.dtex");
 	crayon_memory_load_spritesheet(&Dwarf, NULL, -1, "/files/Dwarf.dtex");
-	crayon_memory_load_spritesheet(&Opaque, NULL, -1, "/files/Opaque.dtex");
-	crayon_memory_load_spritesheet(&Man, &Red_Man_P, 2, "/files/Man.dtex");	//Palette 3 will be reserved for Green Man
-	crayon_memory_load_spritesheet(&Characters, NULL, 4, "/files/Characters.dtex");	//Since it has 23 colours, we'll just use ARGB1555
 
 	fs_romdisk_unmount("/files");
 
@@ -312,221 +309,38 @@ int main(){
 		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
-	crayon_memory_init_sprite_array(&James_Draw, &Characters, 0, NULL, 1, 9, 0, PVR_FILTER_NONE, 0);
-	James_Draw.scale[0].x = 2;
-	James_Draw.scale[0].y = 2;
-	James_Draw.coord[0].x = 307;	//These are about the mid-point given sprite sizes and scale
-	James_Draw.coord[0].y = 220;
-	James_Draw.layer[0] = 16;
-	James_Draw.flip[0] = (james_direction == 3) ? 1 : 0;	//If facing East, use West sprite but flipped
-	James_Draw.rotation[0] = 0;
-	James_Draw.colour[0] = 0;
-	James_Draw.frame_id[0] = (james_direction == 3) ? 3 * 2 : 3 * james_direction;	//If facing East, use west sprite but flipped
-	James_Draw.visible[0] = 1;
-	uint8_t i;
-	for(i = 0; i < James_Draw.frames_used; i++){
-		crayon_memory_set_frame_uv(&James_Draw, i, i);
-	}
 
-	//Draws 4 faces and rotates between all 12 faces
-	crayon_memory_init_sprite_array(&Frames_Draw, &Opaque, 0, NULL, 4, 12, CRAY_MULTI_FRAME, PVR_FILTER_NONE, 0);
-	Frames_Draw.scale[0].x = 3;
-	Frames_Draw.scale[0].y = 3;
-	Frames_Draw.coord[0].x = 380;
-	Frames_Draw.coord[0].y = 50;
-	Frames_Draw.coord[1].x = Frames_Draw.coord[0].x + (Frames_Draw.scale[0].x * Opaque.animation[0].frame_width);
-	Frames_Draw.coord[1].y = Frames_Draw.coord[0].y;
-	Frames_Draw.coord[2].x = Frames_Draw.coord[0].x;
-	Frames_Draw.coord[2].y = Frames_Draw.coord[0].y + (Frames_Draw.scale[0].y * Opaque.animation[0].frame_height);
-	Frames_Draw.coord[3].x = Frames_Draw.coord[1].x;
-	Frames_Draw.coord[3].y = Frames_Draw.coord[2].y;
-	Frames_Draw.layer[0] = 18;
-	Frames_Draw.layer[1] = 18;
-	Frames_Draw.layer[2] = 18;
-	Frames_Draw.layer[3] = 18;
-	Frames_Draw.flip[0] = 0;
-	Frames_Draw.rotation[0] = 0;
-	Frames_Draw.colour[0] = 0;
-	Frames_Draw.frame_id[0] = 0;
-	Frames_Draw.frame_id[1] = 1;
-	Frames_Draw.frame_id[2] = 2;
-	Frames_Draw.frame_id[3] = 3;
-	for(i = 0; i < Frames_Draw.frames_used; i++){
-		crayon_memory_set_frame_uv(&Frames_Draw, i, i);
-	}
-	for(i = 0; i < Frames_Draw.list_size; i++){
-		Frames_Draw.visible[i] = 1;
-	}
-	Frames_Draw.visible[0] = 0;
-	Frames_Draw.visible[1] = 1;
-	Frames_Draw.visible[2] = 1;
-	Frames_Draw.visible[3] = 1;
+
+
+
+
+	//WITH THE CAMERA THAT SHOWS THE BUG, DWARFY CAN BE FOUND AROUND X = 81, Y = 62
+
+
+
+
+
+
+
+
+
+
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 1, CRAY_MULTI_SCALE, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 1, 1, CRAY_NO_MULTIS, PVR_FILTER_NONE, 0);
 	Dwarf_Draw.coord[0].x = 50;
 	Dwarf_Draw.coord[0].y = 20;
-	Dwarf_Draw.coord[1].x = Dwarf_Draw.coord[0].x;
-	Dwarf_Draw.coord[1].y = Dwarf_Draw.coord[0].y + (Dwarf_Draw.animation[0].frame_height / 2);
-	Dwarf_Draw.coord[2].x = Dwarf_Draw.coord[0].x;
-	Dwarf_Draw.coord[2].y = Dwarf_Draw.coord[1].y + Dwarf_Draw.animation[0].frame_height;
 	Dwarf_Draw.layer[0] = 18;
-	Dwarf_Draw.layer[1] = 18;
-	Dwarf_Draw.layer[2] = 18;
-	Dwarf_Draw.scale[0].x = 0.5;
-	Dwarf_Draw.scale[0].y = 0.5;
-	Dwarf_Draw.scale[1].x = 1;
-	Dwarf_Draw.scale[1].y = 1;
-	Dwarf_Draw.scale[2].x = 2;
-	Dwarf_Draw.scale[2].y = 2;
+	Dwarf_Draw.scale[0].x = 2;
+	Dwarf_Draw.scale[0].y = 2;
 	Dwarf_Draw.flip[0] = 0;
 	Dwarf_Draw.rotation[0] = 0;
 	Dwarf_Draw.colour[0] = 0;
 	Dwarf_Draw.frame_id[0] = 0;
+	Dwarf_Draw.visible[0] = 1;
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 0, 0);
-	for(i = 0; i < Dwarf_Draw.list_size; i++){
-		Dwarf_Draw.visible[i] = 1;
-	}
 
-	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
-	crayon_memory_init_sprite_array(&Red_Man_Draw, &Man, 0, &Red_Man_P, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Red_Man_Draw.coord[0].x = 50;
-	Red_Man_Draw.coord[0].y = 280;
-	Red_Man_Draw.layer[0] = 18;
-	Red_Man_Draw.scale[0].x = 6;
-	Red_Man_Draw.scale[0].y = 6;
-	Red_Man_Draw.flip[0] = 0;
-	Red_Man_Draw.rotation[0] = 450;
-	Red_Man_Draw.colour[0] = 0;
-	Red_Man_Draw.frame_id[0] = 0;
-	Red_Man_Draw.visible[0] = 1;
-	crayon_memory_set_frame_uv(&Red_Man_Draw, 0, 0);
-
-	//Copy the red palette over and modify red with green
-	crayon_memory_clone_palette(&Red_Man_P, &Green_Man_P, 3);
-	crayon_memory_swap_colour(&Green_Man_P, 0xFFFF0000, 0xFF00D200, 0);
-
-	//Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
-	crayon_memory_init_sprite_array(&Green_Man_Draw, &Man, 0, &Green_Man_P, 8, 1, CRAY_MULTI_FLIP | CRAY_MULTI_ROTATE, PVR_FILTER_NONE, 0);
-	Green_Man_Draw.coord[0].x = 300;
-	Green_Man_Draw.coord[0].y = 360;
-	Green_Man_Draw.coord[1].x = Green_Man_Draw.coord[0].x + 60;
-	Green_Man_Draw.coord[1].y = Green_Man_Draw.coord[0].y;
-	Green_Man_Draw.coord[2].x = Green_Man_Draw.coord[0].x;
-	Green_Man_Draw.coord[2].y = Green_Man_Draw.coord[0].y + 60;
-	Green_Man_Draw.coord[3].x = Green_Man_Draw.coord[1].x;
-	Green_Man_Draw.coord[3].y = Green_Man_Draw.coord[2].y;
-	Green_Man_Draw.coord[4].x = Green_Man_Draw.coord[0].x;
-	Green_Man_Draw.coord[4].y = Green_Man_Draw.coord[3].y + 60;
-	Green_Man_Draw.coord[5].x = Green_Man_Draw.coord[1].x;
-	Green_Man_Draw.coord[5].y = Green_Man_Draw.coord[4].y;
-	Green_Man_Draw.coord[6].x = Green_Man_Draw.coord[0].x;
-	Green_Man_Draw.coord[6].y = Green_Man_Draw.coord[4].y + 60;
-	Green_Man_Draw.coord[7].x = Green_Man_Draw.coord[1].x;
-	Green_Man_Draw.coord[7].y = Green_Man_Draw.coord[6].y;
-	Green_Man_Draw.layer[0] = 50;
-	Green_Man_Draw.layer[1] = 50;
-	Green_Man_Draw.layer[2] = 50;
-	Green_Man_Draw.layer[3] = 50;
-	Green_Man_Draw.layer[4] = 50;
-	Green_Man_Draw.layer[5] = 50;
-	Green_Man_Draw.layer[6] = 50;
-	Green_Man_Draw.layer[7] = 50;
-	Green_Man_Draw.scale[0].x = 3;
-	Green_Man_Draw.scale[0].y = 3;
-	Green_Man_Draw.flip[0] = 0;
-	Green_Man_Draw.flip[1] = 1;
-	Green_Man_Draw.flip[2] = 0;
-	Green_Man_Draw.flip[3] = 1;
-	Green_Man_Draw.flip[4] = 0;
-	Green_Man_Draw.flip[5] = 1;
-	Green_Man_Draw.flip[6] = 0;
-	Green_Man_Draw.flip[7] = 1;
-	Green_Man_Draw.rotation[0] = 0;
-	Green_Man_Draw.rotation[1] = 0;
-	Green_Man_Draw.rotation[2] = 90;
-	Green_Man_Draw.rotation[3] = 90;
-	Green_Man_Draw.rotation[4] = 180;
-	Green_Man_Draw.rotation[5] = 180;
-	Green_Man_Draw.rotation[6] = 270;
-	Green_Man_Draw.rotation[7] = 270;
-	Green_Man_Draw.colour[0] = 0;
-	Green_Man_Draw.frame_id[0] = 0;
-	crayon_memory_set_frame_uv(&Green_Man_Draw, 0, 0);
-	for(i = 0; i < Green_Man_Draw.list_size; i++){
-		Green_Man_Draw.visible[i] = 1;
-	}
-
-	//8 sprites, 1 frame, multi rotation and flip
-	crayon_memory_init_sprite_array(&Rainbow_Draw, &Opaque, 1, NULL, 8, 1, CRAY_MULTI_FLIP | CRAY_MULTI_ROTATE, PVR_FILTER_NONE, 0);
-	Rainbow_Draw.coord[0].x = Dwarf_Draw.coord[0].x + (2 * Dwarf_Draw.animation[0].frame_width) + 20;
-	Rainbow_Draw.coord[0].y = 20;
-	Rainbow_Draw.coord[1].x = Rainbow_Draw.coord[0].x;
-	Rainbow_Draw.coord[1].y = Rainbow_Draw.coord[0].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10;
-	Rainbow_Draw.coord[2].x = Rainbow_Draw.coord[0].x;
-	Rainbow_Draw.coord[2].y = Rainbow_Draw.coord[1].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10;
-	Rainbow_Draw.coord[3].x = Rainbow_Draw.coord[0].x;
-	Rainbow_Draw.coord[3].y = Rainbow_Draw.coord[2].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10;
-	Rainbow_Draw.coord[4].x = Rainbow_Draw.coord[0].x + (8 * Rainbow_Draw.animation[0].frame_width) + 10;
-	Rainbow_Draw.coord[4].y = Rainbow_Draw.coord[0].y;
-	Rainbow_Draw.coord[5].x = Rainbow_Draw.coord[4].x;
-	Rainbow_Draw.coord[5].y = Rainbow_Draw.coord[0].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10;
-	Rainbow_Draw.coord[6].x = Rainbow_Draw.coord[4].x;
-	Rainbow_Draw.coord[6].y = Rainbow_Draw.coord[5].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10;
-	Rainbow_Draw.coord[7].x = Rainbow_Draw.coord[4].x;
-	Rainbow_Draw.coord[7].y = Rainbow_Draw.coord[6].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10;
-	Rainbow_Draw.layer[0] = 14;
-	Rainbow_Draw.layer[1] = 14;
-	Rainbow_Draw.layer[2] = 14;
-	Rainbow_Draw.layer[3] = 14;
-	Rainbow_Draw.layer[4] = 14;
-	Rainbow_Draw.layer[5] = 14;
-	Rainbow_Draw.layer[6] = 14;
-	Rainbow_Draw.layer[7] = 14;
-	Rainbow_Draw.scale[0].x = 8;
-	Rainbow_Draw.scale[0].y = 8;
-	Rainbow_Draw.flip[0] = 0;
-	Rainbow_Draw.flip[1] = 0;
-	Rainbow_Draw.flip[2] = 0;
-	Rainbow_Draw.flip[3] = 0;
-	Rainbow_Draw.flip[4] = 1;
-	Rainbow_Draw.flip[5] = 1;
-	Rainbow_Draw.flip[6] = 1;
-	Rainbow_Draw.flip[7] = 1;
-	Rainbow_Draw.rotation[0] = 0;
-	Rainbow_Draw.rotation[1] = 90;
-	Rainbow_Draw.rotation[2] = 180;
-	Rainbow_Draw.rotation[3] = 270;
-	Rainbow_Draw.rotation[4] = 0;
-	Rainbow_Draw.rotation[5] = 90;
-	Rainbow_Draw.rotation[6] = 180;
-	Rainbow_Draw.rotation[7] = 270;
-	Rainbow_Draw.colour[0] = 0;
-	Rainbow_Draw.frame_id[0] = 0;
-	crayon_memory_set_frame_uv(&Rainbow_Draw, 0, 0);
-	for(i = 0; i < Rainbow_Draw.list_size; i++){
-		Rainbow_Draw.visible[i] = 1;
-	}
-	// Rainbow_Draw.visible[0] = 0;
-	// Rainbow_Draw.visible[1] = 1;
-	// Rainbow_Draw.visible[2] = 0;
-	// Rainbow_Draw.visible[3] = 1;
-	// Rainbow_Draw.visible[4] = 0;
-	// Rainbow_Draw.visible[5] = 0;
-	// Rainbow_Draw.visible[6] = 1;
-	// Rainbow_Draw.visible[7] = 0;
-
-	crayon_memory_init_sprite_array(&Man_BG, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
-	Man_BG.coord[0].x = Red_Man_Draw.coord[0].x;
-	Man_BG.coord[0].y = Red_Man_Draw.coord[0].y;
-	Man_BG.layer[0] = Red_Man_Draw.layer[0] - 1;
-	Man_BG.scale[0].x = Red_Man_Draw.animation->frame_width * Red_Man_Draw.scale[0].x;
-	Man_BG.scale[0].y = Red_Man_Draw.animation->frame_height * Red_Man_Draw.scale[0].y;
-	Man_BG.rotation[0] = 0;
-	Man_BG.colour[0] = 0xFF000000;
-	Man_BG.visible[0] = 1;
-
-	crayon_memory_init_sprite_array(&Cam_BGs[0], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Cam_BGs[0], NULL, 0, NULL, 1, 1, CRAY_NO_MULTIS, PVR_FILTER_NONE, 0);
 	Cam_BGs[0].coord[0].x = 0;
 	Cam_BGs[0].coord[0].y = 0;
 	Cam_BGs[0].layer[0] = 1;
@@ -536,7 +350,7 @@ int main(){
 	Cam_BGs[0].colour[0] = 0xFF888888;
 	Cam_BGs[0].visible[0] = 1;
 
-	crayon_memory_init_sprite_array(&Cam_BGs[1], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Cam_BGs[1], NULL, 0, NULL, 1, 1, CRAY_NO_MULTIS, PVR_FILTER_NONE, 0);
 	Cam_BGs[1].coord[0].x = 140;
 	Cam_BGs[1].coord[0].y = 32;
 	Cam_BGs[1].layer[0] = 1;
@@ -546,7 +360,7 @@ int main(){
 	Cam_BGs[1].colour[0] = 0xFF888888;
 	Cam_BGs[1].visible[0] = 1;
 
-	crayon_memory_init_sprite_array(&Cam_BGs[2], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Cam_BGs[2], NULL, 0, NULL, 1, 1, CRAY_NO_MULTIS, PVR_FILTER_NONE, 0);
 	Cam_BGs[2].coord[0].x = 160;
 	Cam_BGs[2].coord[0].y = 120;
 	Cam_BGs[2].layer[0] = 1;
@@ -559,7 +373,7 @@ int main(){
 	#define MODE 1
 
 	if(MODE != 2){
-		crayon_memory_init_sprite_array(&Cam_BGs[3], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+		crayon_memory_init_sprite_array(&Cam_BGs[3], NULL, 0, NULL, 1, 1, CRAY_NO_MULTIS, PVR_FILTER_NONE, 0);
 		Cam_BGs[3].coord[0].x = 160;
 		Cam_BGs[3].coord[0].y = 120;
 		Cam_BGs[3].layer[0] = 1;
@@ -570,7 +384,7 @@ int main(){
 		Cam_BGs[3].visible[0] = 1;
 	}
 	else{
-		crayon_memory_init_sprite_array(&Cam_BGs[3], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+		crayon_memory_init_sprite_array(&Cam_BGs[3], NULL, 0, NULL, 1, 1, CRAY_NO_MULTIS, PVR_FILTER_NONE, 0);
 		Cam_BGs[3].coord[0].x = 20;
 		Cam_BGs[3].coord[0].y = 40;
 		Cam_BGs[3].layer[0] = 1;
@@ -623,17 +437,17 @@ int main(){
 			(vec2_u16_t){Cam_BGs[3].scale[0].x,Cam_BGs[3].scale[0].y}, 1);
 	}
 
-	// char g_buffer[300];
-	// for(i = 0; i < 7; i++){
-	// 	__GRAPHICS_DEBUG_VARIABLES[i] = 0;
-	// }
+	//I'm using index 8 (9th element) to ...dunno
+	char g_buffer[300];
+	uint8_t i;
+	for(i = 0; i < 7; i++){
+		__CRAYON_GRAPHICS_DEBUG_VARS[i] = 0;
+	}
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
 	crayon_graphics_setup_palette(&BIOS_P);
 	crayon_graphics_setup_palette(&Tahoma_P);
-	crayon_graphics_setup_palette(&Red_Man_P);
-	crayon_graphics_setup_palette(&Green_Man_P);
 
 	char snum1[80];
 
@@ -647,13 +461,10 @@ int main(){
 	uint8_t last_dir = 0;
 	uint8_t info_disp = 1;
 
-	pvr_stats_t stats;
-	pvr_get_stats(&stats);
 	uint8_t escape = 0;
 	uint32_t prev_btns[4] = {0};
 	vec2_u8_t prev_trigs[4] = {(vec2_u8_t){0,0}};
 	uint32_t curr_thumb = 0;
-	// uint32_t prev_thumb = 0;
 	vec2_f_t moved_on_frame;	//This is the distance to move the camera per frame. It makes moving James easier
 	while(!escape){
 		moved_on_frame = (vec2_f_t){0,0};
@@ -698,8 +509,8 @@ int main(){
 		}
 
 		if((st->buttons & CONT_B) && !(prev_btns[__dev->port] & CONT_B)){
-			__GRAPHICS_DEBUG_VARIABLES[8]++;
-			if(__GRAPHICS_DEBUG_VARIABLES[8] > 7){__GRAPHICS_DEBUG_VARIABLES[8] = 0;}
+			// __CRAYON_GRAPHICS_DEBUG_VARS[8]++;
+			// if(__CRAYON_GRAPHICS_DEBUG_VARS[8] > 7){__CRAYON_GRAPHICS_DEBUG_VARS[8] = 0;}
 		}
 
 		//Need to add the free-ing functions first
@@ -758,42 +569,11 @@ int main(){
 			crayon_memory_move_camera_y(&cameras[i], moved_on_frame.y);
 		}
 
-		//Currently doesn't actually move you. Just updates the way you face
-		move_james(&James_Draw, moved_on_frame, stats.frame_count);
-
 		pvr_scene_begin();
-
-		pvr_get_stats(&stats);
-
-		//Animation of red man falling and faces rotating
-		if(stats.frame_count % 120 <= 30){
-			Red_Man_Draw.rotation[0] = 0;
-		}
-		else if(stats.frame_count % 120 <= 60){
-			Red_Man_Draw.rotation[0] = 90;
-		}
-		else if(stats.frame_count % 120 <= 90){
-			Red_Man_Draw.rotation[0] = 180;
-		}
-		else{
-			Red_Man_Draw.rotation[0] = 270;
-		}
-
-		if(stats.frame_count % 60 == 0){
-			Frames_Draw.frame_id[0] = (Frames_Draw.frame_id[0] + 1) % Frames_Draw.animation->frame_count;
-			Frames_Draw.frame_id[1] = (Frames_Draw.frame_id[1] + 1) % Frames_Draw.animation->frame_count;
-			Frames_Draw.frame_id[2] = (Frames_Draw.frame_id[2] + 1) % Frames_Draw.animation->frame_count;
-			Frames_Draw.frame_id[3] = (Frames_Draw.frame_id[3] + 1) % Frames_Draw.animation->frame_count;
-		}
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
 			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-
-			//THe player sprite
-			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
 
 			//Fonts aren't supported by cameras yet
 			// crayon_graphics_draw_text_prop("Tahoma\0", &Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id);
@@ -825,14 +605,12 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
-			// __GRAPHICS_DEBUG_VARIABLES[0] = 1;
-			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
-			// __GRAPHICS_DEBUG_VARIABLES[0] = 0;
+			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 1;
+			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 0;
 
 			// sprintf(g_buffer, "%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n",
-			// 		__GRAPHICS_DEBUG_VARIABLES[1], __GRAPHICS_DEBUG_VARIABLES[2], __GRAPHICS_DEBUG_VARIABLES[3],
-			// 		__GRAPHICS_DEBUG_VARIABLES[4], __GRAPHICS_DEBUG_VARIABLES[5], __GRAPHICS_DEBUG_VARIABLES[6]);
+			// 		__CRAYON_GRAPHICS_DEBUG_VARS[1], __CRAYON_GRAPHICS_DEBUG_VARS[2], __CRAYON_GRAPHICS_DEBUG_VARS[3],
+			// 		__CRAYON_GRAPHICS_DEBUG_VARS[4], __CRAYON_GRAPHICS_DEBUG_VARS[5], __CRAYON_GRAPHICS_DEBUG_VARS[6]);
 
 			// crayon_graphics_draw_text_mono(g_buffer, &BIOS, PVR_LIST_PT_POLY, 32, 280, 254, 1, 1, BIOS_P.palette_id);
 
@@ -862,25 +640,14 @@ int main(){
 	uint32_t retVal = 0;
 
 	retVal += crayon_memory_free_spritesheet(&Dwarf);
-	retVal += crayon_memory_free_spritesheet(&Opaque);
-	retVal += crayon_memory_free_spritesheet(&Man);
-	retVal += crayon_memory_free_spritesheet(&Characters);
 
 	retVal += crayon_memory_free_mono_font_sheet(&BIOS);
 	retVal += crayon_memory_free_prop_font_sheet(&Tahoma);
 
 	retVal += crayon_memory_free_palette(&BIOS_P);
 	retVal += crayon_memory_free_palette(&Tahoma_P);
-	retVal += crayon_memory_free_palette(&Red_Man_P);
-	retVal += crayon_memory_free_palette(&Green_Man_P);
 
-	retVal += crayon_memory_free_sprite_array(&James_Draw);
 	retVal += crayon_memory_free_sprite_array(&Dwarf_Draw);
-	retVal += crayon_memory_free_sprite_array(&Rainbow_Draw);
-	retVal += crayon_memory_free_sprite_array(&Frames_Draw);
-	retVal += crayon_memory_free_sprite_array(&Red_Man_Draw);
-	retVal += crayon_memory_free_sprite_array(&Green_Man_Draw);
-	retVal += crayon_memory_free_sprite_array(&Man_BG);
 	retVal += crayon_memory_free_sprite_array(&Cam_BGs[0]);
 	retVal += crayon_memory_free_sprite_array(&Cam_BGs[1]);
 	retVal += crayon_memory_free_sprite_array(&Cam_BGs[2]);
