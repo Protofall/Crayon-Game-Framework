@@ -135,6 +135,11 @@ extern uint32_t crayon_misc_insert_bits(uint32_t number_1, uint32_t number_2, ui
 	return (number_1 & ~(((1UL << bit_length) - 1) << offset)) | (number_2 << offset);
 }
 
+extern uint32_t crayon_misc_increment_bits(uint32_t number, int32_t change_val, uint8_t bit_length, uint8_t offset){
+	return crayon_misc_insert_bits(number,
+		crayon_misc_extract_bits(number, bit_length, offset) + change_val, bit_length, offset);
+}
+
 // Convert unsigned int to string
 // 'out_string' buffer is assumed to be large enough.
 // Requires an 11-byte output buffer for the string.

@@ -13,6 +13,7 @@
 #define CRAY_MULTI_COLOUR_ADD (3 << 5) // 0110 0000
 #define CRAY_MULTI_COLOUR_BLEND (1 << 5) // 0010 0000
 #define CRAY_MULTI_COLOUR (1 << 5) //Use this one for untextured polys
+#define CRAY_NO_MULTIS 0	//Just so when checking the code its easier to read
 
 //Internal usage
 #define CRAY_COLOUR_BLEND (0 << 6)

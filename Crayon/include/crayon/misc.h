@@ -47,9 +47,15 @@ extern uint32_t crayon_misc_extract_bits(uint32_t number, uint8_t bit_length, ui
 //This simply insets your second number into the first number. I don't know what happens if number_2 is too long...
 extern uint32_t crayon_misc_insert_bits(uint32_t number_1, uint32_t number_2, uint8_t bit_length, uint8_t offset);
 
+//UNTESTED
+//Despite the name, if you pass in a negative number it will decrement
+extern uint32_t crayon_misc_increment_bits(uint32_t number, int32_t change_val, uint8_t bit_length, uint8_t offset);
+
 
 //THE FUNCTIONS BELOW CAME FROM DREAMHAL
 // https://github.com/Moopthehedgehog/DreamHAL/blob/master/modules/simple_print.c
+	//NOTE: As of writting, Moop's github has been deleted and all his work too, but copies of DreamHAL can be found
+	//on the Simulant discord channel
 
 //NOTE: "out_string" is expected to be at least 12 characters long (10 for number, 1 for sign, 1 for \0 )
 	//For unsigned you can get away with 11 since there's no sign
