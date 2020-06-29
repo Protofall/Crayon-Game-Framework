@@ -1,7 +1,7 @@
 #!/bin/bash
 
 helpInfo () {
-	echo 'Usage: ./make.sh -noRM*'
+	echo 'Usage: ./preprocess.sh -noRM*'
 	echo 'noRM:'
 	echo -e ' \t -noRM is an optional parameter. It prevents the'
 	echo -e ' \t removal of temperary files for viewing/debugging'
@@ -211,7 +211,7 @@ projectRoot="$PWD"	#Make sure bash script is called from the real project root
 
 # If the assets folder DNE, then don't bother preprocessing
 if [ ! -d "$assets" ]; then
-	exit 0
+	exit 1
 fi
 
 while test ${#} -gt 0

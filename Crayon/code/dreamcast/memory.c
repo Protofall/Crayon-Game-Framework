@@ -1167,27 +1167,30 @@ extern uint8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint){
 	int length = zlib_getlength(filename);
 
 	//Later add check to see if theres enough available main ram
-	 
-	// Check failure
+	;
+
 	if(length == 0){
-			return 1;
+		return 1;
 	}
-	 
-	// Open file
+	
 	gzFile file = gzopen(filename, "rb"); //Seems to be the replacement of fs_load() along with gzread()
 	if(!file){
-			return 1;
+		return 1;
 	}
 
-	// Allocate memory, read file
-	buffer = malloc(length);  //Might need an (if(!buffer) check here)
+	//Allocate memory, read file
+	buffer = malloc(length);
+	if(!buffer){
+		gzclose(file);
+		return 1;
+	}
+
 	gzread(file, buffer, length);
 	gzclose(file);
 
 	fs_romdisk_mount(mountpoint, buffer, 1);
 	return 0;
 }
-
 
 extern float crayon_memory_get_coord_x(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
 	if(index < sprites->list_size){

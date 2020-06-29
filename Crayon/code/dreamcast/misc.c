@@ -140,6 +140,11 @@ extern uint32_t crayon_misc_increment_bits(uint32_t number, int32_t change_val, 
 		crayon_misc_extract_bits(number, bit_length, offset) + change_val, bit_length, offset);
 }
 
+extern uint8_t crayon_misc_check_endianness(){
+	int a = 1;
+	return !((char*)&a)[0];
+}
+
 // Convert unsigned int to string
 // 'out_string' buffer is assumed to be large enough.
 // Requires an 11-byte output buffer for the string.

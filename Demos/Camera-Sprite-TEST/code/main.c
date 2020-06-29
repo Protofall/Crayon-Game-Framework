@@ -314,6 +314,10 @@ int main(){
 
 
 
+
+
+
+
 	//WITH THE CAMERA THAT SHOWS THE BUG, DWARFY CAN BE FOUND AROUND X = 81, Y = 62
 
 
