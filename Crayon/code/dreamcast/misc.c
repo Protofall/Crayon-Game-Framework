@@ -140,7 +140,7 @@ extern uint32_t crayon_misc_increment_bits(uint32_t number, int32_t change_val, 
 		crayon_misc_extract_bits(number, bit_length, offset) + change_val, bit_length, offset);
 }
 
-extern uint8_t crayon_misc_check_endianness(){
+extern uint8_t crayon_misc_is_big_endian(){
 	int a = 1;
 	return !((char*)&a)[0];
 }

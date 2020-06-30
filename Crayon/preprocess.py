@@ -16,7 +16,7 @@ def helpInfo():
 	print('KOSs implementation of GZ could be iffy so be wary')
 	print('when using it. Don\'t use it on compressed stuff')
 	
-	exit(1)
+	exit(0)
 
 #tags is stuff like Dreamcast compression (So far its just that)
 def packerSheet(src_filename, dest_path, pixel_format, tags, noRM):
@@ -24,6 +24,11 @@ def packerSheet(src_filename, dest_path, pixel_format, tags, noRM):
 	
 	name = os.path.splitext(src_filename)[0] #Strip the extention
 	# https://docs.python.org/3/library/os.path.html#os.path.splitext
+
+#This checks if anything in the assets directory is older than anything
+#in the processed directory. If so then we build, else terminate.
+def check_age(asset_path, processed_path):
+	print("WIP")
 
 #Might be able to get processed_path from asset_path?
 def build(asset_path, processed_path, noRM):

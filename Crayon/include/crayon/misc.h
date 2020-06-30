@@ -52,9 +52,7 @@ extern uint32_t crayon_misc_insert_bits(uint32_t number_1, uint32_t number_2, ui
 extern uint32_t crayon_misc_increment_bits(uint32_t number, int32_t change_val, uint8_t bit_length, uint8_t offset);
 
 //Checks if the computer running this code is big endian or not
-#define CRAY_ARCH_LITTLE_ENDIAN 0
-#define CRAY_ARCH_BIG_ENDIAN 1
-extern uint8_t crayon_misc_check_endianness();
+extern uint8_t crayon_misc_is_big_endian();
 
 //THE FUNCTIONS BELOW CAME FROM DREAMHAL
 // https://github.com/Moopthehedgehog/DreamHAL/blob/master/modules/simple_print.c
