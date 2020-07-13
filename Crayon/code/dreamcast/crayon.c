@@ -1,6 +1,6 @@
 #include "crayon.h"
 
-extern uint8_t crayon_init(uint8_t platform, uint8_t boot_mode){
+uint8_t __attribute__((weak)) crayon_init(uint8_t platform, uint8_t boot_mode){
 	__game_base_path = NULL;
 	if(platform != CRAYON_PLATFORM_DREAMCAST){
 		fprintf(stderr, "ERROR: Unsupported platform: %d\n", platform);
@@ -64,7 +64,7 @@ extern uint8_t crayon_init(uint8_t platform, uint8_t boot_mode){
 }
 
 
-extern uint8_t crayon_sd_mount_fat(){
+uint8_t crayon_sd_mount_fat(){
 	kos_blockdev_t sd_dev;
 	uint8 partition_type;
 
@@ -101,7 +101,7 @@ extern uint8_t crayon_sd_mount_fat(){
 
 
 
-extern void crayon_shutdown(){
+void __attribute__((weak)) crayon_shutdown(){
 	free(__game_base_path);
 
 	if(__sd_present){
@@ -114,8 +114,10 @@ extern void crayon_shutdown(){
 	return;
 }
 
-extern void crayon_sd_unmount_fat(){
+void crayon_sd_unmount_fat(){
 	fs_fat_unmount("/sd");
 	fs_fat_shutdown();
 	sd_shutdown();
+
+	return;
 }
