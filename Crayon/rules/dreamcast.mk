@@ -107,7 +107,7 @@ $(BUILD)/%.elf.bin: $(BUILD)/%.elf
 
 $(BUILD)/%$(PROJECT).elf: $(CRAYON_PROJ_SRC_C:%.c=$(BUILD)/\%%.o)
 	@mkdir -p $(dir $@)
-	$(KOS_CC) $(CFLAGS) $(LDFLAGS) -o $@ $(KOS_START) $^ $(LIBS)
+	$(KOS_CC) $(LDFLAGS) -o $@ $(KOS_START) $^ $(LIBS)
 
 $(BUILD)/crayon-cdi/%.o: %.c
 	@mkdir -p $(dir $@)

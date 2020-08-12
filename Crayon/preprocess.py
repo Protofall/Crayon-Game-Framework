@@ -45,13 +45,14 @@ def main():
 	noRM = False	#False means it will remove temp files, True means it won't remove them
 	project_root = os.getcwd()
 	assets_path = os.path.join(project_root, "assets")
-	processed_path= os.path.join(project_root, "cdfs")
+	processed_path = os.path.join(project_root, "cdfs")
 	
 	if os.path.isdir(assets_path) == False:
 		print("Can't find assets directory")
 		exit(1)
 
 	#check arguments
+		#Later consider replacing this with "argparse"
 	help_enabled = False
 	bad_input = False
 	for arg in sys.argv[1:]:
@@ -73,7 +74,9 @@ def main():
 	print("There's a chance items with a crayon_gz tag won't be processed right\n")
 	build(assets_path, processed_path, noRM)
 
-main()
+
+if __name__ == '__main__':
+    main()
 
 
 
