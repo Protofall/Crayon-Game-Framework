@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if ! [ -z "$CRAYON_BASE2" ]; then	#Checking if the var present, if so its already initialised
+if ! [ -z "$CRAYON_BASE" ]; then	#Checking if the var present, if so its already initialised
 	exit 0
 fi
 
@@ -14,7 +14,6 @@ if [[ $script_dir =~ "$pattern" ]]; then	#path contains a space, that will cause
 fi
 
 line="export CRAYON_BASE=\"$script_dir\""
-
 echo "$line" >> ~/.profile
 
 #Build the dreamcast version of Crayon
@@ -80,9 +79,9 @@ if [ ! -d "$repo_path" ]; then
 	if [ -d "$repo_path" ]; then
 		cd "$repo_path"
 
-		cd "VmuEyeCatchCreator"
+		cd "DreamcastEyecatcherTool"
 		make
-		cp "VmuEyeCatchCreator" "$bins"
+		cp "DreamcastEyecatcherTool" "$bins"
 		cd "../"
 
 		cd "VmuLcdIconCreator"
@@ -90,9 +89,9 @@ if [ ! -d "$repo_path" ]; then
 		cp "VmuLcdIconCreator" "$bins"
 		cd "../"
 
-		cd "VmuSFIconCreator"
+		cd "DreamcastSafefileIconTool"
 		make
-		cp "VmuSFIconCreator" "$bins"
+		cp "DreamcastSafefileIconTool" "$bins"
 		cd "../"
 
 		cd "$user_dir"
