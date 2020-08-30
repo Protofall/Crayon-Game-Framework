@@ -72,7 +72,7 @@ def Init(env):
 	elf = Builder(action="kos-cc -o $TARGET $SOURCES $LIBS")	#SOURCES takes all dependencies and shoves them into one command
 	kos_bin = Builder(action="sh-elf-objcopy -R .stack -O binary $SOURCE $TARGET")
 	scramble = Builder(action="$KOS_BASE/utils/scramble/scramble $SOURCE $TARGET")
-	iso = Builder(action="mkisofs -G $KOS_BASE/../IP.BIN -C 0,11702 -J -l -r -o $TARGET .")
+	iso = Builder(action="genisoimage -G $KOS_BASE/../IP.BIN -C 0,11702 -J -l -r -o $TARGET .")
 	cdi = Builder(action="cdi4dc $SOURCE $TARGET")
 
 	#Add the builders

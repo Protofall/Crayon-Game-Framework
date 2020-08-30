@@ -94,7 +94,7 @@ crayon-rebuild-crayon:
 $(PROJECT).cdi: crayon-rm-cdfs crayon-pp \
 $(BUILD)/crayon-cdi/$(PROJECT).elf.bin.scramble
 	mv $(BUILD)/crayon-cdi/$(PROJECT).elf.bin.scramble cdfs/1st_read.bin
-	mkisofs -G $(IP_BIN) -J -l -r -o $(BUILD)/$(PROJECT).iso cdfs
+	genisoimage -G $(IP_BIN) -J -l -r -o $(BUILD)/$(PROJECT).iso cdfs
 	cdi4dc $(BUILD)/$(PROJECT).iso $@ -d
 
 $(BUILD)/%.scramble: $(BUILD)/%
