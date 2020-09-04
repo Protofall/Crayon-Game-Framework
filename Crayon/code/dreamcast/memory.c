@@ -1,6 +1,6 @@
 #include "memory.h"
 
-extern int16_t crayon_memory_get_animation_id(char * name, crayon_spritesheet_t * ss){
+int16_t crayon_memory_get_animation_id(char *name, crayon_spritesheet_t *ss){
 	uint16_t i;
 	for(i = 0; i < ss->animation_count; i++){
 		if(!strcmp(ss->animation[i].name, name)){
@@ -10,8 +10,8 @@ extern int16_t crayon_memory_get_animation_id(char * name, crayon_spritesheet_t 
 	return -1;
 }
 
-extern uint8_t crayon_memory_load_dtex(crayon_txr_ptr_t *dtex, uint16_t *texture_width, uint16_t *texture_height, uint32_t *format,
-	char *texture_path){
+uint8_t crayon_memory_load_dtex(crayon_txr_ptr_t *dtex, uint16_t *texture_width, uint16_t *texture_height,
+	uint32_t *format, char *texture_path){
 
 	if(*dtex != NULL){return 1;}
 
@@ -46,13 +46,13 @@ extern uint8_t crayon_memory_load_dtex(crayon_txr_ptr_t *dtex, uint16_t *texture
 	return dtex_result;
 }
 
-extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_t *cp, int8_t palette_id, char *path){
+uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_t *cp, int8_t palette_id, char *path){
 	uint8_t result = 0;
 	uint16_t i = 0;
 
-	FILE * txt_file = NULL;
-	char * palette_path = NULL;
-	char * txt_path = NULL;
+	FILE *txt_file = NULL;
+	char *palette_path = NULL;
+	char *txt_path = NULL;
 
 	ss->texture = NULL;
 	ss->animation = NULL;
@@ -167,7 +167,7 @@ extern uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_p
 	return result;
 }
 
-extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palette_t *cp, int8_t palette_id, char *path){
+uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palette_t *cp, int8_t palette_id, char *path){
 	uint8_t result = 0;
 	fp->chars_per_row = NULL;
 	fp->char_width = NULL;
@@ -175,10 +175,10 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	fp->texture = NULL;
 
 	if(cp){cp->palette = NULL;}
-	FILE * txt_file = NULL;
+	FILE *txt_file = NULL;
 
-	char * palette_path = NULL;
-	char * txt_path = NULL;
+	char *palette_path = NULL;
+	char *txt_path = NULL;
 
 	#define ERROR(n) {result = (n); goto cleanup;}
 
@@ -291,15 +291,15 @@ extern uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon
 	return result;
 }
 
-extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, int8_t palette_id, char *path){
+uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, int8_t palette_id, char *path){
 	uint8_t result = 0;
 	
 	fm->texture = NULL;
 	if(cp){cp->palette = NULL;}
-	FILE * txt_file = NULL;
+	FILE *txt_file = NULL;
 
-	char * palette_path = NULL;
-	char * txt_path = NULL;
+	char *palette_path = NULL;
+	char *txt_path = NULL;
 
 	#define ERROR(n) {result = (n); goto cleanup;}
 
@@ -374,9 +374,9 @@ extern uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon
 	return result;
 }
 
-extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, int8_t palette_id, char *path){
+uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, int8_t palette_id, char *path){
 	uint8_t result = 0;
-	FILE * palette_file = NULL;
+	FILE *palette_file = NULL;
 
 	#define PAL_ERROR(n) {result = (n); goto PAL_cleanup;}
 
@@ -410,7 +410,7 @@ extern uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, int8
 	return result;
 }
 
-extern uint8_t crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id){
+uint8_t crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id){
 	copy->palette = malloc(original->colour_count * sizeof(uint32_t));
 	if(copy->palette == NULL){return 1;}
 	copy->colour_count = original->colour_count;
@@ -425,7 +425,7 @@ extern uint8_t crayon_memory_clone_palette(crayon_palette_t *original, crayon_pa
 	return 0;
 }
 
-extern uint8_t crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
+uint8_t crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
 	uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
 	uint8_t filter, uint8_t set_defaults){
 
@@ -489,7 +489,7 @@ extern uint8_t crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_arr
 	return 0;
 }
 
-extern uint8_t crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, crayon_sprite_array_t *src){
+uint8_t crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, crayon_sprite_array_t *src){
 	dest->options = src->options;
 	dest->filter = src->filter;
 
@@ -579,7 +579,7 @@ extern uint8_t crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, cra
 	return 0;
 }
 
-extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_coord, vec2_u16_t world_dim,
+void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_coord, vec2_u16_t world_dim,
 	vec2_u16_t window_coord, vec2_u16_t window_dim, float world_movement_factor){
 
 	camera->world_x = world_coord.x;
@@ -615,11 +615,11 @@ extern void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_
 	while: i = 2. Fails
 	returns list
 */
-extern crayon_sprite_array_reference_t ** crayon_memory_get_sprite_array_refs(crayon_sprite_array_t *sprite_array,
-	uint16_t * indexes, uint16_t indexes_length){
+crayon_sprite_array_reference_t **crayon_memory_get_sprite_array_refs(crayon_sprite_array_t *sprite_array,
+	uint16_t *indexes, uint16_t indexes_length){
 	if(sprite_array->head == NULL){return NULL;}	//Incase you call on a sprite array with no refs
 
-	crayon_sprite_array_reference_t ** list = malloc(sizeof(crayon_sprite_array_reference_t *) * indexes_length);
+	crayon_sprite_array_reference_t **list = malloc(sizeof(crayon_sprite_array_reference_t *) * indexes_length);
 	if(list == NULL){return NULL;}
 
 	//Set all to null, just incase a reference isn't found
@@ -629,7 +629,7 @@ extern crayon_sprite_array_reference_t ** crayon_memory_get_sprite_array_refs(cr
 	}
 
 	i = 0;
-	crayon_sprite_array_reference_t * walker = sprite_array->head;
+	crayon_sprite_array_reference_t *walker = sprite_array->head;
 	while(walker != NULL && i < indexes_length){
 		if(walker->id > indexes[i]){	//Lets say we ask for 6, 7, 8, 9 but we only have 6, 8, 9 and 10
 										//When we get to 8 (In LL), thats > 7 so we check the next element which is 8
@@ -650,12 +650,12 @@ extern crayon_sprite_array_reference_t ** crayon_memory_get_sprite_array_refs(cr
 
 //This would have issues if you try to re-add an existing reference or add before the last element
 	//However in the intended use, its only called by init for all elements and extend so this doesn't normally occur
-extern uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t lower, int32_t upper){
+uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t lower, int32_t upper){
 	if(upper < 0 || sprite_array->list_size == 0){return 0;}	//Since this sorta is valid, we return 0
 	if(upper >= sprite_array->list_size || lower > upper){return 1;}
 
-	crayon_sprite_array_reference_t * prev_node = NULL;
-	crayon_sprite_array_reference_t * curr_node = sprite_array->head;
+	crayon_sprite_array_reference_t *prev_node = NULL;
+	crayon_sprite_array_reference_t *curr_node = sprite_array->head;
 
 	uint16_t i;
 
@@ -704,13 +704,13 @@ extern uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite
 	return 0;
 }
 
-extern void crayon_memory_remove_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t * indexes,
+void crayon_memory_remove_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t *indexes,
 	uint16_t indexes_length){
 
 	uint16_t i_c = 0;	//The index for the "indexes" array. Also used to adjust the id's of the nodes
-	crayon_sprite_array_reference_t * curr_node = sprite_array->head;
-	crayon_sprite_array_reference_t * prev_node = NULL;
-	crayon_sprite_array_reference_t * delete_node;
+	crayon_sprite_array_reference_t *curr_node = sprite_array->head;
+	crayon_sprite_array_reference_t *prev_node = NULL;
+	crayon_sprite_array_reference_t *delete_node;
 	while(curr_node != NULL){
 		if(i_c < indexes_length && curr_node->id == indexes[i_c]){	//Element we need to delete
 			//Remove this current node from the list
@@ -737,7 +737,7 @@ extern void crayon_memory_remove_sprite_array_refs(crayon_sprite_array_t *sprite
 	return;
 }
 
-extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t old, uint32_t new, uint8_t _continue){
+uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t old, uint32_t new, uint8_t _continue){
 	uint16_t i;
 	uint16_t found = 0;
 	for(i = 0; i < cp->colour_count; ++i){
@@ -752,7 +752,7 @@ extern uint16_t crayon_memory_swap_colour(crayon_palette_t *cp, uint32_t old, ui
 	return found;
 }
 
-extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t *sprite_array, uint16_t * indexes,
+uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t *sprite_array, uint16_t *indexes,
 	uint16_t indexes_length){
 
 	if(indexes_length == 0 || sprite_array->list_size == 0){return 1;}
@@ -823,8 +823,8 @@ extern uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t 
 //Note, even if these pointers point to "NULL", it will instead behave like malloc
 	//So if I use this in the init function. Make sure to set all the pointers to NULL before sending them through here
 	//Also the "size == 0" checks are there since zero-length sprite-arrays should be allowed to pass
-extern uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t size, uint8_t set_array_globals){
-	void * holder;
+uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t size, uint8_t set_array_globals){
+	void *holder;
 
 	//1 per element (Set these every time)
 
@@ -923,7 +923,7 @@ extern uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite
 	return 0;
 }
 
-extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t elements, uint8_t set_defaults){
+uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t elements, uint8_t set_defaults){
 	elements += sprite_array->list_size;
 	if(elements <= sprite_array->list_size){return 1;}	//Overflow or adding zero elements
 
@@ -941,7 +941,7 @@ extern uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_a
 	return 0;
 }
 
-extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t start, int32_t end,
+void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t start, int32_t end,
 	uint8_t set_array_globals){
 
 	uint16_t i;
@@ -1007,7 +1007,7 @@ extern void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprit
 	return;
 }
 
-extern void __crayon_memory_swap(uint16_t* a, uint16_t* b){
+static void __crayon_memory_swap(uint16_t *a, uint16_t *b){
 	uint16_t t = *a;
 	*a = *b;
 	*b = t;
@@ -1018,7 +1018,7 @@ extern void __crayon_memory_swap(uint16_t* a, uint16_t* b){
 // array, and places all smaller (smaller than pivot) 
 // to left of pivot and all greater elements to right 
 // of pivot
-extern int __crayon_memory_partition(uint16_t * arr, int low, int high){
+static int __crayon_memory_partition(uint16_t *arr, int low, int high){
 	int pivot = arr[high];	//Pivot
 	int i = (low - 1);	//Index of smaller element
 	int j;
@@ -1038,7 +1038,7 @@ extern int __crayon_memory_partition(uint16_t * arr, int low, int high){
 // arr[] --> Array to be sorted,
 // low  --> Starting index,
 // high  --> Ending index
-extern void crayon_memory_quick_sort(uint16_t * arr, int low, int high){
+void crayon_memory_quick_sort(uint16_t *arr, int low, int high){
 	if(low < high){
 		//pi is partitioning index, arr[p] is now at right place
 		int pi = __crayon_memory_partition(arr, low, high);
@@ -1056,7 +1056,7 @@ extern void crayon_memory_quick_sort(uint16_t * arr, int low, int high){
 
 //Free Texture and anim array
 //Doesn't free the spritesheet struct itself
-extern uint8_t crayon_memory_free_spritesheet(crayon_spritesheet_t *ss){
+int8_t crayon_memory_free_spritesheet(crayon_spritesheet_t *ss){
 	if(ss){
 		uint16_t i;
 		for(i = 0; i < ss->animation_count; i++){
@@ -1074,7 +1074,7 @@ extern uint8_t crayon_memory_free_spritesheet(crayon_spritesheet_t *ss){
 	return 1;
 }
 
-extern uint8_t crayon_memory_free_prop_font_sheet(crayon_font_prop_t *fp){
+int8_t crayon_memory_free_prop_font_sheet(crayon_font_prop_t *fp){
 	if(fp){
 		free(fp->char_x_coord);
 		free(fp->char_width);
@@ -1085,7 +1085,7 @@ extern uint8_t crayon_memory_free_prop_font_sheet(crayon_font_prop_t *fp){
 	return 1;
 }
 
-extern uint8_t crayon_memory_free_mono_font_sheet(crayon_font_mono_t *fm){
+int8_t crayon_memory_free_mono_font_sheet(crayon_font_mono_t *fm){
 	if(fm){
 		crayon_memory_free_txr(fm->texture);
 		return 0;
@@ -1093,7 +1093,7 @@ extern uint8_t crayon_memory_free_mono_font_sheet(crayon_font_mono_t *fm){
 	return 1;
 }
 
-extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
+int8_t crayon_memory_free_palette(crayon_palette_t *cp){
 	if(cp && cp->palette){
 		free(cp->palette);
 		return 0;
@@ -1101,7 +1101,7 @@ extern uint8_t crayon_memory_free_palette(crayon_palette_t *cp){
 	return 1;
 }
 
-extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array){
+int8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array){
 	//Free shouldn't do anything if you try to free a NULL ptr, but just incase...
 	if(sprite_array->coord){free(sprite_array->coord);}
 	if(sprite_array->frame_id){free(sprite_array->frame_id);}
@@ -1127,8 +1127,8 @@ extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_arr
 	sprite_array->visible = NULL;
 
 	//Free the references linked list (This should probably use the remove func)
-	crayon_sprite_array_reference_t * curr_node = sprite_array->head;
-	crayon_sprite_array_reference_t * prev_node;
+	crayon_sprite_array_reference_t *curr_node = sprite_array->head;
+	crayon_sprite_array_reference_t *prev_node;
 	while(curr_node != NULL){
 		if(curr_node->next == NULL){
 			free(curr_node);
@@ -1146,11 +1146,7 @@ extern uint8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_arr
 	return 0;
 }
 
-inline void crayon_memory_free_txr(crayon_txr_ptr_t * ptr){
-	pvr_mem_free(ptr);
-}
-
-extern uint8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint){
+int8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint){
 	void *buffer;
 	ssize_t size = fs_load(filename, &buffer); // Loads the file "filename" into RAM
 
@@ -1162,7 +1158,7 @@ extern uint8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint){
 	return 0;
 }
 
-extern uint8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint){
+int8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint){
 	void *buffer;
 	int length = zlib_getlength(filename);
 
@@ -1192,7 +1188,7 @@ extern uint8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint){
 	return 0;
 }
 
-extern float crayon_memory_get_coord_x(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+float crayon_memory_get_coord_x(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->coord[index].x;
@@ -1202,7 +1198,7 @@ extern float crayon_memory_get_coord_x(crayon_sprite_array_t * sprites, uint16_t
 	return 0;
 }
 
-extern float crayon_memory_get_coord_y(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+float crayon_memory_get_coord_y(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->coord[index].y;
@@ -1212,7 +1208,7 @@ extern float crayon_memory_get_coord_y(crayon_sprite_array_t * sprites, uint16_t
 	return 0;
 }
 
-extern vec2_f_t crayon_memory_get_coords(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+vec2_f_t crayon_memory_get_coords(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->coord[index];
@@ -1222,7 +1218,7 @@ extern vec2_f_t crayon_memory_get_coords(crayon_sprite_array_t * sprites, uint16
 	return (vec2_f_t){0, 0};
 }
 
-extern uint32_t crayon_memory_get_colour(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+uint32_t crayon_memory_get_colour(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(((sprites->options & CRAY_MULTI_COLOUR) && index == 0) || index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->colour[index];
@@ -1232,7 +1228,7 @@ extern uint32_t crayon_memory_get_colour(crayon_sprite_array_t * sprites, uint16
 	return 0;
 }
 
-extern uint8_t crayon_memory_get_fade(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+uint8_t crayon_memory_get_fade(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(((sprites->options & CRAY_MULTI_COLOUR) && index == 0) || index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->fade[index];
@@ -1242,7 +1238,7 @@ extern uint8_t crayon_memory_get_fade(crayon_sprite_array_t * sprites, uint16_t 
 	return 0;
 }
 
-extern float crayon_memory_get_scale_x(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+float crayon_memory_get_scale_x(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(((sprites->options & CRAY_MULTI_SCALE) && index == 0) || index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->scale[index].x;
@@ -1252,7 +1248,7 @@ extern float crayon_memory_get_scale_x(crayon_sprite_array_t * sprites, uint16_t
 	return 0;
 }
 
-extern float crayon_memory_get_scale_y(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+float crayon_memory_get_scale_y(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(((sprites->options & CRAY_MULTI_SCALE) && index == 0) || index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->scale[index].y;
@@ -1262,7 +1258,7 @@ extern float crayon_memory_get_scale_y(crayon_sprite_array_t * sprites, uint16_t
 	return 0;
 }
 
-extern vec2_f_t crayon_memory_get_scales(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+vec2_f_t crayon_memory_get_scales(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(((sprites->options & CRAY_MULTI_SCALE) && index == 0) || index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->scale[index];
@@ -1272,7 +1268,7 @@ extern vec2_f_t crayon_memory_get_scales(crayon_sprite_array_t * sprites, uint16
 	return (vec2_f_t){0, 0};
 }
 
-extern uint8_t crayon_memory_get_flip(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+uint8_t crayon_memory_get_flip(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(((sprites->options & CRAY_MULTI_FLIP) && index == 0) || index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->flip[index];
@@ -1282,7 +1278,7 @@ extern uint8_t crayon_memory_get_flip(crayon_sprite_array_t * sprites, uint16_t 
 	return 0;
 }
 
-extern float crayon_memory_get_rotation(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+float crayon_memory_get_rotation(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(((sprites->options & CRAY_MULTI_ROTATE) && index == 0) || index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->rotation[index];
@@ -1292,7 +1288,7 @@ extern float crayon_memory_get_rotation(crayon_sprite_array_t * sprites, uint16_
 	return 0;
 }
 
-extern uint8_t crayon_memory_get_visibility(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+uint8_t crayon_memory_get_visibility(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->visible[index];
@@ -1302,7 +1298,7 @@ extern uint8_t crayon_memory_get_visibility(crayon_sprite_array_t * sprites, uin
 	return 0;
 }
 
-extern uint8_t crayon_memory_get_layer(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+uint8_t crayon_memory_get_layer(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->layer[index];
@@ -1312,7 +1308,7 @@ extern uint8_t crayon_memory_get_layer(crayon_sprite_array_t * sprites, uint16_t
 	return 0;
 }
 
-extern uint8_t crayon_memory_get_frame_id(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+uint8_t crayon_memory_get_frame_id(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(((sprites->options & CRAY_MULTI_FRAME) && index == 0) || index < sprites->list_size){
 		if(error){*error = 0;}
 		return sprites->frame_id[index];
@@ -1322,7 +1318,7 @@ extern uint8_t crayon_memory_get_frame_id(crayon_sprite_array_t * sprites, uint1
 	return 0;
 }
 
-extern vec2_u16_t crayon_memory_get_frame_uv(crayon_sprite_array_t * sprites, uint16_t index, uint8_t * error){
+vec2_u16_t crayon_memory_get_frame_uv(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(index < sprites->frames_used){
 		if(error){*error = 0;}
 		return sprites->frame_uv[index];
@@ -1332,7 +1328,7 @@ extern vec2_u16_t crayon_memory_get_frame_uv(crayon_sprite_array_t * sprites, ui
 	return (vec2_u16_t){0, 0};
 }
 
-extern uint8_t crayon_memory_set_coord_x(crayon_sprite_array_t * sprites, uint16_t index, float value){
+uint8_t crayon_memory_set_coord_x(crayon_sprite_array_t *sprites, uint16_t index, float value){
 	if(index < sprites->list_size){
 		sprites->coord[index].x = value;
 		return 0;
@@ -1340,7 +1336,7 @@ extern uint8_t crayon_memory_set_coord_x(crayon_sprite_array_t * sprites, uint16
 	return 1;
 }
 
-extern uint8_t crayon_memory_set_coord_y(crayon_sprite_array_t * sprites, uint16_t index, float value){
+uint8_t crayon_memory_set_coord_y(crayon_sprite_array_t *sprites, uint16_t index, float value){
 	if(index < sprites->list_size){
 		sprites->coord[index].y = value;
 		return 0;
@@ -1348,7 +1344,7 @@ extern uint8_t crayon_memory_set_coord_y(crayon_sprite_array_t * sprites, uint16
 	return 1;
 }
 
-extern uint8_t crayon_memory_set_coords(crayon_sprite_array_t * sprites, uint16_t index, vec2_f_t value){
+uint8_t crayon_memory_set_coords(crayon_sprite_array_t *sprites, uint16_t index, vec2_f_t value){
 	if(index < sprites->list_size){
 		sprites->coord[index].x = value.x;
 		sprites->coord[index].y = value.y;
@@ -1357,7 +1353,7 @@ extern uint8_t crayon_memory_set_coords(crayon_sprite_array_t * sprites, uint16_
 	return 1;
 }
 
-extern uint8_t crayon_memory_set_colour(crayon_sprite_array_t * sprites, uint16_t index, uint32_t value){
+uint8_t crayon_memory_set_colour(crayon_sprite_array_t *sprites, uint16_t index, uint32_t value){
 	if(index == 0 || ((sprites->options & CRAY_MULTI_COLOUR) && index < sprites->list_size)){
 		sprites->colour[index] = value;
 		return 0;
@@ -1366,7 +1362,7 @@ extern uint8_t crayon_memory_set_colour(crayon_sprite_array_t * sprites, uint16_
 }
 
 //The extra condition at the beginning it to make sure we don't set fade for untextured polys
-extern uint8_t crayon_memory_set_fade(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value){
+uint8_t crayon_memory_set_fade(crayon_sprite_array_t *sprites, uint16_t index, uint8_t value){
 	if((sprites->options & CRAY_HAS_TEXTURE) && (index == 0 ||
 	((sprites->options & CRAY_MULTI_COLOUR) && index < sprites->list_size))){
 		sprites->fade[index] = value;
@@ -1375,7 +1371,7 @@ extern uint8_t crayon_memory_set_fade(crayon_sprite_array_t * sprites, uint16_t 
 	return 1;
 }
 
-extern uint8_t crayon_memory_set_scale_x(crayon_sprite_array_t * sprites, uint16_t index, float value){
+uint8_t crayon_memory_set_scale_x(crayon_sprite_array_t *sprites, uint16_t index, float value){
 	if(index == 0 || ((sprites->options & CRAY_MULTI_SCALE) && index < sprites->list_size)){
 		sprites->scale[index].x = value;
 		return 0;
@@ -1383,7 +1379,7 @@ extern uint8_t crayon_memory_set_scale_x(crayon_sprite_array_t * sprites, uint16
 	return 1;
 }
 
-extern uint8_t crayon_memory_set_scale_y(crayon_sprite_array_t * sprites, uint16_t index, float value){
+uint8_t crayon_memory_set_scale_y(crayon_sprite_array_t *sprites, uint16_t index, float value){
 	if(index == 0 || ((sprites->options & CRAY_MULTI_SCALE) && index < sprites->list_size)){
 		sprites->scale[index].y = value;
 		return 0;
@@ -1391,7 +1387,7 @@ extern uint8_t crayon_memory_set_scale_y(crayon_sprite_array_t * sprites, uint16
 	return 1;
 }
 
-extern uint8_t crayon_memory_set_scales(crayon_sprite_array_t * sprites, uint16_t index, vec2_f_t value){
+uint8_t crayon_memory_set_scales(crayon_sprite_array_t *sprites, uint16_t index, vec2_f_t value){
 	if(index == 0 || ((sprites->options & CRAY_MULTI_SCALE) && index < sprites->list_size)){
 		sprites->scale[index].x = value.x;
 		sprites->scale[index].y = value.y;
@@ -1400,7 +1396,7 @@ extern uint8_t crayon_memory_set_scales(crayon_sprite_array_t * sprites, uint16_
 	return 1;
 }
 
-extern uint8_t crayon_memory_set_flip(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value){
+uint8_t crayon_memory_set_flip(crayon_sprite_array_t *sprites, uint16_t index, uint8_t value){
 	if((sprites->options & CRAY_HAS_TEXTURE) && (index == 0 ||
 	((sprites->options & CRAY_MULTI_FLIP) && index < sprites->list_size))){
 		sprites->flip[index] = value;
@@ -1409,7 +1405,7 @@ extern uint8_t crayon_memory_set_flip(crayon_sprite_array_t * sprites, uint16_t 
 	return 1;
 }
 
-extern uint8_t crayon_memory_set_rotation(crayon_sprite_array_t * sprites, uint16_t index, float value){
+uint8_t crayon_memory_set_rotation(crayon_sprite_array_t *sprites, uint16_t index, float value){
 	if(index == 0 || ((sprites->options & CRAY_MULTI_ROTATE) && index < sprites->list_size)){
 		sprites->rotation[index] = value;
 		return 0;
@@ -1418,7 +1414,7 @@ extern uint8_t crayon_memory_set_rotation(crayon_sprite_array_t * sprites, uint1
 }
 
 
-extern uint8_t crayon_memory_set_visibility(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value){
+uint8_t crayon_memory_set_visibility(crayon_sprite_array_t *sprites, uint16_t index, uint8_t value){
 	if(index < sprites->list_size){
 		sprites->visible[index] = value;
 		return 0;
@@ -1426,7 +1422,7 @@ extern uint8_t crayon_memory_set_visibility(crayon_sprite_array_t * sprites, uin
 	return 1;
 }
 
-extern uint8_t crayon_memory_set_layer(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value){
+uint8_t crayon_memory_set_layer(crayon_sprite_array_t *sprites, uint16_t index, uint8_t value){
 	if(index < sprites->list_size){
 		sprites->layer[index] = value;
 		return 0;
@@ -1434,7 +1430,7 @@ extern uint8_t crayon_memory_set_layer(crayon_sprite_array_t * sprites, uint16_t
 	return 1;
 }
 
-extern uint8_t crayon_memory_set_frame_id(crayon_sprite_array_t * sprites, uint16_t index, uint8_t value){
+uint8_t crayon_memory_set_frame_id(crayon_sprite_array_t *sprites, uint16_t index, uint8_t value){
 	if((sprites->options & CRAY_HAS_TEXTURE) && (index == 0 ||
 	((sprites->options & CRAY_MULTI_FRAME) && index < sprites->list_size))){
 		sprites->frame_id[index] = value;
@@ -1443,9 +1439,9 @@ extern uint8_t crayon_memory_set_frame_id(crayon_sprite_array_t * sprites, uint1
 	return 1;
 }
 
-extern uint8_t crayon_memory_set_frame_uv(crayon_sprite_array_t * sprites, uint16_t index, uint8_t frame_id){
+uint8_t crayon_memory_set_frame_uv(crayon_sprite_array_t *sprites, uint16_t index, uint8_t frame_id){
 	if((sprites->options & CRAY_HAS_TEXTURE) && index < sprites->frames_used){
-		crayon_animation_t * anim = sprites->animation;
+		crayon_animation_t *anim = sprites->animation;
 		uint8_t frames_per_row = anim->sheet_width / anim->frame_width;
 		uint8_t column_number = frame_id % frames_per_row;
 		uint8_t row_number = frame_id / frames_per_row;
@@ -1457,12 +1453,12 @@ extern uint8_t crayon_memory_set_frame_uv(crayon_sprite_array_t * sprites, uint1
 	return 1;
 }
 
-extern void crayon_memory_move_camera_x(crayon_viewport_t * camera, float x){
+void crayon_memory_move_camera_x(crayon_viewport_t *camera, float x){
 	camera->world_x += (x * camera->world_movement_factor);
 	return;
 }
 
-extern void crayon_memory_move_camera_y(crayon_viewport_t * camera, float y){
+void crayon_memory_move_camera_y(crayon_viewport_t *camera, float y){
 	camera->world_y += (y * camera->world_movement_factor);
 	return;
 }
