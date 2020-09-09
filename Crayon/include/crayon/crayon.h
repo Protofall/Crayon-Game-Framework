@@ -11,7 +11,7 @@
 #include <kos/blockdev.h>
 #include <fat/fs_fat.h>
 
-uint8_t __sd_present;
+extern uint8_t __sd_present;
 
 #define CRAYON_PLATFORM_DREAMCAST 0
 #define CRAYON_PLATFORM_PC 1

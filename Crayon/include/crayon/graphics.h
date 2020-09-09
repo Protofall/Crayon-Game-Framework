@@ -33,10 +33,10 @@
 // This var's purpose is to make debugging the render-ers and other graphics function much easier
 	// Since I currently can't print any text while rendering an object, instead I can set vars to
 	// this variable and render them later since this is global
-float __CRAYON_GRAPHICS_DEBUG_VARS[16];
+extern float __CRAYON_GRAPHICS_DEBUG_VARS[16];
 
-uint16_t __htz;
-float __htz_adjustment;
+extern uint16_t __htz;
+extern float __htz_adjustment;
 
 #define CRAYON_ENABLE_OP (1 << 0)
 #define CRAYON_ENABLE_TR (1 << 1)
@@ -91,11 +91,11 @@ uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_
 
 
 // Draw string using mono font (string must be null-terminated)
-uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_mono_t *fm, uint8_t poly_list_mode, float draw_x,
+uint8_t crayon_graphics_draw_text_mono(char *string, const crayon_font_mono_t *fm, uint8_t poly_list_mode, float draw_x,
 	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number);
 
 // Draw string using propertional font (string must be null-terminated)
-uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_prop_t *fp, uint8_t poly_list_mode, float draw_x,
+uint8_t crayon_graphics_draw_text_prop(char *string, const crayon_font_prop_t *fp, uint8_t poly_list_mode, float draw_x,
 	float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number);
 
 
@@ -114,37 +114,37 @@ void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y
 uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_chars);
 
 // This gets the drawn-length of a string using a certain font. But only the longest line
-uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char * string);
-uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char * string);
+uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char *string);
+uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char *string);
 
 
 //------------------Transition Effects------------------//
 
 
-void crayon_graphics_transistion_init(crayon_transition_t * effect, crayon_sprite_array_t * sprite_array,
+void crayon_graphics_transistion_init(crayon_transition_t *effect, crayon_sprite_array_t *sprite_array,
 	void (*f)(crayon_transition_t *, void *), uint32_t duration_in, uint32_t duration_out);
 		// Thats how you pass in a function. But unsure if that'll work if I want to add it as param for the struct
 		// Note: We assume the sprite_array is already initialised
 
 // This will skip to the end of a transition
-void crayon_graphics_transistion_skip_to_state(crayon_transition_t * effect, void * params, uint8_t state);
+void crayon_graphics_transistion_skip_to_state(crayon_transition_t *effect, void *params, uint8_t state);
 
 // You'll need to call apply to see the change
-void crayon_graphics_transistion_change_state(crayon_transition_t * effect, uint8_t state);
+void crayon_graphics_transistion_change_state(crayon_transition_t *effect, uint8_t state);
 
 // This will bring it close to either fade-in or fade-out
-void crayon_graphics_transistion_apply(crayon_transition_t * effect, void * params);
+void crayon_graphics_transistion_apply(crayon_transition_t *effect, void *params);
 
 // Will give you a percentage where 0 is fully faded in and 1 is fully faded out
-double crayon_graphics_transition_get_curr_percentage(crayon_transition_t * effect);
-double crayon_graphics_transition_get_prev_percentage(crayon_transition_t * effect);
+double crayon_graphics_transition_get_curr_percentage(crayon_transition_t *effect);
+double crayon_graphics_transition_get_prev_percentage(crayon_transition_t *effect);
 
-uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t * effect);
+uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t *effect);
 
 //  #define crayon_savefile_get_valid_screens(effect, camera, poly_list_mode, draw_mode)  crayon_graphics_draw_sprites(effect->draw, camera, poly_list_mode, draw_mode)
 
 // This is just a call to the regular draw function
-//  inline uint8_t crayon_graphics_draw_transistion(const crayon_transition_t * effect, const crayon_viewport_t * camera,
+//  inline uint8_t crayon_graphics_draw_transistion(const crayon_transition_t *effect, const crayon_viewport_t *camera,
 //  	uint8_t poly_list_mode, uint8_t draw_mode){
 //  	return crayon_graphics_draw_sprites(effect->draw, camera, poly_list_mode, draw_mode);
 //  }
@@ -183,7 +183,7 @@ uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t flip_val
 
 float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, vec2_f_t dims);
 
-float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, vec2_f_t * scale, const crayon_viewport_t *camera);
+float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t *vert, vec2_f_t *scale, const crayon_viewport_t *camera);
 
 
 #endif

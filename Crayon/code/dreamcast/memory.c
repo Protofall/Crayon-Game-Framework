@@ -1,5 +1,8 @@
 #include "memory.h"
 
+char *__game_base_path = NULL;
+float __MEMORY_DEBUG_VARIABLES[16] = {0};
+
 int16_t crayon_memory_get_animation_id(char *name, crayon_spritesheet_t *ss){
 	uint16_t i;
 	for(i = 0; i < ss->animation_count; i++){

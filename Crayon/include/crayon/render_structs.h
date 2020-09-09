@@ -42,7 +42,7 @@ typedef struct crayon_viewport_t{
 
 typedef struct crayon_sprite_array_reference{
 	uint16_t id;
-	struct crayon_sprite_array_reference * next;
+	struct crayon_sprite_array_reference *next;
 } crayon_sprite_array_reference_t;
 
 // This is designed for the multi-draw functions. If you want to draw a single thing with this struct
@@ -89,7 +89,7 @@ typedef struct crayon_sprite_array{
 	crayon_animation_t *animation;
 	crayon_palette_t *palette;	// Also ask if palettes can start at not multiples of 16 or 256
 
-	crayon_sprite_array_reference_t * head;
+	crayon_sprite_array_reference_t *head;
 } crayon_sprite_array_t;
 
 // Fade in means we're going from full effect, back to the scene (Entering a menu)
@@ -114,8 +114,8 @@ typedef struct crayon_transition{
 							// "duration_fade_out" depending on if its fading in or out
 	uint32_t prev_duration;	// Like above, but records the previous frame. Might be useful
 
-	crayon_sprite_array_t * draw;	// If you want you can pass a pointer to an array of them and use them in your function
-	void (*f)(struct crayon_transition * effect, void *);	// The function that applies the effect that the user requests
+	crayon_sprite_array_t *draw;	// If you want you can pass a pointer to an array of them and use them in your function
+	void (*f)(struct crayon_transition *effect, void *);	// The function that applies the effect that the user requests
 } crayon_transition_t;
 
 #endif

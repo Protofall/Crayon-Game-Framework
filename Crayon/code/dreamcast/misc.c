@@ -1,7 +1,7 @@
 #include "misc.h"
 
-char * crayon_misc_get_version(){
-	char * version = malloc(sizeof(char) * 16);
+char *crayon_misc_get_version(){
+	char *version = malloc(sizeof(char) * 16);
 	if(!version){
 		return NULL;
 	}
@@ -19,7 +19,7 @@ char * crayon_misc_get_version(){
 	return version;
 }
 
-uint8_t crayon_misc_combine_strings(char ** dest, char * source1, char * source2){
+uint8_t crayon_misc_combine_strings(char **dest, char *source1, char *source2){
 	if(!source1 || !source2){
 		return 1;
 	}
@@ -37,12 +37,12 @@ uint8_t crayon_misc_combine_strings(char ** dest, char * source1, char * source2
 	return 0;
 }
 
-uint8_t crayon_misc_change_extension(char ** dest, char * source, char * extension){
+uint8_t crayon_misc_change_extension(char **dest, char *source, char *extension){
 	if(!source || !extension){
 		return 1;
 	}
 
-	char * dot_pos = strchr(source, '.');
+	char *dot_pos = strchr(source, '.');
 	// No dot present
 	if(!dot_pos){
 		return 1;
@@ -72,11 +72,11 @@ uint8_t crayon_misc_change_extension(char ** dest, char * source, char * extensi
 // For example, call this like so (Assuming file is 12 bytes long)
 // uint8_t *my_stuff;
 // crayon_misc_read_file((void *) &my_stuff, "romdisk/read_data.txt", 12);
-uint8_t crayon_misc_read_file(void ** buffer, char * path, size_t size_bytes, uint8_t allocated){
+uint8_t crayon_misc_read_file(void **buffer, char *path, size_t size_bytes, uint8_t allocated){
 	if(!allocated){
 		*buffer = malloc(size_bytes);
 	}
-	FILE * file = fopen(path, "rb");
+	FILE *file = fopen(path, "rb");
 	if(!file){return 1;}
 	size_t res = fread(*buffer, size_bytes, 1, file);
 	fclose(file);
@@ -86,11 +86,11 @@ uint8_t crayon_misc_read_file(void ** buffer, char * path, size_t size_bytes, ui
 	return 0;
 }
 
-uint32_t crayon_misc_fgeti(FILE * f, int16_t * last_char){
+uint32_t crayon_misc_fgeti(FILE *f, int16_t *last_char){
 	uint32_t n = 0;
 	int16_t d;	// EOF is -1 so we can't use a uint8_t
 	for(d = 0; d < 10; d = fgetc(f) - '0'){
-		n = n * 10 + d;
+		n = n *10 + d;
 	}
 	if(last_char){
 		*last_char = d;
@@ -98,7 +98,7 @@ uint32_t crayon_misc_fgeti(FILE * f, int16_t * last_char){
 	return n;
 }
 
-int crayon_misc_fget_next_int(FILE * f, int * number){
+int crayon_misc_fget_next_int(FILE *f, int *number){
 	*number = 0;
 	uint8_t negative = 0;
 	uint8_t started = 0;
@@ -150,7 +150,7 @@ uint8_t crayon_misc_is_big_endian(){
 // Requires an 11-byte output buffer for the string.
 // The biggest decimal number is 4294967295, which is 10 characters‬ (excluding null term).
 // Returns pointer to out_string.
-char * crayon_misc_uint_to_string(unsigned int in_number, char* out_string){
+char *crayon_misc_uint_to_string(unsigned int in_number, char*out_string){
 	int i;
 
 	out_string[10] = '\0'; // Null term
@@ -174,7 +174,7 @@ char * crayon_misc_uint_to_string(unsigned int in_number, char* out_string){
 // Requires a 12-byte output buffer for the string.
 // The longest signed decimal numbers are 10 characters‬ (excluding null term and sign).
 // Returns pointer to out_string.
-char * crayon_misc_int_to_string(int in_number, char* out_string){
+char *crayon_misc_int_to_string(int in_number, char*out_string){
 	int i;
 	int need_neg = 0;
 	int neg = 0;

@@ -14,7 +14,7 @@
 extern int zlib_getlength(char *filename);	// Because zlib.h won't declare it for us
 
 // This is set in crayon_init(). Its the /cd/, /sd/ or /pc/ before every file access
-char *__game_base_path;
+extern char *__game_base_path;
 
 typedef struct dtex_header{
 	uint8_t magic[4]; // magic number "DTEX"
@@ -30,7 +30,7 @@ typedef struct dpal_header{
 } dpal_header_t;
 
 // This var's purpose is to make debugging the memory stuff such as the reference lists and other memory functions much easier
-float __MEMORY_DEBUG_VARIABLES[16];
+extern float __MEMORY_DEBUG_VARIABLES[16];
 
 //------------------Checking memory------------------//
 

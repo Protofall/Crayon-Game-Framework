@@ -1,5 +1,10 @@
 #include "graphics.h"
 
+float __CRAYON_GRAPHICS_DEBUG_VARS[16] = {0};
+
+uint16_t __htz = 60;
+float __htz_adjustment = 1;
+
 uint8_t crayon_graphics_init(uint8_t poly_modes){
 	pvr_init_params_t pvr_params;
 	pvr_params.opb_sizes[0] = (poly_modes & CRAYON_ENABLE_OP) ? PVR_BINSIZE_16 : PVR_BINSIZE_0;
@@ -1105,7 +1110,7 @@ uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_
 //---------------------------------------------------------------------//
 
 
-uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_mono_t *fm, uint8_t poly_list_mode,
+uint8_t crayon_graphics_draw_text_mono(char *string, const crayon_font_mono_t *fm, uint8_t poly_list_mode,
 	float draw_x, float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number){
 
 	float x0 = floor(draw_x);
@@ -1179,7 +1184,7 @@ uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_mono_t *
 	return 0;
 }
 
-uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_prop_t *fp, uint8_t poly_list_mode,
+uint8_t crayon_graphics_draw_text_prop(char *string, const crayon_font_prop_t *fp, uint8_t poly_list_mode,
 	float draw_x, float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number){
 
 	float x0 = floor(draw_x);
@@ -1359,7 +1364,7 @@ uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_chars){
 	return 0;
 }
 
-uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char * string){
+uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char *string){
 	uint16_t current_length = 0;
 	uint16_t best_length = 0;
 	
@@ -1391,7 +1396,7 @@ uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, ch
 	return best_length;
 }
 
-uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char * string){
+uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char *string){
 	uint16_t current_length = 0;
 	uint16_t best_length = 0;
 
@@ -1431,7 +1436,7 @@ uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, ch
 //---------------------------------------------------------------------//
 
 
-void crayon_graphics_transistion_init(crayon_transition_t * effect, crayon_sprite_array_t * sprite_array,
+void crayon_graphics_transistion_init(crayon_transition_t *effect, crayon_sprite_array_t *sprite_array,
 	void (*f)(crayon_transition_t *, void *), uint32_t duration_in, uint32_t duration_out){
 
 	effect->f = f;
@@ -1447,7 +1452,7 @@ void crayon_graphics_transistion_init(crayon_transition_t * effect, crayon_sprit
 	return;
 }
 
-void crayon_graphics_transistion_skip_to_state(crayon_transition_t * effect, void * params, uint8_t state){
+void crayon_graphics_transistion_skip_to_state(crayon_transition_t *effect, void *params, uint8_t state){
 	if(state != CRAY_FADE_STATE_IN && state != CRAY_FADE_STATE_OUT){return;}
 	effect->curr_state = state;
 
@@ -1461,7 +1466,7 @@ void crayon_graphics_transistion_skip_to_state(crayon_transition_t * effect, voi
 	return;
 }
 
-void crayon_graphics_transistion_change_state(crayon_transition_t * effect, uint8_t state){
+void crayon_graphics_transistion_change_state(crayon_transition_t *effect, uint8_t state){
 	if(state != CRAY_FADE_STATE_IN && state != CRAY_FADE_STATE_OUT){return;}
 	effect->curr_state = state;
 	effect->resting_state = CRAY_FADE_STATE_NOT_RESTING;
@@ -1471,7 +1476,7 @@ void crayon_graphics_transistion_change_state(crayon_transition_t * effect, uint
 	return;
 }
 
-void crayon_graphics_transistion_apply(crayon_transition_t * effect, void * params){
+void crayon_graphics_transistion_apply(crayon_transition_t *effect, void *params){
 	if(effect->curr_state != CRAY_FADE_STATE_IN && effect->curr_state != CRAY_FADE_STATE_OUT){return;}
 
 	effect->prev_duration = effect->curr_duration;
@@ -1494,7 +1499,7 @@ void crayon_graphics_transistion_apply(crayon_transition_t * effect, void * para
 	return;
 }
 
-double crayon_graphics_transition_get_curr_percentage(crayon_transition_t * effect){
+double crayon_graphics_transition_get_curr_percentage(crayon_transition_t *effect){
 	if(effect->curr_state == CRAY_FADE_STATE_IN){
 		return (effect->duration_fade_in - effect->curr_duration) / (double)effect->duration_fade_in;
 	}
@@ -1503,7 +1508,7 @@ double crayon_graphics_transition_get_curr_percentage(crayon_transition_t * effe
 	return effect->curr_duration / (double)effect->duration_fade_out;
 }
 
-double crayon_graphics_transition_get_prev_percentage(crayon_transition_t * effect){
+double crayon_graphics_transition_get_prev_percentage(crayon_transition_t *effect){
 	if(effect->curr_state == CRAY_FADE_STATE_IN){
 		return (effect->duration_fade_in - effect->prev_duration) / (double)effect->duration_fade_in;
 	}
@@ -1647,7 +1652,7 @@ float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, ve
     return dims.y;   // height
 }
 
-float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, vec2_f_t * scale, const crayon_viewport_t *camera){
+float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t *vert, vec2_f_t *scale, const crayon_viewport_t *camera){
 	switch(side){
 		case 0:
 		return (camera->world_width/(float)camera->window_width) * (camera->window_x - vert->x)/scale->x;
