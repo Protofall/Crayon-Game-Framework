@@ -8,7 +8,7 @@
 #include <dc/video.h>
 #include <dc/pvr.h>
 
-//Write a message to the screen using the BIOS font, and hang
-extern void error_freeze(const char *format, ...);
+// Write a message to the screen using the BIOS font, and hang
+void error_freeze(const char *format, ...);
 
 #endif

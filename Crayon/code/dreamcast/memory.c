@@ -66,10 +66,10 @@ uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_
 	uint8_t dtex_result = crayon_memory_load_dtex(&ss->texture, &ss->texture_width, &ss->texture_height, &ss->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	uint8_t texture_format = crayon_misc_extract_bits(ss->texture_format, 3, 27);	//Extract the Pixel format
+	uint8_t texture_format = crayon_misc_extract_bits(ss->texture_format, 3, 27);	// Extract the Pixel format
 
 	uint8_t bpp = 0;
-	if(texture_format > 6){	//Invalid format
+	if(texture_format > 6){	// Invalid format
 		ERROR(7);
 	}
 	else if(texture_format == 5){
@@ -79,11 +79,11 @@ uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_
 		bpp = 8;
 	}
 
-	if(cp && palette_id >= 0 && bpp){	//If we pass in -1 or no cp, then we skip palettes
+	if(cp && palette_id >= 0 && bpp){	// If we pass in -1 or no cp, then we skip palettes
 		if(crayon_misc_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
 
 		int resultPal = crayon_memory_load_palette(cp, bpp, palette_id, palette_path);
-		//The function will modify the palette and colour count. Also it sends the BPP through
+		// The function will modify the palette and colour count. Also it sends the BPP through
 		if(resultPal){ERROR(9 + resultPal);}
 		free(palette_path);
 		palette_path = NULL;
@@ -108,7 +108,7 @@ uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_
 	for(i = 0; i < ss->animation_count; i++){
 		ss->animation[i].name = NULL;
 
-		//Check the length of the name
+		// Check the length of the name
 		count = 0;
 		while((anim_name_part = getc(txt_file)) != '\n'){
 			count++;
@@ -117,13 +117,13 @@ uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_
 		ss->animation[i].name = malloc((count + 1) * sizeof(char));
 		if(!ss->animation[i].name){ERROR(20);}
 
-		fseek(txt_file, -count - 1, SEEK_CUR);  //Go back so we can store the name
+		fseek(txt_file, -count - 1, SEEK_CUR);  // Go back so we can store the name
 
-		//Store the name
+		// Store the name
 		fread(ss->animation[i].name, sizeof(char), count, txt_file);
 		ss->animation[i].name[count] = '\0';
 
-		//Store the rest of the info
+		// Store the rest of the info
 		if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(21);}
 		ss->animation[i].x = number_holder;
 		if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(22);}
@@ -144,14 +144,14 @@ uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_
 
 	cleanup:
 
-	if(txt_file){fclose(txt_file);} //May need to enclode this in an if "res >= 12" if statement
+	if(txt_file){fclose(txt_file);} // May need to enclode this in an if "res >= 12" if statement
 
-	//If a failure occured somewhere
+	// If a failure occured somewhere
 	if(result){
 		if(ss->texture){crayon_memory_free_txr(ss->texture);}
 		if(cp->palette){free(cp->palette);}
 
-		//Cleanup any names that were given
+		// Cleanup any names that were given
 		if(ss->animation){
 			uint16_t j;
 			for(j = 0; j <= i; j++){
@@ -188,10 +188,10 @@ uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palett
 	uint8_t dtex_result = crayon_memory_load_dtex(&fp->texture, &fp->texture_width, &fp->texture_height, &fp->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	uint8_t texture_format = crayon_misc_extract_bits(fp->texture_format, 3, 27);	//Extract the Pixel format
+	uint8_t texture_format = crayon_misc_extract_bits(fp->texture_format, 3, 27);	// Extract the Pixel format
 
 	uint8_t bpp = 0;
-	if(texture_format > 6){	//Invalid format
+	if(texture_format > 6){	// Invalid format
 		ERROR(7);
 	}
 	else if(texture_format == 5){
@@ -201,10 +201,10 @@ uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palett
 		bpp = 8;
 	}
 
-	if(palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
+	if(palette_id >= 0 && bpp){	// If we pass in -1, then we skip palettes
 		if(crayon_misc_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
 
-		//The function will load the palette and colour count. With the specified BPP
+		// The function will load the palette and colour count. With the specified BPP
 		int resultPal = crayon_memory_load_palette(cp, bpp, palette_id, palette_path);
 		if(resultPal){ERROR(9 + resultPal);}
 		free(palette_path);
@@ -244,29 +244,29 @@ uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palett
 		fp->char_width[i] = number_holder;
 	}
 
-	//This section geterates the x coordinates for each char
+	// This section geterates the x coordinates for each char
 	fp->char_x_coord = malloc((fp->num_chars) * sizeof(uint8_t));
 	if(!fp->char_x_coord){ERROR(24);}
 
-	//This for loop generates the x positions in the texture for each character
+	// This for loop generates the x positions in the texture for each character
 	int chars_counted_in_row = 0;
 	int current_row = 0;
 	for(i = 0; i < fp->num_chars; i++){
-		if(chars_counted_in_row == 0){	//first element per row = zero
+		if(chars_counted_in_row == 0){	// first element per row = zero
 			fp->char_x_coord[i] = 0;
 		}
 		else{
-			fp->char_x_coord[i] = fp->char_x_coord[i - 1] + fp->char_width[i - 1];	//nth element = (n-1)th element's width + x pos
+			fp->char_x_coord[i] = fp->char_x_coord[i - 1] + fp->char_width[i - 1];	// nth element = (n-1)th element's width + x pos
 		}
 		chars_counted_in_row++;
 
-		if(chars_counted_in_row == fp->chars_per_row[current_row]){	//When we reach the end of the row, reset our counters
+		if(chars_counted_in_row == fp->chars_per_row[current_row]){	// When we reach the end of the row, reset our counters
 			current_row++;
 			chars_counted_in_row = 0;
 		}
 	}
 
-	//Spacing when rendering the text
+	// Spacing when rendering the text
 	fp->char_spacing.x = 0;
 	fp->char_spacing.y = 0;
 
@@ -276,7 +276,7 @@ uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palett
 
 	if(txt_file){fclose(txt_file);}
 
-	//If an error occured, free these things
+	// If an error occured, free these things
 	if(result){
 		if(fp->texture){crayon_memory_free_txr(fp->texture);}
 		if(cp->palette){free(cp->palette);}
@@ -309,10 +309,10 @@ uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palett
 	uint8_t dtex_result = crayon_memory_load_dtex(&fm->texture, &fm->texture_width, &fm->texture_height, &fm->texture_format, path);
 	if(dtex_result){ERROR(dtex_result);}
 
-	uint8_t texture_format = crayon_misc_extract_bits(fm->texture_format, 3, 27);	//Extract the Pixel format
+	uint8_t texture_format = crayon_misc_extract_bits(fm->texture_format, 3, 27);	// Extract the Pixel format
 
 	uint8_t bpp = 0;
-	if(texture_format > 6){	//Invalid format
+	if(texture_format > 6){	// Invalid format
 		ERROR(7);
 	}
 	else if(texture_format == 5){
@@ -322,11 +322,11 @@ uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palett
 		bpp = 8;
 	}
 
-	if(cp && palette_id >= 0 && bpp){	//If we pass in -1, then we skip palettes
+	if(cp && palette_id >= 0 && bpp){	// If we pass in -1, then we skip palettes
 		if(crayon_misc_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
 		
 		cp->palette = NULL;
-		//The function will load the palette and colour count. With the specified BPP
+		// The function will load the palette and colour count. With the specified BPP
 		uint8_t resultPal = crayon_memory_load_palette(cp, bpp, palette_id, palette_path);
 		if(resultPal){ERROR(9 + resultPal);}
 		free(palette_path);
@@ -335,7 +335,7 @@ uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palett
 
 	if(crayon_misc_change_extension(&txt_path, path, "txt")){ERROR(16);}
 
-	//Read the info file ( Format "NUM1\sNUM2\sNUM3\sNUM4\n" )
+	// Read the info file ( Format "NUM1\sNUM2\sNUM3\sNUM4\n" )
 	txt_file = fopen(txt_path, "rb");
 	if(!txt_file){ERROR(17);}
 	free(txt_path);
@@ -351,7 +351,7 @@ uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palett
 	if(crayon_misc_fget_next_int(txt_file, &number)){ERROR(21);}
 	fm->num_rows = number;
 
-	fm->num_chars = fm->num_columns * fm->num_rows;	//The number of chars *may* be less than this, but it won't be fatal
+	fm->num_chars = fm->num_columns * fm->num_rows;	// The number of chars *may* be less than this, but it won't be fatal
 
 	fm->char_spacing.x = 0;
 	fm->char_spacing.y = 0;
@@ -362,10 +362,10 @@ uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palett
 
 	if(txt_file){fclose(txt_file);}
 
-	//If a failure occured somewhere after loading texture
+	// If a failure occured somewhere after loading texture
 	if(result && fm->texture){crayon_memory_free_txr(fm->texture);}
 
-	//If we allocated memory for the palette and error out
+	// If we allocated memory for the palette and error out
 	if(result && cp->palette){free(cp->palette);}
 
 	if(palette_path){free(palette_path);}
@@ -418,7 +418,7 @@ uint8_t crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t
 	copy->palette_id = palette_id;
 
 	uint16_t i;
-	for(i = 0; i < copy->colour_count; i++){	//Goes through the palette and adds in all values
+	for(i = 0; i < copy->colour_count; i++){	// Goes through the palette and adds in all values
 		copy->palette[i] = original->palette[i];
 	}
 
@@ -437,10 +437,10 @@ uint8_t crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, cra
 		sprite_array->animation = &ss->animation[animation_id];
 		sprite_array->palette = pal;
 		sprite_array->frames_used = frames_used;
-		sprite_array->options |= CRAY_HAS_TEXTURE;	//Set the textured bit
+		sprite_array->options |= CRAY_HAS_TEXTURE;	// Set the textured bit
 	}
 	else{
-		sprite_array->spritesheet = NULL;	//For safety sake
+		sprite_array->spritesheet = NULL;	// For safety sake
 		sprite_array->palette = NULL;
 	}
 
@@ -457,7 +457,7 @@ uint8_t crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, cra
 
 	sprite_array->head = NULL;
 
-	//Since allocate function doesn't do this one
+	// Since allocate function doesn't do this one
 	if(ss){
 		sprite_array->frame_uv = (vec2_u16_t *) malloc(frames_used * sizeof(vec2_u16_t));
 		if(sprite_array->frame_uv == NULL){
@@ -466,19 +466,19 @@ uint8_t crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, cra
 		}
 	}
 
-	//First param is there to not throw errors when we init an empty list
+	// First param is there to not throw errors when we init an empty list
 	if(crayon_memory_allocate_sprite_array(sprite_array, list_size, 1)){
-		//An allocation error occured. Free the arrays that were allocated
+		// An allocation error occured. Free the arrays that were allocated
 		crayon_memory_free_sprite_array(sprite_array);
 		return 1;
 	}
 
-	//Sets default values so everything is initialised
+	// Sets default values so everything is initialised
 	if(set_defaults){
 		crayon_memory_set_defaults_sprite_array(sprite_array, 0, sprite_array->list_size - 1, 1);
 	}
 
-	//Add the references if the user asked for them
+	// Add the references if the user asked for them
 	if(options & CRAY_REF_LIST){
 		if(crayon_memory_add_sprite_array_refs(sprite_array, 0, list_size - 1)){
 			crayon_memory_free_sprite_array(sprite_array);
@@ -500,7 +500,7 @@ uint8_t crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, crayon_spr
 		dest->frames_used = src->frames_used;
 	}
 	else{
-		dest->spritesheet = NULL;	//For safety sake
+		dest->spritesheet = NULL;	// For safety sake
 		dest->palette = NULL;
 	}
 
@@ -517,7 +517,7 @@ uint8_t crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, crayon_spr
 
 	dest->head = NULL;
 
-	//Since allocate function doesn't do this one
+	// Since allocate function doesn't do this one
 	if(dest->spritesheet){
 		dest->frame_uv = (vec2_u16_t *) malloc(dest->frames_used * sizeof(vec2_u16_t));
 		if(dest->frame_uv == NULL){
@@ -526,14 +526,14 @@ uint8_t crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, crayon_spr
 		}
 	}
 
-	//First param is there to not throw errors when we init an empty list
+	// First param is there to not throw errors when we init an empty list
 	if(crayon_memory_allocate_sprite_array(dest, src->list_size, 1)){
-		//An allocation error occured. Free the arrays that were allocated
+		// An allocation error occured. Free the arrays that were allocated
 		crayon_memory_free_sprite_array(dest);
 		return 1;
 	}
 
-	//Now copy over the actual data
+	// Now copy over the actual data
 	uint16_t i;
 	for(i = 0; i < dest->list_size; i++){
 		dest->coord[i].x = src->coord[i].x;
@@ -568,7 +568,7 @@ uint8_t crayon_memory_clone_sprite_array(crayon_sprite_array_t *dest, crayon_spr
 		dest->frame_uv[i].y = src->frame_uv[i].y;
 	}
 
-	//And copy over the sprite_array (For now I'll add all elements if the user has the setting enabled)
+	// And copy over the sprite_array (For now I'll add all elements if the user has the setting enabled)
 	if(dest->options & CRAY_REF_LIST){
 		if(crayon_memory_add_sprite_array_refs(dest, 0, dest->list_size - 1)){
 			crayon_memory_free_sprite_array(dest);
@@ -595,34 +595,34 @@ void crayon_memory_init_camera(crayon_viewport_t *camera, vec2_f_t world_coord, 
 	return;
 }
 
-//Example, only 2 elements in list and we give 0, 1.
-//We'd expect references with id's {0, 1}. But we're getting {0, 0}
-//Indexes length = 2
+// Example, only 2 elements in list and we give 0, 1.
+// We'd expect references with id's {0, 1}. But we're getting {0, 0}
+// Indexes length = 2
 /*
 	while: i = 0. Enters loop:
 		Enters while loop
 		if: walker->id == 0 which isn't greater than indexes[0] == 0
 		if: walker->id == indexes[0]
-			//The correct reference is added to list[0]
-			//i = 1;
+			// The correct reference is added to list[0]
+			// i = 1;
 		go to next in list
 	while: i = 1. Enters loop:
 		if: walker->id == 1, indexes[1] == 1. Fails
 		if: walker->id == indexes[1]. True
-			//The correct element *should* be added...
-			//i++
+			// The correct element *should* be added...
+			// i++
 		go to next in list
 	while: i = 2. Fails
 	returns list
 */
 crayon_sprite_array_reference_t **crayon_memory_get_sprite_array_refs(crayon_sprite_array_t *sprite_array,
 	uint16_t *indexes, uint16_t indexes_length){
-	if(sprite_array->head == NULL){return NULL;}	//Incase you call on a sprite array with no refs
+	if(sprite_array->head == NULL){return NULL;}	// Incase you call on a sprite array with no refs
 
 	crayon_sprite_array_reference_t **list = malloc(sizeof(crayon_sprite_array_reference_t *) * indexes_length);
 	if(list == NULL){return NULL;}
 
-	//Set all to null, just incase a reference isn't found
+	// Set all to null, just incase a reference isn't found
 	uint16_t i;
 	for(i = 0; i < indexes_length; i++){
 		list[i] = NULL;
@@ -631,14 +631,14 @@ crayon_sprite_array_reference_t **crayon_memory_get_sprite_array_refs(crayon_spr
 	i = 0;
 	crayon_sprite_array_reference_t *walker = sprite_array->head;
 	while(walker != NULL && i < indexes_length){
-		if(walker->id > indexes[i]){	//Lets say we ask for 6, 7, 8, 9 but we only have 6, 8, 9 and 10
-										//When we get to 8 (In LL), thats > 7 so we check the next element which is 8
-										//8 is a number we are looking for so we add that in
-										//element 2 of "list" will be NULL due to the above for-loop
+		if(walker->id > indexes[i]){	// Lets say we ask for 6, 7, 8, 9 but we only have 6, 8, 9 and 10
+										// When we get to 8 (In LL), thats > 7 so we check the next element which is 8
+										// 8 is a number we are looking for so we add that in
+										// element 2 of "list" will be NULL due to the above for-loop
 			i++;
 			continue;
 		}
-		if(walker->id == indexes[i]){	//If the elements match, add it to the list
+		if(walker->id == indexes[i]){	// If the elements match, add it to the list
 			list[i] = walker;
 			i++;
 		}
@@ -648,10 +648,10 @@ crayon_sprite_array_reference_t **crayon_memory_get_sprite_array_refs(crayon_spr
 	return list;
 }
 
-//This would have issues if you try to re-add an existing reference or add before the last element
-	//However in the intended use, its only called by init for all elements and extend so this doesn't normally occur
+// This would have issues if you try to re-add an existing reference or add before the last element
+	// However in the intended use, its only called by init for all elements and extend so this doesn't normally occur
 uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t lower, int32_t upper){
-	if(upper < 0 || sprite_array->list_size == 0){return 0;}	//Since this sorta is valid, we return 0
+	if(upper < 0 || sprite_array->list_size == 0){return 0;}	// Since this sorta is valid, we return 0
 	if(upper >= sprite_array->list_size || lower > upper){return 1;}
 
 	crayon_sprite_array_reference_t *prev_node = NULL;
@@ -659,38 +659,38 @@ uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite_array,
 
 	uint16_t i;
 
-	//This should handle an empty reference list case
+	// This should handle an empty reference list case
 	if(sprite_array->head == NULL){
 		for(i = lower; i <= upper; i++){
-			//Setup new node
+			// Setup new node
 			curr_node = malloc(sizeof(crayon_sprite_array_reference_t));
 			if(!curr_node){return 1;}
 
 			curr_node->next = NULL;
 			curr_node->id = i;
 
-			//Update head if needed
+			// Update head if needed
 			if(sprite_array->head == NULL){
 				sprite_array->head = curr_node;
 			}
 			else{
-				prev_node->next = curr_node;	//Because otheriwse prev_node == NULL and that has issues
+				prev_node->next = curr_node;	// Because otheriwse prev_node == NULL and that has issues
 			}
 
-			//Update previous node
+			// Update previous node
 			prev_node = curr_node;
 		}
 		return 0;
 	}
 
-	//This assumes we are always adding to the end
+	// This assumes we are always adding to the end
 	while(curr_node->next != NULL){
 		curr_node = curr_node->next;
 	}
 
 	prev_node = curr_node;
 	for(i = lower; i <= upper; i++){
-		//Setup new node
+		// Setup new node
 		curr_node = malloc(sizeof(crayon_sprite_array_reference_t));
 		if(!curr_node){return 1;}
 
@@ -707,13 +707,13 @@ uint8_t crayon_memory_add_sprite_array_refs(crayon_sprite_array_t *sprite_array,
 void crayon_memory_remove_sprite_array_refs(crayon_sprite_array_t *sprite_array, uint16_t *indexes,
 	uint16_t indexes_length){
 
-	uint16_t i_c = 0;	//The index for the "indexes" array. Also used to adjust the id's of the nodes
+	uint16_t i_c = 0;	// The index for the "indexes" array. Also used to adjust the id's of the nodes
 	crayon_sprite_array_reference_t *curr_node = sprite_array->head;
 	crayon_sprite_array_reference_t *prev_node = NULL;
 	crayon_sprite_array_reference_t *delete_node;
 	while(curr_node != NULL){
-		if(i_c < indexes_length && curr_node->id == indexes[i_c]){	//Element we need to delete
-			//Remove this current node from the list
+		if(i_c < indexes_length && curr_node->id == indexes[i_c]){	// Element we need to delete
+			// Remove this current node from the list
 			if(prev_node != NULL){
 				prev_node->next = curr_node->next;
 			}
@@ -728,7 +728,7 @@ void crayon_memory_remove_sprite_array_refs(crayon_sprite_array_t *sprite_array,
 			continue;
 		}
 
-		//Else we keep curr_node and adjust its id
+		// Else we keep curr_node and adjust its id
 		curr_node->id -= i_c;
 		prev_node = curr_node;
 		curr_node = curr_node->next;
@@ -757,23 +757,23 @@ uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t *sprite
 
 	if(indexes_length == 0 || sprite_array->list_size == 0){return 1;}
 
-	uint16_t array_index = indexes[0];	//Start from the first remove
+	uint16_t array_index = indexes[0];	// Start from the first remove
 	uint16_t elements_to_shift;
 
 	uint16_t i;
-	//Basically what we want to do is find all the gaps in the list and shift them down.
+	// Basically what we want to do is find all the gaps in the list and shift them down.
 	for(i = 0; i < indexes_length; i++){
-		//Incase you try to remove an element beyond the array (size 2, removing {0,1,2})
+		// Incase you try to remove an element beyond the array (size 2, removing {0,1,2})
 		if(indexes[i] >= sprite_array->list_size){
 			i--;
 			break;
 		}
 
-		//Determine how many elements to copy over
+		// Determine how many elements to copy over
 		if(i != indexes_length - 1){
 			elements_to_shift = indexes[i + 1] - indexes[i] - 1;
 		}
-		else{	//For final element do that against the end of the list
+		else{	// For final element do that against the end of the list
 			elements_to_shift = sprite_array->list_size - indexes[i] - 1;
 		}
 
@@ -804,29 +804,29 @@ uint8_t crayon_memory_remove_sprite_array_elements(crayon_sprite_array_t *sprite
 				}
 			}
 
-			//Lastly do this
+			// Lastly do this
 			array_index += elements_to_shift;
 		}
 	}
 
-	//Replaced indexes_length with i to protect against removing too much
+	// Replaced indexes_length with i to protect against removing too much
 
-	//Resize the arrays with realloc (MIGHT BE ABLE TO REUSE array_index HERE)
+	// Resize the arrays with realloc (MIGHT BE ABLE TO REUSE array_index HERE)
 	if(crayon_memory_allocate_sprite_array(sprite_array, sprite_array->list_size - i, 0)){return 2;}
 
-	//Handle the references linked list here
+	// Handle the references linked list here
 	crayon_memory_remove_sprite_array_refs(sprite_array, indexes, i);
 
 	return 0;
 }
 
-//Note, even if these pointers point to "NULL", it will instead behave like malloc
-	//So if I use this in the init function. Make sure to set all the pointers to NULL before sending them through here
-	//Also the "size == 0" checks are there since zero-length sprite-arrays should be allowed to pass
+// Note, even if these pointers point to "NULL", it will instead behave like malloc
+	// So if I use this in the init function. Make sure to set all the pointers to NULL before sending them through here
+	// Also the "size == 0" checks are there since zero-length sprite-arrays should be allowed to pass
 uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t size, uint8_t set_array_globals){
 	void *holder;
 
-	//1 per element (Set these every time)
+	// 1 per element (Set these every time)
 
 	holder =  realloc(sprite_array->coord, size * sizeof(vec2_f_t));
 	if(size == 0 || holder != NULL){
@@ -846,27 +846,27 @@ uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array,
 	}
 	else{return 1;}
 
-	//MULTIs
-		//Cases where we *don't* realloc.
-			//Its an array_global and set_array_globals == 0
-				//if(!(!(options & MULTI) && set_array_globals == 0))
-				//OR we enter if(set_array_globals || its not a global)
-		//We only enter it if we change size
+	// MULTIs
+		// Cases where we *don't* realloc.
+			// Its an array_global and set_array_globals == 0
+				// if(!(!(options & MULTI) && set_array_globals == 0))
+				// OR we enter if(set_array_globals || its not a global)
+		// We only enter it if we change size
 
 
-		//If its both multi and global, then we allocate size, which isn't right...
+		// If its both multi and global, then we allocate size, which isn't right...
 
 
-	//Allocate to 1 if non-multi and global
+	// Allocate to 1 if non-multi and global
 
-	//Set to size if mutli
+	// Set to size if mutli
 
-	//else don't touch it
+	// else don't touch it
 
-	//RULEa (3/3 satisfied)
-		//We always alloc on set_array_globals (And in that case, we set to 1 if non-Multi or size if Multi)
-		//if set_array_globals is 0, we never update the non-Multis
-		//if we set size to zero and set_array_globals == 0, then it only enters if its multi and then it sets itself to zero
+	// RULEa (3/3 satisfied)
+		// We always alloc on set_array_globals (And in that case, we set to 1 if non-Multi or size if Multi)
+		// if set_array_globals is 0, we never update the non-Multis
+		// if we set size to zero and set_array_globals == 0, then it only enters if its multi and then it sets itself to zero
 
 	if((sprite_array->options & CRAY_MULTI_SCALE) || set_array_globals){
 		holder =  realloc(sprite_array->scale, ((sprite_array->options & CRAY_MULTI_SCALE) ? size: 1) * sizeof(vec2_f_t));
@@ -925,9 +925,9 @@ uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array,
 
 uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t elements, uint8_t set_defaults){
 	elements += sprite_array->list_size;
-	if(elements <= sprite_array->list_size){return 1;}	//Overflow or adding zero elements
+	if(elements <= sprite_array->list_size){return 1;}	// Overflow or adding zero elements
 
-	uint16_t old_size = sprite_array->list_size;	//Needed for setting defaults
+	uint16_t old_size = sprite_array->list_size;	// Needed for setting defaults
 	crayon_memory_allocate_sprite_array(sprite_array, elements, 0);
 
 	if(set_defaults){
@@ -946,7 +946,7 @@ void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array
 
 	uint16_t i;
 
-	//If length is zero, only set the multis that aren't multi
+	// If length is zero, only set the multis that aren't multi
 	if(sprite_array->list_size == 0 && set_array_globals){
 		if(!(sprite_array->options & CRAY_MULTI_COLOUR)){
 			sprite_array->colour[0] = 0xFFFFFFFF;
@@ -966,9 +966,9 @@ void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array
 			sprite_array->frame_id[0] = 0;
 		}
 	}
-	else{	//Add set_array_globals to this
+	else{	// Add set_array_globals to this
 		for(i = start; i <= end; i++){
-			//Only set if Multi-and-size > 0 things or first loop
+			// Only set if Multi-and-size > 0 things or first loop
 			if((i == 0 && set_array_globals) || ((sprite_array->options & CRAY_MULTI_COLOUR))){
 				sprite_array->colour[i] = 0xFFFFFFFF;
 				sprite_array->fade[i] = 0xFF;
@@ -987,7 +987,7 @@ void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array
 				sprite_array->frame_id[i] = 0;
 			}
 
-			if(sprite_array->list_size != 0){	//Set if we have at least one element in list
+			if(sprite_array->list_size != 0){	// Set if we have at least one element in list
 				sprite_array->coord[i].x = 0;
 				sprite_array->coord[i].y = 0;
 				sprite_array->layer[i] = 0xFF;
@@ -998,7 +998,7 @@ void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array
 
 	if(set_array_globals){
 		for(i = 0; i < sprite_array->frames_used; i++){
-			//Later replace this with the UVs for the first frame
+			// Later replace this with the UVs for the first frame
 			sprite_array->frame_uv[i].x = 0;
 			sprite_array->frame_uv[i].y = 0;
 		}
@@ -1019,14 +1019,14 @@ static void __crayon_memory_swap(uint16_t *a, uint16_t *b){
 // to left of pivot and all greater elements to right 
 // of pivot
 static int __crayon_memory_partition(uint16_t *arr, int low, int high){
-	int pivot = arr[high];	//Pivot
-	int i = (low - 1);	//Index of smaller element
+	int pivot = arr[high];	// Pivot
+	int i = (low - 1);	// Index of smaller element
 	int j;
 
 	for(j = low; j <= high- 1; j++){
-		//If current element is smaller than the pivot
+		// If current element is smaller than the pivot
 		if(arr[j] < pivot){
-			i++;	//Increment index of smaller element
+			i++;	// Increment index of smaller element
 			__crayon_memory_swap(&arr[i], &arr[j]);
 		} 
 	} 
@@ -1040,11 +1040,11 @@ static int __crayon_memory_partition(uint16_t *arr, int low, int high){
 // high  --> Ending index
 void crayon_memory_quick_sort(uint16_t *arr, int low, int high){
 	if(low < high){
-		//pi is partitioning index, arr[p] is now at right place
+		// pi is partitioning index, arr[p] is now at right place
 		int pi = __crayon_memory_partition(arr, low, high);
 
-		//Separately sort elements before
-		//partition and after partition
+		// Separately sort elements before
+		// partition and after partition
 		crayon_memory_quick_sort(arr, low, pi - 1);
 		crayon_memory_quick_sort(arr, pi + 1, high);
 	}
@@ -1054,8 +1054,8 @@ void crayon_memory_quick_sort(uint16_t *arr, int low, int high){
 //---------------------------------------------
 
 
-//Free Texture and anim array
-//Doesn't free the spritesheet struct itself
+// Free Texture and anim array
+// Doesn't free the spritesheet struct itself
 int8_t crayon_memory_free_spritesheet(crayon_spritesheet_t *ss){
 	if(ss){
 		uint16_t i;
@@ -1064,8 +1064,8 @@ int8_t crayon_memory_free_spritesheet(crayon_spritesheet_t *ss){
 		}
 		free(ss->animation);
 
-		//name is unused so we don't free it
-		//free(ss->name);
+		// name is unused so we don't free it
+		// free(ss->name);
 
 		crayon_memory_free_txr(ss->texture);
 
@@ -1102,7 +1102,7 @@ int8_t crayon_memory_free_palette(crayon_palette_t *cp){
 }
 
 int8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array){
-	//Free shouldn't do anything if you try to free a NULL ptr, but just incase...
+	// Free shouldn't do anything if you try to free a NULL ptr, but just incase...
 	if(sprite_array->coord){free(sprite_array->coord);}
 	if(sprite_array->frame_id){free(sprite_array->frame_id);}
 	if(sprite_array->frame_uv){free(sprite_array->frame_uv);}
@@ -1114,7 +1114,7 @@ int8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array){
 	if(sprite_array->layer){free(sprite_array->layer);}
 	if(sprite_array->visible){free(sprite_array->visible);}
 
-	//Set to NULL just incase user accidentally tries to free these arrays again
+	// Set to NULL just incase user accidentally tries to free these arrays again
 	sprite_array->coord = NULL;
 	sprite_array->frame_id = NULL;
 	sprite_array->frame_uv = NULL;
@@ -1126,7 +1126,7 @@ int8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array){
 	sprite_array->layer = NULL;
 	sprite_array->visible = NULL;
 
-	//Free the references linked list (This should probably use the remove func)
+	// Free the references linked list (This should probably use the remove func)
 	crayon_sprite_array_reference_t *curr_node = sprite_array->head;
 	crayon_sprite_array_reference_t *prev_node;
 	while(curr_node != NULL){
@@ -1162,19 +1162,19 @@ int8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint){
 	void *buffer;
 	int length = zlib_getlength(filename);
 
-	//Later add check to see if theres enough available main ram
+	// Later add check to see if theres enough available main ram
 	;
 
 	if(length == 0){
 		return 1;
 	}
 	
-	gzFile file = gzopen(filename, "rb"); //Seems to be the replacement of fs_load() along with gzread()
+	gzFile file = gzopen(filename, "rb"); // Seems to be the replacement of fs_load() along with gzread()
 	if(!file){
 		return 1;
 	}
 
-	//Allocate memory, read file
+	// Allocate memory, read file
 	buffer = malloc(length);
 	if(!buffer){
 		gzclose(file);
@@ -1361,7 +1361,7 @@ uint8_t crayon_memory_set_colour(crayon_sprite_array_t *sprites, uint16_t index,
 	return 1;
 }
 
-//The extra condition at the beginning it to make sure we don't set fade for untextured polys
+// The extra condition at the beginning it to make sure we don't set fade for untextured polys
 uint8_t crayon_memory_set_fade(crayon_sprite_array_t *sprites, uint16_t index, uint8_t value){
 	if((sprites->options & CRAY_HAS_TEXTURE) && (index == 0 ||
 	((sprites->options & CRAY_MULTI_COLOUR) && index < sprites->list_size))){

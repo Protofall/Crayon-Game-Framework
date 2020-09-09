@@ -1,6 +1,6 @@
 #include "misc.h"
 
-extern char * crayon_misc_get_version(){
+char * crayon_misc_get_version(){
 	char * version = malloc(sizeof(char) * 16);
 	if(!version){
 		return NULL;
@@ -19,15 +19,15 @@ extern char * crayon_misc_get_version(){
 	return version;
 }
 
-extern uint8_t crayon_misc_combine_strings(char ** dest, char * source1, char * source2){
+uint8_t crayon_misc_combine_strings(char ** dest, char * source1, char * source2){
 	if(!source1 || !source2){
 		return 1;
 	}
 
-	uint16_t s1_length = strlen(source1);	//Remember for "good\0" strlen returns 4
+	uint16_t s1_length = strlen(source1);	// Remember for "good\0" strlen returns 4
 	uint16_t s2_length = strlen(source2);
 	*dest = malloc(sizeof(char) * (s1_length + s2_length + 1));	// +1 for null-terminator
-	if(!(*dest)){	//Somehow the malloc failed. Thats bad!
+	if(!(*dest)){	// Somehow the malloc failed. Thats bad!
 		return 1;
 	}
 
@@ -37,21 +37,21 @@ extern uint8_t crayon_misc_combine_strings(char ** dest, char * source1, char * 
 	return 0;
 }
 
-extern uint8_t crayon_misc_change_extension(char ** dest, char * source, char * extension){
+uint8_t crayon_misc_change_extension(char ** dest, char * source, char * extension){
 	if(!source || !extension){
 		return 1;
 	}
 
 	char * dot_pos = strchr(source, '.');
-	//No dot present
+	// No dot present
 	if(!dot_pos){
 		return 1;
 	}
 
-	//Get the offset of the dot
+	// Get the offset of the dot
 	uint16_t src_length = 1 + (dot_pos - source);
 
-	//Dot at the start of the string (eg ".bashrc") isn't valid
+	// Dot at the start of the string (eg ".bashrc") isn't valid
 	if(src_length == 1){
 		return 1;
 	}
@@ -62,17 +62,17 @@ extern uint8_t crayon_misc_change_extension(char ** dest, char * source, char * 
 		return 1;
 	}
 
-	//Add the part of the source we're keeping then the extension
+	// Add the part of the source we're keeping then the extension
 	memcpy((*dest), source, src_length);
 	memcpy((*dest + src_length), extension, ext_length + 1);
 
 	return 0;
 }
 
-//For example, call this like so (Assuming file is 12 bytes long)
+// For example, call this like so (Assuming file is 12 bytes long)
 // uint8_t *my_stuff;
 // crayon_misc_read_file((void *) &my_stuff, "romdisk/read_data.txt", 12);
-extern uint8_t crayon_misc_read_file(void ** buffer, char * path, size_t size_bytes, uint8_t allocated){
+uint8_t crayon_misc_read_file(void ** buffer, char * path, size_t size_bytes, uint8_t allocated){
 	if(!allocated){
 		*buffer = malloc(size_bytes);
 	}
@@ -86,9 +86,9 @@ extern uint8_t crayon_misc_read_file(void ** buffer, char * path, size_t size_by
 	return 0;
 }
 
-extern uint32_t crayon_misc_fgeti(FILE * f, int16_t * last_char){
+uint32_t crayon_misc_fgeti(FILE * f, int16_t * last_char){
 	uint32_t n = 0;
-	int16_t d;	//EOF is -1 so we can't use a uint8_t
+	int16_t d;	// EOF is -1 so we can't use a uint8_t
 	for(d = 0; d < 10; d = fgetc(f) - '0'){
 		n = n * 10 + d;
 	}
@@ -98,11 +98,11 @@ extern uint32_t crayon_misc_fgeti(FILE * f, int16_t * last_char){
 	return n;
 }
 
-extern int crayon_misc_fget_next_int(FILE * f, int * number){
+int crayon_misc_fget_next_int(FILE * f, int * number){
 	*number = 0;
 	uint8_t negative = 0;
 	uint8_t started = 0;
-	int16_t d;	//EOF is -1 so we can't use a uint8_t
+	int16_t d;	// EOF is -1 so we can't use a uint8_t
 	while((d = fgetc(f)) != EOF){
 		if((char)d == '-'){
 			negative = 1;
@@ -127,20 +127,20 @@ extern int crayon_misc_fget_next_int(FILE * f, int * number){
 	return 0;
 }
 
-extern uint32_t crayon_misc_extract_bits(uint32_t number, uint8_t bit_length, uint8_t offset){
+uint32_t crayon_misc_extract_bits(uint32_t number, uint8_t bit_length, uint8_t offset){
 	return (((1 << bit_length) - 1) & (number >> offset));
 }
 
-extern uint32_t crayon_misc_insert_bits(uint32_t number_1, uint32_t number_2, uint8_t bit_length, uint8_t offset){
+uint32_t crayon_misc_insert_bits(uint32_t number_1, uint32_t number_2, uint8_t bit_length, uint8_t offset){
 	return (number_1 & ~(((1UL << bit_length) - 1) << offset)) | (number_2 << offset);
 }
 
-extern uint32_t crayon_misc_increment_bits(uint32_t number, int32_t change_val, uint8_t bit_length, uint8_t offset){
+uint32_t crayon_misc_increment_bits(uint32_t number, int32_t change_val, uint8_t bit_length, uint8_t offset){
 	return crayon_misc_insert_bits(number,
 		crayon_misc_extract_bits(number, bit_length, offset) + change_val, bit_length, offset);
 }
 
-extern uint8_t crayon_misc_is_big_endian(){
+uint8_t crayon_misc_is_big_endian(){
 	int a = 1;
 	return !((char*)&a)[0];
 }
@@ -150,7 +150,7 @@ extern uint8_t crayon_misc_is_big_endian(){
 // Requires an 11-byte output buffer for the string.
 // The biggest decimal number is 4294967295, which is 10 characters‬ (excluding null term).
 // Returns pointer to out_string.
-extern char * crayon_misc_uint_to_string(unsigned int in_number, char* out_string){
+char * crayon_misc_uint_to_string(unsigned int in_number, char* out_string){
 	int i;
 
 	out_string[10] = '\0'; // Null term
@@ -174,7 +174,7 @@ extern char * crayon_misc_uint_to_string(unsigned int in_number, char* out_strin
 // Requires a 12-byte output buffer for the string.
 // The longest signed decimal numbers are 10 characters‬ (excluding null term and sign).
 // Returns pointer to out_string.
-extern char * crayon_misc_int_to_string(int in_number, char* out_string){
+char * crayon_misc_int_to_string(int in_number, char* out_string){
 	int i;
 	int need_neg = 0;
 	int neg = 0;

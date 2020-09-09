@@ -16,14 +16,14 @@ uint8_t __sd_present;
 #define CRAYON_PLATFORM_DREAMCAST 0
 #define CRAYON_PLATFORM_PC 1
 
-#define CRAYON_BOOT_OPTICAL 0	//For DC this is /cd/
-#define CRAYON_BOOT_SD 1		//For DC this is /sd/
-#define CRAYON_BOOT_PC_LAN 2	//For DC this is /pc/
+#define CRAYON_BOOT_OPTICAL 0	// For DC this is /cd/
+#define CRAYON_BOOT_SD 1		// For DC this is /sd/
+#define CRAYON_BOOT_PC_LAN 2	// For DC this is /pc/
 
-//Give this and shutdown the weak attribute like KOS and try to automatically call them
+// Give this and shutdown the weak attribute like KOS and try to automatically call them
 uint8_t __attribute__((weak)) crayon_init(uint8_t platform, uint8_t boot_mode);
 
-//NEED TO HANDLE RETURN CODES BETTER
+// NEED TO HANDLE RETURN CODES BETTER
 uint8_t crayon_sd_mount_fat();
 
 void __attribute__((weak)) crayon_shutdown();

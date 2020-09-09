@@ -1,6 +1,6 @@
 #include "graphics.h"
 
-extern uint8_t crayon_graphics_init(uint8_t poly_modes){
+uint8_t crayon_graphics_init(uint8_t poly_modes){
 	pvr_init_params_t pvr_params;
 	pvr_params.opb_sizes[0] = (poly_modes & CRAYON_ENABLE_OP) ? PVR_BINSIZE_16 : PVR_BINSIZE_0;
 	pvr_params.opb_sizes[1] = PVR_BINSIZE_0;
@@ -10,23 +10,23 @@ extern uint8_t crayon_graphics_init(uint8_t poly_modes){
 
 	pvr_params.vertex_buf_size = 512 * 1024;
 	pvr_params.dma_enabled = 0;
-	pvr_params.fsaa_enabled = 0;	//Horizontal scaling (?)
+	pvr_params.fsaa_enabled = 0;	// Horizontal scaling (?)
 	pvr_params.autosort_disabled = 0;
 
 	pvr_init(&pvr_params);
 
 	if(vid_check_cable() == CT_VGA){
-		vid_set_mode(DM_640x480_VGA, PM_RGB565);	//60Hz
+		vid_set_mode(DM_640x480_VGA, PM_RGB565);	// 60Hz
 		__htz = 60;
 		__htz_adjustment = 1;
 	}
 	else if(flashrom_get_region() == FLASHROM_REGION_EUROPE){
-		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
+		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		// 50Hz
 		__htz = 50;
 		__htz_adjustment = 1.2;
 	}
 	else{
-		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
+		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	// 60Hz
 		__htz = 60;
 		__htz_adjustment = 1;
 	}
@@ -34,13 +34,13 @@ extern uint8_t crayon_graphics_init(uint8_t poly_modes){
 	return 0;
 }
 
-extern void crayon_graphics_shutdown(){
+void crayon_graphics_shutdown(){
 	pvr_shutdown();
 }
 
-//There are 4 palettes for 8BPP and 64 palettes for 4BPP
-extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
-	if(cp->palette_id < 0 || cp->bpp < 0 || cp->bpp * cp->palette_id >= 1024){	//Invalid format/palette not properly set
+// There are 4 palettes for 8BPP and 64 palettes for 4BPP
+uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
+	if(cp->palette_id < 0 || cp->bpp < 0 || cp->bpp * cp->palette_id >= 1024){	// Invalid format/palette not properly set
 		return 1;
 	}
 	uint16_t entries;
@@ -50,21 +50,20 @@ extern uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
 	else if(cp->bpp == 8){
 		entries = 256;
 	}
-	else{	//When OpenGL port arrives, this might change if I allow more than 64 entries
+	else{	// When OpenGL port arrives, this might change if I allow more than 64 entries
 		return 2;
 	}
 
 	pvr_set_pal_format(PVR_PAL_ARGB8888);
-	uint16_t i; //Can't this be a uint8_t instead? 0 to 255 and max 256 entries per palette
-	//...but then again how would the loop be able to break? since it would overflow back to 0
+	int i;
 	for(i = 0; i < cp->colour_count; ++i){
 		pvr_set_pal_entry(i + entries * cp->palette_id, cp->palette[i]);
 	}
 	return 0;
 }
 
-extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *sprite_array, uint8_t id){
-	if(!(sprite_array->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
+float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *sprite_array, uint8_t id){
+	if(!(sprite_array->options & CRAY_MULTI_SCALE)){id = 0;}	// When there's only one scale
 	if(sprite_array->options & CRAY_HAS_TEXTURE){
 		return sprite_array->animation->frame_width * sprite_array->scale[id].x;
 	}
@@ -73,8 +72,8 @@ extern float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t 
 	}
 }
 
-extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *sprite_array, uint8_t id){
-	if(!(sprite_array->options & CRAY_MULTI_SCALE)){id = 0;}	//When there's only one scale
+float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *sprite_array, uint8_t id){
+	if(!(sprite_array->options & CRAY_MULTI_SCALE)){id = 0;}	// When there's only one scale
 	if(sprite_array->options & CRAY_HAS_TEXTURE){
 		return sprite_array->animation->frame_height * sprite_array->scale[id].y;
 	}
@@ -83,12 +82,12 @@ extern float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t
 	}
 }
 
-//Right now on Dreamcast I have no idea how to check the current dimensions, so I just assume this. Its usually right
-extern uint32_t crayon_graphics_get_window_width(){
+// Right now on Dreamcast I have no idea how to check the current dimensions, so I just assume this. Its usually right
+uint32_t crayon_graphics_get_window_width(){
 	return 640;
 }
 
-extern uint32_t crayon_graphics_get_window_height(){
+uint32_t crayon_graphics_get_window_height(){
 	return 480;
 }
 
@@ -96,13 +95,13 @@ extern uint32_t crayon_graphics_get_window_height(){
 //---------------------------------------------------------------------//
 
 
-//draw_mode == ---- ---M
-//M is for draw mode (1 for enhanced, 0 for simple)
-extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+// draw_mode == ---- ---M
+// M is for draw mode (1 for enhanced, 0 for simple)
+int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t draw_mode){
-	if(sprite_array->list_size == 0){return 2;}	//Don't render nothing
+	if(sprite_array->list_size == 0){return 2;}	// Don't render nothing
 	crayon_viewport_t default_camera;
-	if(camera == NULL){	//No Camera, use the default one
+	if(camera == NULL){	// No Camera, use the default one
 		crayon_memory_init_camera(&default_camera, (vec2_f_t){0, 0},
 			(vec2_u16_t){crayon_graphics_get_window_width(), crayon_graphics_get_window_height()},
 			(vec2_u16_t){0, 0},
@@ -110,7 +109,7 @@ extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_a
 		camera = &default_camera;
 	}
 
-	if(sprite_array->options & CRAY_HAS_TEXTURE){	//Textured
+	if(sprite_array->options & CRAY_HAS_TEXTURE){	// Textured
 		if(draw_mode & CRAY_DRAW_ENHANCED){
 			return crayon_graphics_draw_sprites_enhanced(sprite_array, camera, poly_list_mode);
 		}
@@ -131,20 +130,21 @@ extern int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_a
 // 	//PVR_TXRFMT_PAL4BPP == 10100 00000 00000 00000 00000 00000
 // 	//PVR_TXRFMT_PAL8BPP == 11000 00000 00000 00000 00000 00000
 
-extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode){
 	
 	float u0, v0, u1, v1;
-	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	//Needed if you want to prevent a bunch of compiler warnings...
+	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	// Needed if you want to prevent a bunch of compiler warnings...
 
-	uint8_t texture_format = (((1 << 3) - 1) & (sprite_array->spritesheet->texture_format >> (28 - 1)));	//Gets the Pixel format
-																										//https://github.com/tvspelsfreak/texconv
+	uint8_t texture_format = (((1 << 3) - 1) &
+	(sprite_array->spritesheet->texture_format >> (28 - 1)));	// Gets the Pixel format
+																// https://github.com/tvspelsfreak/texconv
 	int textureformat = sprite_array->spritesheet->texture_format;
-	if(texture_format == 5){	//4BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 21);	//Update the later to use KOS' macros
+	if(texture_format == 5){	// 4BPP
+			textureformat |= ((sprite_array->palette->palette_id) << 21);	// Update the later to use KOS' macros
 	}
-	if(texture_format == 6){	//8BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 25);	//Update the later to use KOS' macros
+	if(texture_format == 6){	// 8BPP
+			textureformat |= ((sprite_array->palette->palette_id) << 25);	// Update the later to use KOS' macros
 	}
 
 	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
@@ -160,8 +160,8 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 	// uint8_t bounds = 0;
 	// uint8_t cropped = 0;
 
-	//This var exist so we don't need to worry about constantly floor-ing the camera's world points
-		//The sprite points are also floor-ed before calculations are done
+	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
+		// The sprite points are also floor-ed before calculations are done
 	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x),floor(camera->world_y)};
 
 	pvr_poly_cxt_t cxt;
@@ -170,14 +170,14 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 		sprite_array->spritesheet->texture_width, sprite_array->spritesheet->texture_height,
 		sprite_array->spritesheet->texture, sprite_array->filter);
 	pvr_poly_compile(&hdr, &cxt);
-	hdr.cmd |= 4;	//Enable oargb
+	hdr.cmd |= 4;	// Enable oargb
 	pvr_prim(&hdr, sizeof(hdr));
 
-	pvr_vertex_t vert[4];	//4 verts per sprite
+	pvr_vertex_t vert[4];	// 4 verts per sprite
 	vec2_f_t rotated_values;
 
-	//Easily lets us use the right index for each array
-		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
+	// Easily lets us use the right index for each array
+		// That way 1-length arrays only get calculated once and each element for a multi list is calculated
 	uint16_t *rotation_index, *flip_index, *frame_index, *colour_index;
 	uint8_t multi_scale = !!(sprite_array->options & CRAY_MULTI_SCALE);
 	uint16_t zero = 0;
@@ -187,7 +187,7 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 		camera->window_height / (float)camera->world_height};
 	uint8_t skip = 0;
 
-	uint16_t i, j;	//Indexes
+	uint16_t i, j;	// Indexes
 
 	if(sprite_array->options & CRAY_MULTI_FRAME){frame_index = &i;}
 	else{frame_index = &zero;}
@@ -201,7 +201,7 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 	if(sprite_array->options & CRAY_MULTI_COLOUR){colour_index = &i;}
 	else{colour_index = &zero;}
 
-	//Set the flags
+	// Set the flags
 	for(j = 0; j < 3; j++){
 		vert[j].flags = PVR_CMD_VERTEX;
 	}
@@ -209,28 +209,28 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 
 	uint8_t invf, f, a, r, g, b;
 	for(i = 0; i < sprite_array->list_size; i++){
-		if(sprite_array->colour[*colour_index] >> 24 == 0){	//Don't draw alpha-less stuff
-			if(i != 0){continue;}	//For the first element, we need to initialise our vars, otherwise we just skip to the next element
+		if(sprite_array->colour[*colour_index] >> 24 == 0){	// Don't draw alpha-less stuff
+			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
 			skip = 1;
 		}
 
 		if(sprite_array->visible[i] == 0){
 			if(i != 0){continue;}
-			else{skip = 1;}	//We need the defaults to be set on first loop
+			else{skip = 1;}	// We need the defaults to be set on first loop
 		}
 
-		//These if statements will trigger once if we have a single element (i == 0)
-			//and every time for a multi-list
+		// These if statements will trigger once if we have a single element (i == 0)
+			// and every time for a multi-list
 
-		if(*frame_index == i){	//frame
+		if(*frame_index == i){	// frame
 			u0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
 			v0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
 			u1 = u0 + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
 			v1 = v0 + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
 		}
 
-		if(*flip_index == i || *frame_index == i){	//UV
-			if(sprite_array->flip[*flip_index] & (1 << 0)){	//Is flipped
+		if(*flip_index == i || *frame_index == i){	// UV
+			if(sprite_array->flip[*flip_index] & (1 << 0)){	// Is flipped
 				vert[0].u = u1;
 				vert[0].v = v0;
 				vert[1].u = u0;
@@ -259,20 +259,20 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 			r = (((sprite_array->colour[*colour_index] >> 16) & 0xFF) * f)/255.0f;
 			g = (((sprite_array->colour[*colour_index] >> 8) & 0xFF) * f)/255.0f;
 			b = (((sprite_array->colour[*colour_index]) & 0xFF) * f)/255.0f;
-			if(sprite_array->options & CRAY_COLOUR_ADD){	//If Adding
+			if(sprite_array->options & CRAY_COLOUR_ADD){	// If Adding
 				vert[0].argb = (a << 24) + 0x00FFFFFF;
 			}
-			else{	//If Blending
+			else{	// If Blending
 				invf = 255 - f;
 				vert[0].argb = (a << 24) + (invf << 16) + (invf << 8) + invf;
 			}
 			vert[0].oargb = (a << 24) + (r << 16) + (g << 8) + b;
 		}
 
-		//Update rotation part if needed
+		// Update rotation part if needed
 		if(*rotation_index == i){
-			angle = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
-			if(angle < 0){angle += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
+			angle = fmod(sprite_array->rotation[*rotation_index], 360.0);	// If angle is more than 360 degrees, this fixes that
+			if(angle < 0){angle += 360.0;}	// fmod has range -359 to +359, this changes it to 0 to +359
 			angle = (angle * M_PI) / 180.0f;
 		}
 
@@ -289,14 +289,14 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
 
-		//If we don't want to do rotations (Rotation == 0.0), then skip it
+		// If we don't want to do rotations (Rotation == 0.0), then skip it
 		if(sprite_array->rotation[*rotation_index] != 0.0f){
 
-			//Gets the true midpoint
+			// Gets the true midpoint
 			mid.x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
 			mid.y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
 
-			//Update the vert x and y positions
+			// Update the vert x and y positions
 			for(j = 0; j < 4; j++){
 				rotated_values = crayon_graphics_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
 				vert[j].x = rotated_values.x;
@@ -304,16 +304,16 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 			}
 		}
 
-		//Apply the viewport scaling as well as the window offset
+		// Apply the viewport scaling as well as the window offset
 		for(j = 0; j < 4; j++){
 			vert[j].x = floor(vert[j].x * scales.x) + camera->window_x;
 			vert[j].y = floor(vert[j].y * scales.y) + camera->window_y;
 		}
 
-		//Do OOB and culling calculations here
+		// Do OOB and culling calculations here
 		;
 
-		//Apply these to all verts
+		// Apply these to all verts
 		for(j = 1; j < 4; j++){
 			vert[j].argb = vert[0].argb;
 			vert[j].oargb = vert[0].oargb;
@@ -326,7 +326,7 @@ extern uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t
 	return 0;
 }
 
-extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode){
 
 	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
@@ -342,8 +342,8 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 	// uint8_t bounds = 0;
 	// uint8_t cropped = 0;
 
-	//This var exist so we don't need to worry about constantly floor-ing the camera's world points
-		//The sprite points are also floor-ed before calculations are done
+	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
+		// The sprite points are also floor-ed before calculations are done
 	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x),floor(camera->world_y)};
 
 	pvr_poly_cxt_t cxt;
@@ -355,7 +355,7 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
-	//All this just for rotations
+	// All this just for rotations
 	uint16_t *rotation_index, *colour_index;
 	uint8_t multi_dim = !!(sprite_array->options & CRAY_MULTI_DIM);
 	uint16_t zero = 0;
@@ -366,7 +366,7 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 	uint8_t skip = 0;
 
 	uint16_t i, j;
-	//--CR -D--
+	// --CR -D--
 	if(sprite_array->options & CRAY_MULTI_ROTATE){rotation_index = &i;}
 	else{rotation_index = &zero;}
 	if(sprite_array->options & CRAY_MULTI_COLOUR){colour_index = &i;}
@@ -377,28 +377,28 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 	}
 	vert[3].flags = PVR_CMD_VERTEX_EOL;
 
-	//Unused param, set to 0
+	// Unused param, set to 0
 	vert[0].oargb = 0;
 	for(i = 1; i < 4; i++){
 		vert[i].oargb = vert[0].oargb;
 	}
 
 	for(i = 0; i < sprite_array->list_size; i++){
-		if(sprite_array->colour[*colour_index] >> 24 == 0){	//Don't draw alpha-less stuff
-			if(i != 0){continue;}	//For the first element, we need to initialise our vars, otherwise we just skip to the next element
+		if(sprite_array->colour[*colour_index] >> 24 == 0){	// Don't draw alpha-less stuff
+			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
 			skip = 1;
 		}
 
 		if(sprite_array->visible[i] == 0){
 			if(i != 0){continue;}
-			else{skip = 1;}	//We need the defaults to be set on first loop
+			else{skip = 1;}	// We need the defaults to be set on first loop
 		}
 
-		//Update rotation part if needed
+		// Update rotation part if needed
 		if(*rotation_index == i){
-			angle = fmod(sprite_array->rotation[i], 360.0);	//If angle is more than 360 degrees, this fixes that
-			if(angle < 0){angle += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
-			angle = (angle * M_PI) / 180.0f;	//Convert from degrees to ratians
+			angle = fmod(sprite_array->rotation[i], 360.0);	// If angle is more than 360 degrees, this fixes that
+			if(angle < 0){angle += 360.0;}	// fmod has range -359 to +359, this changes it to 0 to +359
+			angle = (angle * M_PI) / 180.0f;	// Convert from degrees to ratians
 		}
 
 		if(*colour_index == i){
@@ -418,13 +418,13 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
 
-		//Rotate the poly
+		// Rotate the poly
 		if(sprite_array->rotation[*rotation_index] != 0.0f){
-			// //Gets the midpoint
+			// Gets the midpoint
 			mid.x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
 			mid.y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
 
-			//Rotate the verts around the midpoint
+			// Rotate the verts around the midpoint
 			for(j = 0; j < 4; j++){
 				rotated_values = crayon_graphics_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
 				vert[j].x = rotated_values.x;
@@ -432,13 +432,13 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 			}
 		}
 
-		//Apply the viewport scaling as well as the window offset
+		// Apply the viewport scaling as well as the window offset
 		for(j = 0; j < 4; j++){
 			vert[j].x = floor(vert[j].x * scales.x) + camera->window_x;
 			vert[j].y = floor(vert[j].y * scales.y) + camera->window_y;
 		}
 
-		//Do OOB and culling calculations here
+		// Do OOB and culling calculations here
 		;
 
 		for(j = 1; j < 4; j++){
@@ -452,35 +452,35 @@ extern uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t
 	return 0;
 }
 
-extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode){
 
-	uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
-										//---- 1111 (Crop on all edges)
+	uint8_t crop_edges = (1 << 4) - 1;	// ---- BRTL
+										// ---- 1111 (Crop on all edges)
 
-	//DELETE THIS LATER. A basic optimisation for now
+	// DELETE THIS LATER. A basic optimisation for now
 	if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
 	if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
 	if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
 	if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
 
-	//Used for cropping
+	// Used for cropping
 	uint8_t bounds = 0;
 	uint8_t cropped = 0;
 	uint8_t flip_val = 0;
 	uint8_t rotation_val = 0;
 
-	//This var exist so we don't need to worry about constantly floor-ing the camera's world points
-		//The sprite points are also floor-ed before calculations are done
+	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
+		// The sprite points are also floor-ed before calculations are done
 	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x),floor(camera->world_y)};
 
-	//Used in calcuating the new UV
+	// Used in calcuating the new UV
 	float texture_offset;
 	float texture_divider;
 	vec2_f_t selected_vert;
 	uint8_t uv_index;
 
-	float uvs[4] = {0};	//u0, v0, u1, v1 (Set to zero to avoid compiler warnings)
+	float uvs[4] = {0};	// u0, v0, u1, v1 (Set to zero to avoid compiler warnings)
 	vec2_f_t camera_verts[4], sprite_verts[4];
 	camera_verts[0] = (vec2_f_t){camera->window_x,camera->window_y};
 	camera_verts[1] = (vec2_f_t){camera->window_x+camera->window_width,camera->window_y};
@@ -488,14 +488,15 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 	camera_verts[3] = (vec2_f_t){camera->window_x+camera->window_width,camera->window_y+camera->window_height};
 
 	pvr_sprite_cxt_t context;
-	uint8_t texture_format = (((1 << 3) - 1) & (sprite_array->spritesheet->texture_format >> (28 - 1)));	//Gets the Pixel format
-																										//https://github.com/tvspelsfreak/texconv
+	uint8_t texture_format = (((1 << 3) - 1) &
+	(sprite_array->spritesheet->texture_format >> (28 - 1)));	// Gets the Pixel format
+																// https://github.com/tvspelsfreak/texconv
 	int textureformat = sprite_array->spritesheet->texture_format;
-	if(texture_format == 5){	//4BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 21);	//Update the later to use KOS' macros
+	if(texture_format == 5){	// 4BPP
+			textureformat |= ((sprite_array->palette->palette_id) << 21);	// Update the later to use KOS' macros
 	}
-	if(texture_format == 6){	//8BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 25);	//Update the later to use KOS' macros
+	if(texture_format == 6){	// 8BPP
+			textureformat |= ((sprite_array->palette->palette_id) << 25);	// Update the later to use KOS' macros
 	}
 	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, sprite_array->spritesheet->texture_width,
 		sprite_array->spritesheet->texture_height, sprite_array->spritesheet->texture, sprite_array->filter);
@@ -504,10 +505,10 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 		.flags = PVR_CMD_VERTEX_EOL
 	};
 
-	//Easily lets us use the right index for each array
-		//That way 1-length arrays only get calculated once and each element for a multi list is calculated
+	// Easily lets us use the right index for each array
+		// That way 1-length arrays only get calculated once and each element for a multi list is calculated
 	uint16_t *rotation_index, *flip_index, *frame_index;
-	uint16_t i;	//The main loop's index
+	uint16_t i;	// The main loop's index
 	uint16_t zero = 0;
 	float rotation_under_360 = 0;
 
@@ -542,24 +543,24 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 	pvr_sprite_compile(&header, &context);
 	pvr_prim(&header, sizeof(header));
 	for(i = 0; i < sprite_array->list_size; i++){
-		//These if statements will trigger once if we have a single element (i == 0)
-			//and every time for a multi-list
-			//and some of them trigger if we just cropped a UV
+		// These if statements will trigger once if we have a single element (i == 0)
+			// and every time for a multi-list
+			// and some of them trigger if we just cropped a UV
 
 		if(sprite_array->visible[i] == 0){
-			if(i != 0){continue;}	//We need the defaults to be set on first loop
+			if(i != 0){continue;}	// We need the defaults to be set on first loop
 		}
 
-		if(*frame_index == i || cropped){	//frame
+		if(*frame_index == i || cropped){	// frame
 			uvs[0] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
 			uvs[1] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
 			uvs[2] = uvs[0] + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
 			uvs[3] = uvs[1] + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
-			cropped = 0;	//Reset cropped from previous element
+			cropped = 0;	// Reset cropped from previous element
 		}
 
-		//Basically enter if first element or either the flip/rotate/frame changed
-			//The multi_blah's are there to prevent checks on draw params that aren't multi/won't change
+		// Basically enter if first element or either the flip/rotate/frame changed
+			// The multi_blah's are there to prevent checks on draw params that aren't multi/won't change
 		if(i == 0 || (multi_flip && (sprite_array->flip[i] != sprite_array->flip[i - 1])) ||
 			(multi_rotate && (sprite_array->rotation[i] != sprite_array->rotation[i - 1])) ||
 			(multi_frame &&
@@ -567,16 +568,16 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			(sprite_array->frame_uv[i].y != sprite_array->frame_uv[i - 1].y)))
 			){
 
-			//Is flipped?
+			// Is flipped?
 			if(sprite_array->flip[*flip_index] & (1 << 0)){flip_val = 1;}
 			else{flip_val = 0;}
 
-			//Don't bother doing extra calculations
+			// Don't bother doing extra calculations
 			if(sprite_array->rotation[*rotation_index] != 0){
-				rotation_under_360 = fmod(sprite_array->rotation[*rotation_index], 360.0);	//If angle is more than 360 degrees, this fixes that
-				if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	//fmod has range -359 to +359, this changes it to 0 to +359
+				rotation_under_360 = fmod(sprite_array->rotation[*rotation_index], 360.0);	// If angle is more than 360 degrees, this fixes that
+				if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	// fmod has range -359 to +359, this changes it to 0 to +359
 
-				//For sprite mode we can't simply "rotate" the verts, instead we need to change the uv
+				// For sprite mode we can't simply "rotate" the verts, instead we need to change the uv
 				if(crayon_graphics_almost_equals(rotation_under_360, 90.0, 45.0)){
 					rotation_val = 1;
 				}
@@ -591,9 +592,9 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			else{rotation_val = 0;}
 		}
 
-		//These blocks act as the rotation
+		// These blocks act as the rotation
 		if(rotation_val == 0){
-			//NOTE: we don't need to floor the camera's window vars because they're all ints
+			// NOTE: we don't need to floor the camera's window vars because they're all ints
 			vert.ax = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
 			vert.ay = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 			vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
@@ -604,8 +605,8 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			vert.dy = vert.cy;
 		}
 		else if(rotation_val == 1){
-			//Both vars are uint16_t and lengths can't be negative or more than 1024 (Largest texture size for DC)
-				//Therfore storing the result in a int16_t is perfectly fine
+			// Both vars are uint16_t and lengths can't be negative or more than 1024 (Largest texture size for DC)
+				// Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
 			vert.dx = floor((floor(sprite_array->coord[i].x) - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
@@ -640,34 +641,34 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			vert.ay = vert.dy;
 		}
 
-		//The first element if invisible now skips cropping and rendering
+		// The first element if invisible now skips cropping and rendering
 		if(i == 0 && sprite_array->visible[i] == 0){continue;}
 
 		vert.az = (float)sprite_array->layer[i];
 		vert.bz = (float)sprite_array->layer[i];
 		vert.cz = (float)sprite_array->layer[i];
 
-		//Verts c and d (Or 2 and 3) are swapped so its in Z order instead of "Backwards C" order
+		// Verts c and d (Or 2 and 3) are swapped so its in Z order instead of "Backwards C" order
 		sprite_verts[0] = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
 		sprite_verts[1] = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
 		sprite_verts[2] = crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4);
 		sprite_verts[3] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 
-		//If OOB then don't draw
+		// If OOB then don't draw
 		if(crayon_graphics_check_oob(camera_verts, sprite_verts, CRAY_DRAW_SIMPLE)){continue;}
 
-		//If we don't need to crop at all, don't both doing the checks. bounds is zero by default
+		// If we don't need to crop at all, don't both doing the checks. bounds is zero by default
 		if(crop_edges){
 			bounds = crayon_graphics_check_intersect(camera_verts, sprite_verts);
-			bounds &= crop_edges;		//To simplify the if checks
+			bounds &= crop_edges;		// To simplify the if checks
 		}
 
-		//Replace below with function calls such as
-		//func(&uvs[], flip, rotate, side, camera, scale, animation, &vert)
-		//and it modifies the uv element if required
-			//Will need to make a function to get last param of crayon_graphics_set_sprite_vert_x/y
-		if(bounds & (1 << 0)){	//Left side
-			//Get the vert that's currently on the left side
+		// Replace below with function calls such as
+		// func(&uvs[], flip, rotate, side, camera, scale, animation, &vert)
+		// and it modifies the uv element if required
+			// Will need to make a function to get last param of crayon_graphics_set_sprite_vert_x/y
+		if(bounds & (1 << 0)){	// Left side
+			// Get the vert that's currently on the left side
 			uv_index = crayon_get_uv_index(0, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
 			texture_offset = crayon_graphics_get_texture_offset(0, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
@@ -685,12 +686,12 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			// 	__GRAPHICS_DEBUG_VARIABLES[6] = texture_offset;		//Is at zero
 			// }
 
-			//Set the vert
+			// Set the vert
 			crayon_graphics_set_sprite_vert_x(&vert, (4 + 0 - rotation_val) % 4, camera->window_x);
 			crayon_graphics_set_sprite_vert_x(&vert, (4 + 3 - rotation_val) % 4, camera->window_x);
 		}
-		if(bounds & (1 << 1)){	//Top side
-			//Get uv thats on top side
+		if(bounds & (1 << 1)){	// Top side
+			// Get uv thats on top side
 			uv_index = crayon_get_uv_index(1, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 1 - rotation_val) % 4);
 			texture_offset = crayon_graphics_get_texture_offset(1, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
@@ -700,17 +701,17 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(3, rotation_val, flip_val)] - uvs[uv_index]);
 			// uvs[uv_index] += (texture_offset / texture_divider) / sprite_array->scale[i * multi_scale].y;
 
-			//If we remove the scale from texture_offset
+			// If we remove the scale from texture_offset
 			// uvs[uv_index] += texture_offset / (texture_divider * sprite_array->scale[i * multi_scale].y * sprite_array->scale[i * multi_scale].y);
 
-			//Set the vert
+			// Set the vert
 			crayon_graphics_set_sprite_vert_y(&vert, (4 + 1 - rotation_val) % 4, camera->window_y);
 			crayon_graphics_set_sprite_vert_y(&vert, (4 + 0 - rotation_val) % 4, camera->window_y);
 		}
-		if(bounds & (1 << 2)){	//Right side
-			//I don't fully understand why we use the magic number 2, maybe its the opposite of 0 (0 == R, 2 == L)
+		if(bounds & (1 << 2)){	// Right side
+			// I don't fully understand why we use the magic number 2, maybe its the opposite of 0 (0 == R, 2 == L)
 
-			//Get the vert that's currently on the right side
+			// Get the vert that's currently on the right side
 			uv_index = crayon_get_uv_index(2, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 			texture_offset = crayon_graphics_get_texture_offset(2, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
@@ -719,12 +720,12 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(0, rotation_val, flip_val)] - uvs[uv_index]);
 
-			//Set the vert
+			// Set the vert
 			crayon_graphics_set_sprite_vert_x(&vert, (4 + 2 - rotation_val) % 4, camera->window_x + camera->window_width);
 			crayon_graphics_set_sprite_vert_x(&vert, (4 + 1 - rotation_val) % 4, camera->window_x + camera->window_width);
 		}
-		if(bounds & (1 << 3)){	//Bottom side
-			//Get the vert that's currently on the bottom side
+		if(bounds & (1 << 3)){	// Bottom side
+			// Get the vert that's currently on the bottom side
 			uv_index = crayon_get_uv_index(3, rotation_val, flip_val);
 			selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 3 - rotation_val) % 4);
 			texture_offset = crayon_graphics_get_texture_offset(3, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
@@ -733,7 +734,7 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(1, rotation_val, flip_val)] - uvs[uv_index]);
 
-			//Set the vert
+			// Set the vert
 			crayon_graphics_set_sprite_vert_y(&vert, (4 + 3 - rotation_val) % 4, camera->window_y + camera->window_height);
 			crayon_graphics_set_sprite_vert_y(&vert, (4 + 2 - rotation_val) % 4, camera->window_y + camera->window_height);
 		}
@@ -749,10 +750,10 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 			vert.cuv = PVR_PACK_16BIT_UV(uvs[2], uvs[3]);
 		}
 
-		//Signal to next item we just modified the uvs and verts via cropping so we need to recalculate them
+		// Signal to next item we just modified the uvs and verts via cropping so we need to recalculate them
 		cropped = (bounds) ? 1 : 0;
 
-		//Draw the sprite
+		// Draw the sprite
 		pvr_prim(&vert, sizeof(vert));
 
 	}
@@ -760,18 +761,18 @@ extern uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *
 	return 0;
 }
 
-//Below is a function that does the same stuff as the simple camera, except its using polys and hence 32-bit UVs.
-	//This means all known cases of shimmering and jittering disapear
-extern uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+// Below is a function that does the same stuff as the simple camera, except its using polys and hence 32-bit UVs.
+	// This means all known cases of shimmering and jittering disapear
+uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode){
 	pvr_sprite_txr_t vert = {
 		.flags = PVR_CMD_VERTEX_EOL
 	};
 
-	uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
-										//---- 1111 (Crop on all edges)
+	uint8_t crop_edges = (1 << 4) - 1;	// ---- BRTL
+										// ---- 1111 (Crop on all edges)
 
-	//DELETE THIS LATER. A basic optimisation for now
+	// DELETE THIS LATER. A basic optimisation for now
 	if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
 	if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
 	if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
@@ -1104,14 +1105,14 @@ extern uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite
 //---------------------------------------------------------------------//
 
 
-extern uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_mono_t *fm, uint8_t poly_list_mode,
+uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_mono_t *fm, uint8_t poly_list_mode,
 	float draw_x, float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number){
 
 	float x0 = floor(draw_x);
 	float y0 = floor(draw_y);
 	const float z = layer;
 
-	//x1 and y1 depend on the letter
+	// x1 and y1 depend on the letter
 	float x1 = x0 + fm->char_width * scale_x;
 	float y1 = y0 + fm->char_height * scale_y;
 
@@ -1119,14 +1120,15 @@ extern uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_m
 
 	pvr_sprite_cxt_t context;
 
-	uint8_t texture_format = (((1 << 3) - 1) & (fm->texture_format >> (28 - 1)));	//Gets the Pixel format
-																					//https://github.com/tvspelsfreak/texconv
+	uint8_t texture_format = (((1 << 3) - 1) &
+		(fm->texture_format >> (28 - 1)));	// Gets the Pixel format
+											// https://github.com/tvspelsfreak/texconv
 	int textureformat = fm->texture_format;
-	if(texture_format == 5){	//4BPP
-			textureformat |= ((palette_number) << 21);	//Update the later to use KOS' macros
+	if(texture_format == 5){	// 4BPP
+			textureformat |= ((palette_number) << 21);	// Update the later to use KOS' macros
 	}
-	if(texture_format == 6){	//8BPP
-			textureformat |= ((palette_number) << 25);	//Update the later to use KOS' macros
+	if(texture_format == 6){	// 8BPP
+			textureformat |= ((palette_number) << 25);	// Update the later to use KOS' macros
 	}
 	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, fm->texture_width,
 		fm->texture_height, fm->texture, PVR_FILTER_NONE);
@@ -1142,7 +1144,7 @@ extern uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_m
 		if(string[i] == '\0'){
 			break;
 		}
-		if(string[i] == '\n'){	//This should be able to do a new line
+		if(string[i] == '\n'){	// This should be able to do a new line
 			x0 = floor(draw_x);
 			x1 = x0 + floor(fm->char_width * scale_x);
 			y0 = y1 + floor(fm->char_spacing.y * scale_y);
@@ -1177,7 +1179,7 @@ extern uint8_t crayon_graphics_draw_text_mono(char * string, const crayon_font_m
 	return 0;
 }
 
-extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_prop_t *fp, uint8_t poly_list_mode,
+uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_prop_t *fp, uint8_t poly_list_mode,
 	float draw_x, float draw_y, uint8_t layer, float scale_x, float scale_y, uint8_t palette_number){
 
 	float x0 = floor(draw_x);
@@ -1195,14 +1197,15 @@ extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_p
 
 	pvr_sprite_cxt_t context;
 
-	uint8_t texture_format = (((1 << 3) - 1) & (fp->texture_format >> (28 - 1)));	//Gets the Pixel format
-																					//https://github.com/tvspelsfreak/texconv
+	uint8_t texture_format = (((1 << 3) - 1) &
+		(fp->texture_format >> (28 - 1)));	// Gets the Pixel format
+											// https://github.com/tvspelsfreak/texconv
 	int textureformat = fp->texture_format;
-	if(texture_format == 5){	//4BPP
-			textureformat |= ((palette_number) << 21);	//Update the later to use KOS' macros
+	if(texture_format == 5){	// 4BPP
+			textureformat |= ((palette_number) << 21);	// Update the later to use KOS' macros
 	}
-	if(texture_format == 6){	//8BPP
-			textureformat |= ((palette_number) << 25);	//Update the later to use KOS' macros
+	if(texture_format == 6){	// 8BPP
+			textureformat |= ((palette_number) << 25);	// Update the later to use KOS' macros
 	}
 	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, fp->texture_width,
 		fp->texture_height, fp->texture, PVR_FILTER_NONE);
@@ -1216,7 +1219,7 @@ extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_p
 		if(string[i] == '\0'){
 			break;
 		}
-		if(string[i] == '\n'){	//This should be able to do a new line
+		if(string[i] == '\n'){	// This should be able to do a new line
 			x0 = floor(draw_x);
 			x1 = x0;
 			y0 = y1 + floor(fp->char_spacing.y * scale_y);
@@ -1226,12 +1229,12 @@ extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_p
 		}
 		uint8_t distance_from_space = string[i] - ' ';
 
-		x1 = x0 + floor(fp->char_width[distance_from_space] * scale_x);	//get the width of the display char
+		x1 = x0 + floor(fp->char_width[distance_from_space] * scale_x);	// get the width of the display char
 
 		u0 = (float)fp->char_x_coord[distance_from_space] / fp->texture_width;
 		u1 = u0 + ((float)fp->char_width[distance_from_space] / fp->texture_width);
 
-		//Can this section be optimised? Maybe replace it with binary search?
+		// Can this section be optimised? Maybe replace it with binary search?
 		int j;
 		int char_count = 0;
 		for(j = 0; j < fp->num_rows; j++){
@@ -1263,9 +1266,9 @@ extern uint8_t crayon_graphics_draw_text_prop(char * string, const crayon_font_p
 //---------------------------------------------------------------------//
 
 
-extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t layer, uint32_t colour,
+void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t layer, uint32_t colour,
 	uint8_t poly_list_mode){
-	if(colour >> 24 == 0){return;}	//Don't draw alpha-less stuff
+	if(colour >> 24 == 0){return;}	// Don't draw alpha-less stuff
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
 	pvr_vertex_t vert[4];
@@ -1286,11 +1289,11 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 	int16_t y_diff = y2 - y1;
 	int16_t x_diff = x2 - x1;
 
-	//Absolute them
+	// Absolute them
 	if(y_diff < 0){y_diff *= -1;}
 	if(x_diff < 0){x_diff *= -1;}
 
-	//We flip them if its in between SW and NE (Going clockwise)
+	// We flip them if its in between SW and NE (Going clockwise)
 
 	if((x1 > x2 && x_diff > y_diff) || (y1 > y2 && x_diff < y_diff)){
 		uint16_t temp = x2;
@@ -1306,21 +1309,21 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 	vert[0].x = x1;
 	vert[0].y = y1;
 
-	if(x_diff > y_diff){	//Wider than taller
-		//Top right
+	if(x_diff > y_diff){	// Wider than taller
+		// Top right
 		vert[1].x = x2 + 1;
 		vert[1].y = y2;
 
-		//Bottom left
+		// Bottom left
 		vert[2].x = x1;
 		vert[2].y = y1 + 1;
 
-		//Bottom right
+		// Bottom right
 		vert[3].x = x2 + 1;
 		vert[3].y = y2 + 1;
 
 	}
-	else{	//taller than wider
+	else{	// taller than wider
 		vert[1].x = x1 + 1;
 		vert[1].y = y1;
 
@@ -1340,14 +1343,14 @@ extern void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uin
 //---------------------------------------------------------------------//
 
 
-extern uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_chars){
+uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_chars){
 	uint16_t i = 0;
 	while(string[i] != '\0'){
 		if(string[i] == '\n'){
 			i++;
 			continue;
 		}
-		if(string[i] < ' ' || string[i] > ' ' + num_chars - 1){	//Outside the fontsheet's charset
+		if(string[i] < ' ' || string[i] > ' ' + num_chars - 1){	// Outside the fontsheet's charset
 			return 1;
 		}
 		i++;
@@ -1356,7 +1359,7 @@ extern uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_char
 	return 0;
 }
 
-extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char * string){
+uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, char * string){
 	uint16_t current_length = 0;
 	uint16_t best_length = 0;
 	
@@ -1369,7 +1372,7 @@ extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t 
 			i++;
 			break;
 		}
-		if(string[i] == '\n'){	//This should be able to do a new line (Doesn't seem to work right)
+		if(string[i] == '\n'){	// This should be able to do a new line (Doesn't seem to work right)
 			if(current_length > best_length){
 				best_length = current_length;
 			}
@@ -1383,12 +1386,12 @@ extern uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t 
 		i++;
 	}
 
-	if(i > 0){best_length -= fm->char_spacing.x;}	//Since we have char - 1 spaces
+	if(i > 0){best_length -= fm->char_spacing.x;}	// Since we have char - 1 spaces
 
 	return best_length;
 }
 
-extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char * string){
+uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, char * string){
 	uint16_t current_length = 0;
 	uint16_t best_length = 0;
 
@@ -1418,8 +1421,8 @@ extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t 
 		i++;
 	}
 
-	//Have one less one
-	if(i > 0){best_length -= fp->char_spacing.x;}	//Since we have char - 1 spaces
+	// Have one less one
+	if(i > 0){best_length -= fp->char_spacing.x;}	// Since we have char - 1 spaces
 
 	return best_length;
 }
@@ -1428,7 +1431,7 @@ extern uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t 
 //---------------------------------------------------------------------//
 
 
-extern void crayon_graphics_transistion_init(crayon_transition_t * effect, crayon_sprite_array_t * sprite_array,
+void crayon_graphics_transistion_init(crayon_transition_t * effect, crayon_sprite_array_t * sprite_array,
 	void (*f)(crayon_transition_t *, void *), uint32_t duration_in, uint32_t duration_out){
 
 	effect->f = f;
@@ -1444,11 +1447,11 @@ extern void crayon_graphics_transistion_init(crayon_transition_t * effect, crayo
 	return;
 }
 
-extern void crayon_graphics_transistion_skip_to_state(crayon_transition_t * effect, void * params, uint8_t state){
+void crayon_graphics_transistion_skip_to_state(crayon_transition_t * effect, void * params, uint8_t state){
 	if(state != CRAY_FADE_STATE_IN && state != CRAY_FADE_STATE_OUT){return;}
 	effect->curr_state = state;
 
-	//We set the duration to the end of the state we gave it
+	// We set the duration to the end of the state we gave it
 	effect->curr_duration = (state == CRAY_FADE_STATE_IN) ? effect->duration_fade_in : effect->duration_fade_out;
 	effect->prev_duration = effect->curr_duration;
 
@@ -1458,7 +1461,7 @@ extern void crayon_graphics_transistion_skip_to_state(crayon_transition_t * effe
 	return;
 }
 
-extern void crayon_graphics_transistion_change_state(crayon_transition_t * effect, uint8_t state){
+void crayon_graphics_transistion_change_state(crayon_transition_t * effect, uint8_t state){
 	if(state != CRAY_FADE_STATE_IN && state != CRAY_FADE_STATE_OUT){return;}
 	effect->curr_state = state;
 	effect->resting_state = CRAY_FADE_STATE_NOT_RESTING;
@@ -1468,14 +1471,14 @@ extern void crayon_graphics_transistion_change_state(crayon_transition_t * effec
 	return;
 }
 
-extern void crayon_graphics_transistion_apply(crayon_transition_t * effect, void * params){
+void crayon_graphics_transistion_apply(crayon_transition_t * effect, void * params){
 	if(effect->curr_state != CRAY_FADE_STATE_IN && effect->curr_state != CRAY_FADE_STATE_OUT){return;}
 
 	effect->prev_duration = effect->curr_duration;
 	effect->curr_duration++;
 	(*effect->f)(effect, params);
 
-	//Check if the transition has finished
+	// Check if the transition has finished
 	if((effect->curr_state == CRAY_FADE_STATE_OUT && effect->curr_duration == effect->duration_fade_out)){
 		effect->resting_state = CRAY_FADE_STATE_RESTING_OUT;
 		effect->curr_state = CRAY_FADE_STATE_NONE;
@@ -1491,21 +1494,21 @@ extern void crayon_graphics_transistion_apply(crayon_transition_t * effect, void
 	return;
 }
 
-extern double crayon_graphics_transition_get_curr_percentage(crayon_transition_t * effect){
+double crayon_graphics_transition_get_curr_percentage(crayon_transition_t * effect){
 	if(effect->curr_state == CRAY_FADE_STATE_IN){
 		return (effect->duration_fade_in - effect->curr_duration) / (double)effect->duration_fade_in;
 	}
 
-	//Fade out
+	// Fade out
 	return effect->curr_duration / (double)effect->duration_fade_out;
 }
 
-extern double crayon_graphics_transition_get_prev_percentage(crayon_transition_t * effect){
+double crayon_graphics_transition_get_prev_percentage(crayon_transition_t * effect){
 	if(effect->curr_state == CRAY_FADE_STATE_IN){
 		return (effect->duration_fade_in - effect->prev_duration) / (double)effect->duration_fade_in;
 	}
 
-	//Fade out
+	// Fade out
 	return effect->prev_duration / (double)effect->duration_fade_out;
 }
 
@@ -1513,20 +1516,20 @@ extern double crayon_graphics_transition_get_prev_percentage(crayon_transition_t
 //---------------------------------------------------------------------//
 
 
-extern vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, float radians){
+vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, float radians){
 	float sin_theta = sin(radians);
 	float cos_theta = cos(radians);
 	return (vec2_f_t){(cos_theta * (orbit.x - center.x)) - (sin_theta * (orbit.y - center.y)) + center.x,
 		(sin_theta * (orbit.x - center.x)) + (cos_theta * (orbit.y - center.y)) + center.y};
 }
 
-extern uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){
+uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){
 	return fabs(a-b) < epsilon;
 }
 
-//Verts order: Top left, Top right, bottom left, bottom right. Z order
-	//Return is of format "---- BRTL"
-extern uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]){
+// Verts order: Top left, Top right, bottom left, bottom right. Z order
+	// Return is of format "---- BRTL"
+uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]){
 	uint8_t bounds = 0;
 	if(vS[0].y < vC[0].y || vS[1].y < vC[0].y){bounds |= (1 << 1);}
 	if(vS[2].y > vC[2].y || vS[3].y > vC[2].y){bounds |= (1 << 3);}
@@ -1536,46 +1539,44 @@ extern uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]){
 	return bounds;
 }
 
-//How to check if OOB for Simple mode (And Enhanced with no rotation)
-	//All verts are further away than one of the camera verts
-	//So if The left X vert of the camera is 150 and all the sprite X verts are less than 150 then its OOB
-//How to check if OOB for Enhanced mode
-	// -
-extern uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4], uint8_t mode){
-	if(mode == CRAY_DRAW_SIMPLE){	//Assumes Axis aligned and Z-order verts. Also used by enhanced when rotation is zero
+// How to check if OOB for Simple mode (And Enhanced with no rotation)
+	// All verts are further away than one of the camera verts
+	// So if The left X vert of the camera is 150 and all the sprite X verts are less than 150 then its OOB
+// How to check if OOB for Enhanced mode
+	//  -
+uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4], uint8_t mode){
+	if(mode == CRAY_DRAW_SIMPLE){	// Assumes Axis aligned and Z-order verts. Also used by enhanced when rotation is zero
 		if(vS[1].x < vC[0].x){
 			return 1;
 		}
-		//right verts
+		// right verts
 		if(vS[0].x > vC[1].x){
 			return 1;
 		}
-		//top verts
+		// top verts
 		if(vS[2].y < vC[0].y){
 			return 1;
 		}
-		//bottom verts
+		// bottom verts
 		if(vS[0].y > vC[2].y){
 			return 1;
 		}
 
-		//No OOBs detected
+		// No OOBs detected
 		return 0;
 	}
 	else{
-		;
-
-		//No OOBs detected
+		// No OOBs detected
 		return 0;
 	}
 }
 
-extern uint8_t round_way(float value){
+uint8_t round_way(float value){
 	return (value - (int)value > 0.5) ? 1 : 0;
 }
 
-//NOTE: This is in the backwards C format (C is bottom right and D is bottom left verts)
-extern vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t sprite, uint8_t vert){
+// NOTE: This is in the backwards C format (C is bottom right and D is bottom left verts)
+vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t sprite, uint8_t vert){
 	switch(vert){
 		case 0:
 		return (vec2_f_t){sprite.ax,sprite.ay};
@@ -1589,7 +1590,7 @@ extern vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t sprite, uint8_t
 	return (vec2_f_t){0,0};
 }
 
-extern void crayon_graphics_set_sprite_vert_x(pvr_sprite_txr_t *sprite, uint8_t vert, float value){
+void crayon_graphics_set_sprite_vert_x(pvr_sprite_txr_t *sprite, uint8_t vert, float value){
 	switch(vert){
 		case 0:
 		sprite->ax = value;
@@ -1607,7 +1608,7 @@ extern void crayon_graphics_set_sprite_vert_x(pvr_sprite_txr_t *sprite, uint8_t 
 	return;
 }
 
-extern void crayon_graphics_set_sprite_vert_y(pvr_sprite_txr_t *sprite, uint8_t vert, float value){
+void crayon_graphics_set_sprite_vert_y(pvr_sprite_txr_t *sprite, uint8_t vert, float value){
 	switch(vert){
 		case 0:
 		sprite->ay = value;
@@ -1625,13 +1626,13 @@ extern void crayon_graphics_set_sprite_vert_y(pvr_sprite_txr_t *sprite, uint8_t 
 	return;
 }
 
-//Side is in format LTRB, 0123
-extern uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t flip_val){
-	//rotate it *back* by rotation_val
+// Side is in format LTRB, 0123
+uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t flip_val){
+	// rotate it *back* by rotation_val
 	side -= rotation_val;
-	if(side > 3){side += 4;}	//If it underflows, bring it back in
+	if(side > 3){side += 4;}	// If it underflows, bring it back in
 
-	//L becomes R and R becomes L. T and B don't change
+	// L becomes R and R becomes L. T and B don't change
 	if(flip_val && side % 2 == 0){
 		side = (side + 2) % 4;
 	}
@@ -1639,14 +1640,14 @@ extern uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t f
 	return side;
 }
 
-extern float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, vec2_f_t dims){
+float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, vec2_f_t dims){
     if((side % 2 == 0 && rotation_val % 2 == 0) || (side % 2 == 1 && rotation_val % 2 == 1)){
-        return dims.x;  //width
+        return dims.x;  // width
     }
-    return dims.y;   //height
+    return dims.y;   // height
 }
 
-extern float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, vec2_f_t * scale, const crayon_viewport_t *camera){
+float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, vec2_f_t * scale, const crayon_viewport_t *camera){
 	switch(side){
 		case 0:
 		return (camera->world_width/(float)camera->window_width) * (camera->window_x - vert->x)/scale->x;
@@ -1657,5 +1658,5 @@ extern float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t * vert, v
 		case 3:
 		return (camera->world_height/(float)camera->window_height) * (vert->y - (camera->window_y + camera->window_height))/scale->y;
 	}
-	return 0;	//Shouldn't get here
+	return 0;	// Shouldn't get here
 }

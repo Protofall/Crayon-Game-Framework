@@ -12,7 +12,7 @@ uint8_t __attribute__((weak)) crayon_init(uint8_t platform, uint8_t boot_mode){
 		return 1;
 	}
 
-	//For (platform == PC) I'll need to make sure the malloc is larger (Get the OS base path first then malloc)
+	// For (platform == PC) I'll need to make sure the malloc is larger (Get the OS base path first then malloc)
 	__game_base_path = malloc(5 * sizeof(char));
 	if(!__game_base_path){
 		return 1;
@@ -81,7 +81,7 @@ uint8_t crayon_sd_mount_fat(){
 
 	// Check to see if the MBR says that we have a valid partition
 	// if(partition_type != 0x83){
-		//I don't know what value I should be comparing against, hence this check is disabled for now
+		// I don't know what value I should be comparing against, hence this check is disabled for now
 		// This: https://en.wikipedia.org/wiki/Partition_type
 			//Suggests there's multiple types for FAT...not sure how to handle this
 		// return 3;
