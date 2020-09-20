@@ -1,6 +1,22 @@
 #ifndef CRAYON_CRAYON_H
 #define CRAYON_CRAYON_H
 
+// Setting defines for different platforms
+#if defined(__APPLE__) || defined(__linux__) || defined(_WIN32)
+	#define _arch_pc
+#endif
+
+#if !(defined(_arch_dreamcast) || defined(_arch_pc))
+	#error "UNSUPPORTED ARCHITECTURE/PLATFORM"
+#endif
+
+// Debug mode
+#ifndef CRAYON_DEBUG
+
+#define CRAYON_DEBUG 0
+
+#endif
+
 #include "memory.h"
 #include "graphics.h"
 // #include "audio.h"

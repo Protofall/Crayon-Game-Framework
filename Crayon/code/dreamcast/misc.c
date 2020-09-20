@@ -145,6 +145,16 @@ uint8_t crayon_misc_is_big_endian(){
 	return !((char*)&a)[0];
 }
 
+void crayon_misc_endian_correction(uint8_t *buffer, size_t bytes){
+	;
+	return;
+}
+
+void crayon_misc_encode_to_buffer(uint8_t *buffer, uint8_t *data, size_t bytes){
+	while(bytes--){*buffer++ = *data++;}
+	return;
+}
+
 // Convert unsigned int to string
 // 'out_string' buffer is assumed to be large enough.
 // Requires an 11-byte output buffer for the string.

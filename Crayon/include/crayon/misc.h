@@ -54,9 +54,13 @@ uint32_t crayon_misc_increment_bits(uint32_t number, int32_t change_val, uint8_t
 // Checks if the computer running this code is big endian or not
 uint8_t crayon_misc_is_big_endian();
 
+void crayon_misc_endian_correction(uint8_t *buffer, size_t bytes);	// UNFINISHED. WIP
+
+void crayon_misc_encode_to_buffer(uint8_t *buffer, uint8_t *data, size_t bytes);
+
 // THE FUNCTIONS BELOW CAME FROM DREAMHAL
 // https://github.com/Moopthehedgehog/DreamHAL/blob/master/modules/simple_print.c
-	// NOTE: As of writting, Moop's github has been deleted and all his work too, but copies of DreamHAL can be found
+	// NOTE: As of writting, Moop's github has gone down, but copies of DreamHAL can be found
 	// on the Simulant discord channel
 
 // NOTE: "out_string" is expected to be at least 12 characters long (10 for number, 1 for sign, 1 for \0 )

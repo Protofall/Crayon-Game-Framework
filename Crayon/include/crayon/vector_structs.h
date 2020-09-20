@@ -1,6 +1,8 @@
 #ifndef VECTOR_STRUCTS_CRAYON_H
 #define VECTOR_STRUCTS_CRAYON_H
 
+#include <stdint.h> // For the uintX_t types
+
 typedef struct vec2_f{
 	float x, y;
 } vec2_f_t;
