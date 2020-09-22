@@ -160,7 +160,7 @@ void crayon_misc_encode_to_buffer(uint8_t *buffer, uint8_t *data, size_t bytes){
 // Requires an 11-byte output buffer for the string.
 // The biggest decimal number is 4294967295, which is 10 characters‬ (excluding null term).
 // Returns pointer to out_string.
-char *crayon_misc_uint_to_string(unsigned int in_number, char*out_string){
+char *crayon_misc_uint_to_string(unsigned int in_number, char *out_string){
 	int i;
 
 	out_string[10] = '\0'; // Null term

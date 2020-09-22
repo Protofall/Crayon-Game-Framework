@@ -199,10 +199,9 @@ Here are some setup guides for installing KOS. I recommend downloading the lates
 
 Once that's done, go into the `Crayon` folder and run `./init.sh` which installs the rest of the pre-requisites. Note you will need to change the bash script slightly if your terminal doesn't source from `~/.profile`.
 
-NOTE: SCONS ISN'T REQUIRED RIGHT NOW AND MAY BE DUMPED IN THE FUTURE. DON'T BOTHER INSTALLING FOR NOW
 Crayon also uses SConstruct as an alternative to makefiles due to its enhanced ability. If you don't already have it installed, run this command
 
-`sudo apt-get install scons`
+`pip3 install scons`
 
 For TexturePacker:
 + Go onto their website https://www.codeandweb.com/texturepacker/download

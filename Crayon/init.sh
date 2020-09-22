@@ -79,20 +79,10 @@ if [ ! -d "$repo_path" ]; then
 	if [ -d "$repo_path" ]; then
 		cd "$repo_path"
 
-		cd "DreamcastEyecatcherTool"
-		make
-		cp "DreamcastEyecatcherTool" "$bins"
-		cd "../"
-
-		cd "VmuLcdIconCreator"
-		make
-		cp "VmuLcdIconCreator" "$bins"
-		cd "../"
-
-		cd "DreamcastSafefileIconTool"
-		make
-		cp "DreamcastSafefileIconTool" "$bins"
-		cd "../"
+		scons
+		cp "DreamcastEyecatcherTool/DreamcastEyecatcherTool" "$bins"
+		cp "VmuLcdIconCreator/VmuLcdIconCreator" "$bins"
+		cp "DreamcastSafefileIconTool/DreamcastSafefileIconTool" "$bins"
 
 		cd "$user_dir"
 	fi
