@@ -20,7 +20,7 @@ typedef struct crayon_palette{
 typedef struct crayon_animation{
 	char *name;
 	uint16_t x;	// Since the animations are designed to be in tiles
-	uint16_t y;	// We can select an frame based off of the first frame's coords
+	uint16_t y;	// We can select a frame based off of the first frame's coords
 	uint16_t sheet_width;	// Width of the animation sheet
 	uint16_t sheet_height;
 	uint16_t frame_width;	// Width of each frame

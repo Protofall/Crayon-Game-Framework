@@ -429,13 +429,18 @@ uint8_t crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t
 }
 
 uint8_t crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
-	uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
+	int16_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
 	uint8_t filter, uint8_t set_defaults){
 
 	sprite_array->options = options;
 	sprite_array->filter = filter;
 
 	if(ss){
+		// For example, crayon_memory_get_animation_id() failed
+		if(animation_id < 0){
+			return 1;
+		}
+
 		sprite_array->spritesheet = ss;
 		sprite_array->animation = &ss->animation[animation_id];
 		sprite_array->palette = pal;
