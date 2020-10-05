@@ -3,9 +3,9 @@
 mkdir -p /opt/toolchains/dc/kos-ports/ALdc/files
 echo $'\n\
 TARGET = libALdc.a\n\
-OBJS = AL/mojoal.o AL/aldc.o AL/alut.o\n\
+OBJS = src/alut.o src/buffer.o src/context.o src/core.o src/listener.o src/math.o src/platform.o src/source.o\n\
 \n\
-KOS_CFLAGS += -ffast-math -O3 -Iinclude -Wall -Werror\n\
+KOS_CFLAGS += -ffast-math -O3 -Iinclude -Wall -Werror -std=c99\n\
 \n\
 include ${KOS_PORTS}/scripts/lib.mk\n\
 ' > /opt/toolchains/dc/kos-ports/ALdc/files/KOSMakefile.mk
