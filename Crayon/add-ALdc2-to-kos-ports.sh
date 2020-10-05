@@ -15,12 +15,12 @@ PORTNAME = ALdc\n\
 PORTVERSION = 1.0.0\n\
 \n\
 MAINTAINER = Luke Benstead <kazade@gmail.com>\n\
-LICENSE = BSD 2-Clause "Simplified" License\n\
+LICENSE = MIT License\n\
 SHORT_DESC = OpenAL 1.1 implementation for KOS\n\
 \n\
 DEPENDENCIES = \n\
 \n\
-GIT_REPOSITORY =    https://gitlab.com/Kazade/ALdc.git\n\
+GIT_REPOSITORY =    https://gitlab.com/simulant/aldc.git\n\
 \n\
 TARGET =			libALdc.a\n\
 INSTALLED_HDRS =	include/AL/al.h include/AL/alc.h include/AL/alut.h\n\

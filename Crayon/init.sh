@@ -21,7 +21,7 @@ make PLATFORM=dreamcast
 
 #Install ALdc as a KOS PORT if it isn't already
 if [[ ! -d "$KOS_PORTS/ALdc" ]]; then
-	$script_dir/add-ALdc-2-kos-ports.sh
+	$script_dir/add-ALdc2-to-kos-ports.sh
 fi
 
 #Make the binaries folder if it doesn't already exist (It should already be in the path)
