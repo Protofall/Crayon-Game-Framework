@@ -164,18 +164,34 @@ build () {
 				fi
 			fi
 
-		elif [[ -f "$x" ]];then	#If its a file
+		elif [[ -f "$x" ]]; then	# If its a file
+			convertedWAV=false
 
-			ln "$PWD/$x" "$2"	#Create a copy that we'll process
-			if [ "$x" != "$outputName" ];then	#If they're the same, we get an annoying message
-				mv "$2/$x" "$2/$outputName"	#Renaming it
+			# Detect WAV files and if > 44.1khz then reduce to 44.1khz
+			if [[ $x == *.wav ]]; then
+				# echo "WAV FILE DETECTED: $x, $outputName"	# They are the same
+				hz=$(sox --info $PWD/$x | sed -n 4p | tr ' ' '\n' | tail -1)
+
+				# If its more than 44.1khz, then bring it down to that
+				if [[ $hz > 44100 ]]; then
+					convertedWAV=true
+					sox $PWD/$x --rate 44100 $2/$x
+				fi
 			fi
 
-			if [ "$texconvFormat" != "NONE" ];then	#No GZ compression, but we want to convert the asset
-				texconv -i "$2/$outputName" -o "$2/${outputName%.*}.dtex" -f $texconvFormat
-				echo "$2/$outputName" "$2/$outputName.dtex"
-				if [ "$3" = 0 ];then
-					rm "$2/$outputName"	#Delete the copied png
+			# If its not a WAV file that needs to be converted
+			if [[ $convertedWAV == false ]]; then
+				ln "$PWD/$x" "$2"	# Create a copy that we'll process
+				if [ "$x" != "$outputName" ];then	# If they're the same, we get an annoying message
+					mv "$2/$x" "$2/$outputName"	# Renaming it
+				fi
+
+				if [ "$texconvFormat" != "NONE" ];then	# No GZ compression, but we want to convert the asset
+					texconv -i "$2/$outputName" -o "$2/${outputName%.*}.dtex" -f $texconvFormat
+					echo "$2/$outputName" "$2/$outputName.dtex"
+					if [ "$3" = 0 ];then
+						rm "$2/$outputName"	# Delete the copied png
+					fi
 				fi
 			fi
 

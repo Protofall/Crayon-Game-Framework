@@ -190,6 +190,7 @@ objectLogicID is basically the general behaviour of a texture. So a background h
 + Crayon Utilities (To build VMU textures)
 + cdi4dc (Kazade's Unix build)
 + (NOT NEEDED RIGHT NOW) SCons (Makefile alternative)
++ SoX for changing audio file sample rate
 
 ### Installing Pre-requisites
 
@@ -202,6 +203,10 @@ Once that's done, go into the `Crayon` folder and run `./init.sh` which installs
 Crayon also uses SConstruct as an alternative to makefiles due to its enhanced ability. If you don't already have it installed, run this command
 
 `pip3 install scons`
+
+SoX is used for making sure WAV files' sample rates are no greater than 44.1khz and if so it will down sample it. This is because ALdc only allows up to 44.1khz since thats the best the Dreamcast can do. SoX can be installed via your package manager, for example on Debain you can run.
+
+`sudo apt-get install sox`
 
 For TexturePacker:
 + Go onto their website https://www.codeandweb.com/texturepacker/download

@@ -6,9 +6,10 @@ $(if $(CRAYON_BASE),,$(error Cannot locate Crayon. Please set CRAYON_BASE to\
   argument to make (eg. `make CRAYON_BASE=path/to/Crayon`)))
 
 CRAYON_PROJ_NAME   := $(notdir $(shell pwd))
-CRAYON_PROJ_LIBS   := -lz
+CRAYON_PROJ_LIBS   := -lkosfat -lz
 CRAYON_PROJ_SRC_C  := $(shell find code -type f -name "*.c")
 CRAYON_BUILD_DIR   := build
+CRAYON_IP_BIN      := $(shell pwd)/IP.BIN
 
 ### TODO: Write a cleaner set of shortcut rules in this example makefile.
 ###     The following rules emulate the previous version of this makefile.
