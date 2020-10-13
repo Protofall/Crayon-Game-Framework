@@ -167,16 +167,27 @@ build () {
 		elif [[ -f "$x" ]]; then	# If its a file
 			convertedWAV=false
 
-			# Detect WAV files and if > 44.1khz then reduce to 44.1khz
+			# Detect WAV files and if > 44.1khz then reduce to 44.1khz. If more than 1 channels make it mono
 			if [[ $x == *.wav ]]; then
-				# echo "WAV FILE DETECTED: $x, $outputName"	# They are the same
+				# echo "   WAV FILE DETECTED: $PWD/$x"
 				hz=$(sox --info $PWD/$x | sed -n 4p | tr ' ' '\n' | tail -1)
+				chan=$(sox --info $PWD/$x | sed -n 3p | tr ' ' '\n' | tail -1)
 
-				# If its more than 44.1khz, then bring it down to that
-				if [[ $hz > 44100 ]]; then
+				# Process the audio files if needed
+				if [[ $chan > 1 ]] && [[ $hz > 44100 ]]; then
+					# echo "   ADJUSTING BOTH"
+					convertedWAV=true
+					sox $PWD/$x --channels 1 --rate 44100 $2/$x
+				elif [[ $chan > 1 ]]; then
+					# echo "   ADJUSTING CHANNELS"
+					convertedWAV=true
+					sox $PWD/$x --channels 1 $2/$x
+				elif [[ $hz > 44100 ]]; then
+					# echo "   ADJUSTING HZ"
 					convertedWAV=true
 					sox $PWD/$x --rate 44100 $2/$x
 				fi
+
 			fi
 
 			# If its not a WAV file that needs to be converted
