@@ -20,8 +20,13 @@
 #define CRAY_FILTER_NEAREST PVR_FILTER_NONE
 #define CRAY_FILTER_LINEAR PVR_FILTER_LINEAR
 
-#define CRAY_DRAW_SIMPLE 0
-#define CRAY_DRAW_ENHANCED 1
+// The draw_mode options
+#define CRAYON_DRAW_SIMPLE (0 << 0)
+#define CRAYON_DRAW_ENHANCED (1 << 0)
+#define CRAYON_DRAW_OOB_CHECK (1 << 1)
+#define CRAYON_DRAW_SOFT_CROP (1 << 2)
+#define CRAYON_DRAW_HARD_CROP (1 << 3)
+#define CRAYON_DRAW_CROP CRAYON_DRAW_SOFT_CROP | CRAYON_DRAW_HARD_CROP
 
 // This var's purpose is to make debugging the render-ers and other graphics function much easier
 	// Since I currently can't print any text while rendering an object, instead I can set vars to
@@ -55,7 +60,7 @@ uint32_t crayon_graphics_get_window_height();
 
 // Queue a texture to be rendered, draw mode right most bit is true for enhanced
 int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode, uint8_t draw_mode);
+	uint8_t poly_list_mode, uint8_t draw_option);
 
 
 //------------------Internal Drawing Functions------------------//
@@ -65,19 +70,19 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 // The version with polygons (Use this if your spritesheet is bigger than 256 by 256)
 	// For DC this uses "poly mode"
 uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode);
+	uint8_t poly_list_mode, uint8_t options);
 
 // This will draw untextured polys (Sprite_arrays with no texture set)
 uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode);
+	uint8_t poly_list_mode, uint8_t options);
 
 // Like the other simple draw one, but this uses a camera to control where on screen to render and what region to show
 uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode);
+	uint8_t poly_list_mode, uint8_t options);
 
 // DELETE THIS LATER
 uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode);
+	uint8_t poly_list_mode, uint8_t options);
 
 
 //------------------Drawing Fonts------------------//

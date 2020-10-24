@@ -1,6 +1,6 @@
 # Sprite Enhanced
 
-This demo shows off drawing with `crayon_graphics_draw()` in `CRAY_DRAW_ENHANCED` mode.
+This demo shows off drawing with `crayon_graphics_draw()` in `CRAYON_DRAW_ENHANCED` mode.
 
 Significant features:
 	- Can use the colour and fade parameters in "ADD" or "BLEND" mode to shade texture

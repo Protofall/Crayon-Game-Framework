@@ -321,20 +321,20 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 			if(curr_effect == 0){
-				crayon_graphics_draw_sprites(&fade_draw, NULL, PVR_LIST_TR_POLY, CRAY_DRAW_SIMPLE);
+				crayon_graphics_draw_sprites(&fade_draw, NULL, PVR_LIST_TR_POLY, CRAYON_DRAW_SIMPLE);
 			}
 		pvr_list_finish();
 
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 			if(curr_effect == 1){
-				crayon_graphics_draw_sprites(&boxy_draw, NULL, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
+				crayon_graphics_draw_sprites(&boxy_draw, NULL, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE);
 			}
 			else if(curr_effect == 2){
-				crayon_graphics_draw_sprites(&letter_box_draw, NULL, PVR_LIST_OP_POLY, CRAY_DRAW_SIMPLE);
+				crayon_graphics_draw_sprites(&letter_box_draw, NULL, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE);
 			}
 
-			crayon_graphics_draw_sprites(&scene_draw, &Camera, PVR_LIST_OP_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&scene_draw, &Camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED);
 
 			sprintf(debug, "State: %d %d. Progress %d, %d %d", effect[curr_effect].curr_state, effect[curr_effect].resting_state,
 				effect[curr_effect].curr_duration, effect[curr_effect].duration_fade_in, effect[curr_effect].duration_fade_out);

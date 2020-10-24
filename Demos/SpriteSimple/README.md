@@ -1,6 +1,6 @@
 # Sprite Simple
 
-This demo shows off drawing with `crayon_graphics_draw()` in `CRAY_DRAW_SIMPLE` mode.
+This demo shows off drawing with `crayon_graphics_draw()` in `CRAYON_DRAW_SIMPLE` mode.
 
 Significant features:
 	- The colour and fade parameters are ignored

@@ -187,8 +187,8 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw_sprites(&Ball_Draw, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);	//Broken on most emulators, but not hardware
-			crayon_graphics_draw_sprites(&Ball2_Draw, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Ball_Draw, NULL, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE);	//Broken on most emulators, but not hardware
+			crayon_graphics_draw_sprites(&Ball2_Draw, NULL, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);

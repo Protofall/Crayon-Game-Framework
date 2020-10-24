@@ -100,10 +100,13 @@ uint32_t crayon_graphics_get_window_height(){
 //---------------------------------------------------------------------//
 
 
-// draw_mode == ---- ---M
+// draw_option == ---- HSOM
 // M is for draw mode (1 for enhanced, 0 for simple)
+// O is for OOB checks
+// S is for softare cropping (On PC this defaults to hardware cropping)
+// H is for hardware cropping (32 by 32 tiles on Dreamcast, Scissor test on PC)
 int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode, uint8_t draw_mode){
+	uint8_t poly_list_mode, uint8_t draw_option){
 	if(sprite_array->size == 0){return 2;}	// Don't render nothing
 	crayon_viewport_t default_camera;
 	if(camera == NULL){	// No Camera, use the default one
@@ -115,12 +118,12 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 	}
 
 	if(sprite_array->options & CRAY_HAS_TEXTURE){	// Textured
-		if(draw_mode & CRAY_DRAW_ENHANCED){
-			return crayon_graphics_draw_sprites_enhanced(sprite_array, camera, poly_list_mode);
+		if(draw_option & CRAYON_DRAW_ENHANCED){
+			return crayon_graphics_draw_sprites_enhanced(sprite_array, camera, poly_list_mode, draw_option);
 		}
-		return crayon_graphics_draw_sprites_simple(sprite_array, camera, poly_list_mode);
+		return crayon_graphics_draw_sprites_simple(sprite_array, camera, poly_list_mode, draw_option);
 	}
-	return crayon_graphics_draw_untextured_array(sprite_array, camera, poly_list_mode);
+	return crayon_graphics_draw_untextured_array(sprite_array, camera, poly_list_mode, draw_option);
 }
 
 //DELETE THIS LATER
@@ -136,7 +139,7 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 // 	//PVR_TXRFMT_PAL8BPP == 11000 00000 00000 00000 00000 00000
 
 uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode){
+	uint8_t poly_list_mode, uint8_t options){
 	
 	float u0, v0, u1, v1;
 	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	// Needed if you want to prevent a bunch of compiler warnings...
@@ -332,7 +335,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 }
 
 uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode){
+	uint8_t poly_list_mode, uint8_t options){
 
 	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
 	// 									//---- 1111 (Crop on all edges)
@@ -361,9 +364,9 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 	pvr_prim(&hdr, sizeof(hdr));
 
 	// All this just for rotations
-	uint16_t *rotation_index, *colour_index;
+	int *rotation_index, *colour_index;
 	uint8_t multi_dim = !!(sprite_array->options & CRAY_MULTI_DIM);
-	uint16_t zero = 0;
+	int zero = 0;
 	float angle = 0;
 	vec2_f_t mid = (vec2_f_t){0,0};
 	vec2_f_t scales = (vec2_f_t){camera->window_width / (float)camera->world_width,
@@ -469,7 +472,7 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 }
 
 uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode){
+	uint8_t poly_list_mode, uint8_t options){
 
 	uint8_t crop_edges = (1 << 4) - 1;	// ---- BRTL
 										// ---- 1111 (Crop on all edges)
@@ -671,7 +674,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		sprite_verts[3] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 
 		// If OOB then don't draw
-		if(crayon_graphics_check_oob(camera_verts, sprite_verts, CRAY_DRAW_SIMPLE)){continue;}
+		if(crayon_graphics_check_oob(camera_verts, sprite_verts, CRAYON_DRAW_SIMPLE)){continue;}
 
 		// If we don't need to crop at all, don't both doing the checks. bounds is zero by default
 		if(crop_edges){
@@ -780,7 +783,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 // Below is a function that does the same stuff as the simple camera, except its using polys and hence 32-bit UVs.
 	// This means all known cases of shimmering and jittering disapear
 uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode){
+	uint8_t poly_list_mode, uint8_t options){
 	pvr_sprite_txr_t vert = {
 		.flags = PVR_CMD_VERTEX_EOL
 	};
@@ -1001,7 +1004,7 @@ uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_
 		sprite_verts[3] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 
 		//If OOB then don't draw
-		if(crayon_graphics_check_oob(camera_verts, sprite_verts, CRAY_DRAW_SIMPLE)){continue;}
+		if(crayon_graphics_check_oob(camera_verts, sprite_verts, CRAYON_DRAW_SIMPLE)){continue;}
 
 		//If we don't need to crop at all, don't both doing the checks. bounds is zero by default
 		if(crop_edges){
@@ -1561,7 +1564,7 @@ uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]){
 // How to check if OOB for Enhanced mode
 	//  -
 uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4], uint8_t mode){
-	if(mode == CRAY_DRAW_SIMPLE){	// Assumes Axis aligned and Z-order verts. Also used by enhanced when rotation is zero
+	if(mode == CRAYON_DRAW_SIMPLE){	// Assumes Axis aligned and Z-order verts. Also used by enhanced when rotation is zero
 		if(vS[1].x < vC[0].x){
 			return 1;
 		}
