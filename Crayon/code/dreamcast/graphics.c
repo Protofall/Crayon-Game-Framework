@@ -100,11 +100,11 @@ uint32_t crayon_graphics_get_window_height(){
 //---------------------------------------------------------------------//
 
 
-// draw_option == ---- HSOM
+// draw_option == ---- SHOM
 // M is for draw mode (1 for enhanced, 0 for simple)
 // O is for OOB checks
-// S is for softare cropping (On PC this defaults to hardware cropping)
 // H is for hardware cropping (32 by 32 tiles on Dreamcast, Scissor test on PC)
+// S is for softare cropping (On PC this defaults to hardware cropping)
 int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t draw_option){
 	if(sprite_array->size == 0){return 2;}	// Don't render nothing
@@ -124,351 +124,6 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 		return crayon_graphics_draw_sprites_simple(sprite_array, camera, poly_list_mode, draw_option);
 	}
 	return crayon_graphics_draw_untextured_array(sprite_array, camera, poly_list_mode, draw_option);
-}
-
-//DELETE THIS LATER
-// 	//Use these to merge the two palette if's into one
-// 	// PVR_TXRFMT_PAL4BPP   (5 << 27)
-// 	// PVR_TXRFMT_PAL8BPP   (6 << 27)
-// 	//(6 << 27) == 110 << 27 == 11000 00000 00000 00000 00000 00000
-// 	//(5 << 27) == 110 << 27 == 10100 00000 00000 00000 00000 00000
-// 	//palette_number ranges from 0 to 63 or 0 to 15 depending on BPP
-// 	//   (8BPP) 3  << 25 == 00011 00000 00000 00000 00000 00000
-// 	//   (4BPP) 63 << 21 == 00011 11110 00000 00000 00000 00000
-// 	//PVR_TXRFMT_PAL4BPP == 10100 00000 00000 00000 00000 00000
-// 	//PVR_TXRFMT_PAL8BPP == 11000 00000 00000 00000 00000 00000
-
-uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode, uint8_t options){
-	
-	float u0, v0, u1, v1;
-	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	// Needed if you want to prevent a bunch of compiler warnings...
-
-	uint8_t texture_format = (((1 << 3) - 1) &
-	(sprite_array->spritesheet->texture_format >> (28 - 1)));	// Gets the Pixel format
-																// https://github.com/tvspelsfreak/texconv
-	int textureformat = sprite_array->spritesheet->texture_format;
-	if(texture_format == 5){	// 4BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 21);	// Update the later to use KOS' macros
-	}
-	if(texture_format == 6){	// 8BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 25);	// Update the later to use KOS' macros
-	}
-
-	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
-	// 									//---- 1111 (Crop on all edges)
-
-	// //DELETE THIS LATER. A basic optimisation for now
-	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
-	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
-	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
-	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
-
-	//Used for cropping
-	// uint8_t bounds = 0;
-	// uint8_t cropped = 0;
-
-	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
-		// The sprite points are also floor-ed before calculations are done
-	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x),floor(camera->world_y)};
-
-	pvr_poly_cxt_t cxt;
-	pvr_poly_hdr_t hdr;
-	pvr_poly_cxt_txr(&cxt, poly_list_mode, textureformat,
-		sprite_array->spritesheet->texture_width, sprite_array->spritesheet->texture_height,
-		sprite_array->spritesheet->texture, sprite_array->filter);
-	pvr_poly_compile(&hdr, &cxt);
-	hdr.cmd |= 4;	// Enable oargb
-	pvr_prim(&hdr, sizeof(hdr));
-
-	pvr_vertex_t vert[4];	// 4 verts per sprite
-	vec2_f_t rotated_values;
-
-	// Easily lets us use the right index for each array
-		// That way 1-length arrays only get calculated once and each element for a multi list is calculated
-	uint16_t *rotation_index, *flip_index, *frame_index, *colour_index;
-	uint8_t multi_scale = !!(sprite_array->options & CRAY_MULTI_SCALE);
-	uint16_t zero = 0;
-	float angle = 0;
-	vec2_f_t mid = (vec2_f_t){0,0};
-	vec2_f_t scales = (vec2_f_t){camera->window_width / (float)camera->world_width,
-		camera->window_height / (float)camera->world_height};
-	uint8_t skip = 0;
-
-	uint16_t i, j;	// Indexes
-
-	if(sprite_array->options & CRAY_MULTI_FRAME){frame_index = &i;}
-	else{frame_index = &zero;}
-
-	if(sprite_array->options & CRAY_MULTI_FLIP){flip_index = &i;}
-	else{flip_index = &zero;}
-
-	if(sprite_array->options & CRAY_MULTI_ROTATE){rotation_index = &i;}
-	else{rotation_index = &zero;}
-
-	if(sprite_array->options & CRAY_MULTI_COLOUR){colour_index = &i;}
-	else{colour_index = &zero;}
-
-	// Set the flags
-	for(j = 0; j < 3; j++){
-		vert[j].flags = PVR_CMD_VERTEX;
-	}
-	vert[3].flags = PVR_CMD_VERTEX_EOL;
-
-	uint8_t invf, f, a, r, g, b;
-	for(i = 0; i < sprite_array->size; i++){
-		if(sprite_array->colour[*colour_index] >> 24 == 0){	// Don't draw alpha-less stuff
-			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
-			skip = 1;
-		}
-
-		if(sprite_array->visible[i] == 0){
-			if(i != 0){continue;}
-			else{skip = 1;}	// We need the defaults to be set on first loop
-		}
-
-		// These if statements will trigger once if we have a single element (i == 0)
-			// and every time for a multi-list
-
-		if(*frame_index == i){	// frame
-			u0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
-			v0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
-			u1 = u0 + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
-			v1 = v0 + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
-		}
-
-		if(*flip_index == i || *frame_index == i){	// UV
-			if(sprite_array->flip[*flip_index] & (1 << 0)){	// Is flipped
-				vert[0].u = u1;
-				vert[0].v = v0;
-				vert[1].u = u0;
-				vert[1].v = v0;
-				vert[2].u = u1;
-				vert[2].v = v1;
-				vert[3].u = u0;
-				vert[3].v = v1;
-			}
-			else{
-				vert[0].u = u0;
-				vert[0].v = v0;
-				vert[1].u = u1;
-				vert[1].v = v0;
-				vert[2].u = u0;
-				vert[2].v = v1;
-				vert[3].u = u1;
-				vert[3].v = v1;
-			}
-		}
-
-		if(*colour_index == i){
-			f = sprite_array->fade[*colour_index];
-			a = (sprite_array->colour[*colour_index] >> 24) & 0xFF;
-
-			r = (((sprite_array->colour[*colour_index] >> 16) & 0xFF) * f)/255.0f;
-			g = (((sprite_array->colour[*colour_index] >> 8) & 0xFF) * f)/255.0f;
-			b = (((sprite_array->colour[*colour_index]) & 0xFF) * f)/255.0f;
-			if(sprite_array->options & CRAY_COLOUR_ADD){	// If Adding
-				vert[0].argb = (a << 24) + 0x00FFFFFF;
-			}
-			else{	// If Blending
-				invf = 255 - f;
-				vert[0].argb = (a << 24) + (invf << 16) + (invf << 8) + invf;
-			}
-			vert[0].oargb = (a << 24) + (r << 16) + (g << 8) + b;
-		}
-
-		// Update rotation part if needed
-		if(*rotation_index == i){
-			angle = fmod(sprite_array->rotation[*rotation_index], 360.0);	// If angle is more than 360 degrees, this fixes that
-			if(angle < 0){angle += 360.0;}	// fmod has range -359 to +359, this changes it to 0 to +359
-			angle = (angle * M_PI) / 180.0f;
-		}
-
-		if(skip){skip = 0; continue;}
-
-		vert[0].z = sprite_array->layer[i];
-
-		vert[0].x = floor(sprite_array->coord[i].x) - world_coord.x;
-		vert[0].y = floor(sprite_array->coord[i].y) - world_coord.y;
-		vert[1].x = vert[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
-		vert[1].y = vert[0].y;
-		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
-		vert[3].x = vert[1].x;
-		vert[3].y = vert[2].y;
-
-		// If we don't want to do rotations (Rotation == 0.0), then skip it
-		if(sprite_array->rotation[*rotation_index] != 0.0f){
-
-			// Gets the true midpoint
-			mid.x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
-			mid.y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
-
-			// Update the vert x and y positions
-			for(j = 0; j < 4; j++){
-				rotated_values = crayon_graphics_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
-				vert[j].x = rotated_values.x;
-				vert[j].y = rotated_values.y;
-			}
-		}
-
-		// Apply the viewport scaling as well as the window offset
-		for(j = 0; j < 4; j++){
-			vert[j].x = floor(vert[j].x * scales.x) + camera->window_x;
-			vert[j].y = floor(vert[j].y * scales.y) + camera->window_y;
-		}
-
-		// Do OOB and culling calculations here
-		;
-
-		// Apply these to all verts
-		for(j = 1; j < 4; j++){
-			vert[j].argb = vert[0].argb;
-			vert[j].oargb = vert[0].oargb;
-			vert[j].z = vert[0].z;
-		}
-
-		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
-	}
-
-	return 0;
-}
-
-uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode, uint8_t options){
-
-	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
-	// 									//---- 1111 (Crop on all edges)
-
-	// //DELETE THIS LATER. A basic optimisation for now
-	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
-	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
-	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
-	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
-
-	//Used for cropping
-	// uint8_t bounds = 0;
-	// uint8_t cropped = 0;
-
-	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
-		// The sprite points are also floor-ed before calculations are done
-	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x),floor(camera->world_y)};
-
-	pvr_poly_cxt_t cxt;
-	pvr_poly_hdr_t hdr;
-	pvr_vertex_t vert[4];	// Might need to change this to "8" later for cropping reasons
-	vec2_f_t rotated_values;
-
-	pvr_poly_cxt_col(&cxt, poly_list_mode);
-	pvr_poly_compile(&hdr, &cxt);
-	pvr_prim(&hdr, sizeof(hdr));
-
-	// All this just for rotations
-	int *rotation_index, *colour_index;
-	uint8_t multi_dim = !!(sprite_array->options & CRAY_MULTI_DIM);
-	int zero = 0;
-	float angle = 0;
-	vec2_f_t mid = (vec2_f_t){0,0};
-	vec2_f_t scales = (vec2_f_t){camera->window_width / (float)camera->world_width,
-		camera->window_height / (float)camera->world_height};
-	uint8_t skip = 0;
-
-	// We use full ints because its faster than uint16_t
-	int i, j;
-
-	// --CR -D--
-	if(sprite_array->options & CRAY_MULTI_ROTATE){rotation_index = &i;}
-	else{rotation_index = &zero;}
-	if(sprite_array->options & CRAY_MULTI_COLOUR){colour_index = &i;}
-	else{colour_index = &zero;}
-
-	for(i = 0; i < 3; i++){
-		vert[i].flags = PVR_CMD_VERTEX;
-	}
-	vert[3].flags = PVR_CMD_VERTEX_EOL;
-
-	// Unused param, set to 0 (Unused so we don't actually have to set it)
-	vert[0].oargb = 0;
-	for(i = 1; i < 4; i++){
-		vert[i].oargb = vert[0].oargb;
-	}
-
-	for(i = 0; i < sprite_array->size; i++){
-		if(sprite_array->colour[*colour_index] >> 24 == 0 || sprite_array->visible[i] == 0){	// Don't draw alpha-less or invisible stuff
-			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
-			skip = 1;	// We need the defaults to be set on first loop
-		}
-
-		// Update rotation part if needed
-		if(*rotation_index == i){
-			angle = fmod(sprite_array->rotation[i], 360.0);	// If angle is more than 360 degrees, this fixes that
-			if(angle < 0){angle += 360.0;}	// fmod has range -359 to +359, this changes it to 0 to +359
-			angle = (angle * M_PI) / 180.0f;	// Convert from degrees to ratians
-		}
-
-		if(*colour_index == i){
-			vert[0].argb = sprite_array->colour[i];
-		}
-
-		if(skip){
-			skip = 0;
-			continue;
-		}
-
-		vert[0].z = sprite_array->layer[i];
-
-		vert[0].x = floor(sprite_array->coord[i].x) - world_coord.x;
-		vert[0].y = floor(sprite_array->coord[i].y) - world_coord.y;
-		vert[1].x = vert[0].x + floor(sprite_array->scale[i * multi_dim].x);
-		vert[1].y = vert[0].y;
-		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + floor(sprite_array->scale[i * multi_dim].y);
-		vert[3].x = vert[1].x;
-		vert[3].y = vert[2].y;
-
-		// NOTE: world_coord.x/y are already floor-ed so the outer floor isn't doing stuff right?
-
-		// vert.ax = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-		// vert.ay = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
-		// vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
-		// vert.by = vert.ay;
-		// vert.cx = vert.bx;
-		// vert.cy = vert.ay + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_height / (float)camera->world_height));
-		// vert.dx = vert.ax;
-		// vert.dy = vert.cy;
-
-		// Rotate the poly
-		if(sprite_array->rotation[*rotation_index] != 0.0f){
-			// Gets the midpoint
-			mid.x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
-			mid.y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
-
-			// Rotate the verts around the midpoint
-			for(j = 0; j < 4; j++){
-				rotated_values = crayon_graphics_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
-				vert[j].x = rotated_values.x;
-				vert[j].y = rotated_values.y;
-			}
-		}
-
-		// Apply the viewport scaling as well as the window offset
-		for(j = 0; j < 4; j++){
-			vert[j].x = floor(vert[j].x * scales.x) + camera->window_x;
-			vert[j].y = floor(vert[j].y * scales.y) + camera->window_y;
-		}
-
-		// Do OOB and culling calculations here
-		;
-
-		for(j = 1; j < 4; j++){
-			vert[j].z = vert[0].z;
-			vert[j].argb = vert[0].argb;
-		}
-
-		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
-	}
-
-	return 0;
 }
 
 uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
@@ -775,6 +430,330 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		// Draw the sprite
 		pvr_prim(&vert, sizeof(vert));
 
+	}
+
+	return 0;
+}
+
+//DELETE THIS LATER
+// 	//Use these to merge the two palette if's into one
+// 	// PVR_TXRFMT_PAL4BPP   (5 << 27)
+// 	// PVR_TXRFMT_PAL8BPP   (6 << 27)
+// 	//(6 << 27) == 110 << 27 == 11000 00000 00000 00000 00000 00000
+// 	//(5 << 27) == 110 << 27 == 10100 00000 00000 00000 00000 00000
+// 	//palette_number ranges from 0 to 63 or 0 to 15 depending on BPP
+// 	//   (8BPP) 3  << 25 == 00011 00000 00000 00000 00000 00000
+// 	//   (4BPP) 63 << 21 == 00011 11110 00000 00000 00000 00000
+// 	//PVR_TXRFMT_PAL4BPP == 10100 00000 00000 00000 00000 00000
+// 	//PVR_TXRFMT_PAL8BPP == 11000 00000 00000 00000 00000 00000
+
+uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode, uint8_t options){
+	
+	float u0, v0, u1, v1;
+	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	// Needed if you want to prevent a bunch of compiler warnings...
+
+	uint8_t texture_format = (((1 << 3) - 1) &
+	(sprite_array->spritesheet->texture_format >> (28 - 1)));	// Gets the Pixel format
+																// https://github.com/tvspelsfreak/texconv
+	int textureformat = sprite_array->spritesheet->texture_format;
+	if(texture_format == 5){	// 4BPP
+			textureformat |= ((sprite_array->palette->palette_id) << 21);	// Update the later to use KOS' macros
+	}
+	if(texture_format == 6){	// 8BPP
+			textureformat |= ((sprite_array->palette->palette_id) << 25);	// Update the later to use KOS' macros
+	}
+
+	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
+	// 									//---- 1111 (Crop on all edges)
+
+	// //DELETE THIS LATER. A basic optimisation for now
+	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
+	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
+	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
+	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
+
+	//Used for cropping
+	// uint8_t bounds = 0;
+	// uint8_t cropped = 0;
+
+	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
+		// The sprite points are also floor-ed before calculations are done
+	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x),floor(camera->world_y)};
+
+	pvr_poly_cxt_t cxt;
+	pvr_poly_hdr_t hdr;
+	pvr_poly_cxt_txr(&cxt, poly_list_mode, textureformat,
+		sprite_array->spritesheet->texture_width, sprite_array->spritesheet->texture_height,
+		sprite_array->spritesheet->texture, sprite_array->filter);
+	pvr_poly_compile(&hdr, &cxt);
+	hdr.cmd |= 4;	// Enable oargb
+	pvr_prim(&hdr, sizeof(hdr));
+
+	pvr_vertex_t vert[4];	// 4 verts per sprite
+	vec2_f_t rotated_values;
+
+	// Easily lets us use the right index for each array
+		// That way 1-length arrays only get calculated once and each element for a multi list is calculated
+	uint16_t *rotation_index, *flip_index, *frame_index, *colour_index;
+	uint8_t multi_scale = !!(sprite_array->options & CRAY_MULTI_SCALE);
+	uint16_t zero = 0;
+	float angle = 0;
+	vec2_f_t mid = (vec2_f_t){0,0};
+	vec2_f_t scales = (vec2_f_t){camera->window_width / (float)camera->world_width,
+		camera->window_height / (float)camera->world_height};
+	uint8_t skip = 0;
+
+	uint16_t i, j;	// Indexes
+
+	if(sprite_array->options & CRAY_MULTI_FRAME){frame_index = &i;}
+	else{frame_index = &zero;}
+
+	if(sprite_array->options & CRAY_MULTI_FLIP){flip_index = &i;}
+	else{flip_index = &zero;}
+
+	if(sprite_array->options & CRAY_MULTI_ROTATE){rotation_index = &i;}
+	else{rotation_index = &zero;}
+
+	if(sprite_array->options & CRAY_MULTI_COLOUR){colour_index = &i;}
+	else{colour_index = &zero;}
+
+	// Set the flags
+	for(j = 0; j < 3; j++){
+		vert[j].flags = PVR_CMD_VERTEX;
+	}
+	vert[3].flags = PVR_CMD_VERTEX_EOL;
+
+	uint8_t invf, f, a, r, g, b;
+	for(i = 0; i < sprite_array->size; i++){
+		if(sprite_array->colour[*colour_index] >> 24 == 0){	// Don't draw alpha-less stuff
+			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
+			skip = 1;
+		}
+
+		if(sprite_array->visible[i] == 0){
+			if(i != 0){continue;}
+			else{skip = 1;}	// We need the defaults to be set on first loop
+		}
+
+		// These if statements will trigger once if we have a single element (i == 0)
+			// and every time for a multi-list
+
+		if(*frame_index == i){	// frame
+			u0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
+			v0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
+			u1 = u0 + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
+			v1 = v0 + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
+		}
+
+		if(*flip_index == i || *frame_index == i){	// UV
+			if(sprite_array->flip[*flip_index] & (1 << 0)){	// Is flipped
+				vert[0].u = u1;
+				vert[0].v = v0;
+				vert[1].u = u0;
+				vert[1].v = v0;
+				vert[2].u = u1;
+				vert[2].v = v1;
+				vert[3].u = u0;
+				vert[3].v = v1;
+			}
+			else{
+				vert[0].u = u0;
+				vert[0].v = v0;
+				vert[1].u = u1;
+				vert[1].v = v0;
+				vert[2].u = u0;
+				vert[2].v = v1;
+				vert[3].u = u1;
+				vert[3].v = v1;
+			}
+		}
+
+		if(*colour_index == i){
+			f = sprite_array->fade[*colour_index];
+			a = (sprite_array->colour[*colour_index] >> 24) & 0xFF;
+
+			r = (((sprite_array->colour[*colour_index] >> 16) & 0xFF) * f)/255.0f;
+			g = (((sprite_array->colour[*colour_index] >> 8) & 0xFF) * f)/255.0f;
+			b = (((sprite_array->colour[*colour_index]) & 0xFF) * f)/255.0f;
+			if(sprite_array->options & CRAY_COLOUR_ADD){	// If Adding
+				vert[0].argb = (a << 24) + 0x00FFFFFF;
+			}
+			else{	// If Blending
+				invf = 255 - f;
+				vert[0].argb = (a << 24) + (invf << 16) + (invf << 8) + invf;
+			}
+			vert[0].oargb = (a << 24) + (r << 16) + (g << 8) + b;
+		}
+
+		// Update rotation part if needed
+		if(*rotation_index == i){
+			angle = fmod(sprite_array->rotation[*rotation_index], 360.0);	// If angle is more than 360 degrees, this fixes that
+			if(angle < 0){angle += 360.0;}	// fmod has range -359 to +359, this changes it to 0 to +359
+			angle = (angle * M_PI) / 180.0f;
+		}
+
+		if(skip){skip = 0; continue;}
+
+		vert[0].z = sprite_array->layer[i];
+
+		vert[0].x = floor(sprite_array->coord[i].x) - world_coord.x;
+		vert[0].y = floor(sprite_array->coord[i].y) - world_coord.y;
+		vert[1].x = vert[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
+		vert[1].y = vert[0].y;
+		vert[2].x = vert[0].x;
+		vert[2].y = vert[0].y + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
+		vert[3].x = vert[1].x;
+		vert[3].y = vert[2].y;
+
+		// If we don't want to do rotations (Rotation == 0.0), then skip it
+		if(sprite_array->rotation[*rotation_index] != 0.0f){
+
+			// Gets the true midpoint
+			mid.x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
+			mid.y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
+
+			// Update the vert x and y positions
+			for(j = 0; j < 4; j++){
+				rotated_values = crayon_graphics_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
+				vert[j].x = rotated_values.x;
+				vert[j].y = rotated_values.y;
+			}
+		}
+
+		// Apply the viewport scaling as well as the window offset
+		for(j = 0; j < 4; j++){
+			vert[j].x = floor(vert[j].x * scales.x) + camera->window_x;
+			vert[j].y = floor(vert[j].y * scales.y) + camera->window_y;
+		}
+
+		// Do OOB and culling calculations here
+		;
+
+		// Apply these to all verts
+		for(j = 1; j < 4; j++){
+			vert[j].argb = vert[0].argb;
+			vert[j].oargb = vert[0].oargb;
+			vert[j].z = vert[0].z;
+		}
+
+		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
+	}
+
+	return 0;
+}
+
+uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode, uint8_t options){
+
+	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
+	// 									//---- 1111 (Crop on all edges)
+
+	// //DELETE THIS LATER. A basic optimisation for now
+	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
+	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
+	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
+	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
+
+	//Used for cropping
+	// uint8_t bounds = 0;
+	// uint8_t cropped = 0;
+
+	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
+		// The sprite points are also floor-ed before calculations are done
+	vec2_f_t camera_scale = (vec2_f_t){camera->window_width / (float)camera->world_width,
+		camera->window_height / (float)camera->world_height};
+
+	pvr_poly_cxt_t cxt;
+	pvr_poly_hdr_t hdr;
+	pvr_vertex_t vert[4];	// Might need to change this to "8" later for cropping reasons
+
+	pvr_poly_cxt_col(&cxt, poly_list_mode);
+	pvr_poly_compile(&hdr, &cxt);
+	pvr_prim(&hdr, sizeof(hdr));
+
+	// Rotation stuff
+	float angle = 0;
+	vec2_f_t mid = (vec2_f_t){0,0};
+	vec2_f_t rotated_values;
+	
+	// Invisible or 0 alpha poly
+	uint8_t skip = 0;
+
+	// --CR -D--
+	uint8_t multi_colour = !!(sprite_array->options & CRAY_MULTI_COLOUR);
+	uint8_t multi_rotation = !!(sprite_array->options & CRAY_MULTI_ROTATE);
+	uint8_t multi_dim = !!(sprite_array->options & CRAY_MULTI_DIM);
+
+
+	// We use full ints because its faster than uint16_t
+	int i, j;
+
+	// Setting these guys
+	for(i = 0; i < 3; i++){
+		vert[i].flags = PVR_CMD_VERTEX;
+	}
+	vert[3].flags = PVR_CMD_VERTEX_EOL;
+
+	for(i = 0; i < sprite_array->size; i++){
+		if(sprite_array->colour[multi_colour ? i : 0] >> 24 == 0 || sprite_array->visible[i] == 0){	// Don't draw alpha-less or invisible stuff
+			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
+			skip = 1;	// We need the defaults to be set on first loop
+		}
+
+		// Update rotation part if needed
+		if(i == 0 || multi_rotation){
+			angle = fmod(sprite_array->rotation[i], 360.0);	// If angle is more than 360 degrees, this fixes that
+			if(angle < 0){angle += 360.0;}	// fmod has range -359 to +359, this changes it to 0 to +359
+			angle = (angle * M_PI) / 180.0f;	// Convert from degrees to ratians
+		}
+
+		if(i == 0 || multi_colour){
+			vert[0].argb = sprite_array->colour[i];
+		}
+
+		if(skip){
+			skip = 0;
+			continue;
+		}
+
+		// Reason for the order of the floor-ing
+			// For top left vert, We remove any float variance from the sprite vert and also the world coord since all sprites should
+			// be locked to the same grind and same for cameras. We then floor the result of timesing by the scale so its now locked
+			// to the grid. We don't floor the scale because we might want to scale by 2.5 or something. Finally window_x/y is an int
+		vert[0].x = floor((floor(sprite_array->coord[i].x) - floor(camera->world_coord.x)) * camera_scale.x) + camera->window_x;
+		vert[0].y = floor((floor(sprite_array->coord[i].y) - floor(camera->world_coord.y)) * camera_scale.y) + camera->window_y;
+		vert[1].x = vert[0].x + floor(sprite_array->scale[multi_dim ? i : 0].x * camera_scale.x);
+		vert[1].y = vert[0].y;
+		vert[2].x = vert[0].x;
+		vert[2].y = vert[0].y + floor(sprite_array->scale[multi_dim ? i : 0].y * camera_scale.y);
+		vert[3].x = vert[1].x;
+		vert[3].y = vert[2].y;
+
+		// Rotate the poly
+		if(sprite_array->rotation[multi_rotation ? i : 0] != 0.0f){
+			// Gets the midpoint
+			mid.x = ((vert[1].x - vert[0].x) / 2.0f) + vert[0].x;
+			mid.y = ((vert[2].y - vert[0].y) / 2.0f) + vert[0].y;
+
+			// Rotate the verts around the midpoint
+			for(j = 0; j < 4; j++){
+				rotated_values = crayon_graphics_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
+				vert[j].x = rotated_values.x;
+				vert[j].y = rotated_values.y;
+			}
+		}
+
+		// Do OOB and culling calculations here
+		;
+
+		vert[0].z = sprite_array->layer[i];
+		for(j = 1; j < 4; j++){
+			vert[j].z = vert[0].z;
+			vert[j].argb = vert[0].argb;
+		}
+
+		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
 	}
 
 	return 0;

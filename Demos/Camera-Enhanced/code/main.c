@@ -522,7 +522,6 @@ int main(){
 	Man_BG.scale[0].y = Red_Man_Draw.animation->frame_height * Red_Man_Draw.scale[0].y;
 	Man_BG.rotation[0] = 0;
 	Man_BG.colour[0] = 0xFF000000;
-	Man_BG.fade[0] = 0;	//Probably not needed
 	Man_BG.visible[0] = 1;
 
 	crayon_memory_init_sprite_array(&Cam_BGs[0], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -533,7 +532,6 @@ int main(){
 	Cam_BGs[0].scale[0].y = 480;
 	Cam_BGs[0].rotation[0] = 0;
 	Cam_BGs[0].colour[0] = 0xFF888888;
-	Cam_BGs[0].fade[0] = 0;
 	Cam_BGs[0].visible[0] = 1;
 
 	crayon_memory_init_sprite_array(&Cam_BGs[1], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -544,7 +542,6 @@ int main(){
 	Cam_BGs[1].scale[0].y = 300;
 	Cam_BGs[1].rotation[0] = 0;
 	Cam_BGs[1].colour[0] = 0xFF888888;
-	Cam_BGs[1].fade[0] = 0;
 	Cam_BGs[1].visible[0] = 1;
 
 	crayon_memory_init_sprite_array(&Cam_BGs[2], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -555,7 +552,6 @@ int main(){
 	Cam_BGs[2].scale[0].y = 240;
 	Cam_BGs[2].rotation[0] = 0;
 	Cam_BGs[2].colour[0] = 0xFF888888;
-	Cam_BGs[2].fade[0] = 0;
 	Cam_BGs[2].visible[0] = 1;
 
 	#define MODE 1

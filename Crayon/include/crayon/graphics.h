@@ -13,20 +13,20 @@
 // For region and htz stuff
 #include <dc/flashrom.h>
 
-#define CRAY_OP_LIST PVR_LIST_OP_POLY	// No alpha
-#define CRAY_TR_LIST PVR_LIST_TR_POLY	// Alpha is either full on or off
-#define CRAY_PT_LIST PVR_LIST_PT_POLY	// Varying alpha
+#define CRAYON_OP_LIST PVR_LIST_OP_POLY	// No alpha
+#define CRAYON_TR_LIST PVR_LIST_TR_POLY	// Alpha is either full on or off
+#define CRAYON_PT_LIST PVR_LIST_PT_POLY	// Varying alpha
 
-#define CRAY_FILTER_NEAREST PVR_FILTER_NONE
-#define CRAY_FILTER_LINEAR PVR_FILTER_LINEAR
+#define CRAYON_FILTER_NEAREST PVR_FILTER_NONE
+#define CRAYON_FILTER_LINEAR PVR_FILTER_LINEAR
 
 // The draw_mode options
 #define CRAYON_DRAW_SIMPLE (0 << 0)
 #define CRAYON_DRAW_ENHANCED (1 << 0)
-#define CRAYON_DRAW_OOB_CHECK (1 << 1)
-#define CRAYON_DRAW_SOFT_CROP (1 << 2)
-#define CRAYON_DRAW_HARD_CROP (1 << 3)
-#define CRAYON_DRAW_CROP CRAYON_DRAW_SOFT_CROP | CRAYON_DRAW_HARD_CROP
+#define CRAYON_DRAW_OOB_CULL (1 << 1)	// If the sprite is entirely OOB, then go to next sprite
+#define CRAYON_DRAW_HARD_CROP (1 << 2)	// On PC uses Scissor Test, DC uses TA for 32x32 tiles
+#define CRAYON_DRAW_CROP (1 << 3) | CRAYON_DRAW_HARD_CROP	// It will attempt to use hardware cropping if all the edges line up
+#define CRAYON_DRAW_FULL_CROP CRAYON_DRAW_CROP | CRAYON_DRAW_OOB_CROP
 
 // This var's purpose is to make debugging the render-ers and other graphics function much easier
 	// Since I currently can't print any text while rendering an object, instead I can set vars to
@@ -67,17 +67,16 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 
 
 // poly_list mode is for the tr/pt/op render list macro we want to use.
+// Uses the Dreamcast sprites/quads for faster/more efficient rendering
+uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode, uint8_t options);
+
 // The version with polygons (Use this if your spritesheet is bigger than 256 by 256)
-	// For DC this uses "poly mode"
 uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t options);
 
 // This will draw untextured polys (Sprite_arrays with no texture set)
 uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode, uint8_t options);
-
-// Like the other simple draw one, but this uses a camera to control where on screen to render and what region to show
-uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t options);
 
 // DELETE THIS LATER
