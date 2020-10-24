@@ -90,9 +90,9 @@ void modify_fade_effect(crayon_transition_t * effect, void * params){
 //To do the effect I'll just modify how many boxes are visible
 void modify_boxy_effect(crayon_transition_t * effect, void * params){
 	if(params != NULL){return;}	//This only exists to make the compiler shut up
-	uint16_t num_visible = crayon_graphics_transition_get_curr_percentage(effect) * effect->draw->list_size;
+	uint16_t num_visible = crayon_graphics_transition_get_curr_percentage(effect) * effect->draw->size;
 	uint16_t i;
-	for(i = 0; i < effect->draw->list_size; i++){
+	for(i = 0; i < effect->draw->size; i++){
 		effect->draw->visible[i] = (i < num_visible) ? 1 : 0;
 	}
 	return;

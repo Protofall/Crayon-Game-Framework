@@ -158,12 +158,12 @@ int main(){
 	for(i = 0; i < 12; i++){
 		crayon_memory_set_frame_uv(&Frames_Draw, i, i);
 	}
-	for(i = 0; i < Frames_Draw.list_size; i++){
+	for(i = 0; i < Frames_Draw.size; i++){
 		Frames_Draw.visible[i] = 1;
 	}
 
 	// crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
-	// uint8_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
+	// uint8_t animation_id, crayon_palette_t *pal, uint16_t size, uint8_t frames_used, uint8_t options,
 	// uint8_t filter, uint8_t set_defaults);
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
@@ -191,7 +191,7 @@ int main(){
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 1, 1);
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 2, 2);
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 3, 3);
-	for(i = 0; i < Dwarf_Draw.list_size; i++){
+	for(i = 0; i < Dwarf_Draw.size; i++){
 		Dwarf_Draw.visible[i] = 1;
 	}
 
@@ -207,7 +207,7 @@ int main(){
 	Red_Man_Draw.colour[0] = 0;
 	Red_Man_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Red_Man_Draw, 0, 0);
-	for(i = 0; i < Red_Man_Draw.list_size; i++){
+	for(i = 0; i < Red_Man_Draw.size; i++){
 		Red_Man_Draw.visible[i] = 1;
 	}
 
@@ -227,7 +227,7 @@ int main(){
 	Green_Man_Draw.colour[0] = 0;
 	Green_Man_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Green_Man_Draw, 0, 0);
-	for(i = 0; i < Green_Man_Draw.list_size; i++){
+	for(i = 0; i < Green_Man_Draw.size; i++){
 		Green_Man_Draw.visible[i] = 1;
 	}
 
@@ -278,7 +278,7 @@ int main(){
 	Rainbow_Draw.colour[0] = 0;
 	Rainbow_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Rainbow_Draw, 0, 0);
-	for(i = 0; i < Rainbow_Draw.list_size; i++){
+	for(i = 0; i < Rainbow_Draw.size; i++){
 		Rainbow_Draw.visible[i] = 1;
 	}
 
@@ -290,7 +290,7 @@ int main(){
 	Man_BG.scale[0].y = Red_Man_Draw.animation->frame_height * Red_Man_Draw.scale[0].y;
 	Man_BG.rotation[0] = 0;
 	Man_BG.colour[0] = 0xFF000000;
-	for(i = 0; i < Man_BG.list_size; i++){
+	for(i = 0; i < Man_BG.size; i++){
 		Man_BG.visible[i] = 1;
 	}
 

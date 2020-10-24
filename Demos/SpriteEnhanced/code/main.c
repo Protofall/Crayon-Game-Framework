@@ -170,7 +170,7 @@ int main(){
 	Dwarf_Draw_Flip.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Flip, 0, 0);
 	uint8_t i;
-	for(i = 0; i < Dwarf_Draw_Flip.list_size; i++){
+	for(i = 0; i < Dwarf_Draw_Flip.size; i++){
 		Dwarf_Draw_Flip.visible[i] = 1;
 	}
 
@@ -200,7 +200,7 @@ int main(){
 	Dwarf_Draw_Rotate.fade[0] = 0;
 	Dwarf_Draw_Rotate.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Rotate, 0, 0);
-	for(i = 0; i < Dwarf_Draw_Rotate.list_size; i++){
+	for(i = 0; i < Dwarf_Draw_Rotate.size; i++){
 		Dwarf_Draw_Rotate.visible[i] = 1;
 	}
 
@@ -228,7 +228,7 @@ int main(){
 	Dwarf_Draw_Scale.fade[0] = 0;
 	Dwarf_Draw_Scale.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Scale, 0, 0);
-	for(i = 0; i < Dwarf_Draw_Scale.list_size; i++){
+	for(i = 0; i < Dwarf_Draw_Scale.size; i++){
 		Dwarf_Draw_Scale.visible[i] = 1;
 	}
 
@@ -255,7 +255,7 @@ int main(){
 	Dwarf_Draw_Frame.frame_id[2] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Frame, 0, 0);
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Frame, 1, 1);
-	for(i = 0; i < Dwarf_Draw_Frame.list_size; i++){
+	for(i = 0; i < Dwarf_Draw_Frame.size; i++){
 		Dwarf_Draw_Frame.visible[i] = 1;
 	}
 
@@ -285,7 +285,7 @@ int main(){
 	Dwarf_Draw_Colour_Blend.rotation[0] = 0;
 	Dwarf_Draw_Colour_Blend.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Colour_Blend, 0, 0);
-	for(i = 0; i < Dwarf_Draw_Colour_Blend.list_size; i++){
+	for(i = 0; i < Dwarf_Draw_Colour_Blend.size; i++){
 		Dwarf_Draw_Colour_Blend.visible[i] = 1;
 	}
 
@@ -315,7 +315,7 @@ int main(){
 	Dwarf_Draw_Colour_Add.rotation[0] = 0;
 	Dwarf_Draw_Colour_Add.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Colour_Add, 0, 0);
-	for(i = 0; i < Dwarf_Draw_Colour_Add.list_size; i++){
+	for(i = 0; i < Dwarf_Draw_Colour_Add.size; i++){
 		Dwarf_Draw_Colour_Add.visible[i] = 1;
 	}
 
@@ -368,7 +368,7 @@ int main(){
 	Dwarf_Draw_Mash.frame_id[5] = 1;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Mash, 0, 0);
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Mash, 1, 1);
-	for(i = 0; i < Dwarf_Draw_Mash.list_size; i++){
+	for(i = 0; i < Dwarf_Draw_Mash.size; i++){
 		Dwarf_Draw_Mash.visible[i] = 1;
 	}
 

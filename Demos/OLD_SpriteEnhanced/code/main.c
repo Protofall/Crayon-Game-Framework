@@ -130,7 +130,7 @@ int main(){
 	Opaque_Blend_Draw.fade[1] = 255;
 	Opaque_Blend_Draw.frame_id[0] = 0;
 	uint8_t i;
-	for(i = 0; i < Opaque_Blend_Draw.list_size; i++){
+	for(i = 0; i < Opaque_Blend_Draw.size; i++){
 		Opaque_Blend_Draw.visible[i] = 1;
 	}
 	crayon_memory_set_frame_uv(&Opaque_Blend_Draw, 0, 0);
@@ -151,7 +151,7 @@ int main(){
 	Opaque_Add_Draw.fade[0] = 255;
 	Opaque_Add_Draw.fade[1] = 255;
 	Opaque_Add_Draw.frame_id[0] = 0;
-	for(i = 0; i < Opaque_Add_Draw.list_size; i++){
+	for(i = 0; i < Opaque_Add_Draw.size; i++){
 		Opaque_Add_Draw.visible[i] = 1;
 	}
 	crayon_memory_set_frame_uv(&Opaque_Add_Draw, 0, 0);

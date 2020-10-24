@@ -104,7 +104,7 @@ uint32_t crayon_graphics_get_window_height(){
 // M is for draw mode (1 for enhanced, 0 for simple)
 int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t draw_mode){
-	if(sprite_array->list_size == 0){return 2;}	// Don't render nothing
+	if(sprite_array->size == 0){return 2;}	// Don't render nothing
 	crayon_viewport_t default_camera;
 	if(camera == NULL){	// No Camera, use the default one
 		crayon_memory_init_camera(&default_camera, (vec2_f_t){0, 0},
@@ -213,7 +213,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	vert[3].flags = PVR_CMD_VERTEX_EOL;
 
 	uint8_t invf, f, a, r, g, b;
-	for(i = 0; i < sprite_array->list_size; i++){
+	for(i = 0; i < sprite_array->size; i++){
 		if(sprite_array->colour[*colour_index] >> 24 == 0){	// Don't draw alpha-less stuff
 			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
 			skip = 1;
@@ -353,7 +353,7 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
-	pvr_vertex_t vert[4];
+	pvr_vertex_t vert[4];	// Might need to change this to "8" later for cropping reasons
 	vec2_f_t rotated_values;
 
 	pvr_poly_cxt_col(&cxt, poly_list_mode);
@@ -370,7 +370,9 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 		camera->window_height / (float)camera->world_height};
 	uint8_t skip = 0;
 
-	uint16_t i, j;
+	// We use full ints because its faster than uint16_t
+	int i, j;
+
 	// --CR -D--
 	if(sprite_array->options & CRAY_MULTI_ROTATE){rotation_index = &i;}
 	else{rotation_index = &zero;}
@@ -382,21 +384,16 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 	}
 	vert[3].flags = PVR_CMD_VERTEX_EOL;
 
-	// Unused param, set to 0
+	// Unused param, set to 0 (Unused so we don't actually have to set it)
 	vert[0].oargb = 0;
 	for(i = 1; i < 4; i++){
 		vert[i].oargb = vert[0].oargb;
 	}
 
-	for(i = 0; i < sprite_array->list_size; i++){
-		if(sprite_array->colour[*colour_index] >> 24 == 0){	// Don't draw alpha-less stuff
+	for(i = 0; i < sprite_array->size; i++){
+		if(sprite_array->colour[*colour_index] >> 24 == 0 || sprite_array->visible[i] == 0){	// Don't draw alpha-less or invisible stuff
 			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
-			skip = 1;
-		}
-
-		if(sprite_array->visible[i] == 0){
-			if(i != 0){continue;}
-			else{skip = 1;}	// We need the defaults to be set on first loop
+			skip = 1;	// We need the defaults to be set on first loop
 		}
 
 		// Update rotation part if needed
@@ -410,7 +407,10 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 			vert[0].argb = sprite_array->colour[i];
 		}
 
-		if(skip){skip = 0; continue;}
+		if(skip){
+			skip = 0;
+			continue;
+		}
 
 		vert[0].z = sprite_array->layer[i];
 
@@ -422,6 +422,17 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 		vert[2].y = vert[0].y + floor(sprite_array->scale[i * multi_dim].y);
 		vert[3].x = vert[1].x;
 		vert[3].y = vert[2].y;
+
+		// NOTE: world_coord.x/y are already floor-ed so the outer floor isn't doing stuff right?
+
+		// vert.ax = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+		// vert.ay = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+		// vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
+		// vert.by = vert.ay;
+		// vert.cx = vert.bx;
+		// vert.cy = vert.ay + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_height / (float)camera->world_height));
+		// vert.dx = vert.ax;
+		// vert.dy = vert.cy;
 
 		// Rotate the poly
 		if(sprite_array->rotation[*rotation_index] != 0.0f){
@@ -547,7 +558,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 	pvr_sprite_hdr_t header;
 	pvr_sprite_compile(&header, &context);
 	pvr_prim(&header, sizeof(header));
-	for(i = 0; i < sprite_array->list_size; i++){
+	for(i = 0; i < sprite_array->size; i++){
 		// These if statements will trigger once if we have a single element (i == 0)
 			// and every time for a multi-list
 			// and some of them trigger if we just cropped a UV
@@ -871,7 +882,7 @@ uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_
 	uint8_t multi_rotate = !!(sprite_array->options & CRAY_MULTI_ROTATE);
 	uint8_t multi_frame = !!(sprite_array->options & CRAY_MULTI_FRAME);
 
-	for(i = 0; i < sprite_array->list_size; i++){
+	for(i = 0; i < sprite_array->size; i++){
 		//These if statements will trigger once if we have a single element (i == 0)
 			//and every time for a multi-list
 			//and some of them trigger if we just cropped a UV

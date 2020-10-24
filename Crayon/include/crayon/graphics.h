@@ -20,13 +20,6 @@
 #define CRAY_FILTER_NEAREST PVR_FILTER_NONE
 #define CRAY_FILTER_LINEAR PVR_FILTER_LINEAR
 
-// Might want to replace these with inline functions later
-#define crayon_graphics_wait_ready() pvr_wait_ready()
-#define crayon_graphics_scene_begin() pvr_scene_begin()
-#define crayon_graphics_list_begin(list) pvr_list_begin(list)
-#define crayon_graphics_list_finish() pvr_list_finish()
-#define crayon_graphics_scene_finish() pvr_scene_finish()
-
 #define CRAY_DRAW_SIMPLE 0
 #define CRAY_DRAW_ENHANCED 1
 

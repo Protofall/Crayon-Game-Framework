@@ -356,7 +356,7 @@ int main(){
 	for(i = 0; i < Frames_Draw.frames_used; i++){
 		crayon_memory_set_frame_uv(&Frames_Draw, i, i);
 	}
-	for(i = 0; i < Frames_Draw.list_size; i++){
+	for(i = 0; i < Frames_Draw.size; i++){
 		Frames_Draw.visible[i] = 1;
 	}
 	Frames_Draw.visible[0] = 0;
@@ -387,7 +387,7 @@ int main(){
 	Dwarf_Draw.fade[0] = 0;
 	Dwarf_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 0, 0);
-	for(i = 0; i < Dwarf_Draw.list_size; i++){
+	for(i = 0; i < Dwarf_Draw.size; i++){
 		Dwarf_Draw.visible[i] = 1;
 	}
 
@@ -458,7 +458,7 @@ int main(){
 	Green_Man_Draw.fade[0] = 0;
 	Green_Man_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Green_Man_Draw, 0, 0);
-	for(i = 0; i < Green_Man_Draw.list_size; i++){
+	for(i = 0; i < Green_Man_Draw.size; i++){
 		Green_Man_Draw.visible[i] = 1;
 	}
 
@@ -510,7 +510,7 @@ int main(){
 	Rainbow_Draw.fade[0] = 0;
 	Rainbow_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Rainbow_Draw, 0, 0);
-	for(i = 0; i < Rainbow_Draw.list_size; i++){
+	for(i = 0; i < Rainbow_Draw.size; i++){
 		Rainbow_Draw.visible[i] = 1;
 	}
 

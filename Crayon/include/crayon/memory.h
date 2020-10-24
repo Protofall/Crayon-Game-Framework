@@ -66,7 +66,7 @@ uint8_t crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t
 	// If T is set, we ignore the flip, frames and Left colour bits
 // If making an untextured array, set the spritesheet pointer to NULL
 uint8_t crayon_memory_init_sprite_array(crayon_sprite_array_t *sprite_array, crayon_spritesheet_t *ss,
-	int16_t animation_id, crayon_palette_t *pal, uint16_t list_size, uint8_t frames_used, uint8_t options,
+	int16_t animation_id, crayon_palette_t *pal, uint16_t size, uint8_t frames_used, uint8_t options,
 	uint8_t filter, uint8_t set_defaults);
 
 // Note, we assume dest isn't initialised
@@ -109,7 +109,7 @@ uint8_t crayon_memory_allocate_sprite_array(crayon_sprite_array_t *sprite_array,
 // Reallocs and extends with "elements" amount of new elements. If "set_defaults" is on then it sets the defaults
 uint8_t crayon_memory_extend_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t elements, uint8_t set_defaults);
 
-// Sets the defaults. If going from 0 to list_size - 1, this will also set the non-multis
+// Sets the defaults. If going from 0 to size - 1, this will also set the non-multis
 	// If enabled, set_array_globals will set frame_uv to zero and all of the potential multis that aren't set to multi
 void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array, uint16_t start, int32_t end,
 	uint8_t set_array_globals);
