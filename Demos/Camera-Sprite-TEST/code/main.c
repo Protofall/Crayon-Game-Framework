@@ -90,7 +90,7 @@ uint32_t thumbstick_to_dpad(int joyx, int joyy, float deadspace){
 		//22.5 degrees is 1/16th of 360 degrees, this makes it easier to check which region the coords are in
 	float angle = 22.5 * M_PI / 180.0;	//In radians
 
-	vec2_f_t point = crayon_graphics_rotate_point((vec2_f_t){0, 0}, (vec2_f_t){thumb_x, thumb_y}, angle);
+	vec2_f_t point = crayon_misc_rotate_point((vec2_f_t){0, 0}, (vec2_f_t){thumb_x, thumb_y}, angle);
 	thumb_x = point.x;
 	thumb_y = point.y;
 

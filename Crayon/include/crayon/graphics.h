@@ -1,6 +1,7 @@
 #ifndef GRAPHICS_CRAYON_H
 #define GRAPHICS_CRAYON_H
 
+#include "misc.h"
 #include "texture_structs.h"  // For the spritehsheet and anim structs
 #include "render_structs.h"  // For the crayon_sprite_array struct
 #include "vector_structs.h"  // For the rotate function struct
@@ -23,10 +24,11 @@
 // The draw_mode options
 #define CRAYON_DRAW_SIMPLE (0 << 0)
 #define CRAYON_DRAW_ENHANCED (1 << 0)
-#define CRAYON_DRAW_OOB_CULL (1 << 1)	// If the sprite is entirely OOB, then go to next sprite
-#define CRAYON_DRAW_HARD_CROP (1 << 2)	// On PC uses Scissor Test, DC uses TA for 32x32 tiles
-#define CRAYON_DRAW_CROP (1 << 3) | CRAYON_DRAW_HARD_CROP	// It will attempt to use hardware cropping if all the edges line up
-#define CRAYON_DRAW_FULL_CROP CRAYON_DRAW_CROP | CRAYON_DRAW_OOB_CROP
+#define CRAYON_DRAW_OOB_SKIP (1 << 1)	// If the sprite is entirely OOB, then go to next sprite
+#define CRAYON_DRAW_HARDWARE_CROP (1 << 2)	// On PC uses Scissor Test, DC uses TA for 32x32 tiles
+#define CRAYON_DRAW_SOFTWARE_CROP (1 << 3)	// Only used for systems where we can't use hardware cropping everywhere
+#define CRAYON_DRAW_CROP CRAYON_DRAW_SOFTWARE_CROP | CRAYON_DRAW_HARDWARE_CROP	// It will attempt to use hardware cropping if all the edges line up
+#define CRAYON_DRAW_FULL_CROP CRAYON_DRAW_CROP | CRAYON_DRAW_OOB_SKIP
 
 // This var's purpose is to make debugging the render-ers and other graphics function much easier
 	// Since I currently can't print any text while rendering an object, instead I can set vars to
@@ -147,11 +149,37 @@ uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t *effect);
 //  }
 
 
-
 //------------------Misc. Internal Functions------------------//
 
-// Returns the point "center_x/y" rotated "radian" degrees around "orbit_x/y"
-vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, float radians);
+
+// Sees if a sprite (rectangle obb) is overlapping with the camera (Assumes camera)
+	// It assumes the verts are in clockwise order. But *might* work for other orders by chance
+
+// Returns 1 if the shapes overlap, 0 otherwise
+// AABB = Axis Aligned Boundry Box (Camera). OBB = Oriented Boundry Box (Sprite/Poly)
+// Two shapes only overlap if they have overlap when "projected" onto every normal axis of both shapes.
+// OBB-OBB uses 8 normal/seperating axises, one for every side. However AABB-OBB only uses 4 since 4 pairs of axises are always parallel
+// For them to overlap, the shapes "crushed" vertexes have to overlap on every axis
+  // So if theres even one axis where the crushed vertexes don't intersect, then the whole thing doesn't overlap.
+uint8_t crayon_graphics_aabb_obb_overlap(vec2_f_t *obb, vec2_f_t *aabb);
+
+// Returns 1 if overlap, 0 if they don't
+uint8_t seperating_axis_theorem(vec2_f_t *oob, vec2_f_t *aabb, vec2_f_t *normal);
+
+// Gets the min and max x and y values and returns them
+	// NOTE. The return value is a static array that persists after the function ends. However calling the function again will override
+	// the old data. However currently its only used once so this isn't an issue
+vec2_f_t *crayon_graphics_get_range(vec2_f_t *vals, uint8_t length);
+
+// The dot product. Produces a scalar (Single value).
+// The dot product of X and Y is the length of the projection of A onto B multiplied by the length of B (or the other way around).
+// https://physics.stackexchange.com/questions/14082/what-is-the-physical-significance-of-dot-cross-product-of-vectors-why-is-divi
+float crayon_graphics_dot(float x1, float y1, float x2, float y2);
+
+// Only ever called once (In unit vector)
+inline float crayon_graphics_magnitude(float x, float y);
+
+vec2_f_t crayon_graphics_unit_vector(float x, float y);
 
 // Checks if float a is equal to b (+ or -) epsilon
 uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);

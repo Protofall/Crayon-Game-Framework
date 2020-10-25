@@ -78,7 +78,7 @@ int main(){
 	Poly_Draw.rotation[2] = 225;
 
 	uint8_t cropping = CRAYON_DRAW_CROP;
-	uint8_t oob_culling = CRAYON_DRAW_OOB_CULL;
+	uint8_t oob_culling = CRAYON_DRAW_OOB_SKIP;
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
@@ -104,6 +104,17 @@ int main(){
 			curr_btns[__dev->port] = st->buttons;
 		MAPLE_FOREACH_END()
 
+		// Buggy code
+			// 0: 435.313721 175.195953
+			// 1: 344.804047 84.686295
+			// 2: 412.686279 16.804039
+			// 3: 503.195953 107.313705
+		// Solid code
+			// 0: 435.313721 175.195953
+			// 1: 344.804047 84.686295
+			// 2: 503.195953 107.313705
+			// 3: 412.686279 16.804039
+
 		for(i = 0; i < 4; i++){
 			// Start to terminate program
 			if((curr_btns[i] & CONT_START) && !(prev_btns[i] & CONT_START)){
@@ -111,23 +122,26 @@ int main(){
 				break;
 			}
 
-			// A press to toggle Cropping
+			// A press to toggle OOB culling
 			if((curr_btns[i] & CONT_A) && !(prev_btns[i] & CONT_A)){
 				if(oob_culling){
 					oob_culling = 0;
 				}
 				else{
-					oob_culling = CRAYON_DRAW_OOB_CULL;
+					oob_culling = CRAYON_DRAW_OOB_SKIP;
 				}
 			}
 
-			// B press to toggle OOB Culling
+			// B press to toggle Cropping mode
 			if((curr_btns[i] & CONT_A) && !(prev_btns[i] & CONT_A)){
-				if(cropping){
-					cropping = 0;
+				if(cropping == 0){
+					cropping = CRAYON_DRAW_HARDWARE_CROP;
+				}
+				else if(cropping == CRAYON_DRAW_HARDWARE_CROP){
+					cropping = CRAYON_DRAW_CROP;
 				}
 				else{
-					cropping = CRAYON_DRAW_CROP;
+					cropping = 0;
 				}
 			}
 

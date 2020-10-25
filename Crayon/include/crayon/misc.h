@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <math.h>
 #include <ctype.h>
 
 #define CRAYON_MAJOR_NUMBER 0
@@ -50,6 +51,9 @@ uint32_t crayon_misc_insert_bits(uint32_t number_1, uint32_t number_2, uint8_t b
 // UNTESTED
 // Despite the name, if you pass in a negative number it will decrement
 uint32_t crayon_misc_increment_bits(uint32_t number, int32_t change_val, uint8_t bit_length, uint8_t offset);
+
+
+vec2_f_t crayon_misc_rotate_point(vec2_f_t center, vec2_f_t orbit, float radians);
 
 // Checks if the computer running this code is big endian or not
 uint8_t crayon_misc_is_big_endian();

@@ -449,7 +449,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 
 uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t options){
-	
+
 	float u0, v0, u1, v1;
 	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	// Needed if you want to prevent a bunch of compiler warnings...
 
@@ -615,7 +615,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 
 			// Update the vert x and y positions
 			for(j = 0; j < 4; j++){
-				rotated_values = crayon_graphics_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
+				rotated_values = crayon_misc_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
 				vert[j].x = rotated_values.x;
 				vert[j].y = rotated_values.y;
 			}
@@ -666,7 +666,20 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
+
+	// The verts
 	pvr_vertex_t vert[4];	// Might need to change this to "8" later for cropping reasons
+	vec2_f_t vert_coords[16];	// 8 is max and we double that because of Sutherland-Hodgman alg
+
+	vec2_f_t camera_coords[4];
+	camera_coords[0].x = camera->window_x;
+	camera_coords[0].y = camera->window_y;
+	camera_coords[1].x = camera_coords[0].x + camera->window_width;
+	camera_coords[1].y = camera_coords[0].y;
+	camera_coords[2].x = camera_coords[1].x;
+	camera_coords[2].y = camera_coords[0].y + camera->window_height;
+	camera_coords[3].x = camera_coords[0].x;
+	camera_coords[3].y = camera_coords[2].y;
 
 	pvr_poly_cxt_col(&cxt, poly_list_mode);
 	pvr_poly_compile(&hdr, &cxt);
@@ -676,7 +689,7 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 	float angle = 0;
 	vec2_f_t mid = (vec2_f_t){0,0};
 	vec2_f_t rotated_values;
-	
+
 	// Invisible or 0 alpha poly
 	uint8_t skip = 0;
 
@@ -717,35 +730,60 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 			continue;
 		}
 
+		// Newer version that uses "vert_coords" immediately
+
 		// Reason for the order of the floor-ing
 			// For top left vert, We remove any float variance from the sprite vert and also the world coord since all sprites should
 			// be locked to the same grind and same for cameras. We then floor the result of timesing by the scale so its now locked
 			// to the grid. We don't floor the scale because we might want to scale by 2.5 or something. Finally window_x/y is an int
-		vert[0].x = floor((floor(sprite_array->coord[i].x) - floor(camera->world_coord.x)) * camera_scale.x) + camera->window_x;
-		vert[0].y = floor((floor(sprite_array->coord[i].y) - floor(camera->world_coord.y)) * camera_scale.y) + camera->window_y;
-		vert[1].x = vert[0].x + floor(sprite_array->scale[multi_dim ? i : 0].x * camera_scale.x);
-		vert[1].y = vert[0].y;
-		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + floor(sprite_array->scale[multi_dim ? i : 0].y * camera_scale.y);
-		vert[3].x = vert[1].x;
-		vert[3].y = vert[2].y;
+		// Also notice how the verts are in clockwise order. This makes it easier for sutherland hodgman algorithm
+		vert_coords[0].x = floor((floor(sprite_array->coord[i].x) - floor(camera->world_x)) * camera_scale.x) + camera->window_x;
+		vert_coords[0].y = floor((floor(sprite_array->coord[i].y) - floor(camera->world_y)) * camera_scale.y) + camera->window_y;
+		vert_coords[1].x = vert_coords[0].x + floor(sprite_array->scale[multi_dim ? i : 0].x * camera_scale.x);
+		vert_coords[1].y = vert_coords[0].y;
+		vert_coords[2].x = vert_coords[1].x;
+		vert_coords[2].y = vert_coords[0].y + floor(sprite_array->scale[multi_dim ? i : 0].y * camera_scale.y);
+		vert_coords[3].x = vert_coords[0].x;
+		vert_coords[3].y = vert_coords[2].y;
 
 		// Rotate the poly
-		if(sprite_array->rotation[multi_rotation ? i : 0] != 0.0f){
+		if(sprite_array->rotation[multi_rotation ? i : 0] != 0.0){
 			// Gets the midpoint
-			mid.x = ((vert[1].x - vert[0].x) / 2.0f) + vert[0].x;
-			mid.y = ((vert[2].y - vert[0].y) / 2.0f) + vert[0].y;
+			mid.x = ((vert_coords[1].x - vert_coords[0].x) * 0.5) + vert_coords[0].x;
+			mid.y = ((vert_coords[2].y - vert_coords[0].y) * 0.5) + vert_coords[0].y;
 
 			// Rotate the verts around the midpoint
 			for(j = 0; j < 4; j++){
-				rotated_values = crayon_graphics_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
-				vert[j].x = rotated_values.x;
-				vert[j].y = rotated_values.y;
+				rotated_values = crayon_misc_rotate_point(mid, vert_coords[j], angle);
+				vert_coords[j].x = rotated_values.x;
+				vert_coords[j].y = rotated_values.y;
 			}
 		}
 
-		// Do OOB and culling calculations here
-		;
+		// OOB check
+		if(options & CRAYON_DRAW_OOB_SKIP){
+			;
+		}
+
+		// Perform software cropping (But only if we can't do hardware cropping)
+			// That !false is a placeholder for the hardware check
+		if(!false && (options & CRAYON_DRAW_SOFTWARE_CROP)){
+			// If they don't overlap then no point progressing
+			if(!crayon_graphics_aabb_obb_overlap(&vert_coords, &camera_coords)){
+				continue;
+			}
+		}
+
+		// Converting our float array to the vertex struct/s
+			// We swap the order of the last two verts so it renders now
+		vert[0].x = vert_coords[0].x;
+		vert[0].y = vert_coords[0].y;
+		vert[1].x = vert_coords[1].x;
+		vert[1].y = vert_coords[1].y;
+		vert[2].x = vert_coords[3].x;
+		vert[2].y = vert_coords[3].y;
+		vert[3].x = vert_coords[2].x;
+		vert[3].y = vert_coords[2].y;
 
 		vert[0].z = sprite_array->layer[i];
 		for(j = 1; j < 4; j++){
@@ -1514,11 +1552,43 @@ double crayon_graphics_transition_get_prev_percentage(crayon_transition_t *effec
 //---------------------------------------------------------------------//
 
 
-vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, float radians){
-	float sin_theta = sin(radians);
-	float cos_theta = cos(radians);
-	return (vec2_f_t){(cos_theta * (orbit.x - center.x)) - (sin_theta * (orbit.y - center.y)) + center.x,
-		(sin_theta * (orbit.x - center.x)) + (cos_theta * (orbit.y - center.y)) + center.y};
+uint8_t crayon_graphics_aabb_obb_overlap(vec2_f_t *obb, vec2_f_t *aabb){
+	return 1;
+}
+
+uint8_t seperating_axis_theorem(vec2_f_t *oob, vec2_f_t *aabb, vec2_f_t *normal){
+	return 1;
+}
+
+vec2_f_t *crayon_graphics_get_range(vec2_f_t *vals, uint8_t length){
+	static vec2_f_t ret[2];	// min x/y, max x/y
+	ret[0].x = vals[0].x;
+	ret[0].y = vals[0].y;
+	ret[1].x = vals[0].x;
+	ret[1].y = vals[0].y;
+
+	int i;
+	for(i = 1; i < length; i++){	// Skip the first element since we've already checked it kinda
+		if(vals[i].x < ret[0].x){ret[0].x = vals[i].x;}
+		else if(vals[i].x > ret[1].x){ret[1].x = vals[i].x;}
+
+		if(vals[i].y < ret[0].y){ret[0].y = vals[i].y;}
+		else if(vals[i].y > ret[1].y){ret[1].y = vals[i].y;}
+	}
+	return ret;
+}
+
+float crayon_graphics_dot(float x1, float y1, float x2, float y2){
+	return (x2 * x1) + (y2 * y1);
+}
+
+inline float crayon_graphics_magnitude(float x, float y){
+	return sqrt(pow(x, 2) + pow(y, 2));
+}
+
+vec2_f_t crayon_graphics_unit_vector(float x, float y){
+	float div = 1 / crayon_graphics_magnitude(x, y);
+	return (vec2_f_t){x * div, y * div};
 }
 
 uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){
@@ -1639,10 +1709,10 @@ uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t flip_val
 }
 
 float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, vec2_f_t dims){
-    if((side % 2 == 0 && rotation_val % 2 == 0) || (side % 2 == 1 && rotation_val % 2 == 1)){
-        return dims.x;  // width
-    }
-    return dims.y;   // height
+	if((side % 2 == 0 && rotation_val % 2 == 0) || (side % 2 == 1 && rotation_val % 2 == 1)){
+		return dims.x;  // width
+	}
+	return dims.y;   // height
 }
 
 float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t *vert, vec2_f_t *scale, const crayon_viewport_t *camera){
