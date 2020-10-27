@@ -47,20 +47,20 @@ int main(){
 		1
 	);
 
-	crayon_sprite_array_t Poly_Draw;	// Contains 3 polys, 1st (0 index) one controlled by the player
-	crayon_memory_init_sprite_array(&Poly_Draw, NULL, 0, NULL, 3, 0, CRAY_MULTI_DIM | CRAY_MULTI_COLOUR | CRAY_MULTI_ROTATE,
+	crayon_sprite_array_t Poly_Draw;	// Contains 4 polys, 1st (0 index) one controlled by the player
+	crayon_memory_init_sprite_array(&Poly_Draw, NULL, 0, NULL, 4, 0, CRAY_MULTI_DIM | CRAY_MULTI_COLOUR | CRAY_MULTI_ROTATE,
 		CRAYON_FILTER_NEAREST, 0);
 	int i;
 	for(i = 0; i < Poly_Draw.size; i++){
 		Poly_Draw.visible[i] = 1;
-		Poly_Draw.layer[i] = 2 + i;
+		Poly_Draw.layer[i] = (Poly_Draw.size - i + 1);	// 5, 4, 3, 2
 	}
 
 	Poly_Draw.scale[0].x = width * 0.20;
 	Poly_Draw.scale[0].y = height * 0.20;
 	Poly_Draw.coord[0].x = 20;
 	Poly_Draw.coord[0].y = 20;
-	Poly_Draw.colour[0] = 0xFFFF0000;
+	Poly_Draw.colour[0] = 0xFFFFFFFF;
 	Poly_Draw.rotation[0] = 0;
 
 	Poly_Draw.scale[1].x = width * 0.5;
@@ -77,6 +77,13 @@ int main(){
 	Poly_Draw.colour[2] = 0xFF0000FF;
 	Poly_Draw.rotation[2] = 225;
 
+	Poly_Draw.scale[3].x = width * 0.15;
+	Poly_Draw.scale[3].y = height * 0.5;
+	Poly_Draw.coord[3].x = Cam_BG.scale[0].x + 20;
+	Poly_Draw.coord[3].y = Cam_BG.scale[0].y - 40;
+	Poly_Draw.colour[3] = 0xFFFF0000;
+	Poly_Draw.rotation[3] = 1337;
+	
 	uint8_t cropping = CRAYON_DRAW_CROP;
 	uint8_t oob_culling = CRAYON_DRAW_OOB_SKIP;
 
@@ -103,17 +110,6 @@ int main(){
 			prev_btns[__dev->port] = curr_btns[__dev->port];
 			curr_btns[__dev->port] = st->buttons;
 		MAPLE_FOREACH_END()
-
-		// Buggy code
-			// 0: 435.313721 175.195953
-			// 1: 344.804047 84.686295
-			// 2: 412.686279 16.804039
-			// 3: 503.195953 107.313705
-		// Solid code
-			// 0: 435.313721 175.195953
-			// 1: 344.804047 84.686295
-			// 2: 503.195953 107.313705
-			// 3: 412.686279 16.804039
 
 		for(i = 0; i < 4; i++){
 			// Start to terminate program
@@ -146,17 +142,25 @@ int main(){
 			}
 
 			// DPAD movement
-			if((curr_btns[i] & CONT_DPAD_UP) && !(prev_btns[i] & CONT_DPAD_UP)){
-				;
+			if((curr_btns[i] & CONT_DPAD_UP)){
+				Poly_Draw.coord[0].y -= 1;
 			}
-			else if((curr_btns[i] & CONT_DPAD_DOWN) && !(prev_btns[i] & CONT_DPAD_DOWN)){
-				;
+			else if((curr_btns[i] & CONT_DPAD_DOWN)){
+				Poly_Draw.coord[0].y += 1;
 			}
-			if((curr_btns[i] & CONT_DPAD_LEFT) && !(prev_btns[i] & CONT_DPAD_LEFT)){
-				;
+			if((curr_btns[i] & CONT_DPAD_LEFT)){
+				Poly_Draw.coord[0].x -= 1;
 			}
-			else if((curr_btns[i] & CONT_DPAD_RIGHT) && !(prev_btns[i] & CONT_DPAD_RIGHT)){
-				;
+			else if((curr_btns[i] & CONT_DPAD_RIGHT)){
+				Poly_Draw.coord[0].x += 1;
+			}
+
+			// Rotation
+			if((curr_btns[i] & CONT_X)){
+				Poly_Draw.rotation[0] -= 1;
+			}
+			if((curr_btns[i] & CONT_Y)){
+				Poly_Draw.rotation[0] += 1;
 			}
 
 			// if((curr_btns[i] & CONT_X) && !(prev_btns[i] & CONT_X)){

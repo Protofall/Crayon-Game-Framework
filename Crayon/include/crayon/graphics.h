@@ -4,7 +4,7 @@
 #include "misc.h"
 #include "texture_structs.h"  // For the spritehsheet and anim structs
 #include "render_structs.h"  // For the crayon_sprite_array struct
-#include "vector_structs.h"  // For the rotate function struct
+#include "vector_structs.h"
 #include "memory.h"  // For the rotate function struct
 
 #include <stdlib.h>
@@ -164,17 +164,17 @@ uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t *effect);
 uint8_t crayon_graphics_aabb_obb_overlap(vec2_f_t *obb, vec2_f_t *aabb);
 
 // Returns 1 if overlap, 0 if they don't
-uint8_t seperating_axis_theorem(vec2_f_t *oob, vec2_f_t *aabb, vec2_f_t *normal);
+uint8_t seperating_axis_theorem(vec2_f_t *obb, vec2_f_t *aabb, vec2_f_t *normal);
 
-// Gets the min and max x and y values and returns them
+// Gets the min and max x and y values and returns them. Assumes vals is an array of 4 structs
 	// NOTE. The return value is a static array that persists after the function ends. However calling the function again will override
 	// the old data. However currently its only used once so this isn't an issue
-vec2_f_t *crayon_graphics_get_range(vec2_f_t *vals, uint8_t length);
+vec2_f_t *crayon_graphics_get_range(vec2_f_t *vals);
 
 // The dot product. Produces a scalar (Single value).
 // The dot product of X and Y is the length of the projection of A onto B multiplied by the length of B (or the other way around).
 // https://physics.stackexchange.com/questions/14082/what-is-the-physical-significance-of-dot-cross-product-of-vectors-why-is-divi
-float crayon_graphics_dot(float x1, float y1, float x2, float y2);
+float crayon_graphics_dot_product(float x1, float y1, float x2, float y2);
 
 // Only ever called once (In unit vector)
 inline float crayon_graphics_magnitude(float x, float y);

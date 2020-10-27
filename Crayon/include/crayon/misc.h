@@ -8,6 +8,8 @@
 #include <math.h>
 #include <ctype.h>
 
+#include "vector_structs.h"  // For the rotate function struct
+
 #define CRAYON_MAJOR_NUMBER 0
 #define CRAYON_MINOR_NUMBER 2
 #define CRAYON_PATCH_NUMBER 0

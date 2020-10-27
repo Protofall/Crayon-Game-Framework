@@ -766,10 +766,10 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 		}
 
 		// Perform software cropping (But only if we can't do hardware cropping)
-			// That !false is a placeholder for the hardware check
-		if(!false && (options & CRAYON_DRAW_SOFTWARE_CROP)){
+			// That !0 is a placeholder for the hardware check
+		if(!0 && (options & CRAYON_DRAW_SOFTWARE_CROP)){
 			// If they don't overlap then no point progressing
-			if(!crayon_graphics_aabb_obb_overlap(&vert_coords, &camera_coords)){
+			if(!crayon_graphics_aabb_obb_overlap(vert_coords, camera_coords)){
 				continue;
 			}
 		}
@@ -1553,33 +1553,81 @@ double crayon_graphics_transition_get_prev_percentage(crayon_transition_t *effec
 
 
 uint8_t crayon_graphics_aabb_obb_overlap(vec2_f_t *obb, vec2_f_t *aabb){
+	vec2_f_t *range = crayon_graphics_get_range(obb);
+
+	// Check with aabb's normals
+	if(range[1].x < aabb[0].x || range[0].x > aabb[1].x || range[1].y < aabb[0].y || range[0].y > aabb[3].y){
+		return 0;
+	}
+
+	vec2_f_t normal_1 = crayon_graphics_unit_vector(obb[1].x - obb[0].x, obb[1].y - obb[0].y);  // Left side's normal
+	vec2_f_t normal_2 = crayon_graphics_unit_vector(obb[3].x - obb[0].x, obb[3].y - obb[0].y);  // Top side's normal
+
+	// // Quicker, but they aren't *unit* vectors So there might be issues with really big numbers
+	// normal_1.x = -(obb[1]->x - obb[0]->x);
+	// normal_1.y = obb[1]->y - obb[0]->y;
+
+	// normal_2.x = -(obb[2]->x - obb[1]->x);
+	// normal_2.y = obb[2]->y - obb[1]->y;
+
+	if(!seperating_axis_theorem(obb, aabb, &normal_1)){
+		return 0;
+	}
+
+	if(!seperating_axis_theorem(obb, aabb, &normal_2)){
+		return 0;
+	}
+
 	return 1;
 }
 
-uint8_t seperating_axis_theorem(vec2_f_t *oob, vec2_f_t *aabb, vec2_f_t *normal){
+uint8_t seperating_axis_theorem(vec2_f_t *obb, vec2_f_t *aabb, vec2_f_t *normal){
+	vec2_f_t range[2];	// min_obb, max_obb, min_aabb, max_aabb
+	range[0].x = crayon_graphics_dot_product(obb[0].x, obb[0].y, normal->x, normal->y);
+	range[0].y = range[0].x;
+	range[1].x = crayon_graphics_dot_product(aabb[0].x, aabb[0].y, normal->x, normal->y);
+	range[1].y = range[1].x;
+
+	int i;
+	float dot_value;
+	for(i = 1; i < 4; i++){
+		dot_value = crayon_graphics_dot_product(obb[i].x, obb[i].y, normal->x, normal->y);
+		if(dot_value < range[0].x){range[0].x = dot_value;}
+		if(dot_value > range[0].y){range[0].y = dot_value;}
+
+		dot_value = crayon_graphics_dot_product(aabb[i].x, aabb[i].y, normal->x, normal->y);
+		if(dot_value < range[1].x){range[1].x = dot_value;}
+		if(dot_value > range[1].y){range[1].y = dot_value;}
+	}
+
+	// max_obb < min_aabb || min_obb > max_aabb
+	if(range[0].y < range[1].x || range[0].x > range[1].y){
+		return 0;
+	}
+
 	return 1;
 }
 
-vec2_f_t *crayon_graphics_get_range(vec2_f_t *vals, uint8_t length){
-	static vec2_f_t ret[2];	// min x/y, max x/y
+vec2_f_t *crayon_graphics_get_range(vec2_f_t *vals){
+	static vec2_f_t ret[2];	// min x, min y, max x, max y
 	ret[0].x = vals[0].x;
 	ret[0].y = vals[0].y;
 	ret[1].x = vals[0].x;
 	ret[1].y = vals[0].y;
 
 	int i;
-	for(i = 1; i < length; i++){	// Skip the first element since we've already checked it kinda
+	for(i = 1; i < 4; i++){	// Skip the first element since we've already checked it
 		if(vals[i].x < ret[0].x){ret[0].x = vals[i].x;}
-		else if(vals[i].x > ret[1].x){ret[1].x = vals[i].x;}
+		if(vals[i].x > ret[1].x){ret[1].x = vals[i].x;}
 
 		if(vals[i].y < ret[0].y){ret[0].y = vals[i].y;}
-		else if(vals[i].y > ret[1].y){ret[1].y = vals[i].y;}
+		if(vals[i].y > ret[1].y){ret[1].y = vals[i].y;}
 	}
 	return ret;
 }
 
-float crayon_graphics_dot(float x1, float y1, float x2, float y2){
-	return (x2 * x1) + (y2 * y1);
+float crayon_graphics_dot_product(float x1, float y1, float x2, float y2){
+	return (x1 * x2) + (y1 * y2);
 }
 
 inline float crayon_graphics_magnitude(float x, float y){
