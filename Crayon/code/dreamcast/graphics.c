@@ -762,16 +762,16 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 
 		// OOB check
 		if(options & CRAYON_DRAW_OOB_SKIP){
-			;
+			// If they don't overlap then no point progressing
+			if(!crayon_graphics_aabb_obb_overlap(vert_coords, camera_coords)){
+				continue;
+			}
 		}
 
 		// Perform software cropping (But only if we can't do hardware cropping)
 			// That !0 is a placeholder for the hardware check
 		if(!0 && (options & CRAYON_DRAW_SOFTWARE_CROP)){
-			// If they don't overlap then no point progressing
-			if(!crayon_graphics_aabb_obb_overlap(vert_coords, camera_coords)){
-				continue;
-			}
+			;
 		}
 
 		// Converting our float array to the vertex struct/s

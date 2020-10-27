@@ -2,14 +2,13 @@
 #include <crayon/memory.h>
 #include <crayon/graphics.h>
 #include <crayon/crayon.h>
+#include <crayon/input.h>
 
 //For the controller
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
 
 int main(){
-	printf("INITIAL\n");
-
 	float g_deadspace = 0.4;
 
 	// Initialise Crayon
@@ -91,6 +90,9 @@ int main(){
 
 	uint32_t curr_btns[4] = {0};
 	uint32_t prev_btns[4] = {0};
+	vec2_u8_t curr_trigs[4] = {0};
+	vec2_u8_t prev_trigs[4] = {0};
+
 	int loop = 1;
 	while(loop){
 		// Graphics
@@ -108,18 +110,23 @@ int main(){
 		// Input handling
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 			prev_btns[__dev->port] = curr_btns[__dev->port];
+			prev_trigs[__dev->port].x = curr_trigs[__dev->port].x;
+			prev_trigs[__dev->port].y = curr_trigs[__dev->port].y;
+
 			curr_btns[__dev->port] = st->buttons;
+			curr_trigs[__dev->port].x = st->ltrig;
+			curr_trigs[__dev->port].y = st->rtrig;
 		MAPLE_FOREACH_END()
 
 		for(i = 0; i < 4; i++){
 			// Start to terminate program
-			if((curr_btns[i] & CONT_START) && !(prev_btns[i] & CONT_START)){
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_START)){
 				loop = 0;
 				break;
 			}
 
 			// A press to toggle OOB culling
-			if((curr_btns[i] & CONT_A) && !(prev_btns[i] & CONT_A)){
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_A)){
 				if(oob_culling){
 					oob_culling = 0;
 				}
@@ -129,7 +136,7 @@ int main(){
 			}
 
 			// B press to toggle Cropping mode
-			if((curr_btns[i] & CONT_A) && !(prev_btns[i] & CONT_A)){
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_B)){
 				if(cropping == 0){
 					cropping = CRAYON_DRAW_HARDWARE_CROP;
 				}
@@ -142,30 +149,26 @@ int main(){
 			}
 
 			// DPAD movement
-			if((curr_btns[i] & CONT_DPAD_UP)){
+			if(crayon_input_button_held(curr_btns[i], CONT_DPAD_UP)){
 				Poly_Draw.coord[0].y -= 1;
 			}
-			else if((curr_btns[i] & CONT_DPAD_DOWN)){
+			else if(crayon_input_button_held(curr_btns[i], CONT_DPAD_DOWN)){
 				Poly_Draw.coord[0].y += 1;
 			}
-			if((curr_btns[i] & CONT_DPAD_LEFT)){
+			if(crayon_input_button_held(curr_btns[i], CONT_DPAD_LEFT)){
 				Poly_Draw.coord[0].x -= 1;
 			}
-			else if((curr_btns[i] & CONT_DPAD_RIGHT)){
+			else if(crayon_input_button_held(curr_btns[i], CONT_DPAD_RIGHT)){
 				Poly_Draw.coord[0].x += 1;
 			}
 
 			// Rotation
-			if((curr_btns[i] & CONT_X)){
+			if(crayon_input_trigger_held(curr_trigs[i].x)){	// Left trigger
 				Poly_Draw.rotation[0] -= 1;
 			}
-			if((curr_btns[i] & CONT_Y)){
+			if(crayon_input_trigger_held(curr_trigs[i].y)){	// Right trigger
 				Poly_Draw.rotation[0] += 1;
 			}
-
-			// if((curr_btns[i] & CONT_X) && !(prev_btns[i] & CONT_X)){
-			// 	;
-			// }
 		}
 	}
 
