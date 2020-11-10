@@ -78,7 +78,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	uint8_t poly_list_mode, uint8_t options);
 
 // This will draw untextured polys (Sprite_arrays with no texture set)
-uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t options);
 
 // DELETE THIS LATER
@@ -161,10 +161,11 @@ uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t *effect);
 // OBB-OBB uses 8 normal/seperating axises, one for every side. However AABB-OBB only uses 4 since 4 pairs of axises are always parallel
 // For them to overlap, the shapes "crushed" vertexes have to overlap on every axis
   // So if theres even one axis where the crushed vertexes don't intersect, then the whole thing doesn't overlap.
-uint8_t crayon_graphics_aabb_obb_overlap(vec2_f_t *obb, vec2_f_t *aabb);
+// obb is an array of 4 vec2_f_ts. aabb is just 4 floats, the min_x, min_y, max_x, max_y of the camera verts
+uint8_t crayon_graphics_aabb_obb_overlap(vec2_f_t *obb, float *aabb);
 
 // Returns 1 if overlap, 0 if they don't
-uint8_t seperating_axis_theorem(vec2_f_t *obb, vec2_f_t *aabb, vec2_f_t *normal);
+uint8_t seperating_axis_theorem(vec2_f_t *obb, float *aabb, vec2_f_t *normal);
 
 // Gets the min and max x and y values and returns them. Assumes vals is an array of 4 structs
 	// NOTE. The return value is a static array that persists after the function ends. However calling the function again will override

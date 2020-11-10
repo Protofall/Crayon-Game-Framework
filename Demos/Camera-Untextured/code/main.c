@@ -9,7 +9,7 @@
 #include <dc/maple/controller.h>
 
 int main(){
-	float g_deadspace = 0.4;
+	// float g_deadspace = 0.4;
 
 	// Initialise Crayon
 	if(crayon_init(CRAYON_PLATFORM_DREAMCAST, CRAYON_BOOT_OPTICAL)){
@@ -91,7 +91,7 @@ int main(){
 	uint32_t curr_btns[4] = {0};
 	uint32_t prev_btns[4] = {0};
 	vec2_u8_t curr_trigs[4] = {0};
-	vec2_u8_t prev_trigs[4] = {0};
+	// vec2_u8_t prev_trigs[4] = {0};
 
 	int loop = 1;
 	while(loop){
@@ -110,8 +110,8 @@ int main(){
 		// Input handling
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 			prev_btns[__dev->port] = curr_btns[__dev->port];
-			prev_trigs[__dev->port].x = curr_trigs[__dev->port].x;
-			prev_trigs[__dev->port].y = curr_trigs[__dev->port].y;
+			// prev_trigs[__dev->port].x = curr_trigs[__dev->port].x;
+			// prev_trigs[__dev->port].y = curr_trigs[__dev->port].y;
 
 			curr_btns[__dev->port] = st->buttons;
 			curr_trigs[__dev->port].x = st->ltrig;

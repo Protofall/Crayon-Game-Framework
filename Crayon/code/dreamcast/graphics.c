@@ -123,7 +123,7 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 		}
 		return crayon_graphics_draw_sprites_simple(sprite_array, camera, poly_list_mode, draw_option);
 	}
-	return crayon_graphics_draw_untextured_array(sprite_array, camera, poly_list_mode, draw_option);
+	return crayon_graphics_draw_untextured_sprites(sprite_array, camera, poly_list_mode, draw_option);
 }
 
 uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
@@ -490,7 +490,9 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	hdr.cmd |= 4;	// Enable oargb
 	pvr_prim(&hdr, sizeof(hdr));
 
+	#define _MAX_POLY_VERTS 8	// With Sutherland-Hodgman I belive it can create up-to 8 vert polys for a 4 sided object
 	pvr_vertex_t vert[4];	// 4 verts per sprite
+	#undef _MAX_POLY_VERTS
 	vec2_f_t rotated_values;
 
 	// Easily lets us use the right index for each array
@@ -643,7 +645,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	return 0;
 }
 
-uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t options){
 
 	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
@@ -668,18 +670,18 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 	pvr_poly_hdr_t hdr;
 
 	// The verts
-	pvr_vertex_t vert[4];	// Might need to change this to "8" later for cropping reasons
-	vec2_f_t vert_coords[16];	// 8 is max and we double that because of Sutherland-Hodgman alg
+	uint8_t pvr_verts = 4;
+	#define _MAX_POLY_VERTS 8	// With Sutherland-Hodgman I belive it can create up-to 8 vert polys for a 4 sided object
+	pvr_vertex_t vert[_MAX_POLY_VERTS];
+	vec2_f_t vert_coords[_MAX_POLY_VERTS * 2];	// We double that because of Sutherland-Hodgman alg
+	#undef _MAX_POLY_VERTS
 
-	vec2_f_t camera_coords[4];
-	camera_coords[0].x = camera->window_x;
-	camera_coords[0].y = camera->window_y;
-	camera_coords[1].x = camera_coords[0].x + camera->window_width;
-	camera_coords[1].y = camera_coords[0].y;
-	camera_coords[2].x = camera_coords[1].x;
-	camera_coords[2].y = camera_coords[0].y + camera->window_height;
-	camera_coords[3].x = camera_coords[0].x;
-	camera_coords[3].y = camera_coords[2].y;
+	// min_x, min_y, max_x, max_y
+	float window_coords[4];
+	window_coords[0] = camera->window_x;
+	window_coords[1] = camera->window_y;
+	window_coords[2] = camera->window_x + camera->window_width;
+	window_coords[3] = camera->window_y + camera->window_height;
 
 	pvr_poly_cxt_col(&cxt, poly_list_mode);
 	pvr_poly_compile(&hdr, &cxt);
@@ -698,8 +700,7 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 	uint8_t multi_rotation = !!(sprite_array->options & CRAY_MULTI_ROTATE);
 	uint8_t multi_dim = !!(sprite_array->options & CRAY_MULTI_DIM);
 
-
-	// We use full ints because its faster than uint16_t
+	// We use full ints because its faster than uint16_t apparently
 	int i, j;
 
 	// Setting these guys
@@ -763,7 +764,7 @@ uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprit
 		// OOB check
 		if(options & CRAYON_DRAW_OOB_SKIP){
 			// If they don't overlap then no point progressing
-			if(!crayon_graphics_aabb_obb_overlap(vert_coords, camera_coords)){
+			if(!crayon_graphics_aabb_obb_overlap(vert_coords, window_coords)){
 				continue;
 			}
 		}
@@ -1552,11 +1553,11 @@ double crayon_graphics_transition_get_prev_percentage(crayon_transition_t *effec
 //---------------------------------------------------------------------//
 
 
-uint8_t crayon_graphics_aabb_obb_overlap(vec2_f_t *obb, vec2_f_t *aabb){
+uint8_t crayon_graphics_aabb_obb_overlap(vec2_f_t *obb, float *aabb){
 	vec2_f_t *range = crayon_graphics_get_range(obb);
 
 	// Check with aabb's normals
-	if(range[1].x < aabb[0].x || range[0].x > aabb[1].x || range[1].y < aabb[0].y || range[0].y > aabb[3].y){
+	if(range[1].x < aabb[0] || range[1].y < aabb[1] || range[0].x > aabb[2] || range[0].y > aabb[3]){
 		return 0;
 	}
 
@@ -1581,11 +1582,11 @@ uint8_t crayon_graphics_aabb_obb_overlap(vec2_f_t *obb, vec2_f_t *aabb){
 	return 1;
 }
 
-uint8_t seperating_axis_theorem(vec2_f_t *obb, vec2_f_t *aabb, vec2_f_t *normal){
+uint8_t seperating_axis_theorem(vec2_f_t *obb, float *aabb, vec2_f_t *normal){
 	vec2_f_t range[2];	// min_obb, max_obb, min_aabb, max_aabb
 	range[0].x = crayon_graphics_dot_product(obb[0].x, obb[0].y, normal->x, normal->y);
 	range[0].y = range[0].x;
-	range[1].x = crayon_graphics_dot_product(aabb[0].x, aabb[0].y, normal->x, normal->y);
+	range[1].x = crayon_graphics_dot_product(aabb[0], aabb[1], normal->x, normal->y);
 	range[1].y = range[1].x;
 
 	int i;
@@ -1595,7 +1596,8 @@ uint8_t seperating_axis_theorem(vec2_f_t *obb, vec2_f_t *aabb, vec2_f_t *normal)
 		if(dot_value < range[0].x){range[0].x = dot_value;}
 		if(dot_value > range[0].y){range[0].y = dot_value;}
 
-		dot_value = crayon_graphics_dot_product(aabb[i].x, aabb[i].y, normal->x, normal->y);
+		// i = 0: min/min, 1: max/min, 2: max/max, 3: min/max
+		dot_value = crayon_graphics_dot_product(aabb[(i < 3) ? 2 : 0], aabb[(i > 1 ? 3 : 1)], normal->x, normal->y);
 		if(dot_value < range[1].x){range[1].x = dot_value;}
 		if(dot_value > range[1].y){range[1].y = dot_value;}
 	}
