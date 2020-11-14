@@ -16,16 +16,17 @@ extern int zlib_getlength(char *filename);	// Because zlib.h won't declare it fo
 // This is set in crayon_init(). Its the /cd/, /sd/ or /pc/ before every file access
 extern char *__game_base_path;
 
+#define DTEX_TXRFMT(x) (7 & (x >> 27))	// Gets the 3 bits for format
 typedef struct dtex_header{
 	uint8_t magic[4]; // magic number "DTEX"
-	uint16_t   width; // texture width in pixels
-	uint16_t  height; // texture height in pixels
-	uint32_t    type; // format (see https://github.com/tvspelsfreak/texconv)
-	uint32_t    size; // texture size in bytes
+	uint16_t width; // texture width in pixels
+	uint16_t height; // texture height in pixels
+	uint32_t type; // format (see https://github.com/tvspelsfreak/texconv)
+	uint32_t size; // texture size in bytes
 } dtex_header_t;
 
 typedef struct dpal_header{
-	uint8_t     magic[4]; // magic number "DPAL"
+	uint8_t magic[4]; // magic number "DPAL"
 	uint32_t color_count; // number of 32-bit ARGB palette entries
 } dpal_header_t;
 

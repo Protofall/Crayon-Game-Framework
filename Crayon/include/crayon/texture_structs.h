@@ -42,6 +42,7 @@ typedef struct crayon_spritesheet{
 } crayon_spritesheet_t;
 
 /*
+
 On fontsheets. FOR NOW EACH CHAR IN THE FONTSHEET CONTAINS BLANK LINES OF PIXELS SEPERATING STUFF. EG (- is blank pixel row/column)
 
 A-B-C-
@@ -55,6 +56,7 @@ Info file format:
 char_height
 num_rows num_chars_row_1 num_chars_row_2 (etc)
 1st_char_width 2nd_char_width (etc)
+
 */
 
 typedef struct crayon_font_prop{

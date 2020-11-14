@@ -435,33 +435,19 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 	return 0;
 }
 
-//DELETE THIS LATER
-// 	//Use these to merge the two palette if's into one
-// 	// PVR_TXRFMT_PAL4BPP   (5 << 27)
-// 	// PVR_TXRFMT_PAL8BPP   (6 << 27)
-// 	//(6 << 27) == 110 << 27 == 11000 00000 00000 00000 00000 00000
-// 	//(5 << 27) == 110 << 27 == 10100 00000 00000 00000 00000 00000
-// 	//palette_number ranges from 0 to 63 or 0 to 15 depending on BPP
-// 	//   (8BPP) 3  << 25 == 00011 00000 00000 00000 00000 00000
-// 	//   (4BPP) 63 << 21 == 00011 11110 00000 00000 00000 00000
-// 	//PVR_TXRFMT_PAL4BPP == 10100 00000 00000 00000 00000 00000
-// 	//PVR_TXRFMT_PAL8BPP == 11000 00000 00000 00000 00000 00000
-
 uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t options){
 
 	float u0, v0, u1, v1;
 	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	// Needed if you want to prevent a bunch of compiler warnings...
 
-	uint8_t texture_format = (((1 << 3) - 1) &
-	(sprite_array->spritesheet->texture_format >> (28 - 1)));	// Gets the Pixel format
-																// https://github.com/tvspelsfreak/texconv
-	int textureformat = sprite_array->spritesheet->texture_format;
+	int pvr_txr_fmt = sprite_array->spritesheet->texture_format;
+	uint8_t texture_format = DTEX_TXRFMT(sprite_array->spritesheet->texture_format);
 	if(texture_format == 5){	// 4BPP
-		textureformat |= ((sprite_array->palette->palette_id) << 21);	// Update the later to use KOS' macros
+		pvr_txr_fmt |= PVR_TXRFMT_4BPP_PAL(sprite_array->palette->palette_id);
 	}
 	else if(texture_format == 6){	// 8BPP
-		textureformat |= ((sprite_array->palette->palette_id) << 25);	// Update the later to use KOS' macros
+		pvr_txr_fmt |= PVR_TXRFMT_8BPP_PAL(sprite_array->palette->palette_id);
 	}
 
 	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
@@ -483,9 +469,8 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
-	pvr_poly_cxt_txr(&cxt, poly_list_mode, textureformat,
-		sprite_array->spritesheet->texture_width, sprite_array->spritesheet->texture_height,
-		sprite_array->spritesheet->texture, sprite_array->filter);
+	pvr_poly_cxt_txr(&cxt, poly_list_mode, pvr_txr_fmt, sprite_array->spritesheet->texture_width,
+		sprite_array->spritesheet->texture_height, sprite_array->spritesheet->texture, sprite_array->filter);
 	pvr_poly_compile(&hdr, &cxt);
 	hdr.cmd |= 4;	// Enable oargb
 	pvr_prim(&hdr, sizeof(hdr));
