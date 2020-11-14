@@ -22,7 +22,16 @@ int main(){
 	height = crayon_graphics_get_window_height();
 
 	// Load the text
-	;
+	crayon_font_mono_t BIOS;
+	crayon_palette_t BIOS_P;
+
+	// CHANGE THIS SO ITS USING CD, SD OR PC
+	crayon_memory_mount_romdisk("/cd/stuff.img", "/files");
+
+	int val = crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 0, "/files/BIOS.dtex");
+	if(val){error_freeze("Issue loading BIOS font. %d", val);}
+
+	fs_romdisk_unmount("/files");
 
 	// Setup the camera and untextured polys
 	crayon_sprite_array_t Cam_BG;
@@ -92,6 +101,8 @@ int main(){
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
+	crayon_graphics_setup_palette(&BIOS_P);
+
 	uint32_t curr_btns[4] = {0};
 	uint32_t prev_btns[4] = {0};
 	vec2_u8_t curr_trigs[4] = {{0,0}};
@@ -99,8 +110,23 @@ int main(){
 
 	uint8_t move_mode = 1;
 
+	char options_msg[80];
+
+	char msg[] = "Controls\n"
+		"D-PAD to move white poly around or change its dimensions\n"
+		"\"A\" toggls OOB culling\n"
+		"\"B\" toggles the cropping modes\n"
+		"\"X\" moves the white poly to where it started\n"
+		"\"Y\" toggles which D-PAD mode its in\n"
+		"Left Trigger to rotate anti-clockwise and Right trigger for clockwise\n"
+		"START to terminate program\n";
+	uint8_t lines = 8;
+
 	int loop = 1;
 	while(loop){
+		sprintf(options_msg, "Angle: %g, Coords: {%.1f, %.1f}, OOB: %d, Crop: %d, Move: %d",
+			Poly_Draw.rotation[0], Poly_Draw.coord[0].x, Poly_Draw.coord[0].y, oob_culling, cropping, move_mode);
+
 		// Graphics
 		pvr_wait_ready();
 
@@ -109,6 +135,9 @@ int main(){
 		pvr_list_begin(PVR_LIST_OP_POLY);
 			crayon_graphics_draw_sprites(&Cam_BG, NULL, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED);
 			crayon_graphics_draw_sprites(&Poly_Draw, &Camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED | cropping | oob_culling);
+
+			crayon_graphics_draw_text_mono(options_msg, &BIOS, PVR_LIST_OP_POLY, 32, height - 24 - ((lines + 1.5) * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono(msg, &BIOS, PVR_LIST_OP_POLY, 32, height - 24 - (lines * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
 		pvr_list_finish();
 
 		pvr_scene_finish();
@@ -154,6 +183,12 @@ int main(){
 				}
 			}
 
+			// X press Move poly to where it started
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_X)){
+				Poly_Draw.coord[0].x = 20;
+				Poly_Draw.coord[0].y = 20;
+			}
+
 			// Y press to toggle movement/size mode
 			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_Y)){
 				move_mode = !move_mode;
@@ -175,7 +210,22 @@ int main(){
 				}
 			}
 			else{
-				;
+				if(crayon_input_button_held(curr_btns[i], CONT_DPAD_UP)){
+					Poly_Draw.coord[0].y += 1;
+					Poly_Draw.scale[0].y -= 2;
+				}
+				else if(crayon_input_button_held(curr_btns[i], CONT_DPAD_DOWN)){
+					Poly_Draw.coord[0].y -= 1;
+					Poly_Draw.scale[0].y += 2;
+				}
+				if(crayon_input_button_held(curr_btns[i], CONT_DPAD_LEFT)){
+					Poly_Draw.coord[0].x += 1;
+					Poly_Draw.scale[0].x -= 2;
+				}
+				else if(crayon_input_button_held(curr_btns[i], CONT_DPAD_RIGHT)){
+					Poly_Draw.coord[0].x -= 1;
+					Poly_Draw.scale[0].x += 2;
+				}
 			}
 
 			// Rotation
@@ -188,7 +238,19 @@ int main(){
 		}
 	}
 
-	crayon_memory_free_sprite_array(&Poly_Draw);
+	// Confirm everything was unloaded successfully (Should equal zero)
+	uint32_t return_val = 0;
+
+	return_val += crayon_memory_free_mono_font_sheet(&BIOS);
+	return_val += crayon_memory_free_palette(&BIOS_P);
+
+	return_val += crayon_memory_free_sprite_array(&Poly_Draw);
+
+	if(return_val){
+		error_freeze("An error occured in shutdown");
+	}
+
+	crayon_shutdown();
 
 	return 0;
 }

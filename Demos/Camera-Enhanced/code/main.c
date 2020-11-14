@@ -821,7 +821,7 @@ int main(){
 
 	}
 
-	//Confirm everything was unloaded successfully (Should equal zero)
+	// Confirm everything was unloaded successfully (Should equal zero)
 	uint32_t retVal = 0;
 
 	retVal += crayon_memory_free_spritesheet(&Dwarf);

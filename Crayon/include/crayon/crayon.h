@@ -42,7 +42,8 @@ uint8_t crayon_init(uint8_t platform, uint8_t boot_mode);
 // NEED TO HANDLE RETURN CODES BETTER
 uint8_t crayon_sd_mount_fat();
 
-void __attribute__((weak)) crayon_shutdown();
+void crayon_shutdown();
+// void __attribute__((weak)) crayon_shutdown();
 
 void crayon_sd_unmount_fat();
 
