@@ -458,10 +458,10 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 																// https://github.com/tvspelsfreak/texconv
 	int textureformat = sprite_array->spritesheet->texture_format;
 	if(texture_format == 5){	// 4BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 21);	// Update the later to use KOS' macros
+		textureformat |= ((sprite_array->palette->palette_id) << 21);	// Update the later to use KOS' macros
 	}
-	if(texture_format == 6){	// 8BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 25);	// Update the later to use KOS' macros
+	else if(texture_format == 6){	// 8BPP
+		textureformat |= ((sprite_array->palette->palette_id) << 25);	// Update the later to use KOS' macros
 	}
 
 	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
@@ -1863,13 +1863,13 @@ float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, ve
 float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t *vert, vec2_f_t *scale, const crayon_viewport_t *camera){
 	switch(side){
 		case 0:
-		return (camera->world_width/(float)camera->window_width) * (camera->window_x - vert->x)/scale->x;
+			return (camera->world_width / (float)camera->window_width) * (camera->window_x - vert->x)/scale->x;
 		case 1:
-		return (camera->world_height/(float)camera->window_height) * (camera->window_y - vert->y)/scale->y;
+			return (camera->world_height / (float)camera->window_height) * (camera->window_y - vert->y)/scale->y;
 		case 2:
-		return (camera->world_width/(float)camera->window_width) * (vert->x - (camera->window_x + camera->window_width))/scale->x;
+			return (camera->world_width / (float)camera->window_width) * (vert->x - (camera->window_x + camera->window_width))/scale->x;
 		case 3:
-		return (camera->world_height/(float)camera->window_height) * (vert->y - (camera->window_y + camera->window_height))/scale->y;
+			return (camera->world_height / (float)camera->window_height) * (vert->y - (camera->window_y + camera->window_height))/scale->y;
 	}
 	return 0;	// Shouldn't get here
 }
