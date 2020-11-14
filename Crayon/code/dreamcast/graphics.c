@@ -100,10 +100,13 @@ uint32_t crayon_graphics_get_window_height(){
 //---------------------------------------------------------------------//
 
 
-// draw_mode == ---- ---M
+// draw_option == ---- SHOM
 // M is for draw mode (1 for enhanced, 0 for simple)
+// O is for OOB checks
+// H is for hardware cropping (32 by 32 tiles on Dreamcast, Scissor test on PC)
+// S is for softare cropping (On PC this defaults to hardware cropping)
 int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode, uint8_t draw_mode){
+	uint8_t poly_list_mode, uint8_t draw_option){
 	if(sprite_array->size == 0){return 2;}	// Don't render nothing
 	crayon_viewport_t default_camera;
 	if(camera == NULL){	// No Camera, use the default one
@@ -115,361 +118,16 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 	}
 
 	if(sprite_array->options & CRAY_HAS_TEXTURE){	// Textured
-		if(draw_mode & CRAY_DRAW_ENHANCED){
-			return crayon_graphics_draw_sprites_enhanced(sprite_array, camera, poly_list_mode);
+		if(draw_option & CRAYON_DRAW_ENHANCED){
+			return crayon_graphics_draw_sprites_enhanced(sprite_array, camera, poly_list_mode, draw_option);
 		}
-		return crayon_graphics_draw_sprites_simple(sprite_array, camera, poly_list_mode);
+		return crayon_graphics_draw_sprites_simple(sprite_array, camera, poly_list_mode, draw_option);
 	}
-	return crayon_graphics_draw_untextured_array(sprite_array, camera, poly_list_mode);
-}
-
-//DELETE THIS LATER
-// 	//Use these to merge the two palette if's into one
-// 	// PVR_TXRFMT_PAL4BPP   (5 << 27)
-// 	// PVR_TXRFMT_PAL8BPP   (6 << 27)
-// 	//(6 << 27) == 110 << 27 == 11000 00000 00000 00000 00000 00000
-// 	//(5 << 27) == 110 << 27 == 10100 00000 00000 00000 00000 00000
-// 	//palette_number ranges from 0 to 63 or 0 to 15 depending on BPP
-// 	//   (8BPP) 3  << 25 == 00011 00000 00000 00000 00000 00000
-// 	//   (4BPP) 63 << 21 == 00011 11110 00000 00000 00000 00000
-// 	//PVR_TXRFMT_PAL4BPP == 10100 00000 00000 00000 00000 00000
-// 	//PVR_TXRFMT_PAL8BPP == 11000 00000 00000 00000 00000 00000
-
-uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode){
-	
-	float u0, v0, u1, v1;
-	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	// Needed if you want to prevent a bunch of compiler warnings...
-
-	uint8_t texture_format = (((1 << 3) - 1) &
-	(sprite_array->spritesheet->texture_format >> (28 - 1)));	// Gets the Pixel format
-																// https://github.com/tvspelsfreak/texconv
-	int textureformat = sprite_array->spritesheet->texture_format;
-	if(texture_format == 5){	// 4BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 21);	// Update the later to use KOS' macros
-	}
-	if(texture_format == 6){	// 8BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 25);	// Update the later to use KOS' macros
-	}
-
-	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
-	// 									//---- 1111 (Crop on all edges)
-
-	// //DELETE THIS LATER. A basic optimisation for now
-	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
-	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
-	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
-	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
-
-	//Used for cropping
-	// uint8_t bounds = 0;
-	// uint8_t cropped = 0;
-
-	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
-		// The sprite points are also floor-ed before calculations are done
-	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x),floor(camera->world_y)};
-
-	pvr_poly_cxt_t cxt;
-	pvr_poly_hdr_t hdr;
-	pvr_poly_cxt_txr(&cxt, poly_list_mode, textureformat,
-		sprite_array->spritesheet->texture_width, sprite_array->spritesheet->texture_height,
-		sprite_array->spritesheet->texture, sprite_array->filter);
-	pvr_poly_compile(&hdr, &cxt);
-	hdr.cmd |= 4;	// Enable oargb
-	pvr_prim(&hdr, sizeof(hdr));
-
-	pvr_vertex_t vert[4];	// 4 verts per sprite
-	vec2_f_t rotated_values;
-
-	// Easily lets us use the right index for each array
-		// That way 1-length arrays only get calculated once and each element for a multi list is calculated
-	uint16_t *rotation_index, *flip_index, *frame_index, *colour_index;
-	uint8_t multi_scale = !!(sprite_array->options & CRAY_MULTI_SCALE);
-	uint16_t zero = 0;
-	float angle = 0;
-	vec2_f_t mid = (vec2_f_t){0,0};
-	vec2_f_t scales = (vec2_f_t){camera->window_width / (float)camera->world_width,
-		camera->window_height / (float)camera->world_height};
-	uint8_t skip = 0;
-
-	uint16_t i, j;	// Indexes
-
-	if(sprite_array->options & CRAY_MULTI_FRAME){frame_index = &i;}
-	else{frame_index = &zero;}
-
-	if(sprite_array->options & CRAY_MULTI_FLIP){flip_index = &i;}
-	else{flip_index = &zero;}
-
-	if(sprite_array->options & CRAY_MULTI_ROTATE){rotation_index = &i;}
-	else{rotation_index = &zero;}
-
-	if(sprite_array->options & CRAY_MULTI_COLOUR){colour_index = &i;}
-	else{colour_index = &zero;}
-
-	// Set the flags
-	for(j = 0; j < 3; j++){
-		vert[j].flags = PVR_CMD_VERTEX;
-	}
-	vert[3].flags = PVR_CMD_VERTEX_EOL;
-
-	uint8_t invf, f, a, r, g, b;
-	for(i = 0; i < sprite_array->size; i++){
-		if(sprite_array->colour[*colour_index] >> 24 == 0){	// Don't draw alpha-less stuff
-			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
-			skip = 1;
-		}
-
-		if(sprite_array->visible[i] == 0){
-			if(i != 0){continue;}
-			else{skip = 1;}	// We need the defaults to be set on first loop
-		}
-
-		// These if statements will trigger once if we have a single element (i == 0)
-			// and every time for a multi-list
-
-		if(*frame_index == i){	// frame
-			u0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
-			v0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
-			u1 = u0 + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
-			v1 = v0 + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
-		}
-
-		if(*flip_index == i || *frame_index == i){	// UV
-			if(sprite_array->flip[*flip_index] & (1 << 0)){	// Is flipped
-				vert[0].u = u1;
-				vert[0].v = v0;
-				vert[1].u = u0;
-				vert[1].v = v0;
-				vert[2].u = u1;
-				vert[2].v = v1;
-				vert[3].u = u0;
-				vert[3].v = v1;
-			}
-			else{
-				vert[0].u = u0;
-				vert[0].v = v0;
-				vert[1].u = u1;
-				vert[1].v = v0;
-				vert[2].u = u0;
-				vert[2].v = v1;
-				vert[3].u = u1;
-				vert[3].v = v1;
-			}
-		}
-
-		if(*colour_index == i){
-			f = sprite_array->fade[*colour_index];
-			a = (sprite_array->colour[*colour_index] >> 24) & 0xFF;
-
-			r = (((sprite_array->colour[*colour_index] >> 16) & 0xFF) * f)/255.0f;
-			g = (((sprite_array->colour[*colour_index] >> 8) & 0xFF) * f)/255.0f;
-			b = (((sprite_array->colour[*colour_index]) & 0xFF) * f)/255.0f;
-			if(sprite_array->options & CRAY_COLOUR_ADD){	// If Adding
-				vert[0].argb = (a << 24) + 0x00FFFFFF;
-			}
-			else{	// If Blending
-				invf = 255 - f;
-				vert[0].argb = (a << 24) + (invf << 16) + (invf << 8) + invf;
-			}
-			vert[0].oargb = (a << 24) + (r << 16) + (g << 8) + b;
-		}
-
-		// Update rotation part if needed
-		if(*rotation_index == i){
-			angle = fmod(sprite_array->rotation[*rotation_index], 360.0);	// If angle is more than 360 degrees, this fixes that
-			if(angle < 0){angle += 360.0;}	// fmod has range -359 to +359, this changes it to 0 to +359
-			angle = (angle * M_PI) / 180.0f;
-		}
-
-		if(skip){skip = 0; continue;}
-
-		vert[0].z = sprite_array->layer[i];
-
-		vert[0].x = floor(sprite_array->coord[i].x) - world_coord.x;
-		vert[0].y = floor(sprite_array->coord[i].y) - world_coord.y;
-		vert[1].x = vert[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
-		vert[1].y = vert[0].y;
-		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
-		vert[3].x = vert[1].x;
-		vert[3].y = vert[2].y;
-
-		// If we don't want to do rotations (Rotation == 0.0), then skip it
-		if(sprite_array->rotation[*rotation_index] != 0.0f){
-
-			// Gets the true midpoint
-			mid.x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
-			mid.y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
-
-			// Update the vert x and y positions
-			for(j = 0; j < 4; j++){
-				rotated_values = crayon_graphics_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
-				vert[j].x = rotated_values.x;
-				vert[j].y = rotated_values.y;
-			}
-		}
-
-		// Apply the viewport scaling as well as the window offset
-		for(j = 0; j < 4; j++){
-			vert[j].x = floor(vert[j].x * scales.x) + camera->window_x;
-			vert[j].y = floor(vert[j].y * scales.y) + camera->window_y;
-		}
-
-		// Do OOB and culling calculations here
-		;
-
-		// Apply these to all verts
-		for(j = 1; j < 4; j++){
-			vert[j].argb = vert[0].argb;
-			vert[j].oargb = vert[0].oargb;
-			vert[j].z = vert[0].z;
-		}
-
-		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
-	}
-
-	return 0;
-}
-
-uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode){
-
-	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
-	// 									//---- 1111 (Crop on all edges)
-
-	// //DELETE THIS LATER. A basic optimisation for now
-	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
-	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
-	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
-	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
-
-	//Used for cropping
-	// uint8_t bounds = 0;
-	// uint8_t cropped = 0;
-
-	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
-		// The sprite points are also floor-ed before calculations are done
-	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x),floor(camera->world_y)};
-
-	pvr_poly_cxt_t cxt;
-	pvr_poly_hdr_t hdr;
-	pvr_vertex_t vert[4];	// Might need to change this to "8" later for cropping reasons
-	vec2_f_t rotated_values;
-
-	pvr_poly_cxt_col(&cxt, poly_list_mode);
-	pvr_poly_compile(&hdr, &cxt);
-	pvr_prim(&hdr, sizeof(hdr));
-
-	// All this just for rotations
-	uint16_t *rotation_index, *colour_index;
-	uint8_t multi_dim = !!(sprite_array->options & CRAY_MULTI_DIM);
-	uint16_t zero = 0;
-	float angle = 0;
-	vec2_f_t mid = (vec2_f_t){0,0};
-	vec2_f_t scales = (vec2_f_t){camera->window_width / (float)camera->world_width,
-		camera->window_height / (float)camera->world_height};
-	uint8_t skip = 0;
-
-	// We use full ints because its faster than uint16_t
-	int i, j;
-
-	// --CR -D--
-	if(sprite_array->options & CRAY_MULTI_ROTATE){rotation_index = &i;}
-	else{rotation_index = &zero;}
-	if(sprite_array->options & CRAY_MULTI_COLOUR){colour_index = &i;}
-	else{colour_index = &zero;}
-
-	for(i = 0; i < 3; i++){
-		vert[i].flags = PVR_CMD_VERTEX;
-	}
-	vert[3].flags = PVR_CMD_VERTEX_EOL;
-
-	// Unused param, set to 0 (Unused so we don't actually have to set it)
-	vert[0].oargb = 0;
-	for(i = 1; i < 4; i++){
-		vert[i].oargb = vert[0].oargb;
-	}
-
-	for(i = 0; i < sprite_array->size; i++){
-		if(sprite_array->colour[*colour_index] >> 24 == 0 || sprite_array->visible[i] == 0){	// Don't draw alpha-less or invisible stuff
-			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
-			skip = 1;	// We need the defaults to be set on first loop
-		}
-
-		// Update rotation part if needed
-		if(*rotation_index == i){
-			angle = fmod(sprite_array->rotation[i], 360.0);	// If angle is more than 360 degrees, this fixes that
-			if(angle < 0){angle += 360.0;}	// fmod has range -359 to +359, this changes it to 0 to +359
-			angle = (angle * M_PI) / 180.0f;	// Convert from degrees to ratians
-		}
-
-		if(*colour_index == i){
-			vert[0].argb = sprite_array->colour[i];
-		}
-
-		if(skip){
-			skip = 0;
-			continue;
-		}
-
-		vert[0].z = sprite_array->layer[i];
-
-		vert[0].x = floor(sprite_array->coord[i].x) - world_coord.x;
-		vert[0].y = floor(sprite_array->coord[i].y) - world_coord.y;
-		vert[1].x = vert[0].x + floor(sprite_array->scale[i * multi_dim].x);
-		vert[1].y = vert[0].y;
-		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + floor(sprite_array->scale[i * multi_dim].y);
-		vert[3].x = vert[1].x;
-		vert[3].y = vert[2].y;
-
-		// NOTE: world_coord.x/y are already floor-ed so the outer floor isn't doing stuff right?
-
-		// vert.ax = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-		// vert.ay = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
-		// vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
-		// vert.by = vert.ay;
-		// vert.cx = vert.bx;
-		// vert.cy = vert.ay + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_height / (float)camera->world_height));
-		// vert.dx = vert.ax;
-		// vert.dy = vert.cy;
-
-		// Rotate the poly
-		if(sprite_array->rotation[*rotation_index] != 0.0f){
-			// Gets the midpoint
-			mid.x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
-			mid.y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
-
-			// Rotate the verts around the midpoint
-			for(j = 0; j < 4; j++){
-				rotated_values = crayon_graphics_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
-				vert[j].x = rotated_values.x;
-				vert[j].y = rotated_values.y;
-			}
-		}
-
-		// Apply the viewport scaling as well as the window offset
-		for(j = 0; j < 4; j++){
-			vert[j].x = floor(vert[j].x * scales.x) + camera->window_x;
-			vert[j].y = floor(vert[j].y * scales.y) + camera->window_y;
-		}
-
-		// Do OOB and culling calculations here
-		;
-
-		for(j = 1; j < 4; j++){
-			vert[j].z = vert[0].z;
-			vert[j].argb = vert[0].argb;
-		}
-
-		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
-	}
-
-	return 0;
+	return crayon_graphics_draw_untextured_sprites(sprite_array, camera, poly_list_mode, draw_option);
 }
 
 uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode){
+	uint8_t poly_list_mode, uint8_t options){
 
 	uint8_t crop_edges = (1 << 4) - 1;	// ---- BRTL
 										// ---- 1111 (Crop on all edges)
@@ -671,7 +329,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		sprite_verts[3] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 
 		// If OOB then don't draw
-		if(crayon_graphics_check_oob(camera_verts, sprite_verts, CRAY_DRAW_SIMPLE)){continue;}
+		if(!crayon_graphics_aabb_aabb_overlap(sprite_verts, camera_verts)){continue;}
 
 		// If we don't need to crop at all, don't both doing the checks. bounds is zero by default
 		if(crop_edges){
@@ -777,10 +435,379 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 	return 0;
 }
 
+//DELETE THIS LATER
+// 	//Use these to merge the two palette if's into one
+// 	// PVR_TXRFMT_PAL4BPP   (5 << 27)
+// 	// PVR_TXRFMT_PAL8BPP   (6 << 27)
+// 	//(6 << 27) == 110 << 27 == 11000 00000 00000 00000 00000 00000
+// 	//(5 << 27) == 110 << 27 == 10100 00000 00000 00000 00000 00000
+// 	//palette_number ranges from 0 to 63 or 0 to 15 depending on BPP
+// 	//   (8BPP) 3  << 25 == 00011 00000 00000 00000 00000 00000
+// 	//   (4BPP) 63 << 21 == 00011 11110 00000 00000 00000 00000
+// 	//PVR_TXRFMT_PAL4BPP == 10100 00000 00000 00000 00000 00000
+// 	//PVR_TXRFMT_PAL8BPP == 11000 00000 00000 00000 00000 00000
+
+uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode, uint8_t options){
+
+	float u0, v0, u1, v1;
+	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	// Needed if you want to prevent a bunch of compiler warnings...
+
+	uint8_t texture_format = (((1 << 3) - 1) &
+	(sprite_array->spritesheet->texture_format >> (28 - 1)));	// Gets the Pixel format
+																// https://github.com/tvspelsfreak/texconv
+	int textureformat = sprite_array->spritesheet->texture_format;
+	if(texture_format == 5){	// 4BPP
+			textureformat |= ((sprite_array->palette->palette_id) << 21);	// Update the later to use KOS' macros
+	}
+	if(texture_format == 6){	// 8BPP
+			textureformat |= ((sprite_array->palette->palette_id) << 25);	// Update the later to use KOS' macros
+	}
+
+	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
+	// 									//---- 1111 (Crop on all edges)
+
+	// //DELETE THIS LATER. A basic optimisation for now
+	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
+	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
+	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
+	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
+
+	//Used for cropping
+	// uint8_t bounds = 0;
+	// uint8_t cropped = 0;
+
+	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
+		// The sprite points are also floor-ed before calculations are done
+	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x),floor(camera->world_y)};
+
+	pvr_poly_cxt_t cxt;
+	pvr_poly_hdr_t hdr;
+	pvr_poly_cxt_txr(&cxt, poly_list_mode, textureformat,
+		sprite_array->spritesheet->texture_width, sprite_array->spritesheet->texture_height,
+		sprite_array->spritesheet->texture, sprite_array->filter);
+	pvr_poly_compile(&hdr, &cxt);
+	hdr.cmd |= 4;	// Enable oargb
+	pvr_prim(&hdr, sizeof(hdr));
+
+	#define _MAX_POLY_VERTS 8	// With Sutherland-Hodgman I belive it can create up-to 8 vert polys for a 4 sided object
+	pvr_vertex_t vert[_MAX_POLY_VERTS];
+	#undef _MAX_POLY_VERTS
+	vec2_f_t rotated_values;
+
+	// Easily lets us use the right index for each array
+		// That way 1-length arrays only get calculated once and each element for a multi list is calculated
+	uint16_t *rotation_index, *flip_index, *frame_index, *colour_index;
+	uint8_t multi_scale = !!(sprite_array->options & CRAY_MULTI_SCALE);
+	uint16_t zero = 0;
+	float angle = 0;
+	vec2_f_t mid = (vec2_f_t){0,0};
+	vec2_f_t scales = (vec2_f_t){camera->window_width / (float)camera->world_width,
+		camera->window_height / (float)camera->world_height};
+	uint8_t skip = 0;
+
+	uint16_t i, j;	// Indexes
+
+	if(sprite_array->options & CRAY_MULTI_FRAME){frame_index = &i;}
+	else{frame_index = &zero;}
+
+	if(sprite_array->options & CRAY_MULTI_FLIP){flip_index = &i;}
+	else{flip_index = &zero;}
+
+	if(sprite_array->options & CRAY_MULTI_ROTATE){rotation_index = &i;}
+	else{rotation_index = &zero;}
+
+	if(sprite_array->options & CRAY_MULTI_COLOUR){colour_index = &i;}
+	else{colour_index = &zero;}
+
+	// Set the flags
+	for(j = 0; j < 3; j++){
+		vert[j].flags = PVR_CMD_VERTEX;
+	}
+	vert[3].flags = PVR_CMD_VERTEX_EOL;
+
+	uint8_t invf, f, a, r, g, b;
+	for(i = 0; i < sprite_array->size; i++){
+		if(sprite_array->colour[*colour_index] >> 24 == 0){	// Don't draw alpha-less stuff
+			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
+			skip = 1;
+		}
+
+		if(sprite_array->visible[i] == 0){
+			if(i != 0){continue;}
+			else{skip = 1;}	// We need the defaults to be set on first loop
+		}
+
+		// These if statements will trigger once if we have a single element (i == 0)
+			// and every time for a multi-list
+
+		if(*frame_index == i){	// frame
+			u0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
+			v0 = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
+			u1 = u0 + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
+			v1 = v0 + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
+		}
+
+		if(*flip_index == i || *frame_index == i){	// UV
+			if(sprite_array->flip[*flip_index] & (1 << 0)){	// Is flipped
+				vert[0].u = u1;
+				vert[0].v = v0;
+				vert[1].u = u0;
+				vert[1].v = v0;
+				vert[2].u = u1;
+				vert[2].v = v1;
+				vert[3].u = u0;
+				vert[3].v = v1;
+			}
+			else{
+				vert[0].u = u0;
+				vert[0].v = v0;
+				vert[1].u = u1;
+				vert[1].v = v0;
+				vert[2].u = u0;
+				vert[2].v = v1;
+				vert[3].u = u1;
+				vert[3].v = v1;
+			}
+		}
+
+		if(*colour_index == i){
+			f = sprite_array->fade[*colour_index];
+			a = (sprite_array->colour[*colour_index] >> 24) & 0xFF;
+
+			r = (((sprite_array->colour[*colour_index] >> 16) & 0xFF) * f)/255.0f;
+			g = (((sprite_array->colour[*colour_index] >> 8) & 0xFF) * f)/255.0f;
+			b = (((sprite_array->colour[*colour_index]) & 0xFF) * f)/255.0f;
+			if(sprite_array->options & CRAY_COLOUR_ADD){	// If Adding
+				vert[0].argb = (a << 24) + 0x00FFFFFF;
+			}
+			else{	// If Blending
+				invf = 255 - f;
+				vert[0].argb = (a << 24) + (invf << 16) + (invf << 8) + invf;
+			}
+			vert[0].oargb = (a << 24) + (r << 16) + (g << 8) + b;
+		}
+
+		// Update rotation part if needed
+		if(*rotation_index == i){
+			angle = fmod(sprite_array->rotation[*rotation_index], 360.0);	// If angle is more than 360 degrees, this fixes that
+			if(angle < 0){angle += 360.0;}	// fmod has range -359 to +359, this changes it to 0 to +359
+			angle = (angle * M_PI) / 180.0f;
+		}
+
+		if(skip){skip = 0; continue;}
+
+		vert[0].z = sprite_array->layer[i];
+
+		vert[0].x = floor(sprite_array->coord[i].x) - world_coord.x;
+		vert[0].y = floor(sprite_array->coord[i].y) - world_coord.y;
+		vert[1].x = vert[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x);
+		vert[1].y = vert[0].y;
+		vert[2].x = vert[0].x;
+		vert[2].y = vert[0].y + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y);
+		vert[3].x = vert[1].x;
+		vert[3].y = vert[2].y;
+
+		// If we don't want to do rotations (Rotation == 0.0), then skip it
+		if(sprite_array->rotation[*rotation_index] != 0.0f){
+
+			// Gets the true midpoint
+			mid.x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
+			mid.y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
+
+			// Update the vert x and y positions
+			for(j = 0; j < 4; j++){
+				rotated_values = crayon_misc_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
+				vert[j].x = rotated_values.x;
+				vert[j].y = rotated_values.y;
+			}
+		}
+
+		// Apply the viewport scaling as well as the window offset
+		for(j = 0; j < 4; j++){
+			vert[j].x = floor(vert[j].x * scales.x) + camera->window_x;
+			vert[j].y = floor(vert[j].y * scales.y) + camera->window_y;
+		}
+
+		// Do OOB and culling calculations here
+		;
+
+		// Apply these to all verts
+		for(j = 1; j < 4; j++){
+			vert[j].argb = vert[0].argb;
+			vert[j].oargb = vert[0].oargb;
+			vert[j].z = vert[0].z;
+		}
+
+		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
+	}
+
+	return 0;
+}
+
+uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode, uint8_t options){
+
+	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
+	// 									//---- 1111 (Crop on all edges)
+
+	// //DELETE THIS LATER. A basic optimisation for now
+	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
+	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
+	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
+	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
+
+	//Used for cropping
+	// uint8_t bounds = 0;
+	// uint8_t cropped = 0;
+
+	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
+		// The sprite points are also floor-ed before calculations are done
+	vec2_f_t camera_scale = (vec2_f_t){camera->window_width / (float)camera->world_width,
+		camera->window_height / (float)camera->world_height};
+
+	pvr_poly_cxt_t cxt;
+	pvr_poly_hdr_t hdr;
+
+	// The verts
+	uint8_t poly_verts = 4;
+	#define _MAX_POLY_VERTS 8	// With Sutherland-Hodgman I belive it can create up-to 8 vert polys for a 4 sided object
+	pvr_vertex_t vert[_MAX_POLY_VERTS];
+	vec2_f_t vert_coords[_MAX_POLY_VERTS * 2];	// We double that because of Sutherland-Hodgman alg
+	#undef _MAX_POLY_VERTS
+
+	// Setting the first vert's command
+	vert[0].flags = PVR_CMD_VERTEX;
+
+	// min_x, min_y, max_x, max_y
+	float window_coords[4];
+	window_coords[0] = camera->window_x;
+	window_coords[1] = camera->window_y;
+	window_coords[2] = camera->window_x + camera->window_width;
+	window_coords[3] = camera->window_y + camera->window_height;
+
+	pvr_poly_cxt_col(&cxt, poly_list_mode);
+	pvr_poly_compile(&hdr, &cxt);
+	pvr_prim(&hdr, sizeof(hdr));
+
+	// Rotation stuff
+		// Using vert_coords indexes 4 for the mid-point
+	float angle = 0;
+
+	// --CR -D--
+	uint8_t multi_colour = !!(sprite_array->options & CRAY_MULTI_COLOUR);
+	uint8_t multi_rotation = !!(sprite_array->options & CRAY_MULTI_ROTATE);
+	uint8_t multi_dim = !!(sprite_array->options & CRAY_MULTI_DIM);
+
+	// Invisible or 0 alpha poly
+	uint8_t skip = 0;
+
+	// We use full ints because its faster than uint16_t apparently
+	int i, j, k;
+
+	for(i = 0; i < sprite_array->size; i++){
+		if(sprite_array->colour[multi_colour ? i : 0] >> 24 == 0 || sprite_array->visible[i] == 0){	// Don't draw alpha-less or invisible stuff
+			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
+			skip = 1;	// We need the defaults to be set on first loop
+		}
+
+		// Update rotation part if needed
+		if(i == 0 || multi_rotation){
+			angle = fmod(sprite_array->rotation[i], 360.0);	// If angle is more than 360 degrees, this fixes that
+			if(angle < 0){angle += 360.0;}	// fmod has range -359 to +359, this changes it to 0 to +359
+			angle = (angle * M_PI) / 180.0f;	// Convert from degrees to ratians
+		}
+
+		if(i == 0 || multi_colour){
+			vert[0].argb = sprite_array->colour[i];
+		}
+
+		if(skip){
+			skip = 0;
+			continue;
+		}
+
+		// Reason for the order of the floor-ing
+			// For top left vert, We remove any float variance from the sprite vert and also the world coord since all sprites should
+			// be locked to the same grind and same for cameras. We then floor the result of timesing by the scale so its now locked
+			// to the grid. We don't floor the scale because we might want to scale by 2.5 or something. Finally window_x/y is an int
+		// Also notice how the verts are in clockwise order. This makes it easier for sutherland hodgman algorithm
+		vert_coords[0].x = floor((floor(sprite_array->coord[i].x) - floor(camera->world_x)) * camera_scale.x) + camera->window_x;
+		vert_coords[0].y = floor((floor(sprite_array->coord[i].y) - floor(camera->world_y)) * camera_scale.y) + camera->window_y;
+		vert_coords[1].x = vert_coords[0].x + floor(sprite_array->scale[multi_dim ? i : 0].x * camera_scale.x);
+		vert_coords[1].y = vert_coords[0].y;
+		vert_coords[2].x = vert_coords[1].x;
+		vert_coords[2].y = vert_coords[0].y + floor(sprite_array->scale[multi_dim ? i : 0].y * camera_scale.y);
+		vert_coords[3].x = vert_coords[0].x;
+		vert_coords[3].y = vert_coords[2].y;
+
+		// Rotate the poly
+		if(sprite_array->rotation[multi_rotation ? i : 0] != 0.0){
+			// Gets the midpoint
+			#define _CRAYON_SPARE_INDEX 4	// Rather than making a new variable, lets use an exisiting one to save on registers
+			vert_coords[_CRAYON_SPARE_INDEX].x = ((vert_coords[1].x - vert_coords[0].x) * 0.5) + vert_coords[0].x;
+			vert_coords[_CRAYON_SPARE_INDEX].y = ((vert_coords[2].y - vert_coords[0].y) * 0.5) + vert_coords[0].y;
+
+			// Rotate the verts around the midpoint
+			for(j = 0; j < 4; j++){
+				vert_coords[j] = crayon_misc_rotate_point(vert_coords[_CRAYON_SPARE_INDEX], vert_coords[j], angle);
+			}
+			#undef _CRAYON_MID_POINT
+		}
+
+		// OOB check
+		if(options & CRAYON_DRAW_OOB_SKIP){
+			// If they don't overlap then no point progressing
+			if(!crayon_graphics_aabb_obb_overlap(vert_coords, window_coords)){
+				continue;
+			}
+		}
+
+		// Perform software cropping (But only if we can't do hardware cropping)
+			// That !0 is a placeholder for the hardware check
+		if(!0 && (options & CRAYON_DRAW_SOFTWARE_CROP)){
+			poly_verts = crayon_graphics_sutherland_hodgman(vert_coords, window_coords);
+
+			// This will only really trigger is the OOB check was disabled
+			if(poly_verts < 3){continue;}	// Usually only ever triggers for "0" so we don't render junk
+		}
+		else{
+			poly_verts = 4;
+		}
+
+		// For a 4-vert poly we expect the vert order to be "0, 1, 3, 2"
+			// We have to swap the vertex order since this is how its done to render stuff
+		vert[0].x = vert_coords[0].x;
+		vert[0].y = vert_coords[0].y;
+		k = 1;	// Order, 0, 1, -1, 2, -2
+		for(j = 1; j < poly_verts; j++){
+			skip = j % 2 != 1;	// Starts at 1
+			vert[j].x = vert_coords[skip ? poly_verts - k : k].x;
+			vert[j].y = vert_coords[skip ? poly_verts - k : k].y;
+			if(skip){k++;}
+		}
+		skip = 0;	// Since this is used for other things too
+
+		// Set the Z, colour and flags for all the verts
+		vert[0].z = sprite_array->layer[i];
+		for(j = 1; j < poly_verts; j++){
+			vert[j].z = vert[0].z;
+			vert[j].argb = vert[0].argb;
+			vert[j].flags = PVR_CMD_VERTEX;	// Don't bother setting this for the first one since it should never change
+		}
+		vert[poly_verts - 1].flags = PVR_CMD_VERTEX_EOL;	// This must be EOL
+
+		// Submit the verts to the PVR for rendering
+		pvr_prim(&vert, sizeof(pvr_vertex_t) * poly_verts);
+	}
+
+	return 0;
+}
+
 // Below is a function that does the same stuff as the simple camera, except its using polys and hence 32-bit UVs.
 	// This means all known cases of shimmering and jittering disapear
 uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode){
+	uint8_t poly_list_mode, uint8_t options){
 	pvr_sprite_txr_t vert = {
 		.flags = PVR_CMD_VERTEX_EOL
 	};
@@ -952,8 +979,8 @@ uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_
 				//Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.dx = floor((floor(sprite_array->coord[i].x) - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.dy = floor((floor(sprite_array->coord[i].y) - world_coord.y - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.dx = floor((floor(sprite_array->coord[i].x) - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff * 0.5)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.dy = floor((floor(sprite_array->coord[i].y) - world_coord.y - (sprite_array->scale[i * multi_scale].x * diff * 0.5)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 			vert.ax = vert.dx + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_width / (float)camera->world_width));
 			vert.ay = vert.dy;
 			vert.bx = vert.ax;
@@ -978,8 +1005,8 @@ uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_
 
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.bx = floor((floor(sprite_array->coord[i].x) - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.by = floor((floor(sprite_array->coord[i].y) - world_coord.y - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.bx = floor((floor(sprite_array->coord[i].x) - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff * 0.5)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.by = floor((floor(sprite_array->coord[i].y) - world_coord.y - (sprite_array->scale[i * multi_scale].x * diff * 0.5)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 			vert.cx = vert.bx + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_width / (float)camera->world_width));
 			vert.cy = vert.by;
 			vert.dx = vert.cx;
@@ -1001,7 +1028,7 @@ uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_
 		sprite_verts[3] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 
 		//If OOB then don't draw
-		if(crayon_graphics_check_oob(camera_verts, sprite_verts, CRAY_DRAW_SIMPLE)){continue;}
+		if(!crayon_graphics_aabb_aabb_overlap(sprite_verts, camera_verts)){continue;}
 
 		//If we don't need to crop at all, don't both doing the checks. bounds is zero by default
 		if(crop_edges){
@@ -1141,10 +1168,10 @@ uint8_t crayon_graphics_draw_text_mono(char *string, const crayon_font_mono_t *f
 											// https://github.com/tvspelsfreak/texconv
 	int textureformat = fm->texture_format;
 	if(texture_format == 5){	// 4BPP
-			textureformat |= ((palette_number) << 21);	// Update the later to use KOS' macros
+		textureformat |= ((palette_number) << 21);	// Update the later to use KOS' macros
 	}
 	if(texture_format == 6){	// 8BPP
-			textureformat |= ((palette_number) << 25);	// Update the later to use KOS' macros
+		textureformat |= ((palette_number) << 25);	// Update the later to use KOS' macros
 	}
 	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, fm->texture_width,
 		fm->texture_height, fm->texture, PVR_FILTER_NONE);
@@ -1218,10 +1245,10 @@ uint8_t crayon_graphics_draw_text_prop(char *string, const crayon_font_prop_t *f
 											// https://github.com/tvspelsfreak/texconv
 	int textureformat = fp->texture_format;
 	if(texture_format == 5){	// 4BPP
-			textureformat |= ((palette_number) << 21);	// Update the later to use KOS' macros
+		textureformat |= ((palette_number) << 21);	// Update the later to use KOS' macros
 	}
 	if(texture_format == 6){	// 8BPP
-			textureformat |= ((palette_number) << 25);	// Update the later to use KOS' macros
+		textureformat |= ((palette_number) << 25);	// Update the later to use KOS' macros
 	}
 	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, fp->texture_width,
 		fp->texture_height, fp->texture, PVR_FILTER_NONE);
@@ -1532,11 +1559,200 @@ double crayon_graphics_transition_get_prev_percentage(crayon_transition_t *effec
 //---------------------------------------------------------------------//
 
 
-vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, float radians){
-	float sin_theta = sin(radians);
-	float cos_theta = cos(radians);
-	return (vec2_f_t){(cos_theta * (orbit.x - center.x)) - (sin_theta * (orbit.y - center.y)) + center.x,
-		(sin_theta * (orbit.x - center.x)) + (cos_theta * (orbit.y - center.y)) + center.y};
+// If side is true, we check >=, else its <
+static uint8_t _crayon_graphics_point_inbounds(float val, float axis, uint8_t side){
+	if(side){return (val >= axis);}
+	return (val < axis);
+}
+
+// If we are going here, we're assuming the lines DO intersect somewhere
+	// If given x value, we're trying to find y and vica versa
+static float _crayon_graphic_line_plane_intersect(vec2_f_t *v0, vec2_f_t *v1, float curr_val, uint8_t vertical_plane){
+	float m, c;
+	if(vertical_plane){  // Have x, finding y
+		// To avoid divide by zero error
+		if(v0->x == v1->x){  // In our use case, this should never trigger since we know the line couldn't be paralle
+			return v0->y;
+		}
+
+		// Turn our line segment into "y = mx + c" then plug in x (curr_val) and we have y
+		m = (v1->y - v0->y) / (v1->x - v0->x);
+		c = v0->y - (m * v0->x);
+
+		// We want to get the y value and we have the x value
+			// This version doesn't work, but if it did it would be faster than the other method
+		//float ratio = abs(x0 - curr_val) / abs(x0 - x1);  // Ratio of how far the point is between x0 and x1
+		//return y0 + (abs(y0 - y1) * ratio);   // The y coord
+	}
+	else{  // Have y, finding x
+		// To avoid divide by zero error
+		if(v0->y == v1->y){  // Never used for us
+			return v0->x;
+		}
+
+		// Rather than doing "y = mx + c", I instead do "x = my + c" and this still gets us the right result.
+		m = (v1->x - v0->x) / (v1->y - v0->y);
+		c = v0->x - (m * v0->y);
+	}
+
+	return (m * curr_val) + c;
+}
+
+uint8_t crayon_graphics_sutherland_hodgman(vec2_f_t *vert_coords, float *camera_coords){
+	// L, T, R, B
+	uint8_t crop_len = 4;
+	uint8_t new_len;	// Set to 0 later
+
+	// Some vars
+	uint8_t in1, in2;  // 1 if value is in, 0 if not
+	uint8_t offset1, offset2;
+	uint8_t axis = 1;	// 1 = Data is from indexes 0 - 7, 0 = indexes 8 - 15
+	unsigned int i, j, prev_vert_index;
+	for(j = 0; j < 4; j++){
+		new_len = 0;
+		#define _CRAYON_VERT_ARRAY_MID 8
+		offset1 = axis ? _CRAYON_VERT_ARRAY_MID : 0;
+		offset2 = axis ? 0 : _CRAYON_VERT_ARRAY_MID;
+		#undef _CRAYON_VERT_ARRAY_MID
+		prev_vert_index = offset2 + (crop_len - 1);	// The last vert in the list
+
+		// Checking if the vertex is in or out of bounds
+		in1 = _crayon_graphics_point_inbounds(axis ? vert_coords[prev_vert_index].x : vert_coords[prev_vert_index].y, camera_coords[j], (j < 2));
+
+		for(i = 0; i < crop_len; i++){
+			in2 = _crayon_graphics_point_inbounds(axis ? vert_coords[offset2 + i].x : vert_coords[offset2 + i].y, camera_coords[j], (j < 2));
+
+			if(in1 && in2){	// both IN, Save vert i
+				if(new_len >= 8){printf("AN ERROR OCCURED"); __CRAYON_GRAPHICS_DEBUG_VARS[0] = 0; return 0;}	// This should never trigger
+				vert_coords[offset1 + new_len].x = vert_coords[offset2 + i].x;
+				vert_coords[offset1 + new_len].y = vert_coords[offset2 + i].y;
+				new_len++;
+			}
+			else if(in1 || in2){	// One IN, other OUT. We'll make v1' and save it
+				if(new_len >= 8){printf("AN ERROR OCCURED"); __CRAYON_GRAPHICS_DEBUG_VARS[0] = 1; return 0;}	// This should never trigger
+				if(axis){
+					vert_coords[offset1 + new_len].x = camera_coords[j];
+					vert_coords[offset1 + new_len].y = _crayon_graphic_line_plane_intersect(&vert_coords[prev_vert_index],
+						&vert_coords[offset2 + i], camera_coords[j], axis);
+				}
+				else{
+					vert_coords[offset1 + new_len].x = _crayon_graphic_line_plane_intersect(&vert_coords[prev_vert_index],
+						&vert_coords[offset2 + i], camera_coords[j], axis);
+					vert_coords[offset1 + new_len].y = camera_coords[j];
+				}
+
+				if(in2){	// OUT-IN, save v2 aswell
+					vert_coords[offset1 + new_len + 1].x = vert_coords[offset2 + i].x;
+					vert_coords[offset1 + new_len + 1].y = vert_coords[offset2 + i].y;
+					new_len += 2;
+				}
+				else{	// IN-OUT
+					new_len++;
+				}
+			}
+			// If both are OUT, we discard both
+
+			// Update the prev vert stuff
+			in1 = in2;
+			prev_vert_index = i + offset2;
+		}
+		if(new_len < 3){	// If we disabled OOB check and poly is entirely OOB, this can happen. Also don't render lines/points
+			return new_len;
+		}
+		crop_len = new_len;
+		axis = !axis;  // True on j = 0 and 2
+	}
+
+	return new_len;
+}
+
+uint8_t crayon_graphics_aabb_obb_overlap(vec2_f_t *obb, float *aabb){
+	vec2_f_t *range = crayon_graphics_get_range(obb);
+
+	// Check with aabb's normals
+	if(range[1].x < aabb[0] || range[1].y < aabb[1] || range[0].x > aabb[2] || range[0].y > aabb[3]){
+		return 0;
+	}
+
+	vec2_f_t normal_1 = crayon_graphics_unit_vector(obb[1].x - obb[0].x, obb[1].y - obb[0].y);  // Left side's normal
+	vec2_f_t normal_2 = crayon_graphics_unit_vector(obb[3].x - obb[0].x, obb[3].y - obb[0].y);  // Top side's normal
+
+	// // Quicker, but they aren't *unit* vectors So there might be issues with really big numbers
+	// normal_1.x = -(obb[1]->x - obb[0]->x);
+	// normal_1.y = obb[1]->y - obb[0]->y;
+
+	// normal_2.x = -(obb[2]->x - obb[1]->x);
+	// normal_2.y = obb[2]->y - obb[1]->y;
+
+	if(!crayon_graphics_seperating_axis_theorem(obb, aabb, &normal_1)){
+		return 0;
+	}
+
+	if(!crayon_graphics_seperating_axis_theorem(obb, aabb, &normal_2)){
+		return 0;
+	}
+
+	return 1;
+}
+
+uint8_t crayon_graphics_seperating_axis_theorem(vec2_f_t *obb, float *aabb, vec2_f_t *normal){
+	vec2_f_t range[2];	// min_obb, max_obb, min_aabb, max_aabb
+	range[0].x = crayon_graphics_dot_product(obb[0].x, obb[0].y, normal->x, normal->y);
+	range[0].y = range[0].x;
+	range[1].x = crayon_graphics_dot_product(aabb[0], aabb[1], normal->x, normal->y);
+	range[1].y = range[1].x;
+
+	int i;
+	float dot_value;
+	for(i = 1; i < 4; i++){
+		dot_value = crayon_graphics_dot_product(obb[i].x, obb[i].y, normal->x, normal->y);
+		if(dot_value < range[0].x){range[0].x = dot_value;}
+		if(dot_value > range[0].y){range[0].y = dot_value;}
+
+		// i = 0: min/min, 1: max/min, 2: max/max, 3: min/max
+		dot_value = crayon_graphics_dot_product(aabb[(i < 3) ? 2 : 0], aabb[(i > 1 ? 3 : 1)], normal->x, normal->y);
+		if(dot_value < range[1].x){range[1].x = dot_value;}
+		if(dot_value > range[1].y){range[1].y = dot_value;}
+	}
+
+	// max_obb < min_aabb || min_obb > max_aabb
+	if(range[0].y < range[1].x || range[0].x > range[1].y){
+		return 0;
+	}
+
+	return 1;
+}
+
+vec2_f_t *crayon_graphics_get_range(vec2_f_t *vals){
+	static vec2_f_t ret[2];	// min x, min y, max x, max y
+	ret[0].x = vals[0].x;
+	ret[0].y = vals[0].y;
+	ret[1].x = vals[0].x;
+	ret[1].y = vals[0].y;
+
+	int i;
+	for(i = 1; i < 4; i++){	// Skip the first element since we've already checked it
+		if(vals[i].x < ret[0].x){ret[0].x = vals[i].x;}
+		if(vals[i].x > ret[1].x){ret[1].x = vals[i].x;}
+
+		if(vals[i].y < ret[0].y){ret[0].y = vals[i].y;}
+		if(vals[i].y > ret[1].y){ret[1].y = vals[i].y;}
+	}
+	return ret;
+}
+
+float crayon_graphics_dot_product(float x1, float y1, float x2, float y2){
+	return (x1 * x2) + (y1 * y2);
+}
+
+// Only ever called once (In crayon_graphics_unit_vector() )
+inline float crayon_graphics_magnitude(float x, float y){
+	return sqrt(pow(x, 2) + pow(y, 2));
+}
+
+vec2_f_t crayon_graphics_unit_vector(float x, float y){
+	float div = 1 / crayon_graphics_magnitude(x, y);
+	return (vec2_f_t){x * div, y * div};
 }
 
 uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){
@@ -1555,39 +1771,20 @@ uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]){
 	return bounds;
 }
 
-// How to check if OOB for Simple mode (And Enhanced with no rotation)
+// How to check if OOB of two axis aligned boundry boxes
 	// All verts are further away than one of the camera verts
 	// So if The left X vert of the camera is 150 and all the sprite X verts are less than 150 then its OOB
-// How to check if OOB for Enhanced mode
-	//  -
-uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4], uint8_t mode){
-	if(mode == CRAY_DRAW_SIMPLE){	// Assumes Axis aligned and Z-order verts. Also used by enhanced when rotation is zero
-		if(vS[1].x < vC[0].x){
-			return 1;
-		}
-		// right verts
-		if(vS[0].x > vC[1].x){
-			return 1;
-		}
-		// top verts
-		if(vS[2].y < vC[0].y){
-			return 1;
-		}
-		// bottom verts
-		if(vS[0].y > vC[2].y){
-			return 1;
-		}
+uint8_t crayon_graphics_aabb_aabb_overlap(vec2_f_t *vS, vec2_f_t *vC){
+	// L R T B
+	if(vS[1].x < vC[0].x || vS[0].x > vC[1].x || vS[2].y < vC[0].y || vS[0].y > vC[2].y){
+		return 0;
+	}
 
-		// No OOBs detected
-		return 0;
-	}
-	else{
-		// No OOBs detected
-		return 0;
-	}
+	// No OOBs detected
+	return 1;
 }
 
-uint8_t round_way(float value){
+uint8_t crayon_graphics_round_way(float value){
 	return (value - (int)value > 0.5) ? 1 : 0;
 }
 
@@ -1657,10 +1854,10 @@ uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t flip_val
 }
 
 float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, vec2_f_t dims){
-    if((side % 2 == 0 && rotation_val % 2 == 0) || (side % 2 == 1 && rotation_val % 2 == 1)){
-        return dims.x;  // width
-    }
-    return dims.y;   // height
+	if((side % 2 == 0 && rotation_val % 2 == 0) || (side % 2 == 1 && rotation_val % 2 == 1)){
+		return dims.x;	// width
+	}
+	return dims.y;	// height
 }
 
 float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t *vert, vec2_f_t *scale, const crayon_viewport_t *camera){

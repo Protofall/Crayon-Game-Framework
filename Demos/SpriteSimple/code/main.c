@@ -320,11 +320,11 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw_sprites(&Dwarf_Draw_Flip, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Dwarf_Draw_Rotate, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Dwarf_Draw_Scale, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Dwarf_Draw_Frame, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Dwarf_Draw_Mash, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Flip, NULL, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Rotate, NULL, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Scale, NULL, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Frame, NULL, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Mash, NULL, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);

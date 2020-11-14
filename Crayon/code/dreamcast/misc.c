@@ -140,6 +140,14 @@ uint32_t crayon_misc_increment_bits(uint32_t number, int32_t change_val, uint8_t
 		crayon_misc_extract_bits(number, bit_length, offset) + change_val, bit_length, offset);
 }
 
+// Returns the point "center_x/y" rotated "radian" degrees around "orbit_x/y"
+vec2_f_t crayon_misc_rotate_point(vec2_f_t center, vec2_f_t orbit, float radians){
+	float sin_theta = sin(radians);
+	float cos_theta = cos(radians);
+	return (vec2_f_t){(cos_theta * (orbit.x - center.x)) - (sin_theta * (orbit.y - center.y)) + center.x,
+		(sin_theta * (orbit.x - center.x)) + (cos_theta * (orbit.y - center.y)) + center.y};
+}
+
 uint8_t crayon_misc_is_big_endian(){
 	int a = 1;
 	return !((char*)&a)[0];

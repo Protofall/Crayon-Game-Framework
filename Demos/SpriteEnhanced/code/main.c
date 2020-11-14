@@ -378,18 +378,18 @@ int main(){
 
 		pvr_scene_begin();
 
-		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw_sprites(&Dwarf_Draw_Flip, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Dwarf_Draw_Rotate, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Dwarf_Draw_Scale, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Dwarf_Draw_Frame, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Dwarf_Draw_Colour_Blend, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Dwarf_Draw_Colour_Add, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Dwarf_Draw_Mash, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
+		pvr_list_begin(CRAYON_PT_LIST);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Flip, NULL, CRAYON_PT_LIST, CRAYON_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Rotate, NULL, CRAYON_PT_LIST, CRAYON_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Scale, NULL, CRAYON_PT_LIST, CRAYON_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Frame, NULL, CRAYON_PT_LIST, CRAYON_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Colour_Blend, NULL, CRAYON_PT_LIST, CRAYON_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Colour_Add, NULL, CRAYON_PT_LIST, CRAYON_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Dwarf_Draw_Mash, NULL, CRAYON_PT_LIST, CRAYON_DRAW_ENHANCED);
 		pvr_list_finish();
 
-		pvr_list_begin(PVR_LIST_OP_POLY);
-			crayon_graphics_draw_text_mono("Controls:", &BIOS, PVR_LIST_OP_POLY, 450, 32, 3, 2, 2, BIOS_P.palette_id);
+		pvr_list_begin(CRAYON_OP_LIST);
+			crayon_graphics_draw_text_mono("Controls:", &BIOS, CRAYON_OP_LIST, 450, 32, 3, 2, 2, BIOS_P.palette_id);
 		pvr_list_finish();
 
 		pvr_scene_finish();

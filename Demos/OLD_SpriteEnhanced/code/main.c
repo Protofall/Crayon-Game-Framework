@@ -179,13 +179,13 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
-			crayon_graphics_draw_sprites(&Opaque_Blend_Draw, NULL, PVR_LIST_OP_POLY, CRAY_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Opaque_Add_Draw, NULL, PVR_LIST_OP_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Opaque_Blend_Draw, NULL, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Opaque_Add_Draw, NULL, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED);
 			crayon_graphics_draw_text_mono(buffer, &BIOS_Font, PVR_LIST_OP_POLY, 280, 360, 30, 1, 1, BIOS_P.palette_id);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
-			crayon_graphics_draw_sprites(&Man_Draw, NULL, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Man_Draw, NULL, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED);
 		pvr_list_finish();
 
 		pvr_scene_finish();

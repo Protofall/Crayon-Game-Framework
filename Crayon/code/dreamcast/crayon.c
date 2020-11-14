@@ -2,7 +2,7 @@
 
 uint8_t __sd_present = 0;
 
-uint8_t __attribute__((weak)) crayon_init(uint8_t platform, uint8_t boot_mode){
+uint8_t crayon_init(uint8_t platform, uint8_t boot_mode){
 	__game_base_path = NULL;
 	if(platform != CRAYON_PLATFORM_DREAMCAST){
 		fprintf(stderr, "ERROR: Unsupported platform: %d\n", platform);
@@ -20,7 +20,7 @@ uint8_t __attribute__((weak)) crayon_init(uint8_t platform, uint8_t boot_mode){
 		return 1;
 	}
 
-	const char * paths[3] = {
+	const char *paths[3] = {
 		"/cd/",
 		"/sd/",
 		"/pc/"
@@ -103,7 +103,7 @@ uint8_t crayon_sd_mount_fat(){
 
 
 
-void __attribute__((weak)) crayon_shutdown(){
+void crayon_shutdown(){
 	free(__game_base_path);
 
 	if(__sd_present){

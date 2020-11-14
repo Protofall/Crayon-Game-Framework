@@ -1,9 +1,10 @@
 #ifndef GRAPHICS_CRAYON_H
 #define GRAPHICS_CRAYON_H
 
+#include "misc.h"
 #include "texture_structs.h"  // For the spritehsheet and anim structs
 #include "render_structs.h"  // For the crayon_sprite_array struct
-#include "vector_structs.h"  // For the rotate function struct
+#include "vector_structs.h"
 #include "memory.h"  // For the rotate function struct
 
 #include <stdlib.h>
@@ -13,15 +14,21 @@
 // For region and htz stuff
 #include <dc/flashrom.h>
 
-#define CRAY_OP_LIST PVR_LIST_OP_POLY	// No alpha
-#define CRAY_TR_LIST PVR_LIST_TR_POLY	// Alpha is either full on or off
-#define CRAY_PT_LIST PVR_LIST_PT_POLY	// Varying alpha
+#define CRAYON_OP_LIST PVR_LIST_OP_POLY	// No alpha
+#define CRAYON_TR_LIST PVR_LIST_TR_POLY	// Alpha is either full on or off
+#define CRAYON_PT_LIST PVR_LIST_PT_POLY	// Varying alpha
 
-#define CRAY_FILTER_NEAREST PVR_FILTER_NONE
-#define CRAY_FILTER_LINEAR PVR_FILTER_LINEAR
+#define CRAYON_FILTER_NEAREST PVR_FILTER_NONE
+#define CRAYON_FILTER_LINEAR PVR_FILTER_LINEAR
 
-#define CRAY_DRAW_SIMPLE 0
-#define CRAY_DRAW_ENHANCED 1
+// The draw_mode options
+#define CRAYON_DRAW_SIMPLE (0 << 0)
+#define CRAYON_DRAW_ENHANCED (1 << 0)
+#define CRAYON_DRAW_OOB_SKIP (1 << 1)	// If the sprite is entirely OOB, then go to next sprite
+#define CRAYON_DRAW_HARDWARE_CROP (1 << 2)	// On PC uses Scissor Test, DC uses TA for 32x32 tiles
+#define CRAYON_DRAW_SOFTWARE_CROP (1 << 3)	// Only used for systems where we can't use hardware cropping everywhere
+#define CRAYON_DRAW_CROP CRAYON_DRAW_SOFTWARE_CROP | CRAYON_DRAW_HARDWARE_CROP	// It will attempt to use hardware cropping if all the edges line up
+#define CRAYON_DRAW_FULL_CROP CRAYON_DRAW_CROP | CRAYON_DRAW_OOB_SKIP
 
 // This var's purpose is to make debugging the render-ers and other graphics function much easier
 	// Since I currently can't print any text while rendering an object, instead I can set vars to
@@ -55,29 +62,28 @@ uint32_t crayon_graphics_get_window_height();
 
 // Queue a texture to be rendered, draw mode right most bit is true for enhanced
 int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode, uint8_t draw_mode);
+	uint8_t poly_list_mode, uint8_t draw_option);
 
 
 //------------------Internal Drawing Functions------------------//
 
 
 // poly_list mode is for the tr/pt/op render list macro we want to use.
+// Uses the Dreamcast sprites/quads for faster/more efficient rendering
+uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode, uint8_t options);
+
 // The version with polygons (Use this if your spritesheet is bigger than 256 by 256)
-	// For DC this uses "poly mode"
 uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode);
+	uint8_t poly_list_mode, uint8_t options);
 
 // This will draw untextured polys (Sprite_arrays with no texture set)
-uint8_t crayon_graphics_draw_untextured_array(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode);
-
-// Like the other simple draw one, but this uses a camera to control where on screen to render and what region to show
-uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode);
+uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
+	uint8_t poly_list_mode, uint8_t options);
 
 // DELETE THIS LATER
 uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode);
+	uint8_t poly_list_mode, uint8_t options);
 
 
 //------------------Drawing Fonts------------------//
@@ -143,11 +149,40 @@ uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t *effect);
 //  }
 
 
-
 //------------------Misc. Internal Functions------------------//
 
-// Returns the point "center_x/y" rotated "radian" degrees around "orbit_x/y"
-vec2_f_t crayon_graphics_rotate_point(vec2_f_t center, vec2_f_t orbit, float radians);
+
+// Will take a 4-sided poly and return a poly that is cropped so its entirely within the camera window
+  // This video taught it so well, very easy to follow:
+  // https://www.youtube.com/watch?v=Euuw72Ymu0M
+uint8_t crayon_graphics_sutherland_hodgman(vec2_f_t *vert_coords, float *camera_coords);
+
+// Sees if a sprite (rectangle obb) is overlapping with the camera (Assumes camera)
+	// It assumes the verts are in clockwise order. But *might* work for other orders by chance
+
+// Returns 1 if the shapes overlap, 0 otherwise
+// AABB = Axis Aligned Boundry Box (Camera). OBB = Oriented Boundry Box (Sprite/Poly)
+// Two shapes only overlap if they have overlap when "projected" onto every normal axis of both shapes.
+// OBB-OBB uses 8 normal/seperating axises, one for every side. However AABB-OBB only uses 4 since 4 pairs of axises are always parallel
+// For them to overlap, the shapes "crushed" vertexes have to overlap on every axis
+  // So if theres even one axis where the crushed vertexes don't intersect, then the whole thing doesn't overlap.
+// obb is an array of 4 vec2_f_ts. aabb is just 4 floats, the min_x, min_y, max_x, max_y of the camera verts
+uint8_t crayon_graphics_aabb_obb_overlap(vec2_f_t *obb, float *aabb);
+
+// Returns 1 if overlap, 0 if they don't
+uint8_t crayon_graphics_seperating_axis_theorem(vec2_f_t *obb, float *aabb, vec2_f_t *normal);
+
+// Gets the min and max x and y values and returns them. Assumes vals is an array of 4 structs
+	// NOTE. The return value is a static array that persists after the function ends. However calling the function again will override
+	// the old data. However currently its only used once so this isn't an issue
+vec2_f_t *crayon_graphics_get_range(vec2_f_t *vals);
+
+// The dot product. Produces a scalar (Single value).
+// The dot product of X and Y is the length of the projection of A onto B multiplied by the length of B (or the other way around).
+// https://physics.stackexchange.com/questions/14082/what-is-the-physical-significance-of-dot-cross-product-of-vectors-why-is-divi
+float crayon_graphics_dot_product(float x1, float y1, float x2, float y2);
+
+vec2_f_t crayon_graphics_unit_vector(float x, float y);
 
 // Checks if float a is equal to b (+ or -) epsilon
 uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
@@ -158,12 +193,12 @@ uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
 uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]);
 
 // Checks if an element is entirely outside of another. Verts are in the Z order
-uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4], uint8_t mode);
+uint8_t crayon_graphics_aabb_aabb_overlap(vec2_f_t *vS, vec2_f_t *vC);
 
 // This function will return 0 (0.5 or less) if the number would be rounded down and
 // returns 1 ( more than 0.5) if it would be rounded up.
 	// CURRENTLY UNUSED
-uint8_t round_way(float value);
+uint8_t crayon_graphics_round_way(float value);
 
 // vert is the nth vert (Backwards C shaped)
 vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t sprite, uint8_t vert);

@@ -152,7 +152,7 @@ void htz_select(){
 
 			//The fading in/out effect
 			if(crayon_misc_extract_bits(fade_draw.colour[0], 8, 24)){
-				crayon_graphics_draw_sprites(&fade_draw, NULL, PVR_LIST_TR_POLY, CRAY_DRAW_SIMPLE);
+				crayon_graphics_draw_sprites(&fade_draw, NULL, PVR_LIST_TR_POLY, CRAYON_DRAW_SIMPLE);
 			}
 
 		pvr_list_finish();
@@ -301,7 +301,7 @@ int main(){
 
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
-			// crayon_graphics_draw_sprites(&fade_draw, NULL, PVR_LIST_TR_POLY, CRAY_DRAW_SIMPLE);
+			// crayon_graphics_draw_sprites(&fade_draw, NULL, PVR_LIST_TR_POLY, CRAYON_DRAW_SIMPLE);
 		pvr_list_finish();
 
 

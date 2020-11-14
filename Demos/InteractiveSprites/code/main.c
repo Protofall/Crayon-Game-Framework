@@ -508,12 +508,12 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 			if(!hide_msg){
-				crayon_graphics_draw_sprites(&Highlight_Draw, NULL, PVR_LIST_TR_POLY, CRAY_DRAW_ENHANCED);
+				crayon_graphics_draw_sprites(&Highlight_Draw, NULL, PVR_LIST_TR_POLY, CRAYON_DRAW_ENHANCED);
 			}
 
-			crayon_graphics_draw_sprites(&Faces_Draw[0], NULL, PVR_LIST_TR_POLY, CRAY_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Faces_Draw[1], NULL, PVR_LIST_TR_POLY, CRAY_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Faces_Draw[2], NULL, PVR_LIST_TR_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Faces_Draw[0], NULL, PVR_LIST_TR_POLY, CRAYON_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Faces_Draw[1], NULL, PVR_LIST_TR_POLY, CRAYON_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Faces_Draw[2], NULL, PVR_LIST_TR_POLY, CRAYON_DRAW_ENHANCED);
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);

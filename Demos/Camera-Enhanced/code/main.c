@@ -90,7 +90,7 @@ uint32_t thumbstick_to_dpad(int joyx, int joyy, float deadspace){
 		//22.5 degrees is 1/16th of 360 degrees, this makes it easier to check which region the coords are in
 	float angle = 22.5 * M_PI / 180.0;	//In radians
 
-	vec2_f_t point = crayon_graphics_rotate_point((vec2_f_t){0, 0}, (vec2_f_t){thumb_x, thumb_y}, angle);
+	vec2_f_t point = crayon_misc_rotate_point((vec2_f_t){0, 0}, (vec2_f_t){thumb_x, thumb_y}, angle);
 	thumb_x = point.x;
 	thumb_y = point.y;
 
@@ -522,7 +522,6 @@ int main(){
 	Man_BG.scale[0].y = Red_Man_Draw.animation->frame_height * Red_Man_Draw.scale[0].y;
 	Man_BG.rotation[0] = 0;
 	Man_BG.colour[0] = 0xFF000000;
-	Man_BG.fade[0] = 0;	//Probably not needed
 	Man_BG.visible[0] = 1;
 
 	crayon_memory_init_sprite_array(&Cam_BGs[0], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -533,7 +532,6 @@ int main(){
 	Cam_BGs[0].scale[0].y = 480;
 	Cam_BGs[0].rotation[0] = 0;
 	Cam_BGs[0].colour[0] = 0xFF888888;
-	Cam_BGs[0].fade[0] = 0;
 	Cam_BGs[0].visible[0] = 1;
 
 	crayon_memory_init_sprite_array(&Cam_BGs[1], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -544,7 +542,6 @@ int main(){
 	Cam_BGs[1].scale[0].y = 300;
 	Cam_BGs[1].rotation[0] = 0;
 	Cam_BGs[1].colour[0] = 0xFF888888;
-	Cam_BGs[1].fade[0] = 0;
 	Cam_BGs[1].visible[0] = 1;
 
 	crayon_memory_init_sprite_array(&Cam_BGs[2], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
@@ -555,7 +552,6 @@ int main(){
 	Cam_BGs[2].scale[0].y = 240;
 	Cam_BGs[2].rotation[0] = 0;
 	Cam_BGs[2].colour[0] = 0xFF888888;
-	Cam_BGs[2].fade[0] = 0;
 	Cam_BGs[2].visible[0] = 1;
 
 	#define MODE 1
@@ -781,20 +777,20 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
-			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
-			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED);
 
 			//THe player sprite
-			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED);
 
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED);
 			// __GRAPHICS_DEBUG_VARIABLES[0] = 1;
-			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED);
 			// __GRAPHICS_DEBUG_VARIABLES[0] = 0;
 
 			// sprintf(g_buffer, "%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n",
@@ -804,7 +800,7 @@ int main(){
 			// crayon_graphics_draw_text_mono(g_buffer, &BIOS, PVR_LIST_PT_POLY, 32, 280, 254, 1, 1, BIOS_P.palette_id);
 
 			//Represents the boundry box for the red man when not rotated
-			crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, CRAY_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED);
 
 			//This represents the camera's space
 			crayon_graphics_draw_sprites(&Cam_BGs[current_camera_id], NULL, PVR_LIST_OP_POLY, 0);
@@ -825,7 +821,7 @@ int main(){
 
 	}
 
-	//Confirm everything was unloaded successfully (Should equal zero)
+	// Confirm everything was unloaded successfully (Should equal zero)
 	uint32_t retVal = 0;
 
 	retVal += crayon_memory_free_spritesheet(&Dwarf);
