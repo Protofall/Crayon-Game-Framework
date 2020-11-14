@@ -193,7 +193,7 @@ uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
 uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]);
 
 // Checks if an element is entirely outside of another. Verts are in the Z order
-uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4], uint8_t mode);
+uint8_t crayon_graphics_aabb_aabb_overlap(vec2_f_t *vS, vec2_f_t *vC);
 
 // This function will return 0 (0.5 or less) if the number would be rounded down and
 // returns 1 ( more than 0.5) if it would be rounded up.

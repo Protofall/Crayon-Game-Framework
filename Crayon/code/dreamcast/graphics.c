@@ -329,7 +329,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		sprite_verts[3] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 
 		// If OOB then don't draw
-		if(crayon_graphics_check_oob(camera_verts, sprite_verts, CRAYON_DRAW_SIMPLE)){continue;}
+		if(!crayon_graphics_aabb_aabb_overlap(sprite_verts, camera_verts)){continue;}
 
 		// If we don't need to crop at all, don't both doing the checks. bounds is zero by default
 		if(crop_edges){
@@ -1028,7 +1028,7 @@ uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_
 		sprite_verts[3] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
 
 		//If OOB then don't draw
-		if(crayon_graphics_check_oob(camera_verts, sprite_verts, CRAYON_DRAW_SIMPLE)){continue;}
+		if(!crayon_graphics_aabb_aabb_overlap(sprite_verts, camera_verts)){continue;}
 
 		//If we don't need to crop at all, don't both doing the checks. bounds is zero by default
 		if(crop_edges){
@@ -1771,36 +1771,17 @@ uint8_t crayon_graphics_check_intersect(vec2_f_t vC[4], vec2_f_t vS[4]){
 	return bounds;
 }
 
-// How to check if OOB for Simple mode (And Enhanced with no rotation)
+// How to check if OOB of two axis aligned boundry boxes
 	// All verts are further away than one of the camera verts
 	// So if The left X vert of the camera is 150 and all the sprite X verts are less than 150 then its OOB
-// How to check if OOB for Enhanced mode
-	//  -
-uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4], uint8_t mode){
-	if(mode == CRAYON_DRAW_SIMPLE){	// Assumes Axis aligned and Z-order verts. Also used by enhanced when rotation is zero
-		if(vS[1].x < vC[0].x){
-			return 1;
-		}
-		// right verts
-		if(vS[0].x > vC[1].x){
-			return 1;
-		}
-		// top verts
-		if(vS[2].y < vC[0].y){
-			return 1;
-		}
-		// bottom verts
-		if(vS[0].y > vC[2].y){
-			return 1;
-		}
+uint8_t crayon_graphics_aabb_aabb_overlap(vec2_f_t *vS, vec2_f_t *vC){
+	// L R T B
+	if(vS[1].x < vC[0].x || vS[0].x > vC[1].x || vS[2].y < vC[0].y || vS[0].y > vC[2].y){
+		return 0;
+	}
 
-		// No OOBs detected
-		return 0;
-	}
-	else{
-		// No OOBs detected
-		return 0;
-	}
+	// No OOBs detected
+	return 1;
 }
 
 uint8_t crayon_graphics_round_way(float value){
@@ -1874,9 +1855,9 @@ uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t flip_val
 
 float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, vec2_f_t dims){
 	if((side % 2 == 0 && rotation_val % 2 == 0) || (side % 2 == 1 && rotation_val % 2 == 1)){
-		return dims.x;  // width
+		return dims.x;	// width
 	}
-	return dims.y;   // height
+	return dims.y;	// height
 }
 
 float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t *vert, vec2_f_t *scale, const crayon_viewport_t *camera){
