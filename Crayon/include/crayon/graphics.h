@@ -152,6 +152,11 @@ uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t *effect);
 //------------------Misc. Internal Functions------------------//
 
 
+// Will take a 4-sided poly and return a poly that is cropped so its entirely within the camera window
+  // This video taught it so well, very easy to follow:
+  // https://www.youtube.com/watch?v=Euuw72Ymu0M
+uint8_t crayon_graphics_sutherland_hodgman(vec2_f_t *vert_coords, float *camera_coords);
+
 // Sees if a sprite (rectangle obb) is overlapping with the camera (Assumes camera)
 	// It assumes the verts are in clockwise order. But *might* work for other orders by chance
 
@@ -165,7 +170,7 @@ uint8_t crayon_graphics_transistion_resting_state(crayon_transition_t *effect);
 uint8_t crayon_graphics_aabb_obb_overlap(vec2_f_t *obb, float *aabb);
 
 // Returns 1 if overlap, 0 if they don't
-uint8_t seperating_axis_theorem(vec2_f_t *obb, float *aabb, vec2_f_t *normal);
+uint8_t crayon_graphics_seperating_axis_theorem(vec2_f_t *obb, float *aabb, vec2_f_t *normal);
 
 // Gets the min and max x and y values and returns them. Assumes vals is an array of 4 structs
 	// NOTE. The return value is a static array that persists after the function ends. However calling the function again will override
@@ -176,9 +181,6 @@ vec2_f_t *crayon_graphics_get_range(vec2_f_t *vals);
 // The dot product of X and Y is the length of the projection of A onto B multiplied by the length of B (or the other way around).
 // https://physics.stackexchange.com/questions/14082/what-is-the-physical-significance-of-dot-cross-product-of-vectors-why-is-divi
 float crayon_graphics_dot_product(float x1, float y1, float x2, float y2);
-
-// Only ever called once (In unit vector)
-inline float crayon_graphics_magnitude(float x, float y);
 
 vec2_f_t crayon_graphics_unit_vector(float x, float y);
 
@@ -196,7 +198,7 @@ uint8_t crayon_graphics_check_oob(vec2_f_t vC[4], vec2_f_t vS[4], uint8_t mode);
 // This function will return 0 (0.5 or less) if the number would be rounded down and
 // returns 1 ( more than 0.5) if it would be rounded up.
 	// CURRENTLY UNUSED
-uint8_t round_way(float value);
+uint8_t crayon_graphics_round_way(float value);
 
 // vert is the nth vert (Backwards C shaped)
 vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t sprite, uint8_t vert);

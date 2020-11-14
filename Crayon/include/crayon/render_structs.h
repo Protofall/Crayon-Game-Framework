@@ -21,7 +21,7 @@
 #define CRAY_HAS_TEXTURE (1 << 7)
 
 // The camera, controls where on screen to render and which part of the world to draw
-typedef struct crayon_viewport_t{
+typedef struct crayon_viewport_t {
 	// Top left of the world region and dimensions
 	float world_x;	// Must be a float since the draw position array is a bunch of floats
 	float world_y;
@@ -40,14 +40,14 @@ typedef struct crayon_viewport_t{
 	uint16_t window_height;
 } crayon_viewport_t;
 
-typedef struct crayon_sprite_array_reference{
+typedef struct crayon_sprite_array_reference {
 	uint16_t id;
 	struct crayon_sprite_array_reference *next;
 } crayon_sprite_array_reference_t;
 
 // This is designed for the multi-draw functions. If you want to draw a single thing with this struct
 // then I you'll still need to go through the multi-draw. It shouldn't be too much slower if any.
-typedef struct crayon_sprite_array{
+typedef struct crayon_sprite_array {
 	vec2_f_t *coord;			// Width then Height extracted from anim/frame data,
 								// Each element is one pair of coordinates
 	uint8_t *layer;				// The layer to help deal with overlapping sprites/polys
@@ -104,7 +104,7 @@ typedef struct crayon_sprite_array{
 #define CRAY_FADE_STATE_RESTING_IN 1
 #define CRAY_FADE_STATE_RESTING_OUT 2
 
-typedef struct crayon_transition{
+typedef struct crayon_transition {
 	uint8_t curr_state;	// The state we are going to 0 for not fading, 1 for fade-in and 2 for fade-out
 	uint8_t resting_state;	// Is NOT_RESTING if its not resting, RESTING_STATE_IN if its finished fading in
 							// and RESTING_STATE_OUT if its finished fading out

@@ -49,12 +49,13 @@ int main(){
 	crayon_sprite_array_t Poly_Draw;	// Contains 4 polys, 1st (0 index) one controlled by the player
 	crayon_memory_init_sprite_array(&Poly_Draw, NULL, 0, NULL, 4, 0, CRAY_MULTI_DIM | CRAY_MULTI_COLOUR | CRAY_MULTI_ROTATE,
 		CRAYON_FILTER_NEAREST, 0);
-	int i;
+	unsigned int i;
 	for(i = 0; i < Poly_Draw.size; i++){
 		Poly_Draw.visible[i] = 1;
 		Poly_Draw.layer[i] = (Poly_Draw.size - i + 1);	// 5, 4, 3, 2
 	}
 
+	// Player white poly
 	Poly_Draw.scale[0].x = width * 0.20;
 	Poly_Draw.scale[0].y = height * 0.20;
 	Poly_Draw.coord[0].x = 20;
@@ -62,13 +63,15 @@ int main(){
 	Poly_Draw.colour[0] = 0xFFFFFFFF;
 	Poly_Draw.rotation[0] = 0;
 
-	Poly_Draw.scale[1].x = width * 0.5;
+	// Green poly
+	Poly_Draw.scale[1].x = width * 0.35;
 	Poly_Draw.scale[1].y = height * 0.1;
-	Poly_Draw.coord[1].x = -60;
+	Poly_Draw.coord[1].x = 10;
 	Poly_Draw.coord[1].y = 150;
 	Poly_Draw.colour[1] = 0xFF00FF00;
 	Poly_Draw.rotation[1] = 0;
 
+	// Blue poly
 	Poly_Draw.scale[2].x = width * 0.2;
 	Poly_Draw.scale[2].y = height * 0.2;
 	Poly_Draw.coord[2].x = 200;
@@ -76,6 +79,7 @@ int main(){
 	Poly_Draw.colour[2] = 0xFF0000FF;
 	Poly_Draw.rotation[2] = 225;
 
+	// Red poly
 	Poly_Draw.scale[3].x = width * 0.15;
 	Poly_Draw.scale[3].y = height * 0.5;
 	Poly_Draw.coord[3].x = Cam_BG.scale[0].x + 20;
@@ -90,8 +94,10 @@ int main(){
 
 	uint32_t curr_btns[4] = {0};
 	uint32_t prev_btns[4] = {0};
-	vec2_u8_t curr_trigs[4] = {0};
-	// vec2_u8_t prev_trigs[4] = {0};
+	vec2_u8_t curr_trigs[4] = {{0,0}};
+	// vec2_u8_t prev_trigs[4] = {{0,0}};
+
+	uint8_t move_mode = 1;
 
 	int loop = 1;
 	while(loop){
@@ -101,8 +107,8 @@ int main(){
 		pvr_scene_begin();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
-			crayon_graphics_draw_sprites(&Poly_Draw, &Camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED | cropping | oob_culling);
 			crayon_graphics_draw_sprites(&Cam_BG, NULL, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED);
+			crayon_graphics_draw_sprites(&Poly_Draw, &Camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED | cropping | oob_culling);
 		pvr_list_finish();
 
 		pvr_scene_finish();
@@ -148,18 +154,28 @@ int main(){
 				}
 			}
 
+			// Y press to toggle movement/size mode
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_Y)){
+				move_mode = !move_mode;
+			}
+
 			// DPAD movement
-			if(crayon_input_button_held(curr_btns[i], CONT_DPAD_UP)){
-				Poly_Draw.coord[0].y -= 1;
+			if(move_mode){
+				if(crayon_input_button_held(curr_btns[i], CONT_DPAD_UP)){
+					Poly_Draw.coord[0].y -= 1;
+				}
+				else if(crayon_input_button_held(curr_btns[i], CONT_DPAD_DOWN)){
+					Poly_Draw.coord[0].y += 1;
+				}
+				if(crayon_input_button_held(curr_btns[i], CONT_DPAD_LEFT)){
+					Poly_Draw.coord[0].x -= 1;
+				}
+				else if(crayon_input_button_held(curr_btns[i], CONT_DPAD_RIGHT)){
+					Poly_Draw.coord[0].x += 1;
+				}
 			}
-			else if(crayon_input_button_held(curr_btns[i], CONT_DPAD_DOWN)){
-				Poly_Draw.coord[0].y += 1;
-			}
-			if(crayon_input_button_held(curr_btns[i], CONT_DPAD_LEFT)){
-				Poly_Draw.coord[0].x -= 1;
-			}
-			else if(crayon_input_button_held(curr_btns[i], CONT_DPAD_RIGHT)){
-				Poly_Draw.coord[0].x += 1;
+			else{
+				;
 			}
 
 			// Rotation
