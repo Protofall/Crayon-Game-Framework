@@ -475,10 +475,12 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	hdr.cmd |= 4;	// Enable oargb
 	pvr_prim(&hdr, sizeof(hdr));
 
+	// The verts
+	uint8_t poly_verts = 4;
 	#define _MAX_POLY_VERTS 8	// With Sutherland-Hodgman I belive it can create up-to 8 vert polys for a 4 sided object
 	pvr_vertex_t vert[_MAX_POLY_VERTS];
+	vec2_f_t vert_coords[_MAX_POLY_VERTS * 2];	// We double that because of Sutherland-Hodgman alg
 	#undef _MAX_POLY_VERTS
-	vec2_f_t rotated_values;
 
 	// Easily lets us use the right index for each array
 		// That way 1-length arrays only get calculated once and each element for a multi list is calculated
@@ -560,9 +562,9 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 			f = sprite_array->fade[*colour_index];
 			a = (sprite_array->colour[*colour_index] >> 24) & 0xFF;
 
-			r = (((sprite_array->colour[*colour_index] >> 16) & 0xFF) * f)/255.0f;
-			g = (((sprite_array->colour[*colour_index] >> 8) & 0xFF) * f)/255.0f;
-			b = (((sprite_array->colour[*colour_index]) & 0xFF) * f)/255.0f;
+			r = (((sprite_array->colour[*colour_index] >> 16) & 0xFF) * f) / 255.0f;
+			g = (((sprite_array->colour[*colour_index] >> 8) & 0xFF) * f) / 255.0f;
+			b = (((sprite_array->colour[*colour_index]) & 0xFF) * f) / 255.0f;
 			if(sprite_array->options & CRAY_COLOUR_ADD){	// If Adding
 				vert[0].argb = (a << 24) + 0x00FFFFFF;
 			}
@@ -597,8 +599,8 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 		if(sprite_array->rotation[*rotation_index] != 0.0f){
 
 			// Gets the true midpoint
-			mid.x = ((vert[1].x - vert[0].x)/2.0f) + vert[0].x;
-			mid.y = ((vert[2].y - vert[0].y)/2.0f) + vert[0].y;
+			mid.x = ((vert[1].x - vert[0].x) * 0.5) + vert[0].x;
+			mid.y = ((vert[2].y - vert[0].y) * 0.5) + vert[0].y;
 
 			// Update the vert x and y positions
 			for(j = 0; j < 4; j++){
@@ -618,13 +620,13 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 		;
 
 		// Apply these to all verts
-		for(j = 1; j < 4; j++){
+		for(j = 1; j < poly_verts; j++){
 			vert[j].argb = vert[0].argb;
 			vert[j].oargb = vert[0].oargb;
 			vert[j].z = vert[0].z;
 		}
 
-		pvr_prim(&vert, sizeof(pvr_vertex_t) * 4);
+		pvr_prim(&vert, sizeof(pvr_vertex_t) * poly_verts);
 	}
 
 	return 0;
@@ -632,20 +634,9 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 
 uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t options){
-
-	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
-	// 									//---- 1111 (Crop on all edges)
-
-	// //DELETE THIS LATER. A basic optimisation for now
-	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
-	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
-	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
-	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
-
-	//Used for cropping
-	// uint8_t bounds = 0;
-	// uint8_t cropped = 0;
-
+	// ADD STUFF HERE FOR HARDWARE CROPPING OVERRIDE CHECKS
+	;
+	
 	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
 		// The sprite points are also floor-ed before calculations are done
 	vec2_f_t camera_scale = (vec2_f_t){camera->window_width / (float)camera->world_width,
@@ -1844,13 +1835,13 @@ float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, ve
 float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t *vert, vec2_f_t *scale, const crayon_viewport_t *camera){
 	switch(side){
 		case 0:
-			return (camera->world_width / (float)camera->window_width) * (camera->window_x - vert->x)/scale->x;
+			return (camera->world_width / (float)camera->window_width) * (camera->window_x - vert->x) / scale->x;
 		case 1:
-			return (camera->world_height / (float)camera->window_height) * (camera->window_y - vert->y)/scale->y;
+			return (camera->world_height / (float)camera->window_height) * (camera->window_y - vert->y) / scale->y;
 		case 2:
-			return (camera->world_width / (float)camera->window_width) * (vert->x - (camera->window_x + camera->window_width))/scale->x;
+			return (camera->world_width / (float)camera->window_width) * (vert->x - (camera->window_x + camera->window_width)) / scale->x;
 		case 3:
-			return (camera->world_height / (float)camera->window_height) * (vert->y - (camera->window_y + camera->window_height))/scale->y;
+			return (camera->world_height / (float)camera->window_height) * (vert->y - (camera->window_y + camera->window_height)) / scale->y;
 	}
 	return 0;	// Shouldn't get here
 }
