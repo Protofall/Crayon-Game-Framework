@@ -162,17 +162,17 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 	camera_verts[3] = (vec2_f_t){camera->window_x+camera->window_width,camera->window_y+camera->window_height};
 
 	pvr_sprite_cxt_t context;
-	uint8_t texture_format = (((1 << 3) - 1) &
-	(sprite_array->spritesheet->texture_format >> (28 - 1)));	// Gets the Pixel format
-																// https://github.com/tvspelsfreak/texconv
-	int textureformat = sprite_array->spritesheet->texture_format;
+
+	int pvr_txr_fmt = sprite_array->spritesheet->texture_format;
+	uint8_t texture_format = DTEX_TXRFMT(sprite_array->spritesheet->texture_format);
 	if(texture_format == 5){	// 4BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 21);	// Update the later to use KOS' macros
+		pvr_txr_fmt |= PVR_TXRFMT_4BPP_PAL(sprite_array->palette->palette_id);
 	}
-	if(texture_format == 6){	// 8BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 25);	// Update the later to use KOS' macros
+	else if(texture_format == 6){	// 8BPP
+		pvr_txr_fmt |= PVR_TXRFMT_8BPP_PAL(sprite_array->palette->palette_id);
 	}
-	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, sprite_array->spritesheet->texture_width,
+
+	pvr_sprite_cxt_txr(&context, poly_list_mode, pvr_txr_fmt, sprite_array->spritesheet->texture_width,
 		sprite_array->spritesheet->texture_height, sprite_array->spritesheet->texture, sprite_array->filter);
 
 	pvr_sprite_txr_t vert = {
@@ -829,21 +829,19 @@ uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_
 	camera_verts[2] = (vec2_f_t){camera->window_x,camera->window_y+camera->window_height};
 	camera_verts[3] = (vec2_f_t){camera->window_x+camera->window_width,camera->window_y+camera->window_height};
 
-	uint8_t texture_format = (((1 << 3) - 1) & (sprite_array->spritesheet->texture_format >> (28 - 1)));	//Gets the Pixel format
-																										//https://github.com/tvspelsfreak/texconv
-	int textureformat = sprite_array->spritesheet->texture_format;
-	if(texture_format == 5){	//4BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 21);	//Update the later to use KOS' macros
+	int pvr_txr_fmt = sprite_array->spritesheet->texture_format;
+	uint8_t texture_format = DTEX_TXRFMT(sprite_array->spritesheet->texture_format);
+	if(texture_format == 5){	// 4BPP
+		pvr_txr_fmt |= PVR_TXRFMT_4BPP_PAL(sprite_array->palette->palette_id);
 	}
-	if(texture_format == 6){	//8BPP
-			textureformat |= ((sprite_array->palette->palette_id) << 25);	//Update the later to use KOS' macros
+	else if(texture_format == 6){	// 8BPP
+		pvr_txr_fmt |= PVR_TXRFMT_8BPP_PAL(sprite_array->palette->palette_id);
 	}
 
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
-	pvr_poly_cxt_txr(&cxt, poly_list_mode, textureformat,
-		sprite_array->spritesheet->texture_width, sprite_array->spritesheet->texture_height,
-		sprite_array->spritesheet->texture, sprite_array->filter);
+	pvr_poly_cxt_txr(&cxt, poly_list_mode, pvr_txr_fmt, sprite_array->spritesheet->texture_width,
+		sprite_array->spritesheet->texture_height, sprite_array->spritesheet->texture, sprite_array->filter);
 	pvr_poly_compile(&hdr, &cxt);
 	// hdr.cmd |= 4;	//Enable oargb
 	pvr_prim(&hdr, sizeof(hdr));
@@ -1148,17 +1146,16 @@ uint8_t crayon_graphics_draw_text_mono(char *string, const crayon_font_mono_t *f
 
 	pvr_sprite_cxt_t context;
 
-	uint8_t texture_format = (((1 << 3) - 1) &
-		(fm->texture_format >> (28 - 1)));	// Gets the Pixel format
-											// https://github.com/tvspelsfreak/texconv
-	int textureformat = fm->texture_format;
+	int pvr_txr_fmt = fm->texture_format;
+	uint8_t texture_format = DTEX_TXRFMT(fm->texture_format);
 	if(texture_format == 5){	// 4BPP
-		textureformat |= ((palette_number) << 21);	// Update the later to use KOS' macros
+		pvr_txr_fmt |= PVR_TXRFMT_4BPP_PAL(palette_number);
 	}
-	if(texture_format == 6){	// 8BPP
-		textureformat |= ((palette_number) << 25);	// Update the later to use KOS' macros
+	else if(texture_format == 6){	// 8BPP
+		pvr_txr_fmt |= PVR_TXRFMT_8BPP_PAL(palette_number);
 	}
-	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, fm->texture_width,
+
+	pvr_sprite_cxt_txr(&context, poly_list_mode, pvr_txr_fmt, fm->texture_width,
 		fm->texture_height, fm->texture, PVR_FILTER_NONE);
 
 	pvr_sprite_hdr_t header;
@@ -1225,17 +1222,16 @@ uint8_t crayon_graphics_draw_text_prop(char *string, const crayon_font_prop_t *f
 
 	pvr_sprite_cxt_t context;
 
-	uint8_t texture_format = (((1 << 3) - 1) &
-		(fp->texture_format >> (28 - 1)));	// Gets the Pixel format
-											// https://github.com/tvspelsfreak/texconv
-	int textureformat = fp->texture_format;
+	int pvr_txr_fmt = fp->texture_format;
+	uint8_t texture_format = DTEX_TXRFMT(fp->texture_format);
 	if(texture_format == 5){	// 4BPP
-		textureformat |= ((palette_number) << 21);	// Update the later to use KOS' macros
+		pvr_txr_fmt |= PVR_TXRFMT_4BPP_PAL(palette_number);
 	}
-	if(texture_format == 6){	// 8BPP
-		textureformat |= ((palette_number) << 25);	// Update the later to use KOS' macros
+	else if(texture_format == 6){	// 8BPP
+		pvr_txr_fmt |= PVR_TXRFMT_8BPP_PAL(palette_number);
 	}
-	pvr_sprite_cxt_txr(&context, poly_list_mode, textureformat, fp->texture_width,
+
+	pvr_sprite_cxt_txr(&context, poly_list_mode, pvr_txr_fmt, fp->texture_width,
 		fp->texture_height, fp->texture, PVR_FILTER_NONE);
 
 	pvr_sprite_hdr_t header;

@@ -622,9 +622,6 @@ int main(){
 	}
 
 	// char g_buffer[300];
-	// for(i = 0; i < 7; i++){
-	// 	__GRAPHICS_DEBUG_VARIABLES[i] = 0;
-	// }
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
@@ -696,8 +693,8 @@ int main(){
 		}
 
 		if((st->buttons & CONT_B) && !(prev_btns[__dev->port] & CONT_B)){
-			__GRAPHICS_DEBUG_VARIABLES[8]++;
-			if(__GRAPHICS_DEBUG_VARIABLES[8] > 7){__GRAPHICS_DEBUG_VARIABLES[8] = 0;}
+			__CRAYON_GRAPHICS_DEBUG_VARS[8]++;
+			if(__CRAYON_GRAPHICS_DEBUG_VARS[8] > 7){__CRAYON_GRAPHICS_DEBUG_VARS[8] = 0;}
 		}
 
 		//Need to add the free-ing functions first
@@ -789,13 +786,13 @@ int main(){
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
 			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED);
-			// __GRAPHICS_DEBUG_VARIABLES[0] = 1;
+			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 1;
 			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED);
-			// __GRAPHICS_DEBUG_VARIABLES[0] = 0;
+			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 0;
 
 			// sprintf(g_buffer, "%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n",
-			// 		__GRAPHICS_DEBUG_VARIABLES[1], __GRAPHICS_DEBUG_VARIABLES[2], __GRAPHICS_DEBUG_VARIABLES[3],
-			// 		__GRAPHICS_DEBUG_VARIABLES[4], __GRAPHICS_DEBUG_VARIABLES[5], __GRAPHICS_DEBUG_VARIABLES[6]);
+			// 		__CRAYON_GRAPHICS_DEBUG_VARS[1], __CRAYON_GRAPHICS_DEBUG_VARS[2], __CRAYON_GRAPHICS_DEBUG_VARS[3],
+			// 		__CRAYON_GRAPHICS_DEBUG_VARS[4], __CRAYON_GRAPHICS_DEBUG_VARS[5], __CRAYON_GRAPHICS_DEBUG_VARS[6]);
 
 			// crayon_graphics_draw_text_mono(g_buffer, &BIOS, PVR_LIST_PT_POLY, 32, 280, 254, 1, 1, BIOS_P.palette_id);
 
