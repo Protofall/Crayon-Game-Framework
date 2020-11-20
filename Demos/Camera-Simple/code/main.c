@@ -652,8 +652,8 @@ int main(){
 		}
 
 		if((st->buttons & CONT_B) && !(prev_btns[__dev->port] & CONT_B)){
-			__GRAPHICS_DEBUG_VARIABLES[8]++;
-			if(__GRAPHICS_DEBUG_VARIABLES[8] > 7){__GRAPHICS_DEBUG_VARIABLES[8] = 0;}
+			__CRAYON_GRAPHICS_DEBUG_VARS[8]++;
+			if(__CRAYON_GRAPHICS_DEBUG_VARS[8] > 7){__CRAYON_GRAPHICS_DEBUG_VARS[8] = 0;}
 		}
 
 		//Need to add the free-ing functions first
@@ -664,34 +664,34 @@ int main(){
 		if((st->rtrig > 0xFF * 0.1) && (prev_trigs[__dev->port].y <= 0xFF * 0.1)){
 			switch(last_dir){
 				case 0:
-				moved_on_frame.x += -1;
-				break;
+					moved_on_frame.x += -1;
+					break;
 				case 1:
-				moved_on_frame.y += -1;
-				break;
+					moved_on_frame.y += -1;
+					break;
 				case 2:
-				moved_on_frame.x += 1;
-				break;
+					moved_on_frame.x += 1;
+					break;
 				case 3:
-				moved_on_frame.y += 1;
-				break;
+					moved_on_frame.y += 1;
+					break;
 			}
 		}
 
 		if((st->ltrig > 0xFF * 0.1) && (prev_trigs[__dev->port].x <= 0xFF * 0.1)){
 			switch(last_dir){
 				case 0:
-				moved_on_frame.x += 1;
-				break;
+					moved_on_frame.x += 1;
+					break;
 				case 1:
-				moved_on_frame.y += 1;
-				break;
+					moved_on_frame.y += 1;
+					break;
 				case 2:
-				moved_on_frame.x += -1;
-				break;
+					moved_on_frame.x += -1;
+					break;
 				case 3:
-				moved_on_frame.y += -1;
-				break;
+					moved_on_frame.y += -1;
+					break;
 			}
 		}
 
@@ -732,6 +732,7 @@ int main(){
 		else{
 			Red_Man_Draw.rotation[0] = 270;
 		}
+		Man_BG.rotation[0] = Red_Man_Draw.rotation[0];
 
 		if(stats.frame_count % 60 == 0){
 			Frames_Draw.frame_id[0] = (Frames_Draw.frame_id[0] + 1) % Frames_Draw.animation->frame_count;
@@ -742,12 +743,12 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
-			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | CRAYON_DRAW_FULL_CROP);
+			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | CRAYON_DRAW_FULL_CROP);
+			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | CRAYON_DRAW_FULL_CROP);
 
 			//THe player sprite
-			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | CRAYON_DRAW_FULL_CROP);
 
 			//Fonts aren't supported by cameras yet
 			// crayon_graphics_draw_text_prop("Tahoma\0", &Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id);
@@ -779,11 +780,11 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE);
-			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE);
+			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE | CRAYON_DRAW_FULL_CROP);
+			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE | CRAYON_DRAW_FULL_CROP);
 
 			//Represents the boundry box for the red man when not rotated
-			// crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, 0);
+			crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE | CRAYON_DRAW_FULL_CROP);
 
 			//This represents the camera's space
 			crayon_graphics_draw_sprites(&Cam_BGs[current_camera_id], NULL, PVR_LIST_OP_POLY, 0);

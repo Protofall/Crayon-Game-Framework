@@ -161,8 +161,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 	camera_verts[2] = (vec2_f_t){camera->window_x,camera->window_y+camera->window_height};
 	camera_verts[3] = (vec2_f_t){camera->window_x+camera->window_width,camera->window_y+camera->window_height};
 
-	pvr_sprite_cxt_t context;
-
+	// Set the texture format including right palette
 	int pvr_txr_fmt = sprite_array->spritesheet->texture_format;
 	uint8_t texture_format = DTEX_TXRFMT(sprite_array->spritesheet->texture_format);
 	if(texture_format == 5){	// 4BPP
@@ -172,6 +171,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		pvr_txr_fmt |= PVR_TXRFMT_8BPP_PAL(sprite_array->palette->palette_id);
 	}
 
+	pvr_sprite_cxt_t context;
 	pvr_sprite_cxt_txr(&context, poly_list_mode, pvr_txr_fmt, sprite_array->spritesheet->texture_width,
 		sprite_array->spritesheet->texture_height, sprite_array->spritesheet->texture, sprite_array->filter);
 
@@ -283,8 +283,8 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 				// Therfore storing the result in a int16_t is perfectly fine
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.dx = floor((floor(sprite_array->coord[i].x) - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.dy = floor((floor(sprite_array->coord[i].y) - world_coord.y - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.dx = floor((floor(sprite_array->coord[i].x) - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff * 0.5)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.dy = floor((floor(sprite_array->coord[i].y) - world_coord.y - (sprite_array->scale[i * multi_scale].x * diff * 0.5)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 			vert.ax = vert.dx + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_width / (float)camera->world_width));
 			vert.ay = vert.dy;
 			vert.bx = vert.ax;
@@ -305,8 +305,8 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		else if(rotation_val == 3){
 			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
 
-			vert.bx = floor((floor(sprite_array->coord[i].x) - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff / 2)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.by = floor((floor(sprite_array->coord[i].y) - world_coord.y - (sprite_array->scale[i * multi_scale].x * diff / 2)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
+			vert.bx = floor((floor(sprite_array->coord[i].x) - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff * 0.5)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
+			vert.by = floor((floor(sprite_array->coord[i].y) - world_coord.y - (sprite_array->scale[i * multi_scale].x * diff * 0.5)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
 			vert.cx = vert.bx + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_width / (float)camera->world_width));
 			vert.cy = vert.by;
 			vert.dx = vert.cx;
