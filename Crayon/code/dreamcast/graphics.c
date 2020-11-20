@@ -641,8 +641,8 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 
 			k = 1;	// vert_coords index goes in order, 0, 1, -1, 2, -2, etc
 			for(j = 1; j < poly_verts; j++){
-				skip = j % 2 != 1;	// Starts at 1
-				index = skip ? poly_verts - k : k;
+				f = j % 2 != 1;	// Starts at 1 (Recyclign register for "f" rather thank making a new var)
+				index = f ? poly_verts - k : k;
 
 				vert[j].x = vert_coords[index].x;
 				vert[j].y = vert_coords[index].y;
@@ -667,9 +667,8 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 				vert[j].v = uv[0].y + ((uv[1].y - uv[0].y) * ((vec[__UNROTATED].y - vec[__SPRITE_BOUND_TL].y) /
 					(vec[__SPRITE_BOUND_BR].y - vec[__SPRITE_BOUND_TL].y)));
 
-				if(skip){k++;}
+				if(f){k++;}
 			}
-			skip = 0;	// Since this is used for other things too
 		}
 		else{
 			poly_verts = 4;
