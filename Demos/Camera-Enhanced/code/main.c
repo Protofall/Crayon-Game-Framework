@@ -312,6 +312,9 @@ int main(){
 		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
+	// Man.animation->frame_width = 8;
+	// Man.animation->frame_height = 16;
+
 	crayon_memory_init_sprite_array(&James_Draw, &Characters, 0, NULL, 1, 9, 0, PVR_FILTER_NONE, 0);
 	James_Draw.scale[0].x = 2;
 	James_Draw.scale[0].y = 2;
@@ -585,40 +588,40 @@ int main(){
 	crayon_viewport_t * current_camera = &cameras[current_camera_id];
 
 	//This is the same as no camera
-	crayon_memory_init_camera(&cameras[0], (vec2_f_t){Cam_BGs[0].coord[0].x,Cam_BGs[0].coord[0].y},
-		(vec2_u16_t){Cam_BGs[0].scale[0].x,Cam_BGs[0].scale[0].y},
-		(vec2_u16_t){Cam_BGs[0].coord[0].x,Cam_BGs[0].coord[0].y},
-		(vec2_u16_t){Cam_BGs[0].scale[0].x,Cam_BGs[0].scale[0].y}, 1);
+	crayon_memory_init_camera(&cameras[0], (vec2_f_t){Cam_BGs[0].coord[0].x, Cam_BGs[0].coord[0].y},
+		(vec2_u16_t){Cam_BGs[0].scale[0].x, Cam_BGs[0].scale[0].y},
+		(vec2_u16_t){Cam_BGs[0].coord[0].x, Cam_BGs[0].coord[0].y},
+		(vec2_u16_t){Cam_BGs[0].scale[0].x, Cam_BGs[0].scale[0].y}, 1);
 
 	//This is the basic view, no scaling, but we crop everything outside the inner 300/200 box
-	crayon_memory_init_camera(&cameras[1], (vec2_f_t){Cam_BGs[1].coord[0].x,Cam_BGs[1].coord[0].y},
-		(vec2_u16_t){Cam_BGs[1].scale[0].x,Cam_BGs[1].scale[0].y},
-		(vec2_u16_t){Cam_BGs[1].coord[0].x,Cam_BGs[1].coord[0].y},
-		(vec2_u16_t){Cam_BGs[1].scale[0].x,Cam_BGs[1].scale[0].y}, 1);
+	crayon_memory_init_camera(&cameras[1], (vec2_f_t){Cam_BGs[1].coord[0].x, Cam_BGs[1].coord[0].y},
+		(vec2_u16_t){Cam_BGs[1].scale[0].x, Cam_BGs[1].scale[0].y},
+		(vec2_u16_t){Cam_BGs[1].coord[0].x, Cam_BGs[1].coord[0].y},
+		(vec2_u16_t){Cam_BGs[1].scale[0].x, Cam_BGs[1].scale[0].y}, 1);
 
 	//Magnify the selectioned zone (160,120 to 480, 360) The world is half the size of the window
 	crayon_memory_init_camera(&cameras[2], (vec2_f_t){0,0},
 		(vec2_u16_t){640,480},
-		(vec2_u16_t){Cam_BGs[2].coord[0].x,Cam_BGs[2].coord[0].y},
-		(vec2_u16_t){Cam_BGs[2].scale[0].x,Cam_BGs[2].scale[0].y}, 1);
+		(vec2_u16_t){Cam_BGs[2].coord[0].x, Cam_BGs[2].coord[0].y},
+		(vec2_u16_t){Cam_BGs[2].scale[0].x, Cam_BGs[2].scale[0].y}, 1);
 
 	if(MODE == 0){
 		crayon_memory_init_camera(&cameras[3], (vec2_f_t){0,0},
 			(vec2_u16_t){320,240},
-			(vec2_u16_t){Cam_BGs[3].coord[0].x,Cam_BGs[3].coord[0].y},
-			(vec2_u16_t){Cam_BGs[3].scale[0].x,Cam_BGs[3].scale[0].y}, 1);
+			(vec2_u16_t){Cam_BGs[3].coord[0].x, Cam_BGs[3].coord[0].y},
+			(vec2_u16_t){Cam_BGs[3].scale[0].x, Cam_BGs[3].scale[0].y}, 1);
 	}
 	else if(MODE == 1){
 		crayon_memory_init_camera(&cameras[3], (vec2_f_t){0,0},
 			(vec2_u16_t){80,60},
-			(vec2_u16_t){Cam_BGs[3].coord[0].x,Cam_BGs[3].coord[0].y},
-			(vec2_u16_t){Cam_BGs[3].scale[0].x,Cam_BGs[3].scale[0].y}, 1);
+			(vec2_u16_t){Cam_BGs[3].coord[0].x, Cam_BGs[3].coord[0].y},
+			(vec2_u16_t){Cam_BGs[3].scale[0].x, Cam_BGs[3].scale[0].y}, 1);
 	}
 	else if(MODE == 2){
 		crayon_memory_init_camera(&cameras[3], (vec2_f_t){0,0},
 			(vec2_u16_t){150,100},
-			(vec2_u16_t){Cam_BGs[3].coord[0].x,Cam_BGs[3].coord[0].y},
-			(vec2_u16_t){Cam_BGs[3].scale[0].x,Cam_BGs[3].scale[0].y}, 1);
+			(vec2_u16_t){Cam_BGs[3].coord[0].x, Cam_BGs[3].coord[0].y},
+			(vec2_u16_t){Cam_BGs[3].scale[0].x, Cam_BGs[3].scale[0].y}, 1);
 	}
 
 	// char g_buffer[300];

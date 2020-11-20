@@ -485,7 +485,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 
 	// The unrotated sprite's boundries
 		// Used when we do Sutherland Hodgman
-	float sprite_boundry[4] = {0};
+	vec2_f_t sprite_boundry[2] = {{0,0}};
 
 	// Quick commands to check if its multi or not
 		// I wonder if its more efficient to use these vars or copy their
@@ -508,7 +508,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	uint8_t f, a, r, g, b;
 
 	// Set the flags
-	unsigned int i, j, k;	// Indexes
+	unsigned int i, j, k, index;	// Indexes
 	// for(j = 0; j < 3; j++){
 	// 	vert[j].flags = PVR_CMD_VERTEX;
 	// }
@@ -539,29 +539,29 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 			// array changed OR we just cropped a poly with sutherland-hodgman
 			//
 
-		// Apply the uvs to the actual vertexes
-		if(i == 0 || multi_flip || multi_frame){
-			if(sprite_array->flip[multi_flip ? i : 0]){	// Is flipped
-				vert[0].u = uv[1].x;
-				vert[0].v = uv[0].y;
-				vert[1].u = uv[0].x;
-				vert[1].v = uv[0].y;
-				vert[2].u = uv[1].x;
-				vert[2].v = uv[1].y;
-				vert[3].u = uv[0].x;
-				vert[3].v = uv[1].y;
-			}
-			else{
-				vert[0].u = uv[0].x;
-				vert[0].v = uv[0].y;
-				vert[1].u = uv[1].x;
-				vert[1].v = uv[0].y;
-				vert[2].u = uv[0].x;
-				vert[2].v = uv[1].y;
-				vert[3].u = uv[1].x;
-				vert[3].v = uv[1].y;
-			}
-		}
+		// // Apply the uvs to the actual vertexes
+		// if(i == 0 || multi_flip || multi_frame){
+		// 	if(sprite_array->flip[multi_flip ? i : 0]){	// Is flipped
+		// 		vert[0].u = uv[1].x;
+		// 		vert[0].v = uv[0].y;
+		// 		vert[1].u = uv[0].x;
+		// 		vert[1].v = uv[0].y;
+		// 		vert[2].u = uv[1].x;
+		// 		vert[2].v = uv[1].y;
+		// 		vert[3].u = uv[0].x;
+		// 		vert[3].v = uv[1].y;
+		// 	}
+		// 	else{
+		// 		vert[0].u = uv[0].x;
+		// 		vert[0].v = uv[0].y;
+		// 		vert[1].u = uv[1].x;
+		// 		vert[1].v = uv[0].y;
+		// 		vert[2].u = uv[0].x;
+		// 		vert[2].v = uv[1].y;
+		// 		vert[3].u = uv[1].x;
+		// 		vert[3].v = uv[1].y;
+		// 	}
+		// }
 
 		// Update rotation angle if needed
 		if(i == 0 || multi_rotation){
@@ -607,11 +607,11 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 		vert_coords[3].y = vert_coords[2].y;
 
 		// Store the unrotated vertex boundries for later if we're doing software cropping
-		if(options & CRAYON_DRAW_SOFTWARE_CROP){
-			sprite_boundry[0] = vert_coords[0].x;
-			sprite_boundry[1] = vert_coords[0].y;
-			sprite_boundry[2] = vert_coords[1].x;
-			sprite_boundry[3] = vert_coords[3].y;
+		if(!0 && (options & CRAYON_DRAW_SOFTWARE_CROP)){
+			sprite_boundry[0].x = vert_coords[0].x;
+			sprite_boundry[0].y = vert_coords[0].y;
+			sprite_boundry[1].x = vert_coords[1].x;
+			sprite_boundry[1].y = vert_coords[3].y;
 		}
 
 		// If we don't want to do rotations (Rotation == 0.0), then skip it
@@ -648,26 +648,97 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 				// To generate the UVs we must rotate the point by "-angle" to find the x/y offset of the vertex
 			vert[0].x = vert_coords[0].x;
 			vert[0].y = vert_coords[0].y;
-			spare = crayon_misc_rotate_point(mid, vert_coords[0], -angle);
-			vert[0].u = (spare.x - sprite_boundry[0]) / sprite_array->spritesheet->texture_width;
-			vert[0].v = (spare.y - sprite_boundry[1]) / sprite_array->spritesheet->texture_height;
+			if(angle != 0){
+				spare = crayon_misc_rotate_point(mid, vert_coords[0], -angle);
+			}
+			else{
+				spare = vert_coords[0];	// Since "mid" wasn't set
+			}
 
+			if(0){
+				if(spare.x < sprite_boundry[0].x){spare.x = sprite_boundry[0].x;}
+				else if(spare.x > sprite_boundry[1].x){spare.x = sprite_boundry[1].x;}
+				if(spare.y < sprite_boundry[0].y){spare.y = sprite_boundry[0].y;}
+				else if(spare.y > sprite_boundry[1].y){spare.y = sprite_boundry[1].y;}
+			}
+
+
+			// What do I have:
+				// The x/y distance between the vertex and top-left original vertex when unrotated
+				// The UVs for the original verticies
+
+			// What do I need:
+				// That distance as a UV
+					// So We'd convert our x/y distance into a UV offset.
+						// (distance / sprite_width_orheight) * (uv[1].x - uv[0].x)
+
+
+			// Ignores the "flip" part
+				// Only x responds to flip, for that we have to do "uv[1].x - blah" instead
+			vert[0].u = (((spare.x - sprite_boundry[0].x) / (sprite_boundry[1].x - sprite_boundry[0].x)) * (uv[1].x - uv[0].x));
+			if(!sprite_array->flip[multi_flip ? i : 0]){	// uv[0].x + Part
+				vert[0].u += uv[0].x;
+			}
+			else{	// uv[1].x - Part
+				vert[0].u *= -1;
+				vert[0].u += uv[1].x;
+			}
+			vert[0].v = uv[0].y + (((spare.y - sprite_boundry[0].y) / (sprite_boundry[1].y - sprite_boundry[0].y)) * (uv[1].y - uv[0].y));
+
+			// if(fmod(sprite_array->rotation[multi_rotation ? i : 0], 360.0) == 45){
+			// 	error_freeze("%.2f %.2f %.2f %.2f %.2f %.2f %.2f", spare.x, spare.y, sprite_boundry[0], sprite_boundry[1], sprite_boundry[2], sprite_boundry[3], angle);
+			// }
+
+
+			// sprite_array->frame_uv[] is the offset from 0 in texture space.
+				// We need to get our offset, divide it by the vertex side length, then add that to sprite_array->frame_uv[]
+				// and divide by texture side length
 
 			// uv[0].x = sprite_array->frame_uv[sprite_array->frame_id[i]].x / (float)sprite_array->spritesheet->texture_width;
 			// uv[0].y = sprite_array->frame_uv[sprite_array->frame_id[i]].y / (float)sprite_array->spritesheet->texture_height;
 			// uv[1].x = uv[0].x + (sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width);
 			// uv[1].y = uv[0].y + (sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height);
 
+			// vert[0].u = uv[0].x;
+			// vert[0].v = uv[0].y;
+			// vert[1].u = uv[1].x;
+			// vert[1].v = uv[0].y;
+			// vert[2].u = uv[0].x;
+			// vert[2].v = uv[1].y;
+			// vert[3].u = uv[1].x;
+			// vert[3].v = uv[1].y;
+
 			k = 1;	// vert_coords index goes in order, 0, 1, -1, 2, -2, etc
-			unsigned int index;
 			for(j = 1; j < poly_verts; j++){
 				skip = j % 2 != 1;	// Starts at 1
 				index = skip ? poly_verts - k : k;
+
 				vert[j].x = vert_coords[index].x;
 				vert[j].y = vert_coords[index].y;
-				spare = crayon_misc_rotate_point(mid, vert_coords[index], -angle);
-				vert[j].u = (spare.x - sprite_boundry[0]) / sprite_array->spritesheet->texture_width;
-				vert[j].v = (spare.y - sprite_boundry[1]) / sprite_array->spritesheet->texture_height;
+				if(angle != 0){
+					spare = crayon_misc_rotate_point(mid, vert_coords[index], -angle);
+				}
+				else{
+					spare = vert_coords[index];	// Since "mid" wasn't set
+				}
+
+				if(0){
+					if(spare.x < sprite_boundry[0].x){spare.x = sprite_boundry[0].x;}
+					else if(spare.x > sprite_boundry[1].x){spare.x = sprite_boundry[1].x;}
+					if(spare.y < sprite_boundry[0].y){spare.y = sprite_boundry[0].y;}
+					else if(spare.y > sprite_boundry[1].y){spare.y = sprite_boundry[1].y;}
+				}
+
+				vert[j].u = (((spare.x - sprite_boundry[0].x) / (sprite_boundry[1].x - sprite_boundry[0].x)) * (uv[1].x - uv[0].x));
+				if(!sprite_array->flip[multi_flip ? i : 0]){	// uv[0].x + Part
+					vert[j].u += uv[0].x;
+				}
+				else{	// uv[1].x - Part
+					vert[j].u *= -1;
+					vert[j].u += uv[1].x;
+				}
+				vert[j].v = uv[0].y + (((spare.y - sprite_boundry[0].y) / (sprite_boundry[1].y - sprite_boundry[0].y)) * (uv[1].y - uv[0].y));
+
 				if(skip){k++;}
 			}
 			skip = 0;	// Since this is used for other things too
@@ -685,7 +756,23 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 			vert[3].y = vert_coords[2].y;
 
 			// Apply the UVs
-			;
+				// If its flipped, swap the x UVs
+			if(sprite_array->flip[multi_flip ? i : 0]){
+				vert[0].u = uv[1].x;
+				vert[1].u = uv[0].x;
+				vert[2].u = uv[1].x;
+				vert[3].u = uv[0].x;
+			}
+			else{
+				vert[0].u = uv[0].x;
+				vert[1].u = uv[1].x;
+				vert[2].u = uv[0].x;
+				vert[3].u = uv[1].x;
+			}
+			vert[0].v = uv[0].y;
+			vert[1].v = uv[0].y;
+			vert[2].v = uv[1].y;
+			vert[3].v = uv[1].y;
 		}
 
 		// Apply these to all verts
