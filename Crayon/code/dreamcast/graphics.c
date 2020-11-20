@@ -437,9 +437,6 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 
 uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 		uint8_t poly_list_mode, uint8_t options){
-	// options = CRAYON_DRAW_OOB_SKIP;
-	// options = 0;
-
 	int pvr_txr_fmt = sprite_array->spritesheet->texture_format;
 	uint8_t texture_format = DTEX_TXRFMT(sprite_array->spritesheet->texture_format);
 	if(texture_format == 5){	// 4BPP
@@ -483,9 +480,18 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	window_coords[2] = camera->window_x + camera->window_width;
 	window_coords[3] = camera->window_y + camera->window_height;
 
-	// The unrotated sprite's boundries
-		// Used when we do Sutherland Hodgman
-	vec2_f_t sprite_boundry[2] = {{0,0}};
+	// Contains a bunch of random vectors. Unrotated sprite top left and bottom right verts,
+		// mid point, unrotated point
+	#define __SPRITE_BOUND_TL 0
+	#define __SPRITE_BOUND_BR 1
+	#define __MID_POINT 2
+	#define __UNROTATED 3
+	#define __CAMERA_SCALE 5
+	vec2_f_t vec[5] = {{0,0}};
+
+	// Set the camera scaling boundries
+	vec[__CAMERA_SCALE].x = camera->window_width / (float)camera->world_width;
+	vec[__CAMERA_SCALE].y = camera->window_height / (float)camera->world_height;
 
 	// Quick commands to check if its multi or not
 		// I wonder if its more efficient to use these vars or copy their
@@ -497,23 +503,13 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	uint8_t multi_flip = !!(sprite_array->options & CRAY_MULTI_FLIP);
 
 	float angle = 0;
-	vec2_f_t mid = (vec2_f_t){0,0};
-	vec2_f_t spare = (vec2_f_t){0,0};
-	vec2_f_t camera_scale = (vec2_f_t){camera->window_width / (float)camera->world_width,
-		camera->window_height / (float)camera->world_height};
-
-	uint8_t skip = 0;
 
 	// Used for the various colour calulations
 	uint8_t f, a, r, g, b;
 
-	// Set the flags
-	unsigned int i, j, k, index;	// Indexes
-	// for(j = 0; j < 3; j++){
-	// 	vert[j].flags = PVR_CMD_VERTEX;
-	// }
-	// vert[3].flags = PVR_CMD_VERTEX_EOL;
+	uint8_t skip = 0;
 
+	unsigned int i, j, k, index;	// Indexes
 	for(i = 0; i < sprite_array->size; i++){
 		// Alpha is zero or element is invisible
 		if((sprite_array->colour[multi_colour ? i : 0] >> 24) == 0 || !sprite_array->visible[i]){	// Don't draw alpha-less stuff
@@ -530,38 +526,6 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 			uv[1].x = uv[0].x + (sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width);
 			uv[1].y = uv[0].y + (sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height);
 		}
-
-		// The actual uv array only needs to be updated on first
-			// loop and whenever the frame changes. However its not
-			// terribly harmful to update it on every loop anyways
-
-		// The vertex uvs, however, should only be updated if the uv
-			// array changed OR we just cropped a poly with sutherland-hodgman
-			//
-
-		// // Apply the uvs to the actual vertexes
-		// if(i == 0 || multi_flip || multi_frame){
-		// 	if(sprite_array->flip[multi_flip ? i : 0]){	// Is flipped
-		// 		vert[0].u = uv[1].x;
-		// 		vert[0].v = uv[0].y;
-		// 		vert[1].u = uv[0].x;
-		// 		vert[1].v = uv[0].y;
-		// 		vert[2].u = uv[1].x;
-		// 		vert[2].v = uv[1].y;
-		// 		vert[3].u = uv[0].x;
-		// 		vert[3].v = uv[1].y;
-		// 	}
-		// 	else{
-		// 		vert[0].u = uv[0].x;
-		// 		vert[0].v = uv[0].y;
-		// 		vert[1].u = uv[1].x;
-		// 		vert[1].v = uv[0].y;
-		// 		vert[2].u = uv[0].x;
-		// 		vert[2].v = uv[1].y;
-		// 		vert[3].u = uv[1].x;
-		// 		vert[3].v = uv[1].y;
-		// 	}
-		// }
 
 		// Update rotation angle if needed
 		if(i == 0 || multi_rotation){
@@ -597,33 +561,36 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 			// be locked to the same grind and same for cameras. We then floor the result of timesing by the scale so its now locked
 			// to the grid. We don't floor the scale because we might want to scale by 2.5 or something. Finally window_x/y is an int
 		// Also notice how the verts are in clockwise order. This makes it easier for sutherland hodgman algorithm
-		vert_coords[0].x = floor((floor(sprite_array->coord[i].x) - floor(camera->world_x)) * camera_scale.x) + camera->window_x;
-		vert_coords[0].y = floor((floor(sprite_array->coord[i].y) - floor(camera->world_y)) * camera_scale.y) + camera->window_y;
-		vert_coords[1].x = vert_coords[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[multi_scale ? i : 0].x * camera_scale.x);
+		vert_coords[0].x = floor((floor(sprite_array->coord[i].x) - floor(camera->world_x)) * vec[__CAMERA_SCALE].x) + camera->window_x;
+		vert_coords[0].y = floor((floor(sprite_array->coord[i].y) - floor(camera->world_y)) * vec[__CAMERA_SCALE].y) + camera->window_y;
+		vert_coords[1].x = vert_coords[0].x +
+			floor(sprite_array->animation->frame_width * sprite_array->scale[multi_scale ? i : 0].x * vec[__CAMERA_SCALE].x);
 		vert_coords[1].y = vert_coords[0].y;
 		vert_coords[2].x = vert_coords[1].x;
-		vert_coords[2].y = vert_coords[0].y + floor(sprite_array->animation->frame_height * sprite_array->scale[multi_scale ? i : 0].y * camera_scale.y);
+		vert_coords[2].y = vert_coords[0].y +
+			floor(sprite_array->animation->frame_height * sprite_array->scale[multi_scale ? i : 0].y * vec[__CAMERA_SCALE].y);
 		vert_coords[3].x = vert_coords[0].x;
 		vert_coords[3].y = vert_coords[2].y;
 
 		// Store the unrotated vertex boundries for later if we're doing software cropping
+			// That !0 is a placeholder for the hardware check (WIP INCOMPLETE)
 		if(!0 && (options & CRAYON_DRAW_SOFTWARE_CROP)){
-			sprite_boundry[0].x = vert_coords[0].x;
-			sprite_boundry[0].y = vert_coords[0].y;
-			sprite_boundry[1].x = vert_coords[1].x;
-			sprite_boundry[1].y = vert_coords[3].y;
+			vec[__SPRITE_BOUND_TL].x = vert_coords[0].x;
+			vec[__SPRITE_BOUND_TL].y = vert_coords[0].y;
+			vec[__SPRITE_BOUND_BR].x = vert_coords[1].x;
+			vec[__SPRITE_BOUND_BR].y = vert_coords[3].y;
 		}
 
 		// If we don't want to do rotations (Rotation == 0.0), then skip it
 		if(sprite_array->rotation[multi_rotation ? i : 0] != 0.0f){
 
 			// Gets the true midpoint
-			mid.x = ((vert_coords[1].x - vert_coords[0].x) * 0.5) + vert_coords[0].x;
-			mid.y = ((vert_coords[2].y - vert_coords[0].y) * 0.5) + vert_coords[0].y;
+			vec[__MID_POINT].x = ((vert_coords[1].x - vert_coords[0].x) * 0.5) + vert_coords[0].x;
+			vec[__MID_POINT].y = ((vert_coords[2].y - vert_coords[0].y) * 0.5) + vert_coords[0].y;
 
 			// Update the vert x and y positions
 			for(j = 0; j < 4; j++){
-				vert_coords[j] = crayon_misc_rotate_point(mid, vert_coords[j], angle);
+				vert_coords[j] = crayon_misc_rotate_point(vec[__MID_POINT], vert_coords[j], angle);
 			}
 		}
 
@@ -648,34 +615,20 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 				// To generate the UVs we must rotate the point by "-angle" to find the x/y offset of the vertex
 			vert[0].x = vert_coords[0].x;
 			vert[0].y = vert_coords[0].y;
-			if(angle != 0){
-				spare = crayon_misc_rotate_point(mid, vert_coords[0], -angle);
-			}
-			else{
-				spare = vert_coords[0];	// Since "mid" wasn't set
-			}
+			if(angle != 0){vec[__UNROTATED] = crayon_misc_rotate_point(vec[__MID_POINT], vert_coords[0], -angle);}
+			else{vec[__UNROTATED] = vert_coords[0];}	// Since "mid" wasn't set
 
-			if(0){
-				if(spare.x < sprite_boundry[0].x){spare.x = sprite_boundry[0].x;}
-				else if(spare.x > sprite_boundry[1].x){spare.x = sprite_boundry[1].x;}
-				if(spare.y < sprite_boundry[0].y){spare.y = sprite_boundry[0].y;}
-				else if(spare.y > sprite_boundry[1].y){spare.y = sprite_boundry[1].y;}
-			}
+			// Due to inaccuracies with the sin/cos functions, the numbers will be off a bit and occationally will be OOB
+			// So this just makes sure they are within
+			if(vec[__UNROTATED].x < vec[__SPRITE_BOUND_TL].x){vec[__UNROTATED].x = vec[__SPRITE_BOUND_TL].x;}
+			else if(vec[__UNROTATED].x > vec[__SPRITE_BOUND_BR].x){vec[__UNROTATED].x = vec[__SPRITE_BOUND_BR].x;}
+			if(vec[__UNROTATED].y < vec[__SPRITE_BOUND_TL].y){vec[__UNROTATED].y = vec[__SPRITE_BOUND_TL].y;}
+			else if(vec[__UNROTATED].y > vec[__SPRITE_BOUND_BR].y){vec[__UNROTATED].y = vec[__SPRITE_BOUND_BR].y;}
 
-
-			// What do I have:
-				// The x/y distance between the vertex and top-left original vertex when unrotated
-				// The UVs for the original verticies
-
-			// What do I need:
-				// That distance as a UV
-					// So We'd convert our x/y distance into a UV offset.
-						// (distance / sprite_width_orheight) * (uv[1].x - uv[0].x)
-
-
-			// Ignores the "flip" part
-				// Only x responds to flip, for that we have to do "uv[1].x - blah" instead
-			vert[0].u = (((spare.x - sprite_boundry[0].x) / (sprite_boundry[1].x - sprite_boundry[0].x)) * (uv[1].x - uv[0].x));
+			// Find the UV offset
+				// Only "x" responds to flip
+			vert[0].u = (uv[1].x - uv[0].x) * ((vec[__UNROTATED].x - vec[__SPRITE_BOUND_TL].x) /
+				(vec[__SPRITE_BOUND_BR].x - vec[__SPRITE_BOUND_TL].x));
 			if(!sprite_array->flip[multi_flip ? i : 0]){	// uv[0].x + Part
 				vert[0].u += uv[0].x;
 			}
@@ -683,30 +636,8 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 				vert[0].u *= -1;
 				vert[0].u += uv[1].x;
 			}
-			vert[0].v = uv[0].y + (((spare.y - sprite_boundry[0].y) / (sprite_boundry[1].y - sprite_boundry[0].y)) * (uv[1].y - uv[0].y));
-
-			// if(fmod(sprite_array->rotation[multi_rotation ? i : 0], 360.0) == 45){
-			// 	error_freeze("%.2f %.2f %.2f %.2f %.2f %.2f %.2f", spare.x, spare.y, sprite_boundry[0], sprite_boundry[1], sprite_boundry[2], sprite_boundry[3], angle);
-			// }
-
-
-			// sprite_array->frame_uv[] is the offset from 0 in texture space.
-				// We need to get our offset, divide it by the vertex side length, then add that to sprite_array->frame_uv[]
-				// and divide by texture side length
-
-			// uv[0].x = sprite_array->frame_uv[sprite_array->frame_id[i]].x / (float)sprite_array->spritesheet->texture_width;
-			// uv[0].y = sprite_array->frame_uv[sprite_array->frame_id[i]].y / (float)sprite_array->spritesheet->texture_height;
-			// uv[1].x = uv[0].x + (sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width);
-			// uv[1].y = uv[0].y + (sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height);
-
-			// vert[0].u = uv[0].x;
-			// vert[0].v = uv[0].y;
-			// vert[1].u = uv[1].x;
-			// vert[1].v = uv[0].y;
-			// vert[2].u = uv[0].x;
-			// vert[2].v = uv[1].y;
-			// vert[3].u = uv[1].x;
-			// vert[3].v = uv[1].y;
+			vert[0].v = uv[0].y + ((uv[1].y - uv[0].y) * ((vec[__UNROTATED].y - vec[__SPRITE_BOUND_TL].y) /
+				(vec[__SPRITE_BOUND_BR].y - vec[__SPRITE_BOUND_TL].y)));
 
 			k = 1;	// vert_coords index goes in order, 0, 1, -1, 2, -2, etc
 			for(j = 1; j < poly_verts; j++){
@@ -715,21 +646,17 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 
 				vert[j].x = vert_coords[index].x;
 				vert[j].y = vert_coords[index].y;
-				if(angle != 0){
-					spare = crayon_misc_rotate_point(mid, vert_coords[index], -angle);
-				}
-				else{
-					spare = vert_coords[index];	// Since "mid" wasn't set
-				}
+				if(angle != 0){vec[__UNROTATED] = crayon_misc_rotate_point(vec[__MID_POINT], vert_coords[index], -angle);}
+				else{vec[__UNROTATED] = vert_coords[index];}	// Since "mid" wasn't set
 
-				if(0){
-					if(spare.x < sprite_boundry[0].x){spare.x = sprite_boundry[0].x;}
-					else if(spare.x > sprite_boundry[1].x){spare.x = sprite_boundry[1].x;}
-					if(spare.y < sprite_boundry[0].y){spare.y = sprite_boundry[0].y;}
-					else if(spare.y > sprite_boundry[1].y){spare.y = sprite_boundry[1].y;}
-				}
+				// OOB correction
+				if(vec[__UNROTATED].x < vec[__SPRITE_BOUND_TL].x){vec[__UNROTATED].x = vec[__SPRITE_BOUND_TL].x;}
+				else if(vec[__UNROTATED].x > vec[__SPRITE_BOUND_BR].x){vec[__UNROTATED].x = vec[__SPRITE_BOUND_BR].x;}
+				if(vec[__UNROTATED].y < vec[__SPRITE_BOUND_TL].y){vec[__UNROTATED].y = vec[__SPRITE_BOUND_TL].y;}
+				else if(vec[__UNROTATED].y > vec[__SPRITE_BOUND_BR].y){vec[__UNROTATED].y = vec[__SPRITE_BOUND_BR].y;}
 
-				vert[j].u = (((spare.x - sprite_boundry[0].x) / (sprite_boundry[1].x - sprite_boundry[0].x)) * (uv[1].x - uv[0].x));
+				vert[j].u = (uv[1].x - uv[0].x) * ((vec[__UNROTATED].x - vec[__SPRITE_BOUND_TL].x) /
+					(vec[__SPRITE_BOUND_BR].x - vec[__SPRITE_BOUND_TL].x));
 				if(!sprite_array->flip[multi_flip ? i : 0]){	// uv[0].x + Part
 					vert[j].u += uv[0].x;
 				}
@@ -737,7 +664,8 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 					vert[j].u *= -1;
 					vert[j].u += uv[1].x;
 				}
-				vert[j].v = uv[0].y + (((spare.y - sprite_boundry[0].y) / (sprite_boundry[1].y - sprite_boundry[0].y)) * (uv[1].y - uv[0].y));
+				vert[j].v = uv[0].y + ((uv[1].y - uv[0].y) * ((vec[__UNROTATED].y - vec[__SPRITE_BOUND_TL].y) /
+					(vec[__SPRITE_BOUND_BR].y - vec[__SPRITE_BOUND_TL].y)));
 
 				if(skip){k++;}
 			}
@@ -777,10 +705,6 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 
 		// Apply these to all verts
 		for(j = 0; j < poly_verts; j++){
-			// if(options & CRAYON_DRAW_SOFTWARE_CROP){
-			// 	vert[j].u = 0;
-			// 	vert[j].v = 0;
-			// }
 			vert[j].argb = vert[0].argb;
 			vert[j].oargb = vert[0].oargb;
 			vert[j].z = sprite_array->layer[i];
