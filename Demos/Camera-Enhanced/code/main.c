@@ -312,9 +312,6 @@ int main(){
 		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
 	#endif
 
-	// Man.animation->frame_width = 8;
-	// Man.animation->frame_height = 16;
-
 	crayon_memory_init_sprite_array(&James_Draw, &Characters, 0, NULL, 1, 9, 0, PVR_FILTER_NONE, 0);
 	James_Draw.scale[0].x = 2;
 	James_Draw.scale[0].y = 2;
