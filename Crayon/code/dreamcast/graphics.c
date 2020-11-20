@@ -436,10 +436,9 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 }
 
 uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode, uint8_t options){
-
-	float u0, v0, u1, v1;
-	u0 = 0; v0 = 0; u1 = 0; v1 = 0;	// Needed if you want to prevent a bunch of compiler warnings...
+		uint8_t poly_list_mode, uint8_t options){
+	// options = CRAYON_DRAW_OOB_SKIP;
+	// options = 0;
 
 	int pvr_txr_fmt = sprite_array->spritesheet->texture_format;
 	uint8_t texture_format = DTEX_TXRFMT(sprite_array->spritesheet->texture_format);
@@ -450,18 +449,14 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 		pvr_txr_fmt |= PVR_TXRFMT_8BPP_PAL(sprite_array->palette->palette_id);
 	}
 
-	// uint8_t crop_edges = (1 << 4) - 1;	//---- BRTL
-	// 									//---- 1111 (Crop on all edges)
-
 	// //DELETE THIS LATER. A basic optimisation for now
 	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
 	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
 	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
 	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
 
-	//Used for cropping
-	// uint8_t bounds = 0;
-	// uint8_t cropped = 0;
+	// Need to set them to zero to prevent a bunch of compiler warnings...
+	vec2_f_t uv[2] = {{0,0}};
 
 	pvr_poly_cxt_t cxt;
 	pvr_poly_hdr_t hdr;
@@ -475,11 +470,11 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	uint8_t poly_verts = 4;
 	#define _MAX_POLY_VERTS 8	// With Sutherland-Hodgman I belive it can create up-to 8 vert polys for a 4 sided object
 	pvr_vertex_t vert[_MAX_POLY_VERTS];
-	vec2_f_t vert_coords[_MAX_POLY_VERTS * 2];	// We double that because of Sutherland-Hodgman alg
+	vec2_f_t vert_coords[(_MAX_POLY_VERTS * 2)];	// We double that because of Sutherland-Hodgman alg
 	#undef _MAX_POLY_VERTS
 
 	// Setting the first vert's command
-	// vert[0].flags = PVR_CMD_VERTEX;
+	vert[0].flags = PVR_CMD_VERTEX;
 
 	// min_x, min_y, max_x, max_y
 	float window_coords[4];
@@ -487,6 +482,10 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	window_coords[1] = camera->window_y;
 	window_coords[2] = camera->window_x + camera->window_width;
 	window_coords[3] = camera->window_y + camera->window_height;
+
+	// The unrotated sprite's boundries
+		// Used when we do Sutherland Hodgman
+	float sprite_boundry[4] = {0};
 
 	// Quick commands to check if its multi or not
 		// I wonder if its more efficient to use these vars or copy their
@@ -499,6 +498,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 
 	float angle = 0;
 	vec2_f_t mid = (vec2_f_t){0,0};
+	vec2_f_t spare = (vec2_f_t){0,0};
 	vec2_f_t camera_scale = (vec2_f_t){camera->window_width / (float)camera->world_width,
 		camera->window_height / (float)camera->world_height};
 
@@ -508,54 +508,58 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	uint8_t f, a, r, g, b;
 
 	// Set the flags
-	unsigned int i, j;	// Indexes
-	for(j = 0; j < 3; j++){
-		vert[j].flags = PVR_CMD_VERTEX;
-	}
-	vert[3].flags = PVR_CMD_VERTEX_EOL;
+	unsigned int i, j, k;	// Indexes
+	// for(j = 0; j < 3; j++){
+	// 	vert[j].flags = PVR_CMD_VERTEX;
+	// }
+	// vert[3].flags = PVR_CMD_VERTEX_EOL;
 
 	for(i = 0; i < sprite_array->size; i++){
-		if(sprite_array->colour[multi_colour ? i : 0] >> 24 == 0){	// Don't draw alpha-less stuff
+		// Alpha is zero or element is invisible
+		if((sprite_array->colour[multi_colour ? i : 0] >> 24) == 0 || !sprite_array->visible[i]){	// Don't draw alpha-less stuff
 			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
 			skip = 1;
-		}
-
-		if(sprite_array->visible[i] == 0){
-			if(i != 0){continue;}
-			else{skip = 1;}	// We need the defaults to be set on first loop
 		}
 
 		// These if statements will trigger once if we have a single element (i == 0)
 			// and every time for a multi-list
 
 		if(i == 0 || multi_frame){	// frame
-			u0 = sprite_array->frame_uv[sprite_array->frame_id[i]].x / (float)sprite_array->spritesheet->texture_width;
-			v0 = sprite_array->frame_uv[sprite_array->frame_id[i]].y / (float)sprite_array->spritesheet->texture_height;
-			u1 = u0 + (sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width);
-			v1 = v0 + (sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height);
+			uv[0].x = sprite_array->frame_uv[sprite_array->frame_id[i]].x / (float)sprite_array->spritesheet->texture_width;
+			uv[0].y = sprite_array->frame_uv[sprite_array->frame_id[i]].y / (float)sprite_array->spritesheet->texture_height;
+			uv[1].x = uv[0].x + (sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width);
+			uv[1].y = uv[0].y + (sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height);
 		}
 
-		// Apply u0, v0, u1, v1 to the actual vertexes
+		// The actual uv array only needs to be updated on first
+			// loop and whenever the frame changes. However its not
+			// terribly harmful to update it on every loop anyways
+
+		// The vertex uvs, however, should only be updated if the uv
+			// array changed OR we just cropped a poly with sutherland-hodgman
+			//
+
+		// Apply the uvs to the actual vertexes
 		if(i == 0 || multi_flip || multi_frame){
-			if(sprite_array->flip[multi_flip ? i : 0] & (1 << 0)){	// Is flipped
-				vert[0].u = u1;
-				vert[0].v = v0;
-				vert[1].u = u0;
-				vert[1].v = v0;
-				vert[2].u = u1;
-				vert[2].v = v1;
-				vert[3].u = u0;
-				vert[3].v = v1;
+			if(sprite_array->flip[multi_flip ? i : 0]){	// Is flipped
+				vert[0].u = uv[1].x;
+				vert[0].v = uv[0].y;
+				vert[1].u = uv[0].x;
+				vert[1].v = uv[0].y;
+				vert[2].u = uv[1].x;
+				vert[2].v = uv[1].y;
+				vert[3].u = uv[0].x;
+				vert[3].v = uv[1].y;
 			}
 			else{
-				vert[0].u = u0;
-				vert[0].v = v0;
-				vert[1].u = u1;
-				vert[1].v = v0;
-				vert[2].u = u0;
-				vert[2].v = v1;
-				vert[3].u = u1;
-				vert[3].v = v1;
+				vert[0].u = uv[0].x;
+				vert[0].v = uv[0].y;
+				vert[1].u = uv[1].x;
+				vert[1].v = uv[0].y;
+				vert[2].u = uv[0].x;
+				vert[2].v = uv[1].y;
+				vert[3].u = uv[1].x;
+				vert[3].v = uv[1].y;
 			}
 		}
 
@@ -593,53 +597,109 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 			// be locked to the same grind and same for cameras. We then floor the result of timesing by the scale so its now locked
 			// to the grid. We don't floor the scale because we might want to scale by 2.5 or something. Finally window_x/y is an int
 		// Also notice how the verts are in clockwise order. This makes it easier for sutherland hodgman algorithm
-		vert[0].x = floor((floor(sprite_array->coord[i].x) - floor(camera->world_x)) * camera_scale.x) + camera->window_x;
-		vert[0].y = floor((floor(sprite_array->coord[i].y) - floor(camera->world_y)) * camera_scale.y) + camera->window_y;
-		vert[1].x = vert[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[multi_scale ? i : 0].x);
-		vert[1].y = vert[0].y;
-		vert[2].x = vert[0].x;
-		vert[2].y = vert[0].y + floor(sprite_array->animation->frame_height * sprite_array->scale[multi_scale ? i : 0].y);
-		vert[3].x = vert[1].x;
-		vert[3].y = vert[2].y;
+		vert_coords[0].x = floor((floor(sprite_array->coord[i].x) - floor(camera->world_x)) * camera_scale.x) + camera->window_x;
+		vert_coords[0].y = floor((floor(sprite_array->coord[i].y) - floor(camera->world_y)) * camera_scale.y) + camera->window_y;
+		vert_coords[1].x = vert_coords[0].x + floor(sprite_array->animation->frame_width * sprite_array->scale[multi_scale ? i : 0].x * camera_scale.x);
+		vert_coords[1].y = vert_coords[0].y;
+		vert_coords[2].x = vert_coords[1].x;
+		vert_coords[2].y = vert_coords[0].y + floor(sprite_array->animation->frame_height * sprite_array->scale[multi_scale ? i : 0].y * camera_scale.y);
+		vert_coords[3].x = vert_coords[0].x;
+		vert_coords[3].y = vert_coords[2].y;
 
-		// Swap vert[2].x and vert[3].x later when adding in the new functions
-		;
+		// Store the unrotated vertex boundries for later if we're doing software cropping
+		if(options & CRAYON_DRAW_SOFTWARE_CROP){
+			sprite_boundry[0] = vert_coords[0].x;
+			sprite_boundry[1] = vert_coords[0].y;
+			sprite_boundry[2] = vert_coords[1].x;
+			sprite_boundry[3] = vert_coords[3].y;
+		}
 
 		// If we don't want to do rotations (Rotation == 0.0), then skip it
 		if(sprite_array->rotation[multi_rotation ? i : 0] != 0.0f){
 
 			// Gets the true midpoint
-			#define _CRAYON_SPARE_INDEX 4	// Rather than making a new variable, lets use an exisiting one to save on registers
-			mid.x = ((vert[1].x - vert[0].x) * 0.5) + vert[0].x;
-			mid.y = ((vert[2].y - vert[0].y) * 0.5) + vert[0].y;
+			mid.x = ((vert_coords[1].x - vert_coords[0].x) * 0.5) + vert_coords[0].x;
+			mid.y = ((vert_coords[2].y - vert_coords[0].y) * 0.5) + vert_coords[0].y;
 
 			// Update the vert x and y positions
 			for(j = 0; j < 4; j++){
-				vec2_f_t rotated_values = crayon_misc_rotate_point(mid, (vec2_f_t){vert[j].x, vert[j].y}, angle);
-				vert[j].x = rotated_values.x;
-				vert[j].y = rotated_values.y;
+				vert_coords[j] = crayon_misc_rotate_point(mid, vert_coords[j], angle);
 			}
-			#undef _CRAYON_SPARE_INDEX
 		}
 
-		// // OOB check
-		// if(options & CRAYON_DRAW_OOB_SKIP){
-		// 	// If they don't overlap then no point progressing
-		// 	if(!crayon_graphics_aabb_obb_overlap(vert_coords, window_coords)){
-		// 		continue;
-		// 	}
-		// }
+		// OOB check
+		if(options & CRAYON_DRAW_OOB_SKIP){
+			// If they don't overlap then no point progressing
+			if(!crayon_graphics_aabb_obb_overlap(vert_coords, window_coords)){
+				continue;
+			}
+		}
 
-		// Do Sutherland-Hodgman alg here
-		;
+		// Perform software cropping (But only if we can't do hardware cropping)
+			// That !0 is a placeholder for the hardware check
+		if(!0 && (options & CRAYON_DRAW_SOFTWARE_CROP)){
+			poly_verts = crayon_graphics_sutherland_hodgman(vert_coords, window_coords);
+
+			// This will only really trigger is the OOB check was disabled
+			if(poly_verts < 3){continue;}	// Usually only ever triggers for "0" so we don't render junk
+
+			// For a 4-vert poly we expect the vert order to be "0, 1, 3, 2"
+			// We have to swap the vertex order since this is how its done to render stuff
+				// To generate the UVs we must rotate the point by "-angle" to find the x/y offset of the vertex
+			vert[0].x = vert_coords[0].x;
+			vert[0].y = vert_coords[0].y;
+			spare = crayon_misc_rotate_point(mid, vert_coords[0], -angle);
+			vert[0].u = (spare.x - sprite_boundry[0]) / sprite_array->spritesheet->texture_width;
+			vert[0].v = (spare.y - sprite_boundry[1]) / sprite_array->spritesheet->texture_height;
+
+
+			// uv[0].x = sprite_array->frame_uv[sprite_array->frame_id[i]].x / (float)sprite_array->spritesheet->texture_width;
+			// uv[0].y = sprite_array->frame_uv[sprite_array->frame_id[i]].y / (float)sprite_array->spritesheet->texture_height;
+			// uv[1].x = uv[0].x + (sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width);
+			// uv[1].y = uv[0].y + (sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height);
+
+			k = 1;	// vert_coords index goes in order, 0, 1, -1, 2, -2, etc
+			unsigned int index;
+			for(j = 1; j < poly_verts; j++){
+				skip = j % 2 != 1;	// Starts at 1
+				index = skip ? poly_verts - k : k;
+				vert[j].x = vert_coords[index].x;
+				vert[j].y = vert_coords[index].y;
+				spare = crayon_misc_rotate_point(mid, vert_coords[index], -angle);
+				vert[j].u = (spare.x - sprite_boundry[0]) / sprite_array->spritesheet->texture_width;
+				vert[j].v = (spare.y - sprite_boundry[1]) / sprite_array->spritesheet->texture_height;
+				if(skip){k++;}
+			}
+			skip = 0;	// Since this is used for other things too
+		}
+		else{
+			poly_verts = 4;
+
+			vert[0].x = vert_coords[0].x;
+			vert[0].y = vert_coords[0].y;
+			vert[1].x = vert_coords[1].x;
+			vert[1].y = vert_coords[1].y;
+			vert[2].x = vert_coords[3].x;
+			vert[2].y = vert_coords[3].y;
+			vert[3].x = vert_coords[2].x;
+			vert[3].y = vert_coords[2].y;
+
+			// Apply the UVs
+			;
+		}
 
 		// Apply these to all verts
-		vert[0].z = sprite_array->layer[i];
-		for(j = 1; j < poly_verts; j++){
+		for(j = 0; j < poly_verts; j++){
+			// if(options & CRAYON_DRAW_SOFTWARE_CROP){
+			// 	vert[j].u = 0;
+			// 	vert[j].v = 0;
+			// }
 			vert[j].argb = vert[0].argb;
 			vert[j].oargb = vert[0].oargb;
-			vert[j].z = vert[0].z;
+			vert[j].z = sprite_array->layer[i];
+			vert[j].flags = PVR_CMD_VERTEX;	// Don't bother setting this for the first one since it should never change
 		}
+		vert[poly_verts - 1].flags = PVR_CMD_VERTEX_EOL;	// This must be EOL
 
 		pvr_prim(&vert, sizeof(pvr_vertex_t) * poly_verts);
 	}
