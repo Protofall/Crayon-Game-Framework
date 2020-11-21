@@ -249,7 +249,7 @@ int main(){
 	James_Draw.scale[0].y = 2;
 	James_Draw.coord[0].x = 307;	//These are about the mid-point given sprite sizes and scale
 	James_Draw.coord[0].y = 220;
-	James_Draw.layer[0] = 16;
+	James_Draw.layer[0] = 160;
 	James_Draw.flip[0] = (james_direction == 3) ? 1 : 0;	//If facing East, use West sprite but flipped
 	James_Draw.rotation[0] = 0;
 	James_Draw.colour[0] = 0;
@@ -291,7 +291,7 @@ int main(){
 	}
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 1, CRAY_MULTI_SCALE, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 4, CRAY_MULTI_SCALE, PVR_FILTER_NONE, 0);
 	Dwarf_Draw.coord[0].x = 50;
 	Dwarf_Draw.coord[0].y = 20;
 	Dwarf_Draw.coord[1].x = Dwarf_Draw.coord[0].x;
@@ -312,6 +312,9 @@ int main(){
 	Dwarf_Draw.colour[0] = 0;
 	Dwarf_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 0, 0);
+	crayon_memory_set_frame_uv(&Dwarf_Draw, 1, 1);
+	crayon_memory_set_frame_uv(&Dwarf_Draw, 2, 2);
+	crayon_memory_set_frame_uv(&Dwarf_Draw, 3, 3);
 	for(i = 0; i < Dwarf_Draw.size; i++){
 		Dwarf_Draw.visible[i] = 1;
 	}
@@ -701,6 +704,10 @@ int main(){
 			Frames_Draw.frame_id[1] = (Frames_Draw.frame_id[1] + 1) % Frames_Draw.animation->frame_count;
 			Frames_Draw.frame_id[2] = (Frames_Draw.frame_id[2] + 1) % Frames_Draw.animation->frame_count;
 			Frames_Draw.frame_id[3] = (Frames_Draw.frame_id[3] + 1) % Frames_Draw.animation->frame_count;
+		}
+
+		if(stats.frame_count % 10 == 0){
+			Dwarf_Draw.frame_id[0] = (Dwarf_Draw.frame_id[0] + 1) % Dwarf_Draw.animation->frame_count;
 		}
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
