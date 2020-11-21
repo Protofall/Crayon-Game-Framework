@@ -684,14 +684,14 @@ int main(){
 
 		pvr_get_stats(&stats);
 
-		//Animation of red man falling and faces rotating
-		if(stats.frame_count % 240 <= 60){
+		// Animation of red man falling and faces rotating
+		if(stats.frame_count % 180 <= 45){
 			Red_Man_Draw.rotation[0] = 0;
 		}
-		else if(stats.frame_count % 240 <= 120){
+		else if(stats.frame_count % 180 <= 90){
 			Red_Man_Draw.rotation[0] = 90;
 		}
-		else if(stats.frame_count % 240 <= 180){
+		else if(stats.frame_count % 180 <= 135){
 			Red_Man_Draw.rotation[0] = 180;
 		}
 		else{
@@ -718,7 +718,7 @@ int main(){
 
 			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
 
-			//Fonts aren't supported by cameras yet
+			// // Fonts aren't supported by cameras yet
 			// crayon_graphics_draw_text_prop("Tahoma\0", &Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id);
 			// crayon_graphics_draw_text_mono("BIOS\0", &BIOS, PVR_LIST_PT_POLY, 120, 40, 30, 1, 1, BIOS_P.palette_id);
 

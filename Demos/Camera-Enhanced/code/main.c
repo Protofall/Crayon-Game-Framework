@@ -256,7 +256,7 @@ int main(){
 	James_Draw.fade[0] = 0;
 	James_Draw.frame_id[0] = (james_direction == 3) ? 3 * 2 : 3 * james_direction;	//If facing East, use west sprite but flipped
 	James_Draw.visible[0] = 1;
-	uint8_t i;
+	unsigned int i;
 	for(i = 0; i < James_Draw.frames_used; i++){
 		crayon_memory_set_frame_uv(&James_Draw, i, i);
 	}

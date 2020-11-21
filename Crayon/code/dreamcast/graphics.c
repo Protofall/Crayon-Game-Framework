@@ -286,7 +286,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		}
 
 		// This section acts as the rotation
-		if(rotation_val == 0){	// 0 degreens
+		if(rotation_val == 0){	// 0 degrees
 			// NOTE: we don't need to floor the camera's window vars because they're all ints
 			vert.ax = floor((floor(sprite_array->coord[i].x) - world_coord.x) * camera_scale.x) + camera->window_x;
 			vert.ay = floor((floor(sprite_array->coord[i].y) - world_coord.y) * camera_scale.y) + camera->window_y;
@@ -351,8 +351,8 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		}
 
 		vert.az = sprite_array->layer[i];
-		vert.bz = sprite_array->layer[i];
-		vert.cz = sprite_array->layer[i];
+		vert.bz = vert.az;
+		vert.cz = vert.az;
 
 		// Vertexes a and c (Top Left, Bottom Right)
 			// We have that mod thing to compensate for the rotation changing the vertex order
