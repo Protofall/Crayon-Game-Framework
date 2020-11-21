@@ -2,6 +2,7 @@
 #include <crayon/memory.h>
 #include <crayon/debug.h>
 #include <crayon/graphics.h>
+#include <crayon/input.h>
 
 #include <dc/maple.h>
 #include <dc/maple/controller.h> //For the "Press start to exit" thing
@@ -62,97 +63,28 @@
 
 #endif
 
-float thumbstick_int_to_float(int joy){
-	float ret_val;	//Range from -1 to 1
-
-	if(joy > 0){	//Converting from -128, 127 to -1, 1
-		ret_val = joy / 127.0;
-	}
-	else{
-		ret_val = joy / 128.0;
-	}
-
-	return ret_val;
-}
-
-uint32_t thumbstick_to_dpad(int joyx, int joyy, float deadspace){
-	float thumb_x = thumbstick_int_to_float(joyx);
-	float thumb_y = thumbstick_int_to_float(joyy);
-
-	//If the thumbstick is inside the deadspace then we don't check angle
-	if((thumb_x * thumb_x) + (thumb_y * thumb_y) < deadspace * deadspace){
-		return 0;
-	}
-
-	//8 options. N, NE, E, SE, S, SW, W, NW.
-
-	//Rotate the thumbstick coordinate 22.5 degrees (Or 22.5 * (PI/180) ~= 0.3927 radians) clockwise
-		//22.5 degrees is 1/16th of 360 degrees, this makes it easier to check which region the coords are in
-	float angle = 22.5 * M_PI / 180.0;	//In radians
-
-	vec2_f_t point = crayon_misc_rotate_point((vec2_f_t){0, 0}, (vec2_f_t){thumb_x, thumb_y}, angle);
-	thumb_x = point.x;
-	thumb_y = point.y;
-
-	float abs_x = fabs(thumb_x);
-	float abs_y = fabs(thumb_y);
-
-	uint32_t bitmap;
-	if(thumb_y < 0){
-		if(thumb_x > 0){
-			if(abs_y > abs_x){	//N
-				bitmap = CONT_DPAD_UP;
-			}
-			else{	//NE
-				bitmap = CONT_DPAD_UP + CONT_DPAD_RIGHT;
-			}
-		}
-		else{
-			if(abs_y < abs_x){	//W
-				bitmap = CONT_DPAD_LEFT;
-			}
-			else{	//NW
-				bitmap = CONT_DPAD_UP + CONT_DPAD_LEFT;
-			}
-		}
-	}
-	else{
-		if(thumb_x > 0){
-			if(abs_y < abs_x){	//E
-				bitmap = CONT_DPAD_RIGHT;
-			}
-			else{	//SE
-				bitmap = CONT_DPAD_DOWN + CONT_DPAD_RIGHT;
-			}
-		}
-		else{
-			if(abs_y > abs_x){	//S
-				bitmap = CONT_DPAD_DOWN;
-			}
-			else{	//SW
-				bitmap = CONT_DPAD_DOWN + CONT_DPAD_LEFT;
-			}
-		}
-	}
-
-	return bitmap;
-}
-
 //Char count:
 //63
+//28
+//27
 //39
 //68
 //72
 //27
 //29
-//Total: 298
-void set_msg(char * buffer){
-	strcpy(buffer, "Use the thumbstick to move the current camera around the world\n\
-Press A to cycle between the 4 cameras\n\
-Press L/R-Triggers move one unit in the direction you last moved in\n\
-D-PAD Up/Down increase/decrease the world_movement_factor (Powers of 2)\n\
-Start to terminate program\n\
-Y to hide these instructions");
+//Total: 353
+void set_msg(char *buffer){
+	strcpy(buffer,
+		"Use the thumbstick to move the current camera around the world\n"
+		"Press A to toggle OOB check\n"
+		"Press B to toggle cropping\n"
+		"Press X to cycle between the 4 cameras\n"
+		"Press L/R-Triggers move one unit in the direction you last moved in\n"
+		"D-PAD Up/Down increase/decrease the world_movement_factor (Powers of 2)\n"
+		"Start to terminate program\n"
+		"Y to hide these instructions"
+	);
+
 	return;
 }
 
@@ -317,14 +249,14 @@ int main(){
 	James_Draw.scale[0].y = 2;
 	James_Draw.coord[0].x = 307;	//These are about the mid-point given sprite sizes and scale
 	James_Draw.coord[0].y = 220;
-	James_Draw.layer[0] = 16;
+	James_Draw.layer[0] = 160;
 	James_Draw.flip[0] = (james_direction == 3) ? 1 : 0;	//If facing East, use West sprite but flipped
 	James_Draw.rotation[0] = 0;
 	James_Draw.colour[0] = 0xFF000000;
 	James_Draw.fade[0] = 0;
 	James_Draw.frame_id[0] = (james_direction == 3) ? 3 * 2 : 3 * james_direction;	//If facing East, use west sprite but flipped
 	James_Draw.visible[0] = 1;
-	uint8_t i;
+	unsigned int i;
 	for(i = 0; i < James_Draw.frames_used; i++){
 		crayon_memory_set_frame_uv(&James_Draw, i, i);
 	}
@@ -365,7 +297,7 @@ int main(){
 	Frames_Draw.visible[3] = 1;
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 1, CRAY_MULTI_SCALE, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 4, CRAY_MULTI_SCALE, PVR_FILTER_NONE, 0);
 	Dwarf_Draw.coord[0].x = 50;
 	Dwarf_Draw.coord[0].y = 20;
 	Dwarf_Draw.coord[1].x = Dwarf_Draw.coord[0].x;
@@ -387,6 +319,9 @@ int main(){
 	Dwarf_Draw.fade[0] = 0;
 	Dwarf_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 0, 0);
+	crayon_memory_set_frame_uv(&Dwarf_Draw, 1, 1);
+	crayon_memory_set_frame_uv(&Dwarf_Draw, 2, 2);
+	crayon_memory_set_frame_uv(&Dwarf_Draw, 3, 3);
 	for(i = 0; i < Dwarf_Draw.size; i++){
 		Dwarf_Draw.visible[i] = 1;
 	}
@@ -621,8 +556,6 @@ int main(){
 			(vec2_u16_t){Cam_BGs[3].scale[0].x, Cam_BGs[3].scale[0].y}, 1);
 	}
 
-	// char g_buffer[300];
-
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
 	crayon_graphics_setup_palette(&BIOS_P);
@@ -632,7 +565,7 @@ int main(){
 
 	char snum1[80];
 
-	char instructions[320];	//I'm only using 298 chars, but I gave more space just to be safe
+	char instructions[380];	//I'm only using 353 chars, but I gave more space just to be safe
 	set_msg(instructions);
 
 	//World_movement_factor_adjustment
@@ -642,21 +575,26 @@ int main(){
 	uint8_t last_dir = 0;
 	uint8_t info_disp = 1;
 
+	uint8_t cropping = CRAYON_DRAW_CROP;
+	uint8_t oob_culling = CRAYON_DRAW_OOB_SKIP;
+
 	pvr_stats_t stats;
 	pvr_get_stats(&stats);
-	uint8_t escape = 0;
+
 	uint32_t prev_btns[4] = {0};
 	vec2_u8_t prev_trigs[4] = {(vec2_u8_t){0,0}};
 	uint32_t curr_thumb = 0;
 	// uint32_t prev_thumb = 0;
 	vec2_f_t moved_on_frame;	//This is the distance to move the camera per frame. It makes moving James easier
+
+	uint8_t escape = 0;
 	while(!escape){
 		moved_on_frame = (vec2_f_t){0,0};
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
 		//Use this instead of the dpad
-		curr_thumb = thumbstick_to_dpad(st->joyx, st->joyy, 0.4);
+		curr_thumb = crayon_input_thumbstick_to_dpad(st->joyx, st->joyy, 0.4);
 
 		if(curr_thumb & CONT_DPAD_LEFT){
 			moved_on_frame.x = -1;
@@ -687,14 +625,30 @@ int main(){
 		}
 
 		if((st->buttons & CONT_A) && !(prev_btns[__dev->port] & CONT_A)){
-			current_camera_id += 1;
-			current_camera_id %= NUM_CAMERAS;
-			current_camera = &cameras[current_camera_id];
+			if(oob_culling){
+				oob_culling = 0;
+			}
+			else{
+				oob_culling = CRAYON_DRAW_OOB_SKIP;
+			}
 		}
 
 		if((st->buttons & CONT_B) && !(prev_btns[__dev->port] & CONT_B)){
-			__CRAYON_GRAPHICS_DEBUG_VARS[8]++;
-			if(__CRAYON_GRAPHICS_DEBUG_VARS[8] > 7){__CRAYON_GRAPHICS_DEBUG_VARS[8] = 0;}
+			if(cropping == 0){
+				cropping = CRAYON_DRAW_HARDWARE_CROP;
+			}
+			else if(cropping == CRAYON_DRAW_HARDWARE_CROP){
+				cropping = CRAYON_DRAW_CROP;
+			}
+			else{
+				cropping = 0;
+			}
+		}
+
+		if((st->buttons & CONT_X) && !(prev_btns[__dev->port] & CONT_X)){
+			current_camera_id += 1;
+			current_camera_id %= NUM_CAMERAS;
+			current_camera = &cameras[current_camera_id];
 		}
 
 		//Need to add the free-ing functions first
@@ -773,32 +727,28 @@ int main(){
 			Frames_Draw.frame_id[3] = (Frames_Draw.frame_id[3] + 1) % Frames_Draw.animation->frame_count;
 		}
 
+		if(stats.frame_count % 10 == 0){
+			Dwarf_Draw.frame_id[0] = (Dwarf_Draw.frame_id[0] + 1) % Dwarf_Draw.animation->frame_count;
+		}
+
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
-			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED | CRAYON_DRAW_FULL_CROP);
-			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED | CRAYON_DRAW_FULL_CROP);
-			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED | CRAYON_DRAW_FULL_CROP);
+			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED | cropping | oob_culling);
+			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED | cropping | oob_culling);
+			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED | cropping | oob_culling);
 
-			//THe player sprite
-			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED | CRAYON_DRAW_FULL_CROP);
+			//The player sprite
+			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_ENHANCED | cropping | oob_culling);
 
 		pvr_list_finish();
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED | CRAYON_DRAW_FULL_CROP);
-			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 1;
-			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED | CRAYON_DRAW_FULL_CROP);
-			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 0;
-
-			// sprintf(g_buffer, "%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n%.4f\n",
-			// 		__CRAYON_GRAPHICS_DEBUG_VARS[1], __CRAYON_GRAPHICS_DEBUG_VARS[2], __CRAYON_GRAPHICS_DEBUG_VARS[3],
-			// 		__CRAYON_GRAPHICS_DEBUG_VARS[4], __CRAYON_GRAPHICS_DEBUG_VARS[5], __CRAYON_GRAPHICS_DEBUG_VARS[6]);
-
-			// crayon_graphics_draw_text_mono(g_buffer, &BIOS, PVR_LIST_PT_POLY, 32, 280, 254, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED | cropping | oob_culling);
+			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED | cropping | oob_culling);
 
 			//Represents the boundry box for the red man when not rotated
-			crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED | CRAYON_DRAW_FULL_CROP);
+			crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED | cropping | oob_culling);
 
 			//This represents the camera's space
 			crayon_graphics_draw_sprites(&Cam_BGs[current_camera_id], NULL, PVR_LIST_OP_POLY, 0);
@@ -807,10 +757,10 @@ int main(){
 				sprintf(snum1, "Camera ID: %d\nX: %.2f\nY: %.2f\nWorld_Movement_Factor: %.2f",
 					current_camera_id, current_camera->world_x, current_camera->world_y, current_camera->world_movement_factor);
 
-				crayon_graphics_draw_text_mono("World Coords:", &BIOS, PVR_LIST_PT_POLY, 32, 280, 254, 1, 1, BIOS_P.palette_id);
-				crayon_graphics_draw_text_mono(snum1, &BIOS, PVR_LIST_PT_POLY, 32, 280 + (BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
+				crayon_graphics_draw_text_mono("World Coords:", &BIOS, PVR_LIST_PT_POLY, 32, 270, 254, 1, 1, BIOS_P.palette_id);
+				crayon_graphics_draw_text_mono(snum1, &BIOS, PVR_LIST_PT_POLY, 32, 270 + (BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
 
-				crayon_graphics_draw_text_mono(instructions, &BIOS, PVR_LIST_PT_POLY, 32, 368, 254, 1, 1, BIOS_P.palette_id);
+				crayon_graphics_draw_text_mono(instructions, &BIOS, PVR_LIST_PT_POLY, 32, 350, 254, 1, 1, BIOS_P.palette_id);
 			}
 
 		pvr_list_finish();
