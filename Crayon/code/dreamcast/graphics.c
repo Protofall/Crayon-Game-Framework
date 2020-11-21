@@ -150,6 +150,9 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		// The sprite points are also floor-ed before calculations are done
 	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x), floor(camera->world_y)};
 
+	vec2_f_t camera_scale = (vec2_f_t){camera->window_width / (float)camera->world_width,
+		camera->window_height / (float)camera->world_height};
+
 	// Used in calcuating the new UV
 	float texture_offset;
 	float texture_divider;
@@ -194,7 +197,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 	// Easily lets us use the right index for each array
 		// That way 1-length arrays only get calculated once and each element for a multi list is calculated
 	uint16_t *rotation_index, *flip_index, *frame_index;
-	unsigned int i;	// The main loop's index
+	uint16_t i;	// The main loop's index (MAKE THIS A unsigned int LATER)
 	uint16_t zero = 0;
 	float rotation_under_360 = 0;
 
@@ -282,60 +285,70 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			else{rotation_val = 0;}
 		}
 
-		// COMPARE THE FOLLOWING VERT BEING SET TO THE ENHANCED/UNTEXTURED VERTS AND SEE IF WE'RE FLOOR-ING RIGHT
-		;
-
-		// These blocks act as the rotation
-		if(rotation_val == 0){
+		// This section acts as the rotation
+		if(rotation_val == 0){	// 0 degreens
 			// NOTE: we don't need to floor the camera's window vars because they're all ints
-			vert.ax = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.ay = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
-			vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
+			vert.ax = floor((floor(sprite_array->coord[i].x) - world_coord.x) * camera_scale.x) + camera->window_x;
+			vert.ay = floor((floor(sprite_array->coord[i].y) - world_coord.y) * camera_scale.y) + camera->window_y;
+			vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * camera_scale.x);
 			vert.by = vert.ay;
 			vert.cx = vert.bx;
-			vert.cy = vert.ay + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_height / (float)camera->world_height));
+			vert.cy = vert.ay + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * camera_scale.y);
 			vert.dx = vert.ax;
 			vert.dy = vert.cy;
 		}
-		else if(rotation_val == 1){
-			// Both vars are uint16_t and lengths can't be negative or more than 1024 (Largest texture size for DC)
-				// Therfore storing the result in a int16_t is perfectly fine
-			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
-
-			vert.dx = floor((floor(sprite_array->coord[i].x) - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff * 0.5)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.dy = floor((floor(sprite_array->coord[i].y) - world_coord.y - (sprite_array->scale[i * multi_scale].x * diff * 0.5)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
-			vert.ax = vert.dx + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_width / (float)camera->world_width));
-			vert.ay = vert.dy;
-			vert.bx = vert.ax;
-			vert.by = vert.dy + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_height / (float)camera->world_height));
-			vert.cx = vert.dx;
-			vert.cy = vert.by;
-		}
-		else if(rotation_val == 2){
-			vert.cx = floor((floor(sprite_array->coord[i].x) - world_coord.x) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.cy = floor((floor(sprite_array->coord[i].y) - world_coord.y) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
-			vert.dx = vert.cx + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_width / (float)camera->world_width));
+		else if(rotation_val == 2){	// 180 degrees
+			vert.cx = floor((floor(sprite_array->coord[i].x) - world_coord.x) * camera_scale.x) + camera->window_x;
+			vert.cy = floor((floor(sprite_array->coord[i].y) - world_coord.y) * camera_scale.y) + camera->window_y;
+			vert.dx = vert.cx + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * camera_scale.x);
 			vert.dy = vert.cy;
 			vert.ax = vert.dx;
-			vert.ay = vert.cy + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_height / (float)camera->world_height));
+			vert.ay = vert.cy + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * camera_scale.y);
 			vert.bx = vert.cx;
 			vert.by = vert.ay;
 		}
-		else if(rotation_val == 3){
-			int16_t diff = sprite_array->animation->frame_width - sprite_array->animation->frame_height;
+		else{	// 90 and 270 degreen rotations
+			// The sprite's original boundries
+			vert.ax = floor((floor(sprite_array->coord[i].x) - world_coord.x) * camera_scale.x) + camera->window_x;
+			vert.ay = floor((floor(sprite_array->coord[i].y) - world_coord.y) * camera_scale.y) + camera->window_y;
+			vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * camera_scale.x);
+			vert.cy = vert.ay + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * camera_scale.y);
 
-			vert.bx = floor((floor(sprite_array->coord[i].x) - world_coord.x + (sprite_array->scale[i * multi_scale].y * diff * 0.5)) * (camera->window_width / (float)camera->world_width)) + camera->window_x;
-			vert.by = floor((floor(sprite_array->coord[i].y) - world_coord.y - (sprite_array->scale[i * multi_scale].x * diff * 0.5)) * (camera->window_height / (float)camera->world_height)) + camera->window_y;
-			vert.cx = vert.bx + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * (camera->window_width / (float)camera->world_width));
-			vert.cy = vert.by;
-			vert.dx = vert.cx;
-			vert.dy = vert.by + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * (camera->window_height / (float)camera->world_height));
-			vert.ax = vert.bx;
-			vert.ay = vert.dy;
+			// We have to do this to simulate the "cos/sin" rotation of enhanced where it rotates around the mid point
+				// Otherwise there can be an inaccuracy in the center of the sprite between simple and enhanced renderers
+			vec2_f_t mid, offset;
+			mid.x = ((vert.bx - vert.ax) * 0.5) + vert.ax;
+			mid.y = ((vert.cy - vert.ay) * 0.5) + vert.ay;
+
+			offset.x = vert.bx - mid.x;
+			offset.y = vert.cy - mid.y;
+
+			if(rotation_val == 1){	// 90 degreen
+				vert.dx = mid.x - offset.y;
+				vert.dy = mid.y - offset.x;
+				vert.ax = mid.x + offset.y;
+				vert.ay = vert.dy;
+				vert.bx = vert.ax;
+				vert.by = mid.y + offset.x;
+				vert.cx = vert.dx;
+				vert.cy = vert.by;
+			}
+			else{	// 270 degree
+				vert.bx = mid.x - offset.y;
+				vert.by = mid.y - offset.x;
+				vert.cx = mid.x + offset.y;
+				vert.cy = vert.by;
+				vert.dx = vert.cx;
+				vert.dy = mid.y + offset.x;
+				vert.ax = vert.bx;
+				vert.ay = vert.dy;
+			}
 		}
 
 		// The first element if invisible now skip cropping and rendering
-		if(i == 0 && !sprite_array->visible[i]){continue;}
+		if(i == 0 && !sprite_array->visible[i]){
+			continue;
+		}
 
 		vert.az = sprite_array->layer[i];
 		vert.bz = sprite_array->layer[i];
@@ -793,7 +806,6 @@ uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *spr
 
 	// We use full ints because its faster than uint16_t apparently
 	unsigned int i, j, k;
-
 	for(i = 0; i < sprite_array->size; i++){
 		if(sprite_array->colour[multi_colour ? i : 0] >> 24 == 0 || sprite_array->visible[i] == 0){	// Don't draw alpha-less or invisible stuff
 			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
