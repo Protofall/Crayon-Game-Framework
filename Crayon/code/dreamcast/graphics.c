@@ -60,7 +60,7 @@ uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
 	}
 
 	pvr_set_pal_format(PVR_PAL_ARGB8888);
-	int i;
+	unsigned int i;
 	for(i = 0; i < cp->colour_count; ++i){
 		pvr_set_pal_entry(i + entries * cp->palette_id, cp->palette[i]);
 	}
@@ -194,34 +194,11 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		.flags = PVR_CMD_VERTEX_EOL
 	};
 
-	// Easily lets us use the right index for each array
-		// That way 1-length arrays only get calculated once and each element for a multi list is calculated
-	uint16_t *rotation_index, *flip_index, *frame_index;
-	uint16_t i;	// The main loop's index (MAKE THIS A unsigned int LATER)
+	unsigned int i;	// The main loop's index
 	uint16_t zero = 0;
 	float rotation_under_360 = 0;
 
-	if(sprite_array->options & CRAY_MULTI_FRAME){
-		frame_index = &i;
-	}
-	else{
-		frame_index = &zero;
-	}
-
-	if(sprite_array->options & CRAY_MULTI_FLIP){
-		flip_index = &i;
-	}
-	else{
-		flip_index = &zero;
-	}
-
-	if(sprite_array->options & CRAY_MULTI_ROTATE){
-		rotation_index = &i;
-	}
-	else{
-		rotation_index = &zero;
-	}
-
+	// Used to determine if the array has 1 or "sprite_array->size" number of elements
 	uint8_t multi_frame = !!(sprite_array->options & CRAY_MULTI_FRAME);
 	uint8_t multi_scale = !!(sprite_array->options & CRAY_MULTI_SCALE);
 	uint8_t multi_flip = !!(sprite_array->options & CRAY_MULTI_FLIP);
@@ -232,43 +209,47 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			// and every time for a multi-list
 			// and some of them trigger if we just cropped a UV
 
-		if(sprite_array->visible[i] == 0){
-			if(i != 0){continue;}	// We need the defaults to be set on first loop
+		if(!sprite_array->visible[i] && i != 0){
+			continue;	// We need the defaults to be set on first loop
 		}
 
 		// Update if the UVs for every frame index or if we just cropped
-			// Why do we do it if we just cropped? Why are we modifying these UVs?
-		if(*frame_index == i || cropped){	// frame
-			uvs[0] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].x / (float)sprite_array->spritesheet->texture_width;
-			uvs[1] = sprite_array->frame_uv[sprite_array->frame_id[*frame_index]].y / (float)sprite_array->spritesheet->texture_height;
+			// ATM we need to re-calculate these if we just cropped because the cropping algorithm
+			// modifies these values. TBH I think its better to do that than make a copy and modify those
+		if(i == 0 || multi_frame || cropped){	// frame
+			uvs[0] = sprite_array->frame_uv[sprite_array->frame_id[multi_frame ? i : 0]].x / (float)sprite_array->spritesheet->texture_width;
+			uvs[1] = sprite_array->frame_uv[sprite_array->frame_id[multi_frame ? i : 0]].y / (float)sprite_array->spritesheet->texture_height;
 			uvs[2] = uvs[0] + sprite_array->animation->frame_width / (float)sprite_array->spritesheet->texture_width;
 			uvs[3] = uvs[1] + sprite_array->animation->frame_height / (float)sprite_array->spritesheet->texture_height;
+
 			cropped = 0;	// Reset cropped from previous element
 		}
-
-		// // Basically enter if first element or either the flip/rotate/frame changed
-		// 	// The multi is are there to prevent checks on draw params that aren't multi/won't change
-		// if((multi_flip && (sprite_array->flip[i] != sprite_array->flip[i - 1])) || i == 0){
-		// 	;
-		// }
 
 		// Basically enter if first element or either the flip/rotate/frame changed
 			// The multi_blah's are there to prevent checks on draw params that aren't multi/won't change
 		// Why are these all bunched together? This code was probably very jank right?
-		if(i == 0 || (multi_flip && (sprite_array->flip[i] != sprite_array->flip[i - 1])) ||
-			(multi_rotate && (sprite_array->rotation[i] != sprite_array->rotation[i - 1])) ||
-			(multi_frame && ((sprite_array->frame_uv[i].x != sprite_array->frame_uv[i - 1].x) ||
-			(sprite_array->frame_uv[i].y != sprite_array->frame_uv[i - 1].y)))
-			){
+		// if(i == 0 || (multi_flip && (sprite_array->flip[i] != sprite_array->flip[i - 1])) ||
+		// 	(multi_rotate && (sprite_array->rotation[i] != sprite_array->rotation[i - 1])) ||
+		// 	(multi_frame && ((sprite_array->frame_uv[i].x != sprite_array->frame_uv[i - 1].x) ||
+		// 	(sprite_array->frame_uv[i].y != sprite_array->frame_uv[i - 1].y)))
+		// 	){
 
+		// I've replaced the if statement with this, because its probably faster to re-calculate
+		// than check if they need recalculation
+			// Why are these 3 all bunched together? Especially frame, nothing frame-wise happens here...
+			// All this if statement does it set "flip_val" and "rotation_val" accordingly and those aren't changed
+			// later in the loop, so even if we crop then its still going to need to re-set them
+		if(i == 0 || (multi_flip || multi_rotate || multi_frame)){
 			// Is flipped?
-			if(sprite_array->flip[*flip_index] & (1 << 0)){flip_val = 1;}
+			if(sprite_array->flip[multi_flip ? i : 0] & (1 << 0)){flip_val = 1;}
 			else{flip_val = 0;}
 
 			// Don't bother doing extra calculations
-			if(sprite_array->rotation[*rotation_index] != 0){
-				rotation_under_360 = fmod(sprite_array->rotation[*rotation_index], 360.0);	// If angle is more than 360 degrees, this fixes that
-				if(rotation_under_360 < 0){rotation_under_360 += 360.0;}	// fmod has range -359 to +359, this changes it to 0 to +359
+			if(sprite_array->rotation[multi_rotate ? i : 0] != 0){
+				rotation_under_360 = fmod(sprite_array->rotation[multi_rotate ? i : 0], 360.0);	// If angle is more than 360 degrees, this fixes that
+				if(rotation_under_360 < 0){	// fmod has range -359 to +359, this changes it to 0 to +359
+					rotation_under_360 += 360.0;
+				}
 
 				// For sprite mode don't simply "rotate" the verts because we want to avoid sin/cos, instead we need to change the uv
 				if(crayon_graphics_almost_equals(rotation_under_360, 90.0, 45.0)){
@@ -280,9 +261,13 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 				else if(crayon_graphics_almost_equals(rotation_under_360, 270.0, 45.0)){
 					rotation_val = 3;
 				}
-				else{rotation_val = 0;}
+				else{
+					rotation_val = 0;
+				}
 			}
-			else{rotation_val = 0;}
+			else{
+				rotation_val = 0;
+			}
 		}
 
 		// This section acts as the rotation
@@ -467,7 +452,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		}
 
 		// Signal to next item we just modified the uvs and verts via cropping so we need to recalculate them
-		cropped = (bounds) ? 1 : 0;
+		cropped = bounds ? 1 : 0;
 
 		// Draw the sprite
 		pvr_prim(&vert, sizeof(vert));
@@ -1278,7 +1263,7 @@ uint8_t crayon_graphics_draw_text_mono(char *string, const crayon_font_mono_t *f
 	pvr_sprite_compile(&header, &context);
 	pvr_prim(&header, sizeof(header));
 
-	int i = 0;
+	unsigned int i = 0;
 	float prop_width = (float)fm->char_width / fm->texture_width;
 	float prop_height = (float)fm->char_height / fm->texture_height;
 	while(1){
@@ -1354,7 +1339,7 @@ uint8_t crayon_graphics_draw_text_prop(char *string, const crayon_font_prop_t *f
 	pvr_sprite_compile(&header, &context);
 	pvr_prim(&header, sizeof(header));
 
-	int i = 0;
+	unsigned int i = 0;
 	while(1){
 		if(string[i] == '\0'){
 			break;
@@ -1417,7 +1402,7 @@ void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
-	uint8_t i;
+	unsigned int i;
 	for(i = 0; i < 4; i++){
 		vert[i].argb = colour;
 		vert[i].oargb = 0;
@@ -1484,15 +1469,17 @@ void crayon_graphics_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y
 
 
 uint8_t crayon_graphics_valid_string(const char *string, uint8_t num_chars){
-	uint16_t i = 0;
+	unsigned int i = 0;
 	while(string[i] != '\0'){
 		if(string[i] == '\n'){
 			i++;
 			continue;
 		}
+
 		if(string[i] < ' ' || string[i] > ' ' + num_chars - 1){	// Outside the fontsheet's charset
 			return 1;
 		}
+
 		i++;
 	}
 
@@ -1509,6 +1496,7 @@ uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, ch
 			if(current_length > best_length){
 				best_length = current_length;
 			}
+
 			i++;
 			break;
 		}
@@ -1516,6 +1504,7 @@ uint16_t crayon_graphics_string_get_length_mono(const crayon_font_mono_t *fm, ch
 			if(current_length > best_length){
 				best_length = current_length;
 			}
+
 			current_length = 0;
 			i++;
 			continue;
@@ -1537,7 +1526,7 @@ uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, ch
 
 	uint8_t distance_from_space;
 
-	uint16_t i = 0;
+	unsigned int i = 0;
 	while(1){
 		if(string[i] == '\0'){
 			if(current_length > best_length){
@@ -1545,6 +1534,7 @@ uint16_t crayon_graphics_string_get_length_prop(const crayon_font_prop_t *fp, ch
 			}
 			break;
 		}
+
 		if(string[i] == '\n'){
 			if(current_length > best_length){
 				best_length = current_length;
@@ -1799,7 +1789,7 @@ uint8_t crayon_graphics_seperating_axis_theorem(vec2_f_t *obb, float *aabb, vec2
 	range[1].x = crayon_graphics_dot_product(aabb[0], aabb[1], normal->x, normal->y);
 	range[1].y = range[1].x;
 
-	int i;
+	unsigned int i;
 	float dot_value;
 	for(i = 1; i < 4; i++){
 		dot_value = crayon_graphics_dot_product(obb[i].x, obb[i].y, normal->x, normal->y);
@@ -1827,7 +1817,7 @@ vec2_f_t *crayon_graphics_get_range(vec2_f_t *vals){
 	ret[1].x = vals[0].x;
 	ret[1].y = vals[0].y;
 
-	int i;
+	unsigned int i;
 	for(i = 1; i < 4; i++){	// Skip the first element since we've already checked it
 		if(vals[i].x < ret[0].x){ret[0].x = vals[i].x;}
 		if(vals[i].x > ret[1].x){ret[1].x = vals[i].x;}
