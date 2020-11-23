@@ -289,6 +289,7 @@ int main(){
 	for(i = 0; i < Frames_Draw.size; i++){
 		Frames_Draw.visible[i] = 1;
 	}
+	Frames_Draw.visible[0] = 0;
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
 	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 4, CRAY_MULTI_SCALE, PVR_FILTER_NONE, 0);
@@ -542,6 +543,23 @@ int main(){
 	pvr_stats_t stats;
 	pvr_get_stats(&stats);
 
+	// DELETE THIS AFTER TESTING
+		// Also triggers on -350, 71 on camera 1, so it has nothing to do with scaling
+	// According to reicast's pixel perfect mode, it seems the issue is the untextured poly
+	// since its fully outside the grey box. DEMUL also agrees with this assessment.
+		// Moving 1 pixel to the right brings back the red man and you can clearly see
+		// Both the red man and black bg are 1 pixel on the camera boarder
+	// vec2_f_t TEMP = {-590, 39};
+	// current_camera_id = 2;
+	// current_camera = &cameras[current_camera_id];
+	// cropping = 0;
+	// for(i = 0; i < NUM_CAMERAS; i++){
+	// 	crayon_memory_move_camera_x(&cameras[i], TEMP.x);
+	// 	crayon_memory_move_camera_y(&cameras[i], TEMP.y);
+	// }
+
+	// move_james(&James_Draw, TEMP, stats.frame_count);
+
 	uint32_t curr_btns[4] = {0};
 	uint32_t prev_btns[4] = {0};
 	vec2_u8_t curr_trigs[4] = {{0,0}};
@@ -712,8 +730,11 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
+			printf("LOOPING\n");
 			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
+			__CRAYON_GRAPHICS_DEBUG_VARS[0] = 1;
 			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
+			__CRAYON_GRAPHICS_DEBUG_VARS[0] = 0;
 			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
 
 			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);

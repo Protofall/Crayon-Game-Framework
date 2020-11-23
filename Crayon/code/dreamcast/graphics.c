@@ -195,7 +195,6 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 	};
 
 	unsigned int i;	// The main loop's index
-	uint16_t zero = 0;
 	float rotation_under_360 = 0;
 
 	// Used to determine if the array has 1 or "sprite_array->size" number of elements
@@ -225,29 +224,19 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			cropped = 0;	// Reset cropped from previous element
 		}
 
-		// Basically enter if first element or either the flip/rotate/frame changed
-			// The multi_blah's are there to prevent checks on draw params that aren't multi/won't change
-		// Why are these all bunched together? This code was probably very jank right?
-		// if(i == 0 || (multi_flip && (sprite_array->flip[i] != sprite_array->flip[i - 1])) ||
-		// 	(multi_rotate && (sprite_array->rotation[i] != sprite_array->rotation[i - 1])) ||
-		// 	(multi_frame && ((sprite_array->frame_uv[i].x != sprite_array->frame_uv[i - 1].x) ||
-		// 	(sprite_array->frame_uv[i].y != sprite_array->frame_uv[i - 1].y)))
-		// 	){
+		if(i == 0 || multi_flip){
+			if(sprite_array->flip[i]){
+				flip_val = 1;
+			}
+			else{
+				flip_val = 0;
+			}
+		}
 
-		// I've replaced the if statement with this, because its probably faster to re-calculate
-		// than check if they need recalculation
-			// Why are these 3 all bunched together? Especially frame, nothing frame-wise happens here...
-			// All this if statement does it set "flip_val" and "rotation_val" accordingly and those aren't changed
-			// later in the loop, so even if we crop then its still going to need to re-set them
-		if(i == 0 || (multi_flip || multi_rotate || multi_frame)){
-			// Is flipped?
-			if(sprite_array->flip[multi_flip ? i : 0] & (1 << 0)){flip_val = 1;}
-			else{flip_val = 0;}
-
-			// Don't bother doing extra calculations
-			if(sprite_array->rotation[multi_rotate ? i : 0] != 0){
-				rotation_under_360 = fmod(sprite_array->rotation[multi_rotate ? i : 0], 360.0);	// If angle is more than 360 degrees, this fixes that
-				if(rotation_under_360 < 0){	// fmod has range -359 to +359, this changes it to 0 to +359
+		if(i == 0 || multi_rotate){
+			if(sprite_array->rotation[i] != 0){
+				rotation_under_360 = fmod(sprite_array->rotation[i], 360.0);	// If angle is more than 360 degrees, this fixes that
+				if(rotation_under_360 < 0){	// fmod has range of about -359 to +359, this changes it to 0 to +359
 					rotation_under_360 += 360.0;
 				}
 
@@ -265,7 +254,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 					rotation_val = 0;
 				}
 			}
-			else{
+			else{	// Don't bother doing extra calculations
 				rotation_val = 0;
 			}
 		}
@@ -348,6 +337,9 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			// Then check if they don't overlap and if so move to next element
 		if((options & (CRAYON_DRAW_OOB_SKIP | CRAYON_DRAW_SOFTWARE_CROP)) &&
 				!crayon_graphics_aabb_aabb_overlap(sprite_verts, camera_verts)){
+			if(__CRAYON_GRAPHICS_DEBUG_VARS[0] == 1){
+				printf("Hii\n");
+			}
 			continue;
 		}
 
@@ -376,13 +368,13 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 
 			uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(2, rotation_val, flip_val)] - uvs[uv_index]);
 
-			// if(i == 0 && __GRAPHICS_DEBUG_VARIABLES[0] == 1){
-			// 	__GRAPHICS_DEBUG_VARIABLES[1] = uvs[uv_index];
-			// 	__GRAPHICS_DEBUG_VARIABLES[2] = uv_index;
-			// 	__GRAPHICS_DEBUG_VARIABLES[3] = selected_vert.x;
-			// 	__GRAPHICS_DEBUG_VARIABLES[4] = selected_vert.y;
-			// 	__GRAPHICS_DEBUG_VARIABLES[5] = texture_divider;	//Is at 8
-			// 	__GRAPHICS_DEBUG_VARIABLES[6] = texture_offset;		//Is at zero
+			// if(i == 0 && __CRAYON_GRAPHICS_DEBUG_VARS[0] == 1){
+			// 	__CRAYON_GRAPHICS_DEBUG_VARS[1] = uvs[uv_index];
+			// 	__CRAYON_GRAPHICS_DEBUG_VARS[2] = uv_index;
+			// 	__CRAYON_GRAPHICS_DEBUG_VARS[3] = selected_vert.x;
+			// 	__CRAYON_GRAPHICS_DEBUG_VARS[4] = selected_vert.y;
+			// 	__CRAYON_GRAPHICS_DEBUG_VARS[5] = texture_divider;	//Is at 8
+			// 	__CRAYON_GRAPHICS_DEBUG_VARS[6] = texture_offset;		//Is at zero
 			// }
 
 			// Set the vert
@@ -456,7 +448,6 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 
 		// Draw the sprite
 		pvr_prim(&vert, sizeof(vert));
-
 	}
 
 	return 0;
