@@ -146,12 +146,12 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 	uint8_t flip_val = 0;	// Our current flip status
 	uint8_t rotation_val = 0;	// Our current rotation status
 
-	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
-		// The sprite points are also floor-ed before calculations are done
-	vec2_f_t world_coord = (vec2_f_t){floor(camera->world_x), floor(camera->world_y)};
-
+	// So we don't have to do the same division every loop
 	vec2_f_t camera_scale = (vec2_f_t){camera->window_width / (float)camera->world_width,
 		camera->window_height / (float)camera->world_height};
+
+	// Used for calculating the rotated vertexes for 90 and 270 degree sprites
+	vec2_f_t mid, offset;
 
 	// Used in calcuating the new UV
 	float texture_offset;
@@ -262,8 +262,8 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		// This section acts as the rotation
 		if(rotation_val == 0){	// 0 degrees
 			// NOTE: we don't need to floor the camera's window vars because they're all ints
-			vert.ax = floor((floor(sprite_array->coord[i].x) - world_coord.x) * camera_scale.x) + camera->window_x;
-			vert.ay = floor((floor(sprite_array->coord[i].y) - world_coord.y) * camera_scale.y) + camera->window_y;
+			vert.ax = floor((floor(sprite_array->coord[i].x) - floor(camera->world_x)) * camera_scale.x) + camera->window_x;
+			vert.ay = floor((floor(sprite_array->coord[i].y) - floor(camera->world_y)) * camera_scale.y) + camera->window_y;
 			vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * camera_scale.x);
 			vert.by = vert.ay;
 			vert.cx = vert.bx;
@@ -272,8 +272,8 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			vert.dy = vert.cy;
 		}
 		else if(rotation_val == 2){	// 180 degrees
-			vert.cx = floor((floor(sprite_array->coord[i].x) - world_coord.x) * camera_scale.x) + camera->window_x;
-			vert.cy = floor((floor(sprite_array->coord[i].y) - world_coord.y) * camera_scale.y) + camera->window_y;
+			vert.cx = floor((floor(sprite_array->coord[i].x) - floor(camera->world_x)) * camera_scale.x) + camera->window_x;
+			vert.cy = floor((floor(sprite_array->coord[i].y) - floor(camera->world_y)) * camera_scale.y) + camera->window_y;
 			vert.dx = vert.cx + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * camera_scale.x);
 			vert.dy = vert.cy;
 			vert.ax = vert.dx;
@@ -283,14 +283,13 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		}
 		else{	// 90 and 270 degreen rotations
 			// The sprite's original boundries
-			vert.ax = floor((floor(sprite_array->coord[i].x) - world_coord.x) * camera_scale.x) + camera->window_x;
-			vert.ay = floor((floor(sprite_array->coord[i].y) - world_coord.y) * camera_scale.y) + camera->window_y;
+			vert.ax = floor((floor(sprite_array->coord[i].x) - floor(camera->world_x)) * camera_scale.x) + camera->window_x;
+			vert.ay = floor((floor(sprite_array->coord[i].y) - floor(camera->world_y)) * camera_scale.y) + camera->window_y;
 			vert.bx = vert.ax + floor(sprite_array->animation->frame_width * sprite_array->scale[i * multi_scale].x * camera_scale.x);
 			vert.cy = vert.ay + floor(sprite_array->animation->frame_height * sprite_array->scale[i * multi_scale].y * camera_scale.y);
 
 			// We have to do this to simulate the "cos/sin" rotation of enhanced where it rotates around the mid point
 				// Otherwise there can be an inaccuracy in the center of the sprite between simple and enhanced renderers
-			vec2_f_t mid, offset;
 			mid.x = ((vert.bx - vert.ax) * 0.5) + vert.ax;
 			mid.y = ((vert.cy - vert.ay) * 0.5) + vert.ay;
 
