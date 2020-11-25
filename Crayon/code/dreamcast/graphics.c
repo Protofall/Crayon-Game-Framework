@@ -1842,9 +1842,9 @@ uint8_t crayon_graphics_check_intersect(vec2_f_t *vS, vec2_f_t *vC){
 	uint8_t bounds = 0;
 
 	if(vS[0].y < vC[0].y){bounds |= (1 << 1);}
-	if(vS[1].y >= vC[1].y){bounds |= (1 << 3);}
+	if(vS[1].y > vC[1].y){bounds |= (1 << 3);}
 	if(vS[0].x < vC[0].x){bounds |= (1 << 0);}
-	if(vS[1].x >= vC[1].x){bounds |= (1 << 2);}
+	if(vS[1].x > vC[1].x){bounds |= (1 << 2);}
 
 	return bounds;
 }
@@ -1853,7 +1853,7 @@ uint8_t crayon_graphics_check_intersect(vec2_f_t *vS, vec2_f_t *vC){
 	// We pass in the boundries of the polys. Since they're all axis aligned, this is fine
 	// Eg if The left X vert of the camera is 150 and all the sprite X verts are less than 150 then its OOB
 uint8_t crayon_graphics_aabb_aabb_overlap(vec2_f_t *vS, vec2_f_t *vC){
-	if(vS[1].x < vC[0].x || vS[0].x >= vC[1].x || vS[1].y < vC[0].y || vS[0].y >= vC[1].y){
+	if(vS[1].x < vC[0].x || vS[0].x > vC[1].x || vS[1].y < vC[0].y || vS[0].y > vC[1].y){
 		return 0;
 	}
 
