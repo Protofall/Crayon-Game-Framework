@@ -100,6 +100,30 @@ uint32_t crayon_graphics_get_window_height(){
 //---------------------------------------------------------------------//
 
 
+// Similar to PVR_PACK_16BIT_UV, except they only add either the U or V
+	// and they leave the other coord intact
+static inline uint32_t PVR_PACK_16BIT_U(uint32_t sprite_uv, float u) {
+	union {
+		float f;
+		uint32_t i;
+	} u2;
+
+	u2.f = u;
+
+	return (u2.i & 0xFFFF0000) | (sprite_uv & 0xFFFF);
+}
+
+static inline uint32_t PVR_PACK_16BIT_V(uint32_t sprite_uv, float v) {
+	union {
+		float f;
+		uint32_t i;
+	} v2;
+
+	v2.f = v;
+
+	return (sprite_uv & 0xFFFF0000) | (v2.i >> 16);
+}
+
 // draw_option == ---- SHOM
 // M is for draw mode (1 for enhanced, 0 for simple)
 // O is for OOB checks
@@ -259,6 +283,11 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			}
 		}
 
+		// If the first element is invisible, now skip vertex setting, cropping and rendering
+		if(i == 0 && !sprite_array->visible[i]){
+			continue;
+		}
+
 		// This section acts as the rotation
 		if(rotation_val == 0){	// 0 degrees
 			// NOTE: we don't need to floor the camera's window vars because they're all ints
@@ -318,16 +347,11 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			}
 		}
 
-		// The first element if invisible now skip cropping and rendering
-		if(i == 0 && !sprite_array->visible[i]){
-			continue;
-		}
-
 		vert.az = sprite_array->layer[i];
 		vert.bz = vert.az;
 		vert.cz = vert.az;
 
-		// Vertexes a and c (Top Left, Bottom Right)
+		// Vertexes a and c (Top Left, Bottom Right) with zero rotation
 			// We have that mod thing to compensate for the rotation changing the vertex order
 		sprite_verts[0] = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
 		sprite_verts[1] = crayon_graphics_get_sprite_vert(vert, (4 + 2 - rotation_val) % 4);
@@ -336,9 +360,9 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			// Then check if they don't overlap and if so move to next element
 		if((options & (CRAYON_DRAW_OOB_SKIP | CRAYON_DRAW_SOFTWARE_CROP)) &&
 				!crayon_graphics_aabb_aabb_overlap(sprite_verts, camera_verts)){
-			if(__CRAYON_GRAPHICS_DEBUG_VARS[0] == 1){
-				printf("Hii\n");
-			}
+			// if(__CRAYON_GRAPHICS_DEBUG_VARS[0] == 1){
+			// 	printf("Hii\n");
+			// }
 			continue;
 		}
 
@@ -350,6 +374,14 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 				bounds &= crop_edges;		// To simplify the if checks
 			}
 
+			// #define XYZ_TESTING 1
+
+			#ifdef XYZ_TESTING
+
+			float holder;
+
+			#else
+
 			// Replace below with function calls such as
 			// func(&uvs[], flip, rotate, side, camera, scale, animation, &vert)
 			// and it modifies the uv element if required
@@ -360,7 +392,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 				selected_vert = crayon_graphics_get_sprite_vert(vert, (4 + 0 - rotation_val) % 4);
 				texture_offset = crayon_graphics_get_texture_offset(0, &selected_vert, &sprite_array->scale[i * multi_scale], camera);
 				texture_divider = crayon_graphics_get_texture_divisor(0, rotation_val,
-					(vec2_f_t){sprite_array->animation->frame_width,sprite_array->animation->frame_height});
+					(vec2_f_t){sprite_array->animation->frame_width, sprite_array->animation->frame_height});
 
 				uvs[uv_index] += (texture_offset / texture_divider) * (uvs[crayon_get_uv_index(2, rotation_val, flip_val)] - uvs[uv_index]);
 
@@ -425,6 +457,8 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 				crayon_graphics_set_sprite_vert_y(&vert, (4 + 3 - rotation_val) % 4, camera->window_y + camera->window_height);
 				crayon_graphics_set_sprite_vert_y(&vert, (4 + 2 - rotation_val) % 4, camera->window_y + camera->window_height);
 			}
+
+			#endif
 
 			// Signal to next element we just modified the uvs via cropping so we need to recalculate them
 			cropped = (bounds != 0);
@@ -524,9 +558,11 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 
 	unsigned int i, j, k, index;	// Indexes
 	for(i = 0; i < sprite_array->size; i++){
-		// Alpha is zero or element is invisible
-		if((sprite_array->colour[multi_colour ? i : 0] >> 24) == 0 || !sprite_array->visible[i]){	// Don't draw alpha-less stuff
-			if(i != 0){continue;}	// For the first element, we need to initialise our vars, otherwise we just skip to the next element
+		// If element is invisible (Max fade and zero alpha effectively make it invisible too)
+			// For the first element, we need to initialise our vars, otherwise we just skip to the next element
+		if((sprite_array->fade[multi_colour ? i : 0] = 0xFF && (sprite_array->colour[multi_colour ? i : 0] >> 24) == 0) ||
+				!sprite_array->visible[i]){
+			if(i != 0){continue;}
 			skip = 1;
 		}
 
@@ -1865,15 +1901,15 @@ uint8_t crayon_graphics_round_way(float value){
 vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t sprite, uint8_t vert){
 	switch(vert){
 		case 0:
-			return (vec2_f_t){sprite.ax,sprite.ay};
+			return (vec2_f_t){sprite.ax, sprite.ay};
 		case 1:
-			return (vec2_f_t){sprite.bx,sprite.by};
+			return (vec2_f_t){sprite.bx, sprite.by};
 		case 2:
-			return (vec2_f_t){sprite.cx,sprite.cy};
+			return (vec2_f_t){sprite.cx, sprite.cy};
 		case 3:
-			return (vec2_f_t){sprite.dx,sprite.dy};
+			return (vec2_f_t){sprite.dx, sprite.dy};
 	}
-	return (vec2_f_t){0,0};
+	return (vec2_f_t){0, 0};
 }
 
 void crayon_graphics_set_sprite_vert_x(pvr_sprite_txr_t *sprite, uint8_t vert, float value){

@@ -2,141 +2,12 @@
 #include <crayon/memory.h>
 #include <crayon/debug.h>
 #include <crayon/graphics.h>
+#include <crayon/input.h>
 
 #include <dc/maple.h>
 #include <dc/maple/controller.h> //For the "Press start to exit" thing
 
 #include <math.h>
-
-#if CRAYON_BOOT_MODE == 1
-	//For mounting the sd dir
-	#include <dc/sd.h>
-	#include <kos/blockdev.h>
-	#include <fat/fs_fat.h>
-#endif
-
-
-#if CRAYON_BOOT_MODE == 1
-	#define MNT_MODE FS_FAT_MOUNT_READONLY
-
-	static void unmount_fat_sd(){
-		fs_fat_unmount("/sd");
-		fs_fat_shutdown();
-		sd_shutdown();
-	}
-
-	static int mount_fat_sd(){
-		kos_blockdev_t sd_dev;
-		uint8 partition_type;
-
-		// Initialize the sd card if its present
-		if(sd_init()){
-			return 1;
-		}
-
-		// Grab the block device for the first partition on the SD card. Note that
-		// you must have the SD card formatted with an MBR partitioning scheme
-		if(sd_blockdev_for_partition(0, &sd_dev, &partition_type)){
-			return 2;
-		}
-
-		// Check to see if the MBR says that we have a valid partition
-		// if(partition_type != 0x83){
-			//I don't know what value I should be comparing against, hence this check is disabled for now
-			// This: https://en.wikipedia.org/wiki/Partition_type
-				//Suggests there's multiple types for FAT...not sure how to handle this
-			// return 3;
-		// }
-
-		// Initialize fs_fat and attempt to mount the device
-		if(fs_fat_init()){
-			return 4;
-		}
-
-		//Mount the SD card to the sd dir in the VFS
-		if(fs_fat_mount("/sd", &sd_dev, MNT_MODE)){
-			return 5;
-		}
-		return 0;
-	}
-
-#endif
-
-float thumbstick_int_to_float(int joy){
-	float ret_val;	//Range from -1 to 1
-
-	if(joy > 0){	//Converting from -128, 127 to -1, 1
-		ret_val = joy / 127.0;
-	}
-	else{
-		ret_val = joy / 128.0;
-	}
-
-	return ret_val;
-}
-
-uint32_t thumbstick_to_dpad(int joyx, int joyy, float deadspace){
-	float thumb_x = thumbstick_int_to_float(joyx);
-	float thumb_y = thumbstick_int_to_float(joyy);
-
-	//If the thumbstick is inside the deadspace then we don't check angle
-	if((thumb_x * thumb_x) + (thumb_y * thumb_y) < deadspace * deadspace){
-		return 0;
-	}
-
-	//8 options. N, NE, E, SE, S, SW, W, NW.
-
-	//Rotate the thumbstick coordinate 22.5 degrees (Or 22.5 * (PI/180) ~= 0.3927 radians) clockwise
-		//22.5 degrees is 1/16th of 360 degrees, this makes it easier to check which region the coords are in
-	float angle = 22.5 * M_PI / 180.0;	//In radians
-
-	vec2_f_t point = crayon_misc_rotate_point((vec2_f_t){0, 0}, (vec2_f_t){thumb_x, thumb_y}, angle);
-	thumb_x = point.x;
-	thumb_y = point.y;
-
-	float abs_x = fabs(thumb_x);
-	float abs_y = fabs(thumb_y);
-
-	uint32_t bitmap;
-	if(thumb_y < 0){
-		if(thumb_x > 0){
-			if(abs_y > abs_x){	//N
-				bitmap = CONT_DPAD_UP;
-			}
-			else{	//NE
-				bitmap = CONT_DPAD_UP + CONT_DPAD_RIGHT;
-			}
-		}
-		else{
-			if(abs_y < abs_x){	//W
-				bitmap = CONT_DPAD_LEFT;
-			}
-			else{	//NW
-				bitmap = CONT_DPAD_UP + CONT_DPAD_LEFT;
-			}
-		}
-	}
-	else{
-		if(thumb_x > 0){
-			if(abs_y < abs_x){	//E
-				bitmap = CONT_DPAD_RIGHT;
-			}
-			else{	//SE
-				bitmap = CONT_DPAD_DOWN + CONT_DPAD_RIGHT;
-			}
-		}
-		else{
-			if(abs_y > abs_x){	//S
-				bitmap = CONT_DPAD_DOWN;
-			}
-			else{	//SW
-				bitmap = CONT_DPAD_DOWN + CONT_DPAD_LEFT;
-			}
-		}
-	}
-
-	return bitmap;
-}
 
 //Char count:
 //63
@@ -293,22 +164,13 @@ int main(){
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P;
 
-	#if CRAYON_BOOT_MODE == 1
-		crayon_memory_mount_romdisk("/sd/colourMod.img", "/files");
-	#else
-		crayon_memory_mount_romdisk("/cd/colourMod.img", "/files");
-	#endif
+	crayon_memory_mount_romdisk("/cd/colourMod.img", "/files");
 
 	crayon_memory_load_prop_font_sheet(&Tahoma, &Tahoma_P, 0, "/files/Fonts/Tahoma_font.dtex");
 	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 1, "/files/Fonts/BIOS_font.dtex");
 	crayon_memory_load_spritesheet(&Dwarf, NULL, -1, "/files/Dwarf.dtex");
 
 	fs_romdisk_unmount("/files");
-
-	#if CRAYON_BOOT_MODE == 1
-		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
-	#endif
-
 
 
 
@@ -339,7 +201,8 @@ int main(){
 	Dwarf_Draw.scale[0].y = 2;
 	Dwarf_Draw.flip[0] = 0;
 	Dwarf_Draw.rotation[0] = 0;
-	Dwarf_Draw.colour[0] = 0;
+	Dwarf_Draw.colour[0] = 0xFF000000;	// Need full alpha for Opaque render list
+	Dwarf_Draw.fade[0] = 0;
 	Dwarf_Draw.frame_id[0] = 0;
 	Dwarf_Draw.visible[0] = 1;
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 0, 0);
@@ -441,19 +304,15 @@ int main(){
 			(vec2_u16_t){Cam_BGs[3].scale[0].x,Cam_BGs[3].scale[0].y}, 1);
 	}
 
-	//I'm using index 8 (9th element) to ...dunno
+	// Unused buffer for rendering the graphics vars
 	char g_buffer[300];
-	uint8_t i;
-	for(i = 0; i < 7; i++){
-		__CRAYON_GRAPHICS_DEBUG_VARS[i] = 0;
-	}
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
 	crayon_graphics_setup_palette(&BIOS_P);
 	crayon_graphics_setup_palette(&Tahoma_P);
 
-	char snum1[80];
+	char snum1[100];
 
 	char instructions[320];	//I'm only using 298 chars, but I gave more space just to be safe
 	set_msg(instructions);
@@ -465,18 +324,24 @@ int main(){
 	uint8_t last_dir = 0;
 	uint8_t info_disp = 1;
 
-	uint8_t escape = 0;
+	uint8_t RENDERER = CRAYON_DRAW_SIMPLE;
+
+	unsigned int i;
+
 	uint32_t prev_btns[4] = {0};
 	vec2_u8_t prev_trigs[4] = {(vec2_u8_t){0,0}};
 	uint32_t curr_thumb = 0;
+
 	vec2_f_t moved_on_frame;	//This is the distance to move the camera per frame. It makes moving James easier
+
+	uint8_t escape = 0;
 	while(!escape){
 		moved_on_frame = (vec2_f_t){0,0};
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
 		//Use this instead of the dpad
-		curr_thumb = thumbstick_to_dpad(st->joyx, st->joyy, 0.4);
+		curr_thumb = crayon_input_thumbstick_to_dpad(st->joyx, st->joyy, 0.4);
 
 		if(curr_thumb & CONT_DPAD_LEFT){
 			moved_on_frame.x = -1;
@@ -507,6 +372,15 @@ int main(){
 		}
 
 		if((st->buttons & CONT_A) && !(prev_btns[__dev->port] & CONT_A)){
+			if(RENDERER == CRAYON_DRAW_SIMPLE){
+				RENDERER = CRAYON_DRAW_ENHANCED;
+			}
+			else{
+				RENDERER = CRAYON_DRAW_SIMPLE;
+			}
+		}
+
+		if((st->buttons & CONT_X) && !(prev_btns[__dev->port] & CONT_X)){
 			current_camera_id += 1;
 			current_camera_id %= NUM_CAMERAS;
 			current_camera = &cameras[current_camera_id];
@@ -525,34 +399,34 @@ int main(){
 		if((st->rtrig > 0xFF * 0.1) && (prev_trigs[__dev->port].y <= 0xFF * 0.1)){
 			switch(last_dir){
 				case 0:
-				moved_on_frame.x += -1;
-				break;
+					moved_on_frame.x += -1;
+					break;
 				case 1:
-				moved_on_frame.y += -1;
-				break;
+					moved_on_frame.y += -1;
+					break;
 				case 2:
-				moved_on_frame.x += 1;
-				break;
+					moved_on_frame.x += 1;
+					break;
 				case 3:
-				moved_on_frame.y += 1;
-				break;
+					moved_on_frame.y += 1;
+					break;
 			}
 		}
 
 		if((st->ltrig > 0xFF * 0.1) && (prev_trigs[__dev->port].x <= 0xFF * 0.1)){
 			switch(last_dir){
 				case 0:
-				moved_on_frame.x += 1;
-				break;
+					moved_on_frame.x += 1;
+					break;
 				case 1:
-				moved_on_frame.y += 1;
-				break;
+					moved_on_frame.y += 1;
+					break;
 				case 2:
-				moved_on_frame.x += -1;
-				break;
+					moved_on_frame.x += -1;
+					break;
 				case 3:
-				moved_on_frame.y += -1;
-				break;
+					moved_on_frame.y += -1;
+					break;
 			}
 		}
 
@@ -577,33 +451,8 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
-			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE);
-
-			//Fonts aren't supported by cameras yet
-			// crayon_graphics_draw_text_prop("Tahoma\0", &Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id);
-			// crayon_graphics_draw_text_mono("BIOS\0", &BIOS, PVR_LIST_PT_POLY, 120, 40, 30, 1, 1, BIOS_P.palette_id);
-
-			// crayon_graphics_draw_text_mono("Rotation: 0 Degrees\0", &BIOS, PVR_LIST_PT_POLY,
-			// 	Rainbow_Draw.coord[4].x + (8 * Rainbow_Draw.animation[0].frame_width) + 10,
-			// 	Rainbow_Draw.coord[0].y + 24, 30, 1, 1, BIOS_P.palette_id);
-
-			// crayon_graphics_draw_text_mono("Rotation: 90 Degrees\0", &BIOS, PVR_LIST_PT_POLY,
-			// 	Rainbow_Draw.coord[4].x + (8 * Rainbow_Draw.animation[0].frame_width) + 10,
-			// 	Rainbow_Draw.coord[1].y + 24, 30, 1, 1, BIOS_P.palette_id);
-
-			// crayon_graphics_draw_text_mono("Rotation: 180 Degrees\0", &BIOS, PVR_LIST_PT_POLY,
-			// 	Rainbow_Draw.coord[4].x + (8 * Rainbow_Draw.animation[0].frame_width) + 10,
-			// 	Rainbow_Draw.coord[2].y + 24, 30, 1, 1, BIOS_P.palette_id);
-
-			// crayon_graphics_draw_text_mono("Rotation: 270 Degrees\0", &BIOS, PVR_LIST_PT_POLY,
-			// 	Rainbow_Draw.coord[4].x + (8 * Rainbow_Draw.animation[0].frame_width) + 10,
-			// 	Rainbow_Draw.coord[3].y + 24, 30, 1, 1, BIOS_P.palette_id);
-
-
-			// crayon_graphics_draw_text_mono("Normal\0", &BIOS, PVR_LIST_PT_POLY, Rainbow_Draw.coord[0].x,
-			// 	Rainbow_Draw.coord[3].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10, 30, 1, 1, BIOS_P.palette_id);
-			// crayon_graphics_draw_text_mono("Flipped\0", &BIOS, PVR_LIST_PT_POLY, Rainbow_Draw.coord[4].x,
-			// 	Rainbow_Draw.coord[3].y + (8 * Rainbow_Draw.animation[0].frame_height) + 10, 30, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY,
+				RENDERER | CRAYON_DRAW_OOB_SKIP | CRAYON_DRAW_SOFTWARE_CROP);
 
 		pvr_list_finish();
 
@@ -618,15 +467,12 @@ int main(){
 
 			// crayon_graphics_draw_text_mono(g_buffer, &BIOS, PVR_LIST_PT_POLY, 32, 280, 254, 1, 1, BIOS_P.palette_id);
 
-			//Represents the boundry box for the red man when not rotated
-			// crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, 0);
-
 			//This represents the camera's space
 			crayon_graphics_draw_sprites(&Cam_BGs[current_camera_id], NULL, PVR_LIST_OP_POLY, 0);
 
 			if(info_disp){
-				sprintf(snum1, "Camera ID: %d\nX: %.2f\nY: %.2f\nWorld_Movement_Factor: %.2f",
-					current_camera_id, current_camera->world_x, current_camera->world_y, current_camera->world_movement_factor);
+				sprintf(snum1, "Camera ID: %d. Renderer: %d\nX: %.2f\nY: %.2f\nWorld_Movement_Factor: %.2f",
+					current_camera_id, RENDERER, current_camera->world_x, current_camera->world_y, current_camera->world_movement_factor);
 
 				crayon_graphics_draw_text_mono("World Coords:", &BIOS, PVR_LIST_PT_POLY, 32, 280, 254, 1, 1, BIOS_P.palette_id);
 				crayon_graphics_draw_text_mono(snum1, &BIOS, PVR_LIST_PT_POLY, 32, 280 + (BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
