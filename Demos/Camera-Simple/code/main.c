@@ -9,60 +9,6 @@
 
 #include <math.h>
 
-#if CRAYON_BOOT_MODE == 1
-	//For mounting the sd dir
-	#include <dc/sd.h>
-	#include <kos/blockdev.h>
-	#include <fat/fs_fat.h>
-#endif
-
-
-#if CRAYON_BOOT_MODE == 1
-	#define MNT_MODE FS_FAT_MOUNT_READONLY
-
-	static void unmount_fat_sd(){
-		fs_fat_unmount("/sd");
-		fs_fat_shutdown();
-		sd_shutdown();
-	}
-
-	static int mount_fat_sd(){
-		kos_blockdev_t sd_dev;
-		uint8 partition_type;
-
-		// Initialize the sd card if its present
-		if(sd_init()){
-			return 1;
-		}
-
-		// Grab the block device for the first partition on the SD card. Note that
-		// you must have the SD card formatted with an MBR partitioning scheme
-		if(sd_blockdev_for_partition(0, &sd_dev, &partition_type)){
-			return 2;
-		}
-
-		// Check to see if the MBR says that we have a valid partition
-		// if(partition_type != 0x83){
-			//I don't know what value I should be comparing against, hence this check is disabled for now
-			// This: https://en.wikipedia.org/wiki/Partition_type
-				//Suggests there's multiple types for FAT...not sure how to handle this
-			// return 3;
-		// }
-
-		// Initialize fs_fat and attempt to mount the device
-		if(fs_fat_init()){
-			return 4;
-		}
-
-		//Mount the SD card to the sd dir in the VFS
-		if(fs_fat_mount("/sd", &sd_dev, MNT_MODE)){
-			return 5;
-		}
-		return 0;
-	}
-
-#endif
-
 //Char count:
 //63
 //28
@@ -225,11 +171,7 @@ int main(){
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P, Red_Man_P, Green_Man_P;
 
-	#if CRAYON_BOOT_MODE == 1
-		crayon_memory_mount_romdisk("/sd/colourMod.img", "/files");
-	#else
-		crayon_memory_mount_romdisk("/cd/colourMod.img", "/files");
-	#endif
+	crayon_memory_mount_romdisk("/cd/colourMod.img", "/files");
 
 	crayon_memory_load_prop_font_sheet(&Tahoma, &Tahoma_P, 0, "/files/Fonts/Tahoma_font.dtex");
 	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 1, "/files/Fonts/BIOS_font.dtex");
@@ -239,10 +181,6 @@ int main(){
 	crayon_memory_load_spritesheet(&Characters, NULL, 4, "/files/Characters.dtex");	//Since it has 23 colours, we'll just use ARGB1555
 
 	fs_romdisk_unmount("/files");
-
-	#if CRAYON_BOOT_MODE == 1
-		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
-	#endif
 
 	crayon_memory_init_sprite_array(&James_Draw, &Characters, 0, NULL, 1, 9, 0, PVR_FILTER_NONE, 0);
 	James_Draw.scale[0].x = 2;
@@ -595,33 +533,51 @@ int main(){
 				break;
 			}
 
-			if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_LEFT)){
+			if(curr_btns[i] & CONT_DPAD_LEFT){
 				moved_on_frame.x = -1;
 				last_dir = 0;
 			}
-			else if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_RIGHT)){
+			else if(curr_btns[i] & CONT_DPAD_RIGHT){
 				moved_on_frame.x = 1;
 				last_dir = 2;
 			}
 
-			if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_UP)){
+			if(curr_btns[i] & CONT_DPAD_UP){
 				moved_on_frame.y = -1;
 				last_dir = 1;
 			}
-			else if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_DOWN)){
+			else if(curr_btns[i] & CONT_DPAD_DOWN){
 				moved_on_frame.y = 1;
 				last_dir = 3;
 			}
 
-			//Adjust the current world movement factor
-			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_DPAD_UP)){
-				scale_adjustment[current_camera_id]++;
-				current_camera->world_movement_factor = pow(2, scale_adjustment[current_camera_id]);
-			}
-			else if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_DPAD_DOWN)){
-				scale_adjustment[current_camera_id]--;
-				current_camera->world_movement_factor = pow(2, scale_adjustment[current_camera_id]);
-			}
+			// if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_LEFT)){
+			// 	moved_on_frame.x = -1;
+			// 	last_dir = 0;
+			// }
+			// else if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_RIGHT)){
+			// 	moved_on_frame.x = 1;
+			// 	last_dir = 2;
+			// }
+
+			// if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_UP)){
+			// 	moved_on_frame.y = -1;
+			// 	last_dir = 1;
+			// }
+			// else if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_DOWN)){
+			// 	moved_on_frame.y = 1;
+			// 	last_dir = 3;
+			// }
+
+			// //Adjust the current world movement factor
+			// if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_DPAD_UP)){
+			// 	scale_adjustment[current_camera_id]++;
+			// 	current_camera->world_movement_factor = pow(2, scale_adjustment[current_camera_id]);
+			// }
+			// else if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_DPAD_DOWN)){
+			// 	scale_adjustment[current_camera_id]--;
+			// 	current_camera->world_movement_factor = pow(2, scale_adjustment[current_camera_id]);
+			// }
 
 			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_A)){
 				if(oob_culling){
@@ -730,11 +686,11 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
-			printf("LOOPING\n");
+			// printf("LOOPING\n");
 			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
-			__CRAYON_GRAPHICS_DEBUG_VARS[0] = 1;
+			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 1;
 			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
-			__CRAYON_GRAPHICS_DEBUG_VARS[0] = 0;
+			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 0;
 			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
 
 			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
@@ -770,7 +726,12 @@ int main(){
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
 			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
+			
+			// printf("STARTING\n");
+			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 1;
 			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
+			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 0;
+			// printf("ENDING\n");
 
 			//Represents the boundry box for the red man when not rotated
 			crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
