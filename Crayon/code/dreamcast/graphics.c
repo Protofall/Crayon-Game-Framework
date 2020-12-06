@@ -497,14 +497,14 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 
 				// Pretty sure we can use "k" as the side we are cropping
 				unsigned int crop_side = k;
-				// if(flip_val){
-				// 	if(crop_side == 0){
-				// 		crop_side = 2;
-				// 	}
-				// 	else if(crop_side == 2){
-				// 		crop_side = 0;
-				// 	}
-				// }
+				if(flip_val){
+					if(crop_side == 0){
+						crop_side = 2;
+					}
+					else if(crop_side == 2){
+						crop_side = 0;
+					}
+				}
 
 				switch(crop_side){	// Cropping against the left edge
 					case 0:	// left side
@@ -575,39 +575,54 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 				// 270 degrees:		, bv, av
 
 
-				if(crop_side == 0){	// LTRB
-					sprite.auv = PVR_PACK_16BIT_U(sprite.auv, holder);
-				}
-				else if(crop_side == 1){
-					sprite.auv = PVR_PACK_16BIT_V(sprite.auv, holder);
-					sprite.buv = PVR_PACK_16BIT_V(sprite.buv, holder);
-				}
-				else if(crop_side == 2){
-					sprite.buv = PVR_PACK_16BIT_U(sprite.buv, holder);
-					sprite.cuv = PVR_PACK_16BIT_U(sprite.cuv, holder);
-				}
-				else if(crop_side == 3){
-					sprite.cuv = PVR_PACK_16BIT_V(sprite.cuv, holder);
-				}
+				;
 
 
-				// // Making sure we don't try to set "duv"
-				// if(k < 3){
-				// 	if(crop_side == 0 || crop_side == 2){
-				// 		uv_ptr[(2 * k)] = PVR_PACK_16BIT_U(uv_ptr[(2 * k)], holder);	// 1
-				// 	}
-				// 	else{
-				// 		uv_ptr[(2 * k)] = PVR_PACK_16BIT_V(uv_ptr[(2 * k)], holder);	// 2
-				// 	}
+				// if(crop_side == 0){	// LTRB
+				// 	// if(flip_val){	// We need to target the opposite side Us when flipped
+				// 	// 	sprite.buv = PVR_PACK_16BIT_U(sprite.buv, holder);
+				// 	// 	sprite.cuv = PVR_PACK_16BIT_U(sprite.cuv, holder);
+				// 	// }
+				// 	// else{
+				// 		sprite.auv = PVR_PACK_16BIT_U(sprite.auv, holder);
+				// 		// -
+				// 	// }
 				// }
-				// if(j < 3){
-				// 	if(crop_side == 0 || crop_side == 2){
-				// 		uv_ptr[(2 * j)] = PVR_PACK_16BIT_U(uv_ptr[(2 * j)], holder);	// 3
-				// 	}
-				// 	else{
-				// 		uv_ptr[(2 * j)] = PVR_PACK_16BIT_V(uv_ptr[(2 * j)], holder);	// 4
-				// 	}
+				// else if(crop_side == 1){
+				// 	sprite.buv = PVR_PACK_16BIT_V(sprite.buv, holder);
+				// 	sprite.auv = PVR_PACK_16BIT_V(sprite.auv, holder);
 				// }
+				// else if(crop_side == 2){
+				// 	// if(flip_val){
+				// 	// 	sprite.auv = PVR_PACK_16BIT_U(sprite.auv, holder);
+				// 	// }
+				// 	// else{
+				// 		sprite.cuv = PVR_PACK_16BIT_U(sprite.cuv, holder);
+				// 		sprite.buv = PVR_PACK_16BIT_U(sprite.buv, holder);
+				// 	// }
+				// }
+				// else if(crop_side == 3){
+				// 	// -
+				// 	sprite.cuv = PVR_PACK_16BIT_V(sprite.cuv, holder);
+				// }
+
+				// Making sure we don't try to set "duv"
+				if(k < 3){
+					if(crop_side == 0 || crop_side == 2){
+						uv_ptr[k] = PVR_PACK_16BIT_U(uv_ptr[k], holder);	// 1
+					}
+					else{
+						uv_ptr[k] = PVR_PACK_16BIT_V(uv_ptr[k], holder);	// 2
+					}
+				}
+				if(j < 3){
+					if(crop_side == 0 || crop_side == 2){
+						uv_ptr[j] = PVR_PACK_16BIT_U(uv_ptr[j], holder);	// 3
+					}
+					else{
+						uv_ptr[j] = PVR_PACK_16BIT_V(uv_ptr[j], holder);	// 4
+					}
+				}
 
 				// cropped = 1;
 
