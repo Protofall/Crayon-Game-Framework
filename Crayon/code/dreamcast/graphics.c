@@ -357,23 +357,15 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		sprite_verts[0] = crayon_graphics_get_sprite_vert(&sprite, rotation_val);	// Top left
 		sprite_verts[1] = crayon_graphics_get_sprite_vert(&sprite, (rotation_val + 2) % 4);	// The bottom right
 
-		if(sprite_verts[1].y < sprite_verts[0].y ||sprite_verts[1].x < sprite_verts[0].x){
-			error_freeze("Incorrect logic");
-		}
-
 		// If we have the software cropping or OOB detection check active
 			// Then check if they don't overlap and if so move to next element
 		if((options & (CRAYON_DRAW_CHECK_OOB | CRAYON_DRAW_SOFTWARE_CROP)) &&
 				!crayon_graphics_aabb_aabb_overlap(sprite_verts, camera_verts)){
-			// if(__CRAYON_GRAPHICS_DEBUG_VARS[0] == 1){
-			// 	printf("Hii\n");
-			// }
 			continue;
 		}
 
 		// If software cropping, Modify the verts/UVs
-		if(!0 && (options & CRAYON_DRAW_SOFTWARE_CROP)){
-			// error_freeze("KJDS");
+		if((options & CRAYON_DRAW_SOFTWARE_CROP) && !0){
 			// typedef struct {
 			//     uint32  flags;
 			//     float   ax;
@@ -420,13 +412,11 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 				sprite.cuv = PVR_PACK_16BIT_V(sprite.cuv, uvs[3]);
 			}
 
-
-
 			// We can use "vert_ptr[index * 3]" to access the x and "vert_ptr[(index * 3) + 1]" for y
 				// NOTE: There is no dz, but we won't be modifying the Z coordinates here
 			float *vert_ptr = &(sprite.ax);
 			uint32_t *uv_ptr = &(sprite.auv);	// WARNING: No duv
-			float holder, dist;
+			float holder;
 			unsigned int j, k;
 			unsigned int crop_side;
 
@@ -438,73 +428,78 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			// 	;
 			// } while();
 
-			// So I think we should start from vertex index "rotation_val" (Which is the top left)
-			// and keep going down until we reach "rotation_val" again.
-				// On each loop we modify the vertex coordinate and texture coords of verts j and next_vert
-				// (next_vert is one less than j). On first loop we modify the y world coords and the y
-				// texture coords (To min y). Second loop its the max x, then max y, then min x (Indexes: 1, 2, 3, 0)
-					// Maybe instead start with vertex j and the previous one for min x, then y, etc so we have 0,1,2,3
-
-
 			// rotation_val:
 			// - 0: 0 degrees    a-vert: TL   ORDER (k, j): (0,3), (1,0), (2,1), (3,2)
 			// - 1: 270 degrees  a-vert: BL   ORDER       : (1,0), (2,1), (3,2), (0,3)
 			// - 2: 180 degrees  a-vert: BR   ORDER       : (2,1), (3,2), (0,3), (1,0)
 			// - 3: 90 degrees   a-vert: TR   ORDER       : (3,2), (0,3), (1,0), (2,1)
 
+			// We will start with the LHS verts
 			k = rotation_val;
 			j = (k != 0) ? k - 1 : 3;	// Vert before k.
 
+			unsigned int l;
+			for(l = 0; l < 4; l++){
+				if(l == 0){
+					if(vert_ptr[(3 * k)] < camera_verts[0].x){	// Left
+						vert_ptr[(3 * k)] = camera_verts[0].x;
+						vert_ptr[(3 * j)] = camera_verts[0].x;
 
-			// TODO:
-				// Add flip support
+						// Percentage of sprite off screen
+						holder = ((camera_verts[0].x - sprite_verts[0].x) / (sprite_verts[1].x - sprite_verts[0].x));
+					}
+					else{
+						// Set default UV and continue
+						;
+						goto NEXT_SPRITE_CLIP;
+					}
+				}
+				else if(l == 1){
+					if(vert_ptr[(3 * k) + 1] < camera_verts[0].y){	// Top
+						vert_ptr[(3 * k) + 1] = camera_verts[0].y;
+						vert_ptr[(3 * j) + 1] = camera_verts[0].y;
 
+						holder = ((camera_verts[0].y - sprite_verts[0].y) / (sprite_verts[1].y - sprite_verts[0].y));
+					}
+					else{
+						// Set default UV and continue
+						;
+						goto NEXT_SPRITE_CLIP;
+					}
+				}
+				else if(l == 2){
+					if(vert_ptr[(3 * k)] > camera_verts[1].x){	// Right
+						vert_ptr[(3 * k)] = camera_verts[1].x;
+						vert_ptr[(3 * j)] = camera_verts[1].x;
 
+						holder = ((sprite_verts[1].x - camera_verts[1].x) / (sprite_verts[1].x - sprite_verts[0].x));
+					}
+					else{
+						// Set default UV and continue
+						;
+						goto NEXT_SPRITE_CLIP;
+					}
+				}
+				else{	// l == 3
+					if(vert_ptr[(3 * k) + 1] > camera_verts[1].y){	// Bottom
+						vert_ptr[(3 * k) + 1] = camera_verts[1].y;
+						vert_ptr[(3 * j) + 1] = camera_verts[1].y;
 
-			if(vert_ptr[(3 * k)] < camera_verts[0].x){
-				vert_ptr[(3 * k)] = camera_verts[0].x;
-				vert_ptr[(3 * j)] = camera_verts[0].x;
+						holder = ((sprite_verts[1].y - camera_verts[1].y) / (sprite_verts[1].y - sprite_verts[0].y));
+					}
+					else{
+						// Set default UV and continue
+						;
+						goto NEXT_SPRITE_CLIP;
+					}
+				}
 
-				// WE WILL ALWAYS BE TARGETTING THE UVs ON THE CROPPED EDGE
-					// uv_ptr[(2 * j)] and uv_ptr[(2 * k)] assuming they're not duv
-				// WE WILL ALWAYS GET THE UV DISTANCE BASED OFF THE ROTATION ALONE
-					// if(rotation_val % 2 == 0){dist = u2 - u0;}
-					// else{dist = u3 - u1;}
-				// The percentage that is offscreen is based off the poly, nothing to do with UVs (ATM):
-					// blah = ((camera_verts[0].x - sprite_verts[0].x) / (sprite_verts[1].x - sprite_verts[0].x))
-				// The calculation will look something like this:
-					// ((dist * blah) + u0) for not flipped, cropped on left/top side of poly
-					// (u1 - (dist * (1 - blah))) for flipped or right/bottom side
-						// NOTE. If flipped and right side, then use ((dist * blah) + u0)
-					// So that's if((!flipped && ?) || (flipped && !?) ) do first one
-						// In this case, "?" is rotation_val = 0 or 3
-				;
+				// The amount of "UV" offscreen
+					// CHANGE THIS TO BE "holder *="" INSTEAD
+				holder *= ((k % 2 == 0) ? (uvs[2] - uvs[0]) : (uvs[3] - uvs[1]));
 
-				holder = ((camera_verts[0].x - sprite_verts[0].x) / (sprite_verts[1].x - sprite_verts[0].x));	// percentage off screen
-				
-				dist = (k % 2 == 0) ? (uvs[2] - uvs[0]) : (uvs[3] - uvs[1]);	// 0 and 180 degree rotation do the Us
-
-				// There are 6 possible combinations for this
-				// 1: We are cropping the top/min-y side
-					// holder = (dist * holder) + uvs[1];
-				// 2: We are cropping the bottom/max-y side
-					// holder = uvs[3] - (dist * holder);
-				// 3: We are cropping the left/min-x side (No flip)
-					// holder = (dist * holder) + uvs[0];
-				// 4: We are cropping the left/min-x side (Flip)
-					// holder = uvs[2] - (dist * holder);
-				// 5: We are cropping the right/max-x side (No flip)
-					// holder = uvs[2] - (dist * holder);
-				// 6: We are cropping the right/max-x side (Flip)
-					// holder = (dist * holder) + uvs[0];
-
-				// 3 and 6 are the same, and 4 and 5 are the same. There are only 4 calculation options
-				// 1 3 6 have the same format and so does 2 4 5s
-
-				// Pretty sure we can use "k" as the side we are cropping
+				// Change the target UV to the opposite side when flipped and a U/X
 				crop_side = k;
-
-				// Change the target UV to the opposite side when flipped
 				if(flip_val){
 					if(crop_side == 0){
 						crop_side = 2;
@@ -514,384 +509,52 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 					}
 				}
 
-				switch(crop_side){	// Cropping against the left edge
+				// Get the exact UV value we need
+				switch(crop_side){
 					case 0:	// left side
-						holder = uvs[0] + (dist * holder);
+						holder = uvs[0] + holder;
 						break;
 					case 1:	// Top side
-						holder = uvs[1] + (dist * holder);
+						holder = uvs[1] + holder;
 						break;
 					case 2:	// Right side
-						holder = uvs[2] - (dist * holder);
+						holder = uvs[2] - holder;
 						break;
 					case 3:	// Bottom side
-						holder = uvs[3] - (dist * holder);
+						holder = uvs[3] - holder;
 						break;
 				}
 
-				// 0 = 0, 1 = 270 and 2 = 180, 3 = 90
-
-				// Which UVs *should* be cropped for which rotations:
-				// 0 degrees:		, au, du
-				// 90 degrees:		, dv, cv
-				// 180 degrees:		, cu, bu
-				// 270 degrees:		, bv, av
-
-
-				;
-
-
-				// if(crop_side == 0){	// LTRB
-				// 	// if(flip_val){	// We need to target the opposite side Us when flipped
-				// 	// 	sprite.buv = PVR_PACK_16BIT_U(sprite.buv, holder);
-				// 	// 	sprite.cuv = PVR_PACK_16BIT_U(sprite.cuv, holder);
-				// 	// }
-				// 	// else{
-				// 		sprite.auv = PVR_PACK_16BIT_U(sprite.auv, holder);
-				// 		// -
-				// 	// }
-				// }
-				// else if(crop_side == 1){
-				// 	sprite.buv = PVR_PACK_16BIT_V(sprite.buv, holder);
-				// 	sprite.auv = PVR_PACK_16BIT_V(sprite.auv, holder);
-				// }
-				// else if(crop_side == 2){
-				// 	// if(flip_val){
-				// 	// 	sprite.auv = PVR_PACK_16BIT_U(sprite.auv, holder);
-				// 	// }
-				// 	// else{
-				// 		sprite.cuv = PVR_PACK_16BIT_U(sprite.cuv, holder);
-				// 		sprite.buv = PVR_PACK_16BIT_U(sprite.buv, holder);
-				// 	// }
-				// }
-				// else if(crop_side == 3){
-				// 	// -
-				// 	sprite.cuv = PVR_PACK_16BIT_V(sprite.cuv, holder);
-				// }
-
-				// Making sure we don't try to set "duv"
+				// Making sure we don't try to set "duv" because it DNE
 				if(k < 3){
 					if(crop_side == 0 || crop_side == 2){
-						uv_ptr[k] = PVR_PACK_16BIT_U(uv_ptr[k], holder);	// 1
+						uv_ptr[k] = PVR_PACK_16BIT_U(uv_ptr[k], holder);
 					}
 					else{
-						uv_ptr[k] = PVR_PACK_16BIT_V(uv_ptr[k], holder);	// 2
+						uv_ptr[k] = PVR_PACK_16BIT_V(uv_ptr[k], holder);
 					}
 				}
 				if(j < 3){
 					if(crop_side == 0 || crop_side == 2){
-						uv_ptr[j] = PVR_PACK_16BIT_U(uv_ptr[j], holder);	// 3
+						uv_ptr[j] = PVR_PACK_16BIT_U(uv_ptr[j], holder);
 					}
 					else{
-						uv_ptr[j] = PVR_PACK_16BIT_V(uv_ptr[j], holder);	// 4
+						uv_ptr[j] = PVR_PACK_16BIT_V(uv_ptr[j], holder);
 					}
 				}
 
-				// cropped = 1;
+				// Just optimisation, no need to do the below if its the last loop
+				if(l == 3){
+					break;
+				}
 
+				// We still need to increment to the next set of verts even if we didn't crop
+				NEXT_SPRITE_CLIP:
 
-
-
-
-				// vert[0].u = (uv[1].x - uv[0].x) * ((vec[__UNROTATED].x - vec[__SPRITE_BOUND_TL].x) /
-				// 	(vec[__SPRITE_BOUND_BR].x - vec[__SPRITE_BOUND_TL].x));
-				// if(!sprite_array->flip[multi_flip ? i : 0]){	// uv[0].x + Part
-				// 	vert[0].u += uv[0].x;
-				// }
-				// else{	// uv[1].x - Part
-				// 	vert[0].u *= -1;
-				// 	vert[0].u += uv[1].x;
-				// }
-
-
-
-
-				// Modify the UVs. Use a ratio between the sprite min/max and the current vert (Either k or j is fine)
-				// holder = ((uvs[2]-uvs[0]) *
-					// ((vert_ptr[(3 * k)] - sprite_verts[0].x) / (sprite_verts[1].x - sprite_verts[0].x))) + uvs[0];
-
-
-
-					// The distance of the UVs. Times by the ratio of the distance outside by the original distance
-				// sprite.auv = PVR_PACK_16BIT_U(sprite.auv, holder);	// not AU, but the one on the left side
-																	// uv_ptr[(2 * k)] as long as (2 * k) isn't > 5
-				// We don't set du because it DNE
+				// Get the next vert ids
+				j = k;
+				k = (k < 3) ? k + 1 : 0;
 			}
-			else{
-				// holder = uvs[0];
-				// Set the default uv
-			}
-
-			// // Making sure we don't try to set "duv"
-			// if(k < 3){
-			// 	uv_ptr[(2 * k)] = PVR_PACK_16BIT_U(uv_ptr[(2 * k)], holder);
-			// }
-			// if(j < 3){
-			// 	uv_ptr[(2 * j)] = PVR_PACK_16BIT_U(uv_ptr[(2 * j)], holder);
-			// }
-
-
-			// Go to the next verts
-			j = k;
-			k = (k < 3) ? k + 1 : 0;
-
-
-			// Top side of camera
-			if(vert_ptr[(3 * k) + 1] < camera_verts[0].y){
-				vert_ptr[(3 * k) + 1] = camera_verts[0].y;
-				vert_ptr[(3 * j) + 1] = camera_verts[0].y;
-
-				holder = ((camera_verts[0].y - sprite_verts[0].y) / (sprite_verts[1].y - sprite_verts[0].y));
-
-				dist = ((k % 2 == 0) ? (uvs[2] - uvs[0]) : (uvs[3] - uvs[1]));	// 0 and 180 degree rotation do the Us
-
-				crop_side = k;
-
-				// Change the target UV to the opposite side when flipped
-				if(flip_val){
-					if(crop_side == 0){
-						crop_side = 2;
-					}
-					else if(crop_side == 2){
-						crop_side = 0;
-					}
-				}
-
-				switch(crop_side){	// Cropping against the left edge
-					case 0:	// left side
-						holder = uvs[0] + (dist * holder);
-						break;
-					case 1:	// Top side
-						holder = uvs[1] + (dist * holder);
-						break;
-					case 2:	// Right side
-						holder = uvs[2] - (dist * holder);
-						break;
-					case 3:	// Bottom side
-						holder = uvs[3] - (dist * holder);
-						break;
-				}
-
-				// Making sure we don't try to set "duv"
-				if(k < 3){
-					if(crop_side == 0 || crop_side == 2){
-						uv_ptr[k] = PVR_PACK_16BIT_U(uv_ptr[k], holder);	// 1
-					}
-					else{
-						uv_ptr[k] = PVR_PACK_16BIT_V(uv_ptr[k], holder);	// 2
-					}
-				}
-				if(j < 3){
-					if(crop_side == 0 || crop_side == 2){
-						uv_ptr[j] = PVR_PACK_16BIT_U(uv_ptr[j], holder);	// 3
-					}
-					else{
-						uv_ptr[j] = PVR_PACK_16BIT_V(uv_ptr[j], holder);	// 4
-					}
-				}
-			}
-
-			j = k;
-			k = (k < 3) ? k + 1 : 0;
-
-
-			// Right side
-			if(vert_ptr[(3 * k)] > camera_verts[1].x){
-				vert_ptr[(3 * k)] = camera_verts[1].x;
-				vert_ptr[(3 * j)] = camera_verts[1].x;
-
-				holder = ((sprite_verts[1].x - camera_verts[1].x) / (sprite_verts[1].x - sprite_verts[0].x));
-
-				dist = ((k % 2 == 0) ? (uvs[2] - uvs[0]) : (uvs[3] - uvs[1]));	// 0 and 180 degree rotation do the Us
-
-				crop_side = k;
-
-				// Change the target UV to the opposite side when flipped
-				if(flip_val){
-					if(crop_side == 0){
-						crop_side = 2;
-					}
-					else if(crop_side == 2){
-						crop_side = 0;
-					}
-				}
-
-				switch(crop_side){	// Cropping against the left edge
-					case 0:	// left side
-						holder = uvs[0] + (dist * holder);
-						break;
-					case 1:	// Top side
-						holder = uvs[1] + (dist * holder);
-						break;
-					case 2:	// Right side
-						holder = uvs[2] - (dist * holder);
-						break;
-					case 3:	// Bottom side
-						holder = uvs[3] - (dist * holder);
-						break;
-				}
-
-				// Making sure we don't try to set "duv"
-				if(k < 3){
-					if(crop_side == 0 || crop_side == 2){
-						uv_ptr[k] = PVR_PACK_16BIT_U(uv_ptr[k], holder);	// 1
-					}
-					else{
-						uv_ptr[k] = PVR_PACK_16BIT_V(uv_ptr[k], holder);	// 2
-					}
-				}
-				if(j < 3){
-					if(crop_side == 0 || crop_side == 2){
-						uv_ptr[j] = PVR_PACK_16BIT_U(uv_ptr[j], holder);	// 3
-					}
-					else{
-						uv_ptr[j] = PVR_PACK_16BIT_V(uv_ptr[j], holder);	// 4
-					}
-				}
-			}
-
-			j = k;
-			k = (k < 3) ? k + 1 : 0;
-
-			// Left side
-			if(vert_ptr[(3 * k) + 1] > camera_verts[1].y){
-				vert_ptr[(3 * k) + 1] = camera_verts[1].y;
-				vert_ptr[(3 * j) + 1] = camera_verts[1].y;
-
-				holder = ((sprite_verts[1].y - camera_verts[1].y) / (sprite_verts[1].y - sprite_verts[0].y));
-
-				dist = ((k % 2 == 0) ? (uvs[2] - uvs[0]) : (uvs[3] - uvs[1]));	// 0 and 180 degree rotation do the Us
-
-				crop_side = k;
-
-				// Change the target UV to the opposite side when flipped
-				if(flip_val){
-					if(crop_side == 0){
-						crop_side = 2;
-					}
-					else if(crop_side == 2){
-						crop_side = 0;
-					}
-				}
-
-				switch(crop_side){	// Cropping against the left edge
-					case 0:	// left side
-						holder = uvs[0] + (dist * holder);
-						break;
-					case 1:	// Top side
-						holder = uvs[1] + (dist * holder);
-						break;
-					case 2:	// Right side
-						holder = uvs[2] - (dist * holder);
-						break;
-					case 3:	// Bottom side
-						holder = uvs[3] - (dist * holder);
-						break;
-				}
-
-				// if(__CRAYON_GRAPHICS_DEBUG_VARS[0] && !flip_val){
-				// 	printf("A: %d %d %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n",
-				// 		k, j, holder, uvs[0], uvs[1], uvs[2], uvs[3], holder, dist);
-				// 	printf("B: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n",
-				// 		sprite_verts[0].x, sprite_verts[1].y, sprite_verts[0].x, sprite_verts[1].y,
-				// 		camera_verts[0].x, camera_verts[1].y, camera_verts[0].x, camera_verts[1].y
-				// 	);
-				// }
-
-				// Non-flipped rainbow polys
-					// crop_side == k cause none are flipped here
-
-				// STARTING
-				// A: 2 1 0.24, 0.00, 0.75, 0.12, 0.88, 0.24, 0.12
-				// B: 479.00, 106.00, 479.00, 106.00, 140.00, 332.00, 140.00, 332.00
-				// A: 1 0 0.63, 0.00, 0.75, 0.12, 0.88, 0.63, 0.12
-				// B: 479.00, 180.00, 479.00, 180.00, 140.00, 332.00, 140.00, 332.00
-				// A: 0 3 -0.12, 0.00, 0.75, 0.12, 0.88, -0.12, 0.12
-				// B: 479.00, 254.00, 479.00, 254.00, 140.00, 332.00, 140.00, 332.00
-				// A: 3 2 0.99, 0.00, 0.75, 0.12, 0.88, 0.99, 0.12
-				// B: 479.00, 328.00, 479.00, 328.00, 140.00, 332.00, 140.00, 332.00
-				// ENDING
-
-				// Making sure we don't try to set "duv"
-				if(k < 3){
-					if(crop_side == 0 || crop_side == 2){
-						uv_ptr[k] = PVR_PACK_16BIT_U(uv_ptr[k], holder);	// 1
-					}
-					else{
-						uv_ptr[k] = PVR_PACK_16BIT_V(uv_ptr[k], holder);	// 2
-					}
-				}
-				if(j < 3){
-					if(crop_side == 0 || crop_side == 2){
-						uv_ptr[j] = PVR_PACK_16BIT_U(uv_ptr[j], holder);	// 3
-					}
-					else{
-						uv_ptr[j] = PVR_PACK_16BIT_V(uv_ptr[j], holder);	// 4
-					}
-				}
-			}
-
-
-
-			// for(l = 0; l < 4; l++){	// L T R B. And if we want to skip a side, we can
-
-			// 	// Check if its inbounds...I wasn't sure how to make it less messy
-			// 	// if(l == 0 && vert_ptr[(3 * k)] < camera_verts[0].x){
-			// 	// 	vert_ptr[(3 * k)] = camera_verts[0].x;
-			// 	// 	vert_ptr[(3 * j)] = camera_verts[0].x;
-			// 	// 	error_freeze("a");
-			// 	// }
-			// 	// else if(l == 1 && vert_ptr[(3 * k) + 1] < camera_verts[0].y){
-			// 	// 	vert_ptr[(3 * k) + 1] = camera_verts[0].y;
-			// 	// 	vert_ptr[(3 * j) + 1] = camera_verts[0].y;
-			// 	// 	error_freeze("b");
-			// 	// }
-			// 	// else if(l == 2 && vert_ptr[(3 * k)] > camera_verts[1].x){
-			// 	// 	vert_ptr[(3 * k)] = camera_verts[1].x;
-			// 	// 	vert_ptr[(3 * j)] = camera_verts[1].x;
-			// 	// 	error_freeze("c");
-			// 	// }
-			// 	// else if(l == 3 && vert_ptr[(3 * k) + 1] > camera_verts[1].y){
-			// 	// 	vert_ptr[(3 * k) + 1] = camera_verts[1].y;
-			// 	// 	vert_ptr[(3 * j) + 1] = camera_verts[1].y;
-			// 	// 	error_freeze("d");
-			// 	// }
-
-			// 	// static uint8_t _crayon_graphics_point_inbounds(float val, float axis, uint8_t side){
-			// 	// 	if(side){return (val >= axis);}
-			// 	// 	return (val < axis);
-			// 	// }
-
-			// 	// in1 = _crayon_graphics_point_inbounds(
-			// 	// 	axis ? vert_coords[prev_vert_index].x : vert_coords[prev_vert_index].y,
-			// 	// 	camera_coords[j],
-			// 	// 	(j < 2)
-			// 	// );
-
-			// 	// Check if the vert's x or y (Depending on l) is OOB
-			// 		// Look at what I did for the Sutherland-Hodgman algorithm
-			// 		// min_x, min_y, max_x, max_y
-			// 	if(0){
-			// 		// Update vertex j and k's x/y to be on the edge of the camera boarder
-			// 		;
-
-			// 		// Then calculate the new U/V and update them using my new two functions
-			// 			// uint32_t PVR_PACK_16BIT_U(uint32_t sprite_uv, float u)
-			// 			// uint32_t PVR_PACK_16BIT_V(uint32_t sprite_uv, float v)
-			// 		// NOTE: We don't have a duv, so we'd only update a UV if the index != 3
-			// 		;
-			// 		if(k != 3){
-			// 			;
-			// 		}
-			// 		if(j != 3){
-			// 			;
-			// 		}
-			// 	}
-
-			// 	// Go to the next verts
-			// 	j = k;
-			// 	k = (j > 3) ? j++ : 0;
-			// }
 		}
 		else{
 			if(flip_val){
