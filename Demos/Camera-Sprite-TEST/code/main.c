@@ -452,7 +452,7 @@ int main(){
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
 			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY,
-				RENDERER | CRAYON_DRAW_OOB_SKIP | CRAYON_DRAW_SOFTWARE_CROP);
+				RENDERER | CRAYON_DRAW_CHECK_OOB | CRAYON_DRAW_SOFTWARE_CROP);
 
 		pvr_list_finish();
 
