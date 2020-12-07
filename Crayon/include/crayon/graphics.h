@@ -200,15 +200,4 @@ uint8_t crayon_graphics_round_way(float value);
 // vert is the nth vert (Backwards C shaped)
 vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t *sprite, uint8_t vert);
 
-void crayon_graphics_set_sprite_vert_x(pvr_sprite_txr_t *sprite, uint8_t vert, float value);
-void crayon_graphics_set_sprite_vert_y(pvr_sprite_txr_t *sprite, uint8_t vert, float value);
-
-// Given a 90-degree-increment rotation, flip flag and side, it will return the correct index to modify
-uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t flip_val);
-
-float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, vec2_f_t dims);
-
-float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t *vert, vec2_f_t *scale, const crayon_viewport_t *camera);
-
-
 #endif
