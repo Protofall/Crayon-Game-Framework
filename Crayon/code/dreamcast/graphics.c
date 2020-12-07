@@ -357,6 +357,10 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		sprite_verts[0] = crayon_graphics_get_sprite_vert(&sprite, rotation_val);	// Top left
 		sprite_verts[1] = crayon_graphics_get_sprite_vert(&sprite, (rotation_val + 2) % 4);	// The bottom right
 
+		if(sprite_verts[1].y < sprite_verts[0].y ||sprite_verts[1].x < sprite_verts[0].x){
+			error_freeze("Incorrect logic");
+		}
+
 		// If we have the software cropping or OOB detection check active
 			// Then check if they don't overlap and if so move to next element
 		if((options & (CRAYON_DRAW_CHECK_OOB | CRAYON_DRAW_SOFTWARE_CROP)) &&
@@ -424,6 +428,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			uint32_t *uv_ptr = &(sprite.auv);	// WARNING: No duv
 			float holder, dist;
 			unsigned int j, k;
+			unsigned int crop_side;
 
 			// So I can access them like the uvs array
 			float *sprite_ptr = &(sprite_verts[0].x);
@@ -476,6 +481,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 				;
 
 				holder = ((camera_verts[0].x - sprite_verts[0].x) / (sprite_verts[1].x - sprite_verts[0].x));	// percentage off screen
+				
 				dist = (k % 2 == 0) ? (uvs[2] - uvs[0]) : (uvs[3] - uvs[1]);	// 0 and 180 degree rotation do the Us
 
 				// There are 6 possible combinations for this
@@ -496,7 +502,9 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 				// 1 3 6 have the same format and so does 2 4 5s
 
 				// Pretty sure we can use "k" as the side we are cropping
-				unsigned int crop_side = k;
+				crop_side = k;
+
+				// Change the target UV to the opposite side when flipped
 				if(flip_val){
 					if(crop_side == 0){
 						crop_side = 2;
@@ -521,52 +529,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 						break;
 				}
 
-				// if(__CRAYON_GRAPHICS_DEBUG_VARS[0] == 1 && !flip_val){
-				// 	printf("%d %.2f %.2f %.2f %.2f %.2f\n", crop_side, holder, uvs[0], uvs[1], uvs[2], uvs[3]);
-				// }
-
-				// This *seems* to be right...
-
-				// STARTING
-				// 0 0.09 0.00 0.75 0.12 0.88
-				// 3 0.79 0.00 0.75 0.12 0.88
-				// 2 0.04 0.00 0.75 0.12 0.88
-				// 1 0.84 0.00 0.75 0.12 0.88
-				// ENDING
-
-				// LOOPING
-				// STARTING
-				// 0 0.02 0.00 0.75 0.12 0.88
-				// 3 0.86 0.00 0.75 0.12 0.88
-				// 2 0.11 0.00 0.75 0.12 0.88
-				// 1 0.77 0.00 0.75 0.12 0.88
-				// ENDING
-
-				// Replace "rotation_val" below with "k"
-
 				// 0 = 0, 1 = 270 and 2 = 180, 3 = 90
-				// if((!flip_val && rotation_val < 2) ||
-				// 		(flip_val && rotation_val > 1)){
-				// 	holder = (dist * holder) + uvs[0 + ((rotation_val < 2) ? 0 : 2)];
-				// }
-				// else{
-				// 	holder = uvs[1 + ((rotation_val < 2) ? 0 : 2)] - (dist * holder);
-				// }
-
-				// When rotated at 90 degrees, LHS needs bottom side cropped
-					// So that would be just cuv (Since duv DNE)
-					// If we do that, k = 3 (duv) and j = cuv, right?
-
-				// if(__CRAYON_GRAPHICS_DEBUG_VARS[0] == 1 && !flip_val){
-				// 	printf("%d %d %d\n", k, j, crop_side);
-				// }
-
-				// STARTING
-				// 0 3 0		// 1, -		// Crops U		(au)		// Left side
-				// 3 2 3		// -, 4		// Crops V		(cv)		// Bottom side
-				// 2 1 2		// 1, 3		// Crops Us		(cu, bu)	// Right side
-				// 1 0 1		// 2, 4		// Crops Vs		(bv, av)	// Top side
-				// ENDING
 
 				// Which UVs *should* be cropped for which rotations:
 				// 0 degrees:		, au, du
@@ -673,27 +636,199 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			k = (k < 3) ? k + 1 : 0;
 
 
+			// Top side of camera
 			if(vert_ptr[(3 * k) + 1] < camera_verts[0].y){
 				vert_ptr[(3 * k) + 1] = camera_verts[0].y;
 				vert_ptr[(3 * j) + 1] = camera_verts[0].y;
+
+				holder = ((camera_verts[0].y - sprite_verts[0].y) / (sprite_verts[1].y - sprite_verts[0].y));
+
+				dist = ((k % 2 == 0) ? (uvs[2] - uvs[0]) : (uvs[3] - uvs[1]));	// 0 and 180 degree rotation do the Us
+
+				crop_side = k;
+
+				// Change the target UV to the opposite side when flipped
+				if(flip_val){
+					if(crop_side == 0){
+						crop_side = 2;
+					}
+					else if(crop_side == 2){
+						crop_side = 0;
+					}
+				}
+
+				switch(crop_side){	// Cropping against the left edge
+					case 0:	// left side
+						holder = uvs[0] + (dist * holder);
+						break;
+					case 1:	// Top side
+						holder = uvs[1] + (dist * holder);
+						break;
+					case 2:	// Right side
+						holder = uvs[2] - (dist * holder);
+						break;
+					case 3:	// Bottom side
+						holder = uvs[3] - (dist * holder);
+						break;
+				}
+
+				// Making sure we don't try to set "duv"
+				if(k < 3){
+					if(crop_side == 0 || crop_side == 2){
+						uv_ptr[k] = PVR_PACK_16BIT_U(uv_ptr[k], holder);	// 1
+					}
+					else{
+						uv_ptr[k] = PVR_PACK_16BIT_V(uv_ptr[k], holder);	// 2
+					}
+				}
+				if(j < 3){
+					if(crop_side == 0 || crop_side == 2){
+						uv_ptr[j] = PVR_PACK_16BIT_U(uv_ptr[j], holder);	// 3
+					}
+					else{
+						uv_ptr[j] = PVR_PACK_16BIT_V(uv_ptr[j], holder);	// 4
+					}
+				}
 			}
 
 			j = k;
 			k = (k < 3) ? k + 1 : 0;
 
 
+			// Right side
 			if(vert_ptr[(3 * k)] > camera_verts[1].x){
 				vert_ptr[(3 * k)] = camera_verts[1].x;
 				vert_ptr[(3 * j)] = camera_verts[1].x;
+
+				holder = ((sprite_verts[1].x - camera_verts[1].x) / (sprite_verts[1].x - sprite_verts[0].x));
+
+				dist = ((k % 2 == 0) ? (uvs[2] - uvs[0]) : (uvs[3] - uvs[1]));	// 0 and 180 degree rotation do the Us
+
+				crop_side = k;
+
+				// Change the target UV to the opposite side when flipped
+				if(flip_val){
+					if(crop_side == 0){
+						crop_side = 2;
+					}
+					else if(crop_side == 2){
+						crop_side = 0;
+					}
+				}
+
+				switch(crop_side){	// Cropping against the left edge
+					case 0:	// left side
+						holder = uvs[0] + (dist * holder);
+						break;
+					case 1:	// Top side
+						holder = uvs[1] + (dist * holder);
+						break;
+					case 2:	// Right side
+						holder = uvs[2] - (dist * holder);
+						break;
+					case 3:	// Bottom side
+						holder = uvs[3] - (dist * holder);
+						break;
+				}
+
+				// Making sure we don't try to set "duv"
+				if(k < 3){
+					if(crop_side == 0 || crop_side == 2){
+						uv_ptr[k] = PVR_PACK_16BIT_U(uv_ptr[k], holder);	// 1
+					}
+					else{
+						uv_ptr[k] = PVR_PACK_16BIT_V(uv_ptr[k], holder);	// 2
+					}
+				}
+				if(j < 3){
+					if(crop_side == 0 || crop_side == 2){
+						uv_ptr[j] = PVR_PACK_16BIT_U(uv_ptr[j], holder);	// 3
+					}
+					else{
+						uv_ptr[j] = PVR_PACK_16BIT_V(uv_ptr[j], holder);	// 4
+					}
+				}
 			}
 
 			j = k;
 			k = (k < 3) ? k + 1 : 0;
 
-
+			// Left side
 			if(vert_ptr[(3 * k) + 1] > camera_verts[1].y){
 				vert_ptr[(3 * k) + 1] = camera_verts[1].y;
 				vert_ptr[(3 * j) + 1] = camera_verts[1].y;
+
+				holder = ((sprite_verts[1].y - camera_verts[1].y) / (sprite_verts[1].y - sprite_verts[0].y));
+
+				dist = ((k % 2 == 0) ? (uvs[2] - uvs[0]) : (uvs[3] - uvs[1]));	// 0 and 180 degree rotation do the Us
+
+				crop_side = k;
+
+				// Change the target UV to the opposite side when flipped
+				if(flip_val){
+					if(crop_side == 0){
+						crop_side = 2;
+					}
+					else if(crop_side == 2){
+						crop_side = 0;
+					}
+				}
+
+				switch(crop_side){	// Cropping against the left edge
+					case 0:	// left side
+						holder = uvs[0] + (dist * holder);
+						break;
+					case 1:	// Top side
+						holder = uvs[1] + (dist * holder);
+						break;
+					case 2:	// Right side
+						holder = uvs[2] - (dist * holder);
+						break;
+					case 3:	// Bottom side
+						holder = uvs[3] - (dist * holder);
+						break;
+				}
+
+				// if(__CRAYON_GRAPHICS_DEBUG_VARS[0] && !flip_val){
+				// 	printf("A: %d %d %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n",
+				// 		k, j, holder, uvs[0], uvs[1], uvs[2], uvs[3], holder, dist);
+				// 	printf("B: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n",
+				// 		sprite_verts[0].x, sprite_verts[1].y, sprite_verts[0].x, sprite_verts[1].y,
+				// 		camera_verts[0].x, camera_verts[1].y, camera_verts[0].x, camera_verts[1].y
+				// 	);
+				// }
+
+				// Non-flipped rainbow polys
+					// crop_side == k cause none are flipped here
+
+				// STARTING
+				// A: 2 1 0.24, 0.00, 0.75, 0.12, 0.88, 0.24, 0.12
+				// B: 479.00, 106.00, 479.00, 106.00, 140.00, 332.00, 140.00, 332.00
+				// A: 1 0 0.63, 0.00, 0.75, 0.12, 0.88, 0.63, 0.12
+				// B: 479.00, 180.00, 479.00, 180.00, 140.00, 332.00, 140.00, 332.00
+				// A: 0 3 -0.12, 0.00, 0.75, 0.12, 0.88, -0.12, 0.12
+				// B: 479.00, 254.00, 479.00, 254.00, 140.00, 332.00, 140.00, 332.00
+				// A: 3 2 0.99, 0.00, 0.75, 0.12, 0.88, 0.99, 0.12
+				// B: 479.00, 328.00, 479.00, 328.00, 140.00, 332.00, 140.00, 332.00
+				// ENDING
+
+				// Making sure we don't try to set "duv"
+				if(k < 3){
+					if(crop_side == 0 || crop_side == 2){
+						uv_ptr[k] = PVR_PACK_16BIT_U(uv_ptr[k], holder);	// 1
+					}
+					else{
+						uv_ptr[k] = PVR_PACK_16BIT_V(uv_ptr[k], holder);	// 2
+					}
+				}
+				if(j < 3){
+					if(crop_side == 0 || crop_side == 2){
+						uv_ptr[j] = PVR_PACK_16BIT_U(uv_ptr[j], holder);	// 3
+					}
+					else{
+						uv_ptr[j] = PVR_PACK_16BIT_V(uv_ptr[j], holder);	// 4
+					}
+				}
 			}
 
 
