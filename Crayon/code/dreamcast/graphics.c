@@ -206,10 +206,17 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		.flags = PVR_CMD_VERTEX_EOL
 	};
 
-	// The main loop's index and the two for software cropping
-	unsigned int i, j, k;
+	// We can use "vert_ptr[index * 3]" to access the x and "vert_ptr[(index * 3) + 1]" for y
+		// NOTE: There is no dz, but we won't be modifying the Z coordinates with this
+	float *vert_ptr = &(sprite.ax);
+	uint32_t *uv_ptr = &(sprite.auv);	// WARNING: No duv
 
-	float rotation_under_360 = 0;
+	// The main loop's index and the two for software cropping
+		// Can we remove some of these?
+	unsigned int i, j, k, l, crop_side;
+
+	// Used for stuff like figuring out "rotation_val".and software cropping UVs
+	float holder;
 
 	// Used to determine if the array has 1 or "sprite_array->size" number of elements
 	uint8_t multi_frame = !!(sprite_array->options & CRAY_MULTI_FRAME);
@@ -244,19 +251,19 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 
 		if(i == 0 || multi_rotate){
 			if(sprite_array->rotation[i] != 0){
-				rotation_under_360 = fmod(sprite_array->rotation[i], 360.0);	// If angle is more than 360 degrees, this fixes that
-				if(rotation_under_360 < 0){	// fmod has range of about -359 to +359, this changes it to 0 to +359
-					rotation_under_360 += 360.0;
+				holder = fmod(sprite_array->rotation[i], 360.0);	// If angle is more than 360 degrees, this fixes that
+				if(holder < 0){	// fmod has range of about -359 to +359, this changes it to 0 to +359
+					holder += 360.0;
 				}
 
 				// For sprite mode don't simply "rotate" the verts because we want to avoid sin/cos, instead we need to change the uv
-				if(crayon_graphics_almost_equals(rotation_under_360, 90.0, 45.0)){
+				if(crayon_graphics_almost_equals(holder, 90.0, 45.0)){
 					rotation_val = 3;
 				}
-				else if(crayon_graphics_almost_equals(rotation_under_360, 180.0, 45.0)){
+				else if(crayon_graphics_almost_equals(holder, 180.0, 45.0)){
 					rotation_val = 2;
 				}
-				else if(crayon_graphics_almost_equals(rotation_under_360, 270.0, 45.0)){
+				else if(crayon_graphics_almost_equals(holder, 270.0, 45.0)){
 					rotation_val = 1;
 				}
 				else{
@@ -336,11 +343,12 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		sprite.bz = sprite.az;
 		sprite.cz = sprite.az;
 
-		// Vertexes a and c (Top Left, Bottom Right) with zero rotation
-			// We have that mod thing to compensate for the rotation changing the vertex order
-			// REPLACE THESE WITH POINTER OFFSETS
-		sprite_verts[0] = crayon_graphics_get_sprite_vert(&sprite, rotation_val);	// Top left
-		sprite_verts[1] = crayon_graphics_get_sprite_vert(&sprite, (rotation_val + 2) % 4);	// The bottom right
+		// Gets the Top Left and the Bottom Right vertex coords. Takes rotation into consideration.
+		sprite_verts[0].x = vert_ptr[rotation_val * 3];	// TL
+		sprite_verts[0].y = vert_ptr[(rotation_val * 3) + 1];
+		j = (rotation_val + 2) % 4;
+		sprite_verts[1].x = vert_ptr[j * 3];	// BR
+		sprite_verts[1].y = vert_ptr[(j * 3) + 1];
 
 		// If we have the software cropping or OOB detection check active
 			// Then check if they don't overlap and if so move to next element
@@ -397,14 +405,9 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 				sprite.cuv = PVR_PACK_16BIT_V(sprite.cuv, uvs[3]);
 			}
 
-			// We can use "vert_ptr[index * 3]" to access the x and "vert_ptr[(index * 3) + 1]" for y
-				// NOTE: There is no dz, but we won't be modifying the Z coordinates here
-			float *vert_ptr = &(sprite.ax);
-			uint32_t *uv_ptr = &(sprite.auv);	// WARNING: No duv
-			float holder;
-			unsigned int crop_side;
 
 			// So I can access them like the uvs array
+				// Do we needs these/should we use them?
 			float *sprite_ptr = &(sprite_verts[0].x);
 			float *camera_ptr = &(camera_verts[0].x);
 
@@ -422,7 +425,6 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			k = rotation_val;
 			j = (k != 0) ? k - 1 : 3;	// Vert before k.
 
-			unsigned int l;
 			for(l = 0; l < 4; l++){
 				if(l == 0){
 					if(vert_ptr[(3 * k)] < camera_verts[0].x){	// Left
@@ -1635,19 +1637,4 @@ uint8_t crayon_graphics_aabb_aabb_overlap(vec2_f_t *vS, vec2_f_t *vC){
 
 uint8_t crayon_graphics_round_way(float value){
 	return (value - (int)value > 0.5) ? 1 : 0;
-}
-
-// NOTE: This is in the backwards C format (C is bottom right and D is bottom left verts)
-vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t *sprite, uint8_t vert){
-	switch(vert){
-		case 0:
-			return (vec2_f_t){sprite->ax, sprite->ay};
-		case 1:
-			return (vec2_f_t){sprite->bx, sprite->by};
-		case 2:
-			return (vec2_f_t){sprite->cx, sprite->cy};
-		case 3:
-			return (vec2_f_t){sprite->dx, sprite->dy};
-	}
-	return (vec2_f_t){0, 0};
 }

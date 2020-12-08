@@ -197,7 +197,4 @@ uint8_t crayon_graphics_aabb_aabb_overlap(vec2_f_t *vS, vec2_f_t *vC);
 	// CURRENTLY UNUSED
 uint8_t crayon_graphics_round_way(float value);
 
-// vert is the nth vert (Backwards C shaped)
-vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t *sprite, uint8_t vert);
-
 #endif
