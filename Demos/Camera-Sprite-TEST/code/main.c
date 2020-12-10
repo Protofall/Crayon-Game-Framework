@@ -202,6 +202,7 @@ int main(){
 	Dwarf_Draw.flip[0] = 0;
 	Dwarf_Draw.rotation[0] = 0;
 	Dwarf_Draw.colour[0] = 0xFF000000;	// Need full alpha for Opaque render list
+										// Maybe not, I had a bug in the enhanced renderer
 	Dwarf_Draw.fade[0] = 0;
 	Dwarf_Draw.frame_id[0] = 0;
 	Dwarf_Draw.visible[0] = 1;

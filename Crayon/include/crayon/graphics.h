@@ -183,11 +183,6 @@ vec2_f_t crayon_graphics_unit_vector(float x, float y);
 // Checks if float a is equal to b (+ or -) epsilon
 uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
 
-// Returns a crop range to see which edges need to be cropped
-// ---- BRTL (Bottom, Right, Top, Left)
-	// Arrays are just the top left and bottom right verts of the boxes
-uint8_t crayon_graphics_check_intersect(vec2_f_t *vS, vec2_f_t *vC);
-
 // Checks if vS is partially inside of vC.
 	// Arrays are just the top left and bottom right verts of the boxes
 uint8_t crayon_graphics_aabb_aabb_overlap(vec2_f_t *vS, vec2_f_t *vC);

@@ -358,7 +358,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 				sprite.cx = sprite.dx;
 				sprite.cy = sprite.by;
 			}
-			else{	// 270 degree
+			else{	// 270 degrees
 				sprite.bx = mid.x - offset.y;
 				sprite.by = mid.y - offset.x;
 				sprite.cx = mid.x + offset.y;
@@ -576,7 +576,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	for(i = 0; i < sprite_array->size; i++){
 		// If element is invisible (Max fade and zero alpha effectively make it invisible too)
 			// For the first element, we need to initialise our vars, otherwise we just skip to the next element
-		if((sprite_array->fade[multi_colour ? i : 0] = 0xFF && (sprite_array->colour[multi_colour ? i : 0] >> 24) == 0) ||
+		if((sprite_array->fade[multi_colour ? i : 0] == 0xFF && (sprite_array->colour[multi_colour ? i : 0] >> 24) == 0) ||
 				!sprite_array->visible[i]){
 			if(i != 0){continue;}
 			skip = 1;
@@ -1544,19 +1544,6 @@ vec2_f_t crayon_graphics_unit_vector(float x, float y){
 
 uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){
 	return fabs(a-b) < epsilon;
-}
-
-// Verts order: Top left, Top right, bottom left, bottom right. Z order
-	// Return is of format "---- BRTL"
-uint8_t crayon_graphics_check_intersect(vec2_f_t *vS, vec2_f_t *vC){
-	uint8_t bounds = 0;
-
-	if(vS[0].y < vC[0].y){bounds |= (1 << 1);}
-	if(vS[1].y > vC[1].y){bounds |= (1 << 3);}
-	if(vS[0].x < vC[0].x){bounds |= (1 << 0);}
-	if(vS[1].x > vC[1].x){bounds |= (1 << 2);}
-
-	return bounds;
 }
 
 // How to check if OOB of two axis aligned boundry boxes
