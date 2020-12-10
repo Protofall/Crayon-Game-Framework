@@ -576,7 +576,7 @@ int main(){
 	uint8_t info_disp = 1;
 
 	uint8_t cropping = CRAYON_DRAW_CROP;
-	uint8_t oob_culling = CRAYON_DRAW_OOB_SKIP;
+	uint8_t oob_culling = CRAYON_DRAW_CHECK_OOB;
 
 	pvr_stats_t stats;
 	pvr_get_stats(&stats);
@@ -629,7 +629,7 @@ int main(){
 				oob_culling = 0;
 			}
 			else{
-				oob_culling = CRAYON_DRAW_OOB_SKIP;
+				oob_culling = CRAYON_DRAW_CHECK_OOB;
 			}
 		}
 

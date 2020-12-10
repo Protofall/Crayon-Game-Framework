@@ -24,11 +24,11 @@
 // The draw_mode options
 #define CRAYON_DRAW_SIMPLE (0 << 0)
 #define CRAYON_DRAW_ENHANCED (1 << 0)
-#define CRAYON_DRAW_OOB_SKIP (1 << 1)	// If the sprite is entirely OOB, then go to next sprite
+#define CRAYON_DRAW_CHECK_OOB (1 << 1)	// If the sprite is entirely OOB, then go to next sprite
 #define CRAYON_DRAW_HARDWARE_CROP (1 << 2)	// On PC uses Scissor Test, DC uses TA for 32x32 tiles
 #define CRAYON_DRAW_SOFTWARE_CROP (1 << 3)	// Only used for systems where we can't use hardware cropping everywhere
 #define CRAYON_DRAW_CROP CRAYON_DRAW_SOFTWARE_CROP | CRAYON_DRAW_HARDWARE_CROP	// It will attempt to use hardware cropping if all the edges line up
-#define CRAYON_DRAW_FULL_CROP CRAYON_DRAW_CROP | CRAYON_DRAW_OOB_SKIP
+#define CRAYON_DRAW_FULL_CROP CRAYON_DRAW_CROP | CRAYON_DRAW_CHECK_OOB
 
 // This var's purpose is to make debugging the render-ers and other graphics function much easier
 	// Since I currently can't print any text while rendering an object, instead I can set vars to
@@ -79,10 +79,6 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 
 // This will draw untextured polys (Sprite_arrays with no texture set)
 uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
-	uint8_t poly_list_mode, uint8_t options);
-
-// DELETE THIS LATER
-uint8_t crayon_graphics_draw_sprites_simple_POLY_TEST(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t options);
 
 
@@ -187,11 +183,6 @@ vec2_f_t crayon_graphics_unit_vector(float x, float y);
 // Checks if float a is equal to b (+ or -) epsilon
 uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
 
-// Returns a crop range to see which edges need to be cropped
-// ---- BRTL (Bottom, Right, Top, Left)
-	// Arrays are just the top left and bottom right verts of the boxes
-uint8_t crayon_graphics_check_intersect(vec2_f_t *vS, vec2_f_t *vC);
-
 // Checks if vS is partially inside of vC.
 	// Arrays are just the top left and bottom right verts of the boxes
 uint8_t crayon_graphics_aabb_aabb_overlap(vec2_f_t *vS, vec2_f_t *vC);
@@ -200,19 +191,5 @@ uint8_t crayon_graphics_aabb_aabb_overlap(vec2_f_t *vS, vec2_f_t *vC);
 // returns 1 ( more than 0.5) if it would be rounded up.
 	// CURRENTLY UNUSED
 uint8_t crayon_graphics_round_way(float value);
-
-// vert is the nth vert (Backwards C shaped)
-vec2_f_t crayon_graphics_get_sprite_vert(pvr_sprite_txr_t sprite, uint8_t vert);
-
-void crayon_graphics_set_sprite_vert_x(pvr_sprite_txr_t *sprite, uint8_t vert, float value);
-void crayon_graphics_set_sprite_vert_y(pvr_sprite_txr_t *sprite, uint8_t vert, float value);
-
-// Given a 90-degree-increment rotation, flip flag and side, it will return the correct index to modify
-uint8_t crayon_get_uv_index(uint8_t side, uint8_t rotation_val, uint8_t flip_val);
-
-float crayon_graphics_get_texture_divisor(uint8_t side, uint8_t rotation_val, vec2_f_t dims);
-
-float crayon_graphics_get_texture_offset(uint8_t side, vec2_f_t *vert, vec2_f_t *scale, const crayon_viewport_t *camera);
-
 
 #endif

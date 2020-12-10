@@ -97,7 +97,7 @@ int main(){
 	Poly_Draw.rotation[3] = 1337;
 	
 	uint8_t cropping = CRAYON_DRAW_CROP;
-	uint8_t oob_culling = CRAYON_DRAW_OOB_SKIP;
+	uint8_t oob_culling = CRAYON_DRAW_CHECK_OOB;
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
@@ -166,7 +166,7 @@ int main(){
 					oob_culling = 0;
 				}
 				else{
-					oob_culling = CRAYON_DRAW_OOB_SKIP;
+					oob_culling = CRAYON_DRAW_CHECK_OOB;
 				}
 			}
 
