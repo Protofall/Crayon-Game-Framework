@@ -163,6 +163,11 @@ void crayon_misc_encode_to_buffer(uint8_t *buffer, uint8_t *data, size_t bytes){
 	return;
 }
 
+
+uint8_t crayon_misc_almost_equals(float a, float b, float epsilon){
+	return fabs(a - b) <= epsilon;
+}
+
 // Convert unsigned int to string
 // 'out_string' buffer is assumed to be large enough.
 // Requires an 11-byte output buffer for the string.

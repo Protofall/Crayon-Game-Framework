@@ -3,6 +3,7 @@
 #include <crayon/debug.h>
 #include <crayon/graphics.h>
 #include <crayon/input.h>
+#include <crayon/misc.h>
 
 #include <dc/maple.h>
 #include <dc/maple/controller.h> //For the "Press start to exit" thing
@@ -21,14 +22,14 @@
 //Total: 353
 void set_msg(char *buffer){
 	strcpy(buffer,
-		"Use the thumbstick to move the current camera around the world\n"
-		"Press A to toggle OOB check\n"
-		"Press B to toggle cropping\n"
-		"Press X to cycle between the 4 cameras\n"
-		"Press L/R-Triggers move one unit in the direction you last moved in\n"
-		"D-PAD Up/Down increase/decrease the world_movement_factor (Powers of 2)\n"
-		"Start to terminate program\n"
-		"Y to hide these instructions"
+		"A: cycle between the 4 cameras\n"
+		"B: to toggle cropping and OOB check\n"
+		"X: Switch between simple and enhanced renderers\n"
+		"Thumbstick: Moves the current camera around the world\n"
+		"L/R-Triggers: move one unit in the direction you last moved in\n"
+		"D-PAD Up/Down: Increase/decrease the world_movement_factor (Powers of 2)\n"
+		"Start: Terminate program\n"
+		"Y: Hides these instructions"
 	);
 
 	return;
@@ -125,30 +126,8 @@ void move_james(crayon_sprite_array_t * James, vec2_f_t distance, uint32_t curre
 	return;
 }
 
-pvr_init_params_t pvr_params = {
-		// Enable opaque, translucent and punch through polygons with size 16
-			//To better explain, the opb_sizes or Object Pointer Buffer sizes
-			//Work like this: Set to zero to disable. Otherwise the higher the
-			//number the more space used (And more efficient under higher loads)
-			//The lower the number, the less space used and less efficient under
-			//high loads. You can choose 0, 8, 16 or 32
-		{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16 },
-
-		// Vertex buffer size 512K
-		512 * 1024,
-
-		// No DMA
-		0,
-
-		// No FSAA
-		0,
-
-		// Translucent Autosort enabled
-		0
-};
-
 int main(){
-	pvr_init(&pvr_params);
+	crayon_graphics_init(CRAYON_ENABLE_OP | CRAYON_ENABLE_PT);
 	
 	#if CRAYON_BOOT_MODE == 1
 		int sdRes = mount_fat_sd();	//This function should be able to mount a FAT32 formatted sd card to the /sd dir	
@@ -157,16 +136,10 @@ int main(){
 		}
 	#endif
 
-	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
-		vid_set_mode(DM_640x480_VGA, PM_RGB565);
-	}
-	else{	//Else its RGB and we default to NTSC interlace
-		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);
-	}
-
 	crayon_spritesheet_t Dwarf, Opaque, Man, Characters;
 	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw, Man_BG, James_Draw;
-	crayon_sprite_array_t Cam_BGs[4];
+	#define NUM_CAMERAS 5
+	crayon_sprite_array_t Cam_BGs[NUM_CAMERAS];
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P, Red_Man_P, Green_Man_P;
@@ -190,7 +163,8 @@ int main(){
 	James_Draw.layer[0] = 160;
 	James_Draw.flip[0] = (james_direction == 3) ? 1 : 0;	//If facing East, use West sprite but flipped
 	James_Draw.rotation[0] = 0;
-	James_Draw.colour[0] = 0;
+	James_Draw.colour[0] = 0xFF000000;
+	James_Draw.fade[0] = 0;
 	James_Draw.frame_id[0] = (james_direction == 3) ? 3 * 2 : 3 * james_direction;	//If facing East, use west sprite but flipped
 	James_Draw.visible[0] = 1;
 	unsigned int i;
@@ -217,6 +191,7 @@ int main(){
 	Frames_Draw.flip[0] = 0;
 	Frames_Draw.rotation[0] = 0;
 	Frames_Draw.colour[0] = 0;
+	Frames_Draw.fade[0] = 0;
 	Frames_Draw.frame_id[0] = 0;
 	Frames_Draw.frame_id[1] = 1;
 	Frames_Draw.frame_id[2] = 2;
@@ -248,7 +223,8 @@ int main(){
 	Dwarf_Draw.scale[2].y = 2;
 	Dwarf_Draw.flip[0] = 0;
 	Dwarf_Draw.rotation[0] = 0;
-	Dwarf_Draw.colour[0] = 0;
+	Dwarf_Draw.colour[0] = 0xFF000000;	// Needs full alpha apparently
+	Dwarf_Draw.fade[0] = 0;
 	Dwarf_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 0, 0);
 	crayon_memory_set_frame_uv(&Dwarf_Draw, 1, 1);
@@ -267,7 +243,8 @@ int main(){
 	Red_Man_Draw.scale[0].y = 6;
 	Red_Man_Draw.flip[0] = 0;
 	Red_Man_Draw.rotation[0] = 450;
-	Red_Man_Draw.colour[0] = 0;
+	Red_Man_Draw.colour[0] = 0xFF000000;
+	Red_Man_Draw.fade[0] = 0;
 	Red_Man_Draw.frame_id[0] = 0;
 	Red_Man_Draw.visible[0] = 1;
 	crayon_memory_set_frame_uv(&Red_Man_Draw, 0, 0);
@@ -320,7 +297,8 @@ int main(){
 	Green_Man_Draw.rotation[5] = 180;
 	Green_Man_Draw.rotation[6] = 270;
 	Green_Man_Draw.rotation[7] = 270;
-	Green_Man_Draw.colour[0] = 0;
+	Green_Man_Draw.colour[0] = 0xFF000000;
+	Green_Man_Draw.fade[0] = 0;
 	Green_Man_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Green_Man_Draw, 0, 0);
 	for(i = 0; i < Green_Man_Draw.size; i++){
@@ -372,6 +350,7 @@ int main(){
 	Rainbow_Draw.rotation[6] = 180;
 	Rainbow_Draw.rotation[7] = 270;
 	Rainbow_Draw.colour[0] = 0;
+	Rainbow_Draw.fade[0] = 0;
 	Rainbow_Draw.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Rainbow_Draw, 0, 0);
 	for(i = 0; i < Rainbow_Draw.size; i++){
@@ -422,14 +401,23 @@ int main(){
 	Cam_BGs[3].coord[0].x = 0;
 	Cam_BGs[3].coord[0].y = 0;
 	Cam_BGs[3].layer[0] = 1;
-	Cam_BGs[3].scale[0].x = 640;
-	Cam_BGs[3].scale[0].y = 480;
+	Cam_BGs[3].scale[0].x = 600;
+	Cam_BGs[3].scale[0].y = 400;
 	Cam_BGs[3].rotation[0] = 0;
 	Cam_BGs[3].colour[0] = 0xFF888888;
 	Cam_BGs[3].visible[0] = 1;
 
+	crayon_memory_init_sprite_array(&Cam_BGs[4], NULL, 0, NULL, 1, 1, CRAY_NO_MULTIS, PVR_FILTER_NONE, 0);
+	Cam_BGs[4].coord[0].x = 20;
+	Cam_BGs[4].coord[0].y = 40;
+	Cam_BGs[4].layer[0] = 1;
+	Cam_BGs[4].scale[0].x = 600;
+	Cam_BGs[4].scale[0].y = 400;
+	Cam_BGs[4].rotation[0] = 0;
+	Cam_BGs[4].colour[0] = 0xFF888888;
+	Cam_BGs[4].visible[0] = 1;
+
 	uint8_t current_camera_id = 0;
-	#define NUM_CAMERAS 4
 	crayon_viewport_t cameras[NUM_CAMERAS];
 	crayon_viewport_t * current_camera = &cameras[current_camera_id];
 
@@ -451,12 +439,19 @@ int main(){
 		(vec2_u16_t){Cam_BGs[2].coord[0].x, Cam_BGs[2].coord[0].y},
 		(vec2_u16_t){Cam_BGs[2].scale[0].x, Cam_BGs[2].scale[0].y}, 1);
 
-	crayon_memory_init_camera(&cameras[3], (vec2_f_t){0,0},
-		(vec2_u16_t){320,240},
+	// Zoomed in
+	crayon_memory_init_camera(&cameras[3], (vec2_f_t){20,40},
+		(vec2_u16_t){300,200},
 		(vec2_u16_t){Cam_BGs[3].coord[0].x, Cam_BGs[3].coord[0].y},
 		(vec2_u16_t){Cam_BGs[3].scale[0].x, Cam_BGs[3].scale[0].y}, 1);
 
-	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
+	// Super zoomed in with small window
+	crayon_memory_init_camera(&cameras[4], (vec2_f_t){0,0},
+		(vec2_u16_t){80,60},
+		(vec2_u16_t){Cam_BGs[3].coord[0].x,Cam_BGs[3].coord[0].y},
+		(vec2_u16_t){Cam_BGs[3].scale[0].x,Cam_BGs[3].scale[0].y}, 1);
+
+	crayon_graphics_set_bg_colour(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
 	crayon_graphics_setup_palette(&BIOS_P);
 	crayon_graphics_setup_palette(&Tahoma_P);
@@ -475,29 +470,13 @@ int main(){
 	uint8_t last_dir = 0;
 	uint8_t info_disp = 1;
 
-	uint8_t cropping = CRAYON_DRAW_CROP;
-	uint8_t oob_culling = CRAYON_DRAW_CHECK_OOB;
+	uint8_t crop_oob_mode = CRAYON_DRAW_FULL_CROP;
+	uint8_t renderer = CRAYON_DRAW_ENHANCED;
 
 	pvr_stats_t stats;
 	pvr_get_stats(&stats);
 
-	// DELETE THIS AFTER TESTING
-		// Also triggers on -350, 71 on camera 1, so it has nothing to do with scaling
-	// According to reicast's pixel perfect mode, it seems the issue is the untextured poly
-	// since its fully outside the grey box. DEMUL also agrees with this assessment.
-		// Moving 1 pixel to the right brings back the red man and you can clearly see
-		// Both the red man and black bg are 1 pixel on the camera boarder
-	// vec2_f_t TEMP = {-590, 39};
-	// current_camera_id = 2;
-	// current_camera = &cameras[current_camera_id];
-	// cropping = 0;
-	// for(i = 0; i < NUM_CAMERAS; i++){
-	// 	crayon_memory_move_camera_x(&cameras[i], TEMP.x);
-	// 	crayon_memory_move_camera_y(&cameras[i], TEMP.y);
-	// }
-
-	// move_james(&James_Draw, TEMP, stats.frame_count);
-
+	// Getting inputs
 	uint32_t curr_btns[4] = {0};
 	uint32_t prev_btns[4] = {0};
 	vec2_u8_t curr_trigs[4] = {{0,0}};
@@ -524,7 +503,6 @@ int main(){
 			//Use this instead of the dpad
 			prev_thumb[__dev->port] = curr_thumb[__dev->port];
 			curr_thumb[__dev->port] = crayon_input_thumbstick_to_dpad(st->joyx, st->joyy, 0.4);
-
 		MAPLE_FOREACH_END()
 
 		for(i = 0; i < 4; i++){
@@ -533,77 +511,65 @@ int main(){
 				break;
 			}
 
-			if(curr_btns[i] & CONT_DPAD_LEFT){
+			// Movement
+			if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_LEFT)){
 				moved_on_frame.x = -1;
 				last_dir = 0;
 			}
-			else if(curr_btns[i] & CONT_DPAD_RIGHT){
+			else if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_RIGHT)){
 				moved_on_frame.x = 1;
 				last_dir = 2;
 			}
 
-			if(curr_btns[i] & CONT_DPAD_UP){
+			if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_UP)){
 				moved_on_frame.y = -1;
 				last_dir = 1;
 			}
-			else if(curr_btns[i] & CONT_DPAD_DOWN){
+			else if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_DOWN)){
 				moved_on_frame.y = 1;
 				last_dir = 3;
 			}
 
-			// if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_LEFT)){
-			// 	moved_on_frame.x = -1;
-			// 	last_dir = 0;
-			// }
-			// else if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_RIGHT)){
-			// 	moved_on_frame.x = 1;
-			// 	last_dir = 2;
-			// }
+			// Adjust the current world movement factor
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_DPAD_UP)){
+				scale_adjustment[current_camera_id]++;
+				current_camera->world_movement_factor = pow(2, scale_adjustment[current_camera_id]);
+			}
+			else if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_DPAD_DOWN)){
+				scale_adjustment[current_camera_id]--;
+				current_camera->world_movement_factor = pow(2, scale_adjustment[current_camera_id]);
+			}
 
-			// if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_UP)){
-			// 	moved_on_frame.y = -1;
-			// 	last_dir = 1;
-			// }
-			// else if(crayon_input_button_held(curr_thumb[i], CONT_DPAD_DOWN)){
-			// 	moved_on_frame.y = 1;
-			// 	last_dir = 3;
-			// }
-
-			// //Adjust the current world movement factor
-			// if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_DPAD_UP)){
-			// 	scale_adjustment[current_camera_id]++;
-			// 	current_camera->world_movement_factor = pow(2, scale_adjustment[current_camera_id]);
-			// }
-			// else if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_DPAD_DOWN)){
-			// 	scale_adjustment[current_camera_id]--;
-			// 	current_camera->world_movement_factor = pow(2, scale_adjustment[current_camera_id]);
-			// }
-
+			// Swap cameras
 			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_A)){
-				if(oob_culling){
-					oob_culling = 0;
-				}
-				else{
-					oob_culling = CRAYON_DRAW_CHECK_OOB;
-				}
-			}
-
-			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_B)){
-				if(cropping == 0){
-					cropping = CRAYON_DRAW_HARDWARE_CROP;
-				}
-				else if(cropping == CRAYON_DRAW_HARDWARE_CROP){
-					cropping = CRAYON_DRAW_CROP;
-				}
-				else{
-					cropping = 0;
-				}
-			}
-
-			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_X)){
 				current_camera_id += 1;
 				current_camera_id %= NUM_CAMERAS;
 				current_camera = &cameras[current_camera_id];
+			}
+
+			// Toggle oob/crop mode
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_B)){
+				if(crop_oob_mode >= CRAYON_DRAW_FULL_CROP){
+					crop_oob_mode = 0;
+				}
+				else{
+					crop_oob_mode += 2;	// The first bit is responsible for enhanced/simple
+				}
+			}
+
+			// Swap between enhanced and simple renderers
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_X)){
+				if(renderer == CRAYON_DRAW_ENHANCED){
+					renderer = CRAYON_DRAW_SIMPLE;
+				}
+				else{
+					renderer = CRAYON_DRAW_ENHANCED;
+				}
+			}
+
+			// Hide the info message
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_Y)){
+				info_disp = !info_disp;
 			}
 
 			// Move by one unit
@@ -640,10 +606,6 @@ int main(){
 						break;
 				}
 			}
-
-			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_Y)){
-				info_disp = !info_disp;
-			}
 		}
 		if(escape){break;}
 
@@ -658,20 +620,47 @@ int main(){
 
 		pvr_get_stats(&stats);
 
-		// Animation of red man falling and faces rotating
-		if(stats.frame_count % 180 <= 45){
-			Red_Man_Draw.rotation[0] = 0;
+		Red_Man_Draw.rotation[0]++;
+		if(Red_Man_Draw.rotation[0] > 360){
+			Red_Man_Draw.rotation[0] -= 360;
 		}
-		else if(stats.frame_count % 180 <= 90){
-			Red_Man_Draw.rotation[0] = 90;
-		}
-		else if(stats.frame_count % 180 <= 135){
-			Red_Man_Draw.rotation[0] = 180;
-		}
-		else{
-			Red_Man_Draw.rotation[0] = 270;
-		}
+
 		Man_BG.rotation[0] = Red_Man_Draw.rotation[0];
+		if(renderer == CRAYON_DRAW_SIMPLE){
+			float holder = fmod(Man_BG.rotation[0], 360.0);	// If angle is more than 360 degrees, this fixes that
+			if(holder < 0){	// fmod has range of about -359 to +359, this changes it to 0 to +359
+				holder += 360.0;
+			}
+
+			// For sprite mode don't simply "rotate" the verts because we want to avoid sin/cos, instead we need to change the uv
+			if(crayon_misc_almost_equals(holder, 90.0, 45.0)){
+				Man_BG.rotation[0] = 90;
+			}
+			else if(crayon_misc_almost_equals(holder, 180.0, 45.0)){
+				Man_BG.rotation[0] = 180;
+			}
+			else if(crayon_misc_almost_equals(holder, 270.0, 45.0)){
+				Man_BG.rotation[0] = 270;
+			}
+			else{
+				Man_BG.rotation[0] = 0;
+			}
+		}
+
+		// Animation of red man falling and faces rotating
+		// if(stats.frame_count % 180 <= 45){
+		// 	Red_Man_Draw.rotation[0] = 0;
+		// }
+		// else if(stats.frame_count % 180 <= 90){
+		// 	Red_Man_Draw.rotation[0] = 90;
+		// }
+		// else if(stats.frame_count % 180 <= 135){
+		// 	Red_Man_Draw.rotation[0] = 180;
+		// }
+		// else{
+		// 	Red_Man_Draw.rotation[0] = 270;
+		// }
+		// Man_BG.rotation[0] = Red_Man_Draw.rotation[0];
 
 		if(stats.frame_count % 60 == 0){
 			Frames_Draw.frame_id[0] = (Frames_Draw.frame_id[0] + 1) % Frames_Draw.animation->frame_count;
@@ -687,13 +676,13 @@ int main(){
 		pvr_list_begin(PVR_LIST_PT_POLY);
 
 			// printf("LOOPING\n");
-			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
+			crayon_graphics_draw_sprites(&Dwarf_Draw, current_camera, PVR_LIST_PT_POLY, renderer | crop_oob_mode);
 			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 1;
-			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
+			crayon_graphics_draw_sprites(&Red_Man_Draw, current_camera, PVR_LIST_PT_POLY, renderer | crop_oob_mode);
 			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 0;
-			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
+			crayon_graphics_draw_sprites(&Green_Man_Draw, current_camera, PVR_LIST_PT_POLY, renderer | crop_oob_mode);
 
-			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
+			crayon_graphics_draw_sprites(&James_Draw, current_camera, PVR_LIST_PT_POLY, renderer | crop_oob_mode);
 
 			// // Fonts aren't supported by cameras yet
 			// crayon_graphics_draw_text_prop("Tahoma\0", &Tahoma, PVR_LIST_PT_POLY, 120, 20, 30, 1, 1, Tahoma_P.palette_id);
@@ -725,16 +714,16 @@ int main(){
 
 		pvr_list_begin(PVR_LIST_OP_POLY);
 
-			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
+			crayon_graphics_draw_sprites(&Frames_Draw, current_camera, PVR_LIST_OP_POLY, renderer | crop_oob_mode);
 			
 			// printf("STARTING\n");
 			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 1;
-			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
+			crayon_graphics_draw_sprites(&Rainbow_Draw, current_camera, PVR_LIST_OP_POLY, renderer | crop_oob_mode);
 			// __CRAYON_GRAPHICS_DEBUG_VARS[0] = 0;
 			// printf("ENDING\n");
 
 			//Represents the boundry box for the red man when not rotated
-			crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, CRAYON_DRAW_SIMPLE | cropping | oob_culling);
+			crayon_graphics_draw_sprites(&Man_BG, current_camera, PVR_LIST_OP_POLY, renderer | crop_oob_mode);
 
 			//This represents the camera's space
 			crayon_graphics_draw_sprites(&Cam_BGs[current_camera_id], NULL, PVR_LIST_OP_POLY, 0);

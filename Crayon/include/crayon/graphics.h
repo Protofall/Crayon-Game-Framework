@@ -27,8 +27,8 @@
 #define CRAYON_DRAW_CHECK_OOB (1 << 1)	// If the sprite is entirely OOB, then go to next sprite
 #define CRAYON_DRAW_HARDWARE_CROP (1 << 2)	// On PC uses Scissor Test, DC uses TA for 32x32 tiles
 #define CRAYON_DRAW_SOFTWARE_CROP (1 << 3)	// Only used for systems where we can't use hardware cropping everywhere
-#define CRAYON_DRAW_CROP CRAYON_DRAW_SOFTWARE_CROP | CRAYON_DRAW_HARDWARE_CROP	// It will attempt to use hardware cropping if all the edges line up
-#define CRAYON_DRAW_FULL_CROP CRAYON_DRAW_CROP | CRAYON_DRAW_CHECK_OOB
+#define CRAYON_DRAW_CROP (CRAYON_DRAW_SOFTWARE_CROP | CRAYON_DRAW_HARDWARE_CROP)	// It will attempt to use hardware cropping if all the edges line up
+#define CRAYON_DRAW_FULL_CROP (CRAYON_DRAW_CROP | CRAYON_DRAW_CHECK_OOB)
 
 // This var's purpose is to make debugging the render-ers and other graphics function much easier
 	// Since I currently can't print any text while rendering an object, instead I can set vars to
@@ -43,6 +43,8 @@ extern float __htz_adjustment;
 #define CRAYON_ENABLE_PT (1 << 2)
 uint8_t crayon_graphics_init(uint8_t poly_modes);
 void crayon_graphics_shutdown();
+
+#define crayon_graphics_set_bg_colour(r,g,b) pvr_set_bg_color(r,g,b);
 
 // Sets a palette for a spritesheet
 uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
@@ -179,9 +181,6 @@ vec2_f_t *crayon_graphics_get_range(vec2_f_t *vals);
 float crayon_graphics_dot_product(float x1, float y1, float x2, float y2);
 
 vec2_f_t crayon_graphics_unit_vector(float x, float y);
-
-// Checks if float a is equal to b (+ or -) epsilon
-uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon);
 
 // Checks if vS is partially inside of vC.
 	// Arrays are just the top left and bottom right verts of the boxes

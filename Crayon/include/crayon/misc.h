@@ -64,6 +64,9 @@ void crayon_misc_endian_correction(uint8_t *buffer, size_t bytes);	// UNFINISHED
 
 void crayon_misc_encode_to_buffer(uint8_t *buffer, uint8_t *data, size_t bytes);
 
+// Checks if float a is equal to b (+ or -) epsilon
+uint8_t crayon_misc_almost_equals(float a, float b, float epsilon);
+
 // THE FUNCTIONS BELOW CAME FROM DREAMHAL
 // https://github.com/Moopthehedgehog/DreamHAL/blob/master/modules/simple_print.c
 	// NOTE: As of writting, Moop's github has gone down, but copies of DreamHAL can be found

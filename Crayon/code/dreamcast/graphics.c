@@ -288,16 +288,16 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 				}
 
 				// For sprite mode don't simply "rotate" the verts because we want to avoid sin/cos, instead we need to change the uv
-				if(crayon_graphics_almost_equals(holder, 90.0, 45.0)){
+				if(crayon_misc_almost_equals(holder, 90.0, 45.0)){
 					rotation_val = 3;
 				}
-				else if(crayon_graphics_almost_equals(holder, 180.0, 45.0)){
+				else if(crayon_misc_almost_equals(holder, 180.0, 45.0)){
 					rotation_val = 2;
 				}
-				else if(crayon_graphics_almost_equals(holder, 270.0, 45.0)){
+				else if(crayon_misc_almost_equals(holder, 270.0, 45.0)){
 					rotation_val = 1;
 				}
-				else{
+				else{	// Seems there's some cases where this picks up stuff it shouldn't
 					rotation_val = 0;
 				}
 			}
@@ -1540,10 +1540,6 @@ inline float crayon_graphics_magnitude(float x, float y){
 vec2_f_t crayon_graphics_unit_vector(float x, float y){
 	float div = 1 / crayon_graphics_magnitude(x, y);
 	return (vec2_f_t){x * div, y * div};
-}
-
-uint8_t crayon_graphics_almost_equals(float a, float b, float epsilon){
-	return fabs(a-b) < epsilon;
 }
 
 // How to check if OOB of two axis aligned boundry boxes
