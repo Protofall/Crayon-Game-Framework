@@ -10,14 +10,16 @@
 #define CRAY_MULTI_DIM (1 << 2)
 #define CRAY_MULTI_FLIP (1 << 3)
 #define CRAY_MULTI_ROTATE (1 << 4)
-#define CRAY_MULTI_COLOUR_ADD (3 << 5) // 0110 0000
-#define CRAY_MULTI_COLOUR_BLEND (1 << 5) // 0010 0000
 #define CRAY_MULTI_COLOUR (1 << 5) // Use this one for untextured polys
+#define CRAY_MULTI_COLOUR_ADD ((1 << 6) | CRAY_MULTI_COLOUR)
+#define CRAY_MULTI_COLOUR_BLEND CRAY_MULTI_COLOUR
 #define CRAY_NO_MULTIS 0	// Just so when checking the code its easier to read
 
-// Internal usage
+// Use these if you don't want multis, but want to specify these
 #define CRAY_COLOUR_BLEND (0 << 6)
 #define CRAY_COLOUR_ADD (1 << 6)
+
+// Internal usage
 #define CRAY_HAS_TEXTURE (1 << 7)
 
 // The camera, controls where on screen to render and which part of the world to draw
