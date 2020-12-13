@@ -136,7 +136,7 @@ void set_msg_option(char * buffer, uint8_t option, uint8_t sub_option, uint8_t s
 		sprintf(buffer, "Option: Fade. Value: 0x%x", Faces_Draw[sprite].fade[0]);
 		break;
 	case 3:
-		if(Faces_Draw[sprite].options & CRAY_COLOUR_ADD){
+		if(Faces_Draw[sprite].options & CRAYON_COLOUR_ADD){
 			sprintf(buffer, "Option: Colour-Mix-Mode: ADD");
 		}
 		else{
@@ -375,7 +375,7 @@ int main(){
 					set_msg_option(msg_option, option, sub_option, sprite);
 					break;
 				case 3:
-					Faces_Draw[sprite].options ^= CRAY_COLOUR_ADD;	//Will toggle between Blend and Add modes
+					Faces_Draw[sprite].options ^= CRAYON_COLOUR_ADD;	//Will toggle between Blend and Add modes
 					set_msg_option(msg_option, option, sub_option, sprite);
 					break;
 				case 6:
@@ -453,7 +453,7 @@ int main(){
 					set_msg_option(msg_option, option, sub_option, sprite);
 					break;
 				case 3:
-					Faces_Draw[sprite].options ^= CRAY_COLOUR_ADD;
+					Faces_Draw[sprite].options ^= CRAYON_COLOUR_ADD;
 					set_msg_option(msg_option, option, sub_option, sprite);
 					break;
 				case 6:

@@ -42,7 +42,7 @@ int main(){
 	if(error){error_freeze("Unable to load spritesheet");}
 
 	//3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	error = crayon_memory_init_sprite_array(&Logo_Draw, &Logo, 0, &Logo_P, 1, 1, 0, PVR_FILTER_NONE, 0);
+	error = crayon_memory_init_sprite_array(&Logo_Draw, &Logo, 0, &Logo_P, 1, 1, CRAYON_NO_MULTIS, PVR_FILTER_NONE, 0);
 	if(error){error_freeze("Can't create logo sprite array");}
 	error += crayon_memory_set_coord_x(&Logo_Draw, 0, (crayon_graphics_get_window_width() - Logo.animation[0].frame_width) / 2);
 	error += crayon_memory_set_coord_y(&Logo_Draw, 0, (crayon_graphics_get_window_height() - Logo.animation[0].frame_height) / 2);

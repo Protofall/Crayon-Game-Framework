@@ -56,8 +56,8 @@ int main(){
 	);
 
 	crayon_sprite_array_t Poly_Draw;	// Contains 4 polys, 1st (0 index) one controlled by the player
-	crayon_memory_init_sprite_array(&Poly_Draw, NULL, 0, NULL, 4, 0, CRAY_MULTI_DIM | CRAY_MULTI_COLOUR | CRAY_MULTI_ROTATE,
-		CRAYON_FILTER_NEAREST, 0);
+	crayon_memory_init_sprite_array(&Poly_Draw, NULL, 0, NULL, 4, 0,
+		CRAYON_MULTI_DIM | CRAYON_MULTI_COLOUR | CRAYON_MULTI_ROTATE, CRAYON_FILTER_NEAREST, 0);
 	unsigned int i;
 	for(i = 0; i < Poly_Draw.size; i++){
 		Poly_Draw.visible[i] = 1;

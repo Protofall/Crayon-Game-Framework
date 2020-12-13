@@ -186,7 +186,7 @@ int main(){
 
 	fs_romdisk_unmount("/files");
 
-	crayon_memory_init_sprite_array(&James_Draw, &Characters, 0, NULL, 1, 9, 0, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&James_Draw, &Characters, 0, NULL, 1, 9, CRAYON_NO_MULTIS, PVR_FILTER_NONE, 0);
 	James_Draw.scale[0].x = 2;
 	James_Draw.scale[0].y = 2;
 	James_Draw.coord[0].x = 307;	// These are about the mid-point given sprite sizes and scale
@@ -204,7 +204,7 @@ int main(){
 	}
 
 	// Draws 4 faces and rotates between all 12 faces
-	crayon_memory_init_sprite_array(&Frames_Draw, &Opaque, 0, NULL, 4, 12, CRAY_MULTI_FRAME, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Frames_Draw, &Opaque, 0, NULL, 4, 12, CRAYON_MULTI_FRAME, PVR_FILTER_NONE, 0);
 	Frames_Draw.scale[0].x = 3;
 	Frames_Draw.scale[0].y = 3;
 	Frames_Draw.coord[0].x = 120;
@@ -236,7 +236,7 @@ int main(){
 	Frames_Draw.visible[0] = 0;
 
 	// 3 Dwarfs, first shrunk, 2nd normal, 3rd enlarged. Scaling looks off in emulators like lxdream though (But thats a emulator bug)
-	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 4, CRAY_MULTI_SCALE, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Dwarf_Draw, &Dwarf, 0, NULL, 3, 4, CRAYON_MULTI_SCALE, PVR_FILTER_NONE, 0);
 	Dwarf_Draw.coord[0].x = 50;
 	Dwarf_Draw.coord[0].y = 20;
 	Dwarf_Draw.coord[1].x = Dwarf_Draw.coord[0].x;
@@ -266,7 +266,7 @@ int main(){
 	}
 
 	// Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
-	crayon_memory_init_sprite_array(&Red_Man_Draw, &Man, 0, &Red_Man_P, 1, 1, 0, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Red_Man_Draw, &Man, 0, &Red_Man_P, 1, 1, CRAYON_NO_MULTIS, PVR_FILTER_NONE, 0);
 	Red_Man_Draw.coord[0].x = 70;
 	Red_Man_Draw.coord[0].y = 280;
 	Red_Man_Draw.layer[0] = 18;
@@ -285,7 +285,8 @@ int main(){
 	crayon_memory_swap_colour(&Green_Man_P, 0xFFFF0000, 0xFF00D200, 0);
 
 	// Sprite is 7 high by 14 wide. Showcases 90/270 degree angle rotation with sprites where height != width
-	crayon_memory_init_sprite_array(&Green_Man_Draw, &Man, 0, &Green_Man_P, 8, 1, CRAY_MULTI_FLIP | CRAY_MULTI_ROTATE, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Green_Man_Draw, &Man, 0, &Green_Man_P, 8, 1,
+		CRAYON_MULTI_FLIP | CRAYON_MULTI_ROTATE, PVR_FILTER_NONE, 0);
 	Green_Man_Draw.coord[0].x = 300;
 	Green_Man_Draw.coord[0].y = 360;
 	Green_Man_Draw.coord[1].x = Green_Man_Draw.coord[0].x + 60;
@@ -338,7 +339,7 @@ int main(){
 
 	// 8 sprites, 1 frame, multi rotation and flip
 	crayon_memory_init_sprite_array(&Rainbow_Draw, &Opaque, 1, NULL, 8, 1,
-		CRAY_MULTI_FLIP | CRAY_MULTI_ROTATE | CRAY_COLOUR_ADD, PVR_FILTER_NONE, 0);
+		CRAYON_MULTI_FLIP | CRAYON_MULTI_ROTATE | CRAYON_COLOUR_ADD, PVR_FILTER_NONE, 0);
 	Rainbow_Draw.coord[0].x = Dwarf_Draw.coord[0].x + (2 * Dwarf_Draw.animation[0].frame_width) + 20;
 	Rainbow_Draw.coord[0].y = 20;
 	Rainbow_Draw.coord[1].x = Rainbow_Draw.coord[0].x;
@@ -389,7 +390,7 @@ int main(){
 		Rainbow_Draw.visible[i] = 1;
 	}
 
-	crayon_memory_init_sprite_array(&Man_BG, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Man_BG, NULL, 0, NULL, 1, 1, CRAYON_NO_MULTIS, PVR_FILTER_NONE, 0);
 	Man_BG.coord[0].x = Red_Man_Draw.coord[0].x;
 	Man_BG.coord[0].y = Red_Man_Draw.coord[0].y;
 	Man_BG.layer[0] = Red_Man_Draw.layer[0] - 1;
@@ -399,7 +400,7 @@ int main(){
 	Man_BG.colour[0] = 0xFF000000;
 	Man_BG.visible[0] = 1;
 
-	crayon_memory_init_sprite_array(&Cam_BGs[0], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Cam_BGs[0], NULL, 0, NULL, 1, 1, CRAYON_NO_MULTIS, PVR_FILTER_NONE, 0);
 	Cam_BGs[0].coord[0].x = 0;
 	Cam_BGs[0].coord[0].y = 0;
 	Cam_BGs[0].layer[0] = 1;
@@ -409,7 +410,7 @@ int main(){
 	Cam_BGs[0].colour[0] = 0xFF888888;
 	Cam_BGs[0].visible[0] = 1;
 
-	crayon_memory_init_sprite_array(&Cam_BGs[1], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Cam_BGs[1], NULL, 0, NULL, 1, 1, CRAYON_NO_MULTIS, PVR_FILTER_NONE, 0);
 	Cam_BGs[1].coord[0].x = 140;
 	Cam_BGs[1].coord[0].y = 32;
 	Cam_BGs[1].layer[0] = 1;
@@ -419,7 +420,7 @@ int main(){
 	Cam_BGs[1].colour[0] = 0xFF888888;
 	Cam_BGs[1].visible[0] = 1;
 
-	crayon_memory_init_sprite_array(&Cam_BGs[2], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Cam_BGs[2], NULL, 0, NULL, 1, 1, CRAYON_NO_MULTIS, PVR_FILTER_NONE, 0);
 	Cam_BGs[2].coord[0].x = 160;
 	Cam_BGs[2].coord[0].y = 80;
 	Cam_BGs[2].layer[0] = 1;
@@ -429,7 +430,7 @@ int main(){
 	Cam_BGs[2].colour[0] = 0xFF888888;
 	Cam_BGs[2].visible[0] = 1;
 
-	crayon_memory_init_sprite_array(&Cam_BGs[3], NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Cam_BGs[3], NULL, 0, NULL, 1, 1, CRAYON_NO_MULTIS, PVR_FILTER_NONE, 0);
 	Cam_BGs[3].coord[0].x = 20;
 	Cam_BGs[3].coord[0].y = 20;
 	Cam_BGs[3].layer[0] = 1;
@@ -439,7 +440,7 @@ int main(){
 	Cam_BGs[3].colour[0] = 0xFF888888;
 	Cam_BGs[3].visible[0] = 1;
 
-	crayon_memory_init_sprite_array(&Cam_BGs[4], NULL, 0, NULL, 1, 1, CRAY_NO_MULTIS, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Cam_BGs[4], NULL, 0, NULL, 1, 1, CRAYON_NO_MULTIS, PVR_FILTER_NONE, 0);
 	Cam_BGs[4].coord[0].x = 160;
 	Cam_BGs[4].coord[0].y = 80;
 	Cam_BGs[4].layer[0] = 1;

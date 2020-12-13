@@ -78,8 +78,8 @@ uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
 }
 
 float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *sprite_array, uint8_t id){
-	if(!(sprite_array->options & CRAY_MULTI_SCALE)){id = 0;}	// When there's only one scale
-	if(sprite_array->options & CRAY_HAS_TEXTURE){
+	if(!(sprite_array->options & CRAYON_MULTI_SCALE)){id = 0;}	// When there's only one scale
+	if(sprite_array->options & CRAYON_HAS_TEXTURE){
 		return sprite_array->animation->frame_width * sprite_array->scale[id].x;
 	}
 	else{
@@ -88,8 +88,8 @@ float crayon_graphics_get_draw_element_width(const crayon_sprite_array_t *sprite
 }
 
 float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *sprite_array, uint8_t id){
-	if(!(sprite_array->options & CRAY_MULTI_SCALE)){id = 0;}	// When there's only one scale
-	if(sprite_array->options & CRAY_HAS_TEXTURE){
+	if(!(sprite_array->options & CRAYON_MULTI_SCALE)){id = 0;}	// When there's only one scale
+	if(sprite_array->options & CRAYON_HAS_TEXTURE){
 		return sprite_array->animation->frame_height * sprite_array->scale[id].y;
 	}
 	else{
@@ -153,7 +153,7 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 		// camera = &__default_camera;
 	}
 
-	if(sprite_array->options & CRAY_HAS_TEXTURE){	// Textured
+	if(sprite_array->options & CRAYON_HAS_TEXTURE){	// Textured
 		if(draw_option & CRAYON_DRAW_ENHANCED){
 			return crayon_graphics_draw_sprites_enhanced(sprite_array, camera, poly_list_mode, draw_option);
 		}
@@ -255,10 +255,10 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 	float uvs[4] = {0};	// u0, v0, u1, v1 (Set to zero to avoid compiler warnings)
 
 	// Used to determine if the array has 1 or "sprite_array->size" number of elements
-	uint8_t multi_frame = !!(sprite_array->options & CRAY_MULTI_FRAME);
-	uint8_t multi_scale = !!(sprite_array->options & CRAY_MULTI_SCALE);
-	uint8_t multi_flip = !!(sprite_array->options & CRAY_MULTI_FLIP);
-	uint8_t multi_rotate = !!(sprite_array->options & CRAY_MULTI_ROTATE);
+	uint8_t multi_frame = !!(sprite_array->options & CRAYON_MULTI_FRAME);
+	uint8_t multi_scale = !!(sprite_array->options & CRAYON_MULTI_SCALE);
+	uint8_t multi_flip = !!(sprite_array->options & CRAYON_MULTI_FLIP);
+	uint8_t multi_rotate = !!(sprite_array->options & CRAYON_MULTI_ROTATE);
 
 	for(i = 0; i < sprite_array->size; i++){
 		// These if statements will trigger once if we have a single element (i == 0)
@@ -559,11 +559,11 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	// Quick commands to check if its multi or not
 		// I wonder if its more efficient to use these vars or copy their
 		// formula everywhere its used
-	uint8_t multi_colour = !!(sprite_array->options & CRAY_MULTI_COLOUR);
-	uint8_t multi_rotation = !!(sprite_array->options & CRAY_MULTI_ROTATE);
-	uint8_t multi_scale = !!(sprite_array->options & CRAY_MULTI_DIM);
-	uint8_t multi_frame = !!(sprite_array->options & CRAY_MULTI_FRAME);
-	uint8_t multi_flip = !!(sprite_array->options & CRAY_MULTI_FLIP);
+	uint8_t multi_colour = !!(sprite_array->options & CRAYON_MULTI_COLOUR);
+	uint8_t multi_rotation = !!(sprite_array->options & CRAYON_MULTI_ROTATE);
+	uint8_t multi_scale = !!(sprite_array->options & CRAYON_MULTI_DIM);
+	uint8_t multi_frame = !!(sprite_array->options & CRAYON_MULTI_FRAME);
+	uint8_t multi_flip = !!(sprite_array->options & CRAYON_MULTI_FLIP);
 
 	float angle = 0;
 
@@ -606,7 +606,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 			r = (((sprite_array->colour[i] >> 16) & 0xFF) * f) / 255.0f;
 			g = (((sprite_array->colour[i] >> 8) & 0xFF) * f) / 255.0f;
 			b = (((sprite_array->colour[i]) & 0xFF) * f) / 255.0f;
-			if(sprite_array->options & CRAY_COLOUR_ADD){	// If Adding
+			if(sprite_array->options & CRAYON_COLOUR_ADD){	// If Adding
 				vert[0].argb = (a << 24) + 0x00FFFFFF;
 			}
 			else{	// If Blending
@@ -820,9 +820,9 @@ uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *spr
 	float angle = 0;
 
 	// --CR -D--
-	uint8_t multi_colour = !!(sprite_array->options & CRAY_MULTI_COLOUR);
-	uint8_t multi_rotation = !!(sprite_array->options & CRAY_MULTI_ROTATE);
-	uint8_t multi_dim = !!(sprite_array->options & CRAY_MULTI_DIM);
+	uint8_t multi_colour = !!(sprite_array->options & CRAYON_MULTI_COLOUR);
+	uint8_t multi_rotation = !!(sprite_array->options & CRAYON_MULTI_ROTATE);
+	uint8_t multi_dim = !!(sprite_array->options & CRAYON_MULTI_DIM);
 
 	// Invisible or 0 alpha poly
 	uint8_t skip = 0;
@@ -1266,8 +1266,8 @@ void crayon_graphics_transistion_init(crayon_transition_t *effect, crayon_sprite
 
 	effect->f = f;
 
-	effect->curr_state = CRAY_FADE_STATE_NONE;
-	effect->resting_state = CRAY_FADE_STATE_NONE;
+	effect->curr_state = CRAYON_FADE_STATE_NONE;
+	effect->resting_state = CRAYON_FADE_STATE_NONE;
 	effect->duration_fade_in = duration_in;
 	effect->duration_fade_out = duration_out;
 	effect->curr_duration = 0;
@@ -1278,23 +1278,23 @@ void crayon_graphics_transistion_init(crayon_transition_t *effect, crayon_sprite
 }
 
 void crayon_graphics_transistion_skip_to_state(crayon_transition_t *effect, void *params, uint8_t state){
-	if(state != CRAY_FADE_STATE_IN && state != CRAY_FADE_STATE_OUT){return;}
+	if(state != CRAYON_FADE_STATE_IN && state != CRAYON_FADE_STATE_OUT){return;}
 	effect->curr_state = state;
 
 	// We set the duration to the end of the state we gave it
-	effect->curr_duration = (state == CRAY_FADE_STATE_IN) ? effect->duration_fade_in : effect->duration_fade_out;
+	effect->curr_duration = (state == CRAYON_FADE_STATE_IN) ? effect->duration_fade_in : effect->duration_fade_out;
 	effect->prev_duration = effect->curr_duration;
 
 	(*effect->f)(effect, params);
-	effect->resting_state = ((state == CRAY_FADE_STATE_OUT)) ? CRAY_FADE_STATE_RESTING_OUT : CRAY_FADE_STATE_RESTING_IN;
-	effect->curr_state = CRAY_FADE_STATE_NONE;
+	effect->resting_state = ((state == CRAYON_FADE_STATE_OUT)) ? CRAYON_FADE_STATE_RESTING_OUT : CRAYON_FADE_STATE_RESTING_IN;
+	effect->curr_state = CRAYON_FADE_STATE_NONE;
 	return;
 }
 
 void crayon_graphics_transistion_change_state(crayon_transition_t *effect, uint8_t state){
-	if(state != CRAY_FADE_STATE_IN && state != CRAY_FADE_STATE_OUT){return;}
+	if(state != CRAYON_FADE_STATE_IN && state != CRAYON_FADE_STATE_OUT){return;}
 	effect->curr_state = state;
-	effect->resting_state = CRAY_FADE_STATE_NOT_RESTING;
+	effect->resting_state = CRAYON_FADE_STATE_NOT_RESTING;
 
 	effect->curr_duration = 0;
 
@@ -1302,30 +1302,30 @@ void crayon_graphics_transistion_change_state(crayon_transition_t *effect, uint8
 }
 
 void crayon_graphics_transistion_apply(crayon_transition_t *effect, void *params){
-	if(effect->curr_state != CRAY_FADE_STATE_IN && effect->curr_state != CRAY_FADE_STATE_OUT){return;}
+	if(effect->curr_state != CRAYON_FADE_STATE_IN && effect->curr_state != CRAYON_FADE_STATE_OUT){return;}
 
 	effect->prev_duration = effect->curr_duration;
 	effect->curr_duration++;
 	(*effect->f)(effect, params);
 
 	// Check if the transition has finished
-	if((effect->curr_state == CRAY_FADE_STATE_OUT && effect->curr_duration == effect->duration_fade_out)){
-		effect->resting_state = CRAY_FADE_STATE_RESTING_OUT;
-		effect->curr_state = CRAY_FADE_STATE_NONE;
+	if((effect->curr_state == CRAYON_FADE_STATE_OUT && effect->curr_duration == effect->duration_fade_out)){
+		effect->resting_state = CRAYON_FADE_STATE_RESTING_OUT;
+		effect->curr_state = CRAYON_FADE_STATE_NONE;
 	}
-	else if(effect->curr_state == CRAY_FADE_STATE_IN && effect->curr_duration == effect->duration_fade_in){
-		effect->resting_state = CRAY_FADE_STATE_RESTING_IN;
-		effect->curr_state = CRAY_FADE_STATE_NONE;
+	else if(effect->curr_state == CRAYON_FADE_STATE_IN && effect->curr_duration == effect->duration_fade_in){
+		effect->resting_state = CRAYON_FADE_STATE_RESTING_IN;
+		effect->curr_state = CRAYON_FADE_STATE_NONE;
 	}
 	else{
-		effect->resting_state = CRAY_FADE_STATE_NOT_RESTING;
+		effect->resting_state = CRAYON_FADE_STATE_NOT_RESTING;
 	}
 
 	return;
 }
 
 double crayon_graphics_transition_get_curr_percentage(crayon_transition_t *effect){
-	if(effect->curr_state == CRAY_FADE_STATE_IN){
+	if(effect->curr_state == CRAYON_FADE_STATE_IN){
 		return (effect->duration_fade_in - effect->curr_duration) / (double)effect->duration_fade_in;
 	}
 
@@ -1334,7 +1334,7 @@ double crayon_graphics_transition_get_curr_percentage(crayon_transition_t *effec
 }
 
 double crayon_graphics_transition_get_prev_percentage(crayon_transition_t *effect){
-	if(effect->curr_state == CRAY_FADE_STATE_IN){
+	if(effect->curr_state == CRAYON_FADE_STATE_IN){
 		return (effect->duration_fade_in - effect->prev_duration) / (double)effect->duration_fade_in;
 	}
 

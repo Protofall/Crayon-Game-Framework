@@ -4,23 +4,23 @@
 #include "texture_structs.h"  // For the spritesheet and anim structs
 #include "vector_structs.h"
 
-#define CRAY_REF_LIST (1 << 0)	// Tells the functions that we want each element to have a reference node
-#define CRAY_MULTI_FRAME (1 << 1)
-#define CRAY_MULTI_SCALE (1 << 2)
-#define CRAY_MULTI_DIM (1 << 2)
-#define CRAY_MULTI_FLIP (1 << 3)
-#define CRAY_MULTI_ROTATE (1 << 4)
-#define CRAY_MULTI_COLOUR (1 << 5) // Use this one for untextured polys
-#define CRAY_MULTI_COLOUR_ADD ((1 << 6) | CRAY_MULTI_COLOUR)
-#define CRAY_MULTI_COLOUR_BLEND CRAY_MULTI_COLOUR
-#define CRAY_NO_MULTIS 0	// Just so when checking the code its easier to read
+#define CRAYON_REF_LIST (1 << 0)	// Tells the functions that we want each element to have a reference node
+#define CRAYON_MULTI_FRAME (1 << 1)
+#define CRAYON_MULTI_SCALE (1 << 2)
+#define CRAYON_MULTI_DIM (1 << 2)
+#define CRAYON_MULTI_FLIP (1 << 3)
+#define CRAYON_MULTI_ROTATE (1 << 4)
+#define CRAYON_MULTI_COLOUR (1 << 5) // Use this one for untextured polys
+#define CRAYON_MULTI_COLOUR_ADD ((1 << 6) | CRAYON_MULTI_COLOUR)
+#define CRAYON_MULTI_COLOUR_BLEND CRAYON_MULTI_COLOUR
+#define CRAYON_NO_MULTIS 0	// Just so when checking the code its easier to read
 
 // Use these if you don't want multis, but want to specify these
-#define CRAY_COLOUR_BLEND (0 << 6)
-#define CRAY_COLOUR_ADD (1 << 6)
+#define CRAYON_COLOUR_BLEND (0 << 6)
+#define CRAYON_COLOUR_ADD (1 << 6)
 
 // Internal usage
-#define CRAY_HAS_TEXTURE (1 << 7)
+#define CRAYON_HAS_TEXTURE (1 << 7)
 
 // The camera, controls where on screen to render and which part of the world to draw
 typedef struct crayon_viewport_t {
@@ -96,15 +96,15 @@ typedef struct crayon_sprite_array {
 
 // Fade in means we're going from full effect, back to the scene (Entering a menu)
 // Fade out is reverse (Going back a menu)
-#define CRAY_FADE_STATE_NONE 0
-#define CRAY_FADE_STATE_IN 1
-#define CRAY_FADE_STATE_OUT 2
+#define CRAYON_FADE_STATE_NONE 0
+#define CRAYON_FADE_STATE_IN 1
+#define CRAYON_FADE_STATE_OUT 2
 
 // Used by crayon_graphics_transistion_resting_state() To tell if we've finished a
 // transition or not and where we are
-#define CRAY_FADE_STATE_NOT_RESTING 0
-#define CRAY_FADE_STATE_RESTING_IN 1
-#define CRAY_FADE_STATE_RESTING_OUT 2
+#define CRAYON_FADE_STATE_NOT_RESTING 0
+#define CRAYON_FADE_STATE_RESTING_IN 1
+#define CRAYON_FADE_STATE_RESTING_OUT 2
 
 typedef struct crayon_transition {
 	uint8_t curr_state;	// The state we are going to 0 for not fading, 1 for fade-in and 2 for fade-out

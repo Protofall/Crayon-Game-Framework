@@ -113,7 +113,7 @@ int main(){
 	Man_Draw.visible[0] = 1;
 	crayon_memory_set_frame_uv(&Man_Draw, 0, 0);
 
-	crayon_memory_init_sprite_array(&Opaque_Blend_Draw, &Opaque_SS, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_BLEND, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Opaque_Blend_Draw, &Opaque_SS, 0, NULL, 2, 1, CRAYON_MULTI_COLOUR | CRAYON_COLOUR_BLEND, PVR_FILTER_NONE, 0);
 	Opaque_Blend_Draw.scale[0].x = 12;
 	Opaque_Blend_Draw.scale[0].y = 12;
 	Opaque_Blend_Draw.coord[0].x = 0;
@@ -135,7 +135,7 @@ int main(){
 	}
 	crayon_memory_set_frame_uv(&Opaque_Blend_Draw, 0, 0);
 
-	crayon_memory_init_sprite_array(&Opaque_Add_Draw, &Opaque_SS, 0, NULL, 2, 1, CRAY_MULTI_COLOUR + CRAY_COLOUR_ADD, PVR_FILTER_NONE, 0);
+	crayon_memory_init_sprite_array(&Opaque_Add_Draw, &Opaque_SS, 0, NULL, 2, 1, CRAYON_MULTI_COLOUR | CRAYON_COLOUR_ADD, PVR_FILTER_NONE, 0);
 	Opaque_Add_Draw.scale[0].x = 12;
 	Opaque_Add_Draw.scale[0].y = 12;
 	Opaque_Add_Draw.coord[0].x = 0;

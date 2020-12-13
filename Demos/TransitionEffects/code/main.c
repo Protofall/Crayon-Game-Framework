@@ -125,7 +125,7 @@ int main(){
 
 	crayon_sprite_array_t scene_draw;
 	crayon_memory_init_sprite_array(&scene_draw, NULL, 0, NULL, 4, 0,
-		CRAY_MULTI_DIM | CRAY_MULTI_ROTATE | CRAY_MULTI_COLOUR, PVR_FILTER_NONE, 0);
+		CRAYON_MULTI_DIM | CRAYON_MULTI_ROTATE | CRAYON_MULTI_COLOUR, PVR_FILTER_NONE, 0);
 	for(i = 0; i < 20; i++){
 		scene_draw.visible[i] = 1;
 	}
@@ -214,11 +214,11 @@ int main(){
 	//Fade out and fade in are reversed
 
 	//We want them both to start off as faded out (This is redundant due to below, but anyways)
-	crayon_graphics_transistion_skip_to_state(&effect[0], NULL, CRAY_FADE_STATE_OUT);
-	crayon_graphics_transistion_skip_to_state(&effect[1], NULL, CRAY_FADE_STATE_OUT);
+	crayon_graphics_transistion_skip_to_state(&effect[0], NULL, CRAYON_FADE_STATE_OUT);
+	crayon_graphics_transistion_skip_to_state(&effect[1], NULL, CRAYON_FADE_STATE_OUT);
 
 	//Start the transition
-	crayon_graphics_transistion_change_state(&effect[curr_effect], CRAY_FADE_STATE_IN);
+	crayon_graphics_transistion_change_state(&effect[curr_effect], CRAYON_FADE_STATE_IN);
 
 	//For the 3rd effect
 	crayon_sprite_array_t letter_box_draw;
@@ -282,15 +282,15 @@ int main(){
 		for(i = 0; i < 4; i++){
 			//Press A to fade in
 			if((curr_btns[i] & CONT_A) && !(prev_btns[i] & CONT_A)){
-				if(effect[curr_effect].resting_state == CRAY_FADE_STATE_RESTING_OUT){
-					crayon_graphics_transistion_change_state(&effect[curr_effect], CRAY_FADE_STATE_IN);
+				if(effect[curr_effect].resting_state == CRAYON_FADE_STATE_RESTING_OUT){
+					crayon_graphics_transistion_change_state(&effect[curr_effect], CRAYON_FADE_STATE_IN);
 				}
 			}
 
 			//Press B to fade out
 			if((curr_btns[i] & CONT_B) && !(prev_btns[i] & CONT_B)){
-				if(effect[curr_effect].resting_state == CRAY_FADE_STATE_RESTING_IN){
-					crayon_graphics_transistion_change_state(&effect[curr_effect], CRAY_FADE_STATE_OUT);
+				if(effect[curr_effect].resting_state == CRAYON_FADE_STATE_RESTING_IN){
+					crayon_graphics_transistion_change_state(&effect[curr_effect], CRAYON_FADE_STATE_OUT);
 				}
 			}
 
