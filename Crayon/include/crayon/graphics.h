@@ -14,6 +14,16 @@
 // For region and htz stuff
 #include <dc/flashrom.h>
 
+// Hardware cropping structs/functions
+typedef struct ta_userclip_cmd{
+	int cmd;
+	int padding[3];
+	int minx;
+	int miny;
+	int maxx;
+	int maxy;
+} ta_userclip_cmd_t;
+
 #define CRAYON_OP_LIST PVR_LIST_OP_POLY	// No alpha
 #define CRAYON_TR_LIST PVR_LIST_TR_POLY	// Alpha is either full on or off
 #define CRAYON_PT_LIST PVR_LIST_PT_POLY	// Varying alpha
@@ -44,7 +54,7 @@ extern float __htz_adjustment;
 uint8_t crayon_graphics_init(uint8_t poly_modes);
 void crayon_graphics_shutdown();
 
-#define crayon_graphics_set_bg_colour(r,g,b) pvr_set_bg_color(r,g,b);
+#define crayon_graphics_set_bg_colour(r, g, b) pvr_set_bg_color(r, g, b);
 
 // Sets a palette for a spritesheet
 uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
@@ -57,6 +67,14 @@ float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *sprit
 // This gets the width and height of the screen in pixels
 uint32_t crayon_graphics_get_window_width();
 uint32_t crayon_graphics_get_window_height();
+
+// WIP
+uint8_t crayon_graphics_clamp_hardware_clip(vec2_u16_t *values);
+
+// Only render in this region.
+	// Should only be called in a poly list internally and only accepts multiples of 32 as parameters
+	// Returns 0 on success, 1 on failure
+uint8_t crayon_graphics_set_hardware_clip(uint16_t minx, uint16_t miny, uint16_t maxx, uint16_t maxy);
 
 
 //------------------Drawing Sprites from Spritesheets------------------//

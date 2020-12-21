@@ -5,6 +5,11 @@ float __CRAYON_GRAPHICS_DEBUG_VARS[16] = {0};
 uint16_t __htz = 60;
 float __htz_adjustment = 1;
 
+uint32_t ta_clip_minx = 0;
+uint32_t ta_clip_miny = 0;
+uint32_t ta_clip_maxx = 640;	// Replace these with calls to crayon_graphics_get_window_width/height
+uint32_t ta_clip_maxy = 480;	// When I later integrate this into crayon_graphics_init()
+
 // crayon_viewport_t __default_camera;
 
 uint8_t crayon_graphics_init(uint8_t poly_modes){
@@ -106,6 +111,59 @@ uint32_t crayon_graphics_get_window_height(){
 	return 480;
 }
 
+uint8_t crayon_graphics_clamp_hardware_clip(vec2_u16_t *values){
+	vec2_u16_t temp[2];
+
+	temp[0].x = (values[0].x >> 5) << 5;
+	temp[0].y = (values[0].y >> 5) << 5;
+
+	temp[1].x = ((values[1].x & ((1 << 5) - 1)) != 0) ? 32 : 0;
+	temp[1].x = ((values[1].x >> 5) << 5);
+
+	temp[1].y = ((values[1].y & ((1 << 5) - 1)) != 0) ? 32 : 0;
+	temp[1].y = ((values[1].y >> 5) << 5);
+
+	// Make sure that min is min and max is max
+	if(values[0].x >= values[1].x || values[0].y >= values[1].y){
+		return 1;
+	}
+
+	// We can't crop this far
+	if(temp[1].x > 1280 || temp[1].y > 480){
+		return 1;
+	}
+
+	// Copy the values over
+	values[0].x = temp[0].x;
+	values[0].y = temp[0].y;
+	values[1].x = temp[1].x;
+	values[1].y = temp[1].y;
+
+	return 0;
+}
+
+uint8_t crayon_graphics_set_hardware_clip(uint16_t minx, uint16_t miny, uint16_t maxx, uint16_t maxy){
+	// Check if the dimension values are correct
+	// Those "(blah & ((1 << 5) - 1)) != 0" are the equivalent of "blah % 32 != 0", but faster
+	if((minx & ((1 << 5) - 1)) != 0 || (miny & ((1 << 5) - 1)) != 0 || (maxx & ((1 << 5) - 1)) != 0 ||
+		(maxy & ((1 << 5) - 1)) != 0 || minx >= maxx || miny >= maxy || maxx > 1280 || maxy > 480){
+		return 1;
+	}
+	
+	//
+	ta_userclip_cmd_t clip;
+	clip.cmd = PVR_CMD_USERCLIP;
+	clip.minx = minx >> 5;
+	clip.miny = miny >> 5;
+	clip.maxx = (maxx >> 5) - 1;
+	clip.maxy = (maxy >> 5) - 1;
+	
+	// Send it to the TA
+	pvr_prim(&clip, sizeof(clip));
+
+	return 0;
+}
+
 
 //---------------------------------------------------------------------//
 
@@ -190,6 +248,9 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 	pvr_sprite_cxt_t context;
 	pvr_sprite_cxt_txr(&context, poly_list_mode, pvr_txr_fmt, sprite_array->spritesheet->texture_width,
 		sprite_array->spritesheet->texture_height, sprite_array->spritesheet->texture, sprite_array->filter);
+
+	// Override the clipping parameter
+	// context.gen.clip_mode = ;
 
 	pvr_sprite_hdr_t header;
 	pvr_sprite_compile(&header, &context);
@@ -370,9 +431,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			}
 		}
 
-		sprite.az = sprite_array->layer[i];
-		sprite.bz = sprite.az;
-		sprite.cz = sprite.az;
+		sprite.az = sprite.bz = sprite.cz = sprite_array->layer[i];
 
 		// Gets the Top Left and the Bottom Right vertex coords. Takes rotation into consideration.
 		sprite_verts[0].x = vert_ptr[rotation_val * 3];	// TL
@@ -519,9 +578,13 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 	vec2_f_t uv[2] = {{0,0}};
 
 	pvr_poly_cxt_t cxt;
-	pvr_poly_hdr_t hdr;
 	pvr_poly_cxt_txr(&cxt, poly_list_mode, pvr_txr_fmt, sprite_array->spritesheet->texture_width,
 		sprite_array->spritesheet->texture_height, sprite_array->spritesheet->texture, sprite_array->filter);
+
+	// Override the clipping parameter
+	// cxt.gen.clip_mode = ;
+
+	pvr_poly_hdr_t hdr;
 	pvr_poly_compile(&hdr, &cxt);
 	hdr.cmd |= 4;	// Enable oargb
 	pvr_prim(&hdr, sizeof(hdr));
@@ -810,8 +873,12 @@ uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *spr
 	window_coords[3] = camera->window_y + camera->window_height;
 
 	pvr_poly_cxt_t cxt;
-	pvr_poly_hdr_t hdr;
 	pvr_poly_cxt_col(&cxt, poly_list_mode);
+
+	// Override the clipping parameter
+	// cxt.gen.clip_mode = ;
+
+	pvr_poly_hdr_t hdr;	
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
