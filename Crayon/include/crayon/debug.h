@@ -11,4 +11,7 @@
 // Write a message to the screen using the BIOS font, and hang
 void error_freeze(const char *format, ...);
 
+// Same as above, but with no pvr_shutdown()
+void error_freeze_no_pvr(const char *format, ...);
+
 #endif
