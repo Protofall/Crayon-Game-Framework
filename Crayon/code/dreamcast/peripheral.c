@@ -19,7 +19,7 @@ vec2_s8_t crayon_peripheral_dreamcast_get_port_and_slot(int8_t save_device_id){
 uint8_t crayon_peripheral_dreamcast_get_screens(){
 	#if defined(_arch_dreamcast)
 
-	uint8_t screens = 0;	// a1a2b1b2c1c2d1d2
+	uint8_t screens = 0;	// d2d1c2c1b2b1a2a1
 
 	int i;
 	for(i = 0; i < 8; i++){	// 8 because we can have 8 VMUs max
@@ -43,17 +43,16 @@ void crayon_peripheral_vmu_display_icon(uint8_t vmu_bitmap, void *icon){
 	
 	maple_device_t *vmu;
 	uint8_t i, j;
-	for(j = 0; j <= 3; j++){
-		for(i = 1; i <= 2; i++){
-			// a1a2b1b2c1c2d1d2
-			if((vmu_bitmap >> ((2 * j) + (i - 1))) & 1){	// We want to display on this VMU
+	for(i = 0; i <= 3; i++){
+		for(j = 1; j <= 2; j++){
+			// ((2 * i) + (j - 1)) Goes 0, 1, 2, ... , 7. So thats a1, a2, etc
+			if((vmu_bitmap >> ((2 * i) + (j - 1))) & 1){	// We want to display on this VMU
 				if(!(vmu = maple_enum_dev(i, j))){	// Device not present
 					continue;
 				}
 				vmu_draw_lcd(vmu, icon);
 			}
 		}
-	
 	}
 	
 	#endif

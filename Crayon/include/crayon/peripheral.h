@@ -18,10 +18,10 @@
 // Converts the device id to a port (x) and slot (y)
 vec2_s8_t crayon_peripheral_dreamcast_get_port_and_slot(int8_t savefile_device_id);
 
-// Returns a bitmap of all vmus with a screen (a1a2b1b2c1c2d1d2)
+// Returns a bitmap of all vmus with a screen (d2d1c2c1b2b1a2a1)
 uint8_t crayon_peripheral_dreamcast_get_screens();
 
-// Displays the icon to all vmu screens specified by the bitmap
+// Displays the icon to all vmu screens specified by the bitmap (Order d2d1c2c1b2b1a2a1)
 void crayon_peripheral_vmu_display_icon(uint8_t vmu_bitmap, void *icon);
 
 // 0 if the peripheral doesn't have the function, 1 if it does
