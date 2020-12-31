@@ -97,8 +97,6 @@ uint8_t crayon_sd_mount_fat(){
 	return 0;
 }
 
-
-
 void crayon_shutdown(){
 	free(__game_base_path);
 
