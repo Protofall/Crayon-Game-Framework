@@ -15,14 +15,19 @@
 #include <dc/flashrom.h>
 
 // Hardware cropping structs/functions
-typedef struct ta_userclip_cmd{
+typedef struct crayon_clipping_cmd{
+	#if defined(_arch_dreamcast)
+
 	int cmd;
 	int padding[3];
+
+	#endif
+
 	int minx;
 	int miny;
 	int maxx;
 	int maxy;
-} ta_userclip_cmd_t;
+} crayon_clipping_cmd_t;
 
 #define CRAYON_OP_LIST PVR_LIST_OP_POLY	// No alpha
 #define CRAYON_TR_LIST PVR_LIST_TR_POLY	// Alpha is either full on or off
@@ -68,13 +73,14 @@ float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *sprit
 uint32_t crayon_graphics_get_window_width();
 uint32_t crayon_graphics_get_window_height();
 
-// WIP
-uint8_t crayon_graphics_clamp_hardware_clip(vec2_u16_t *values);
+// Takes the camera boundries and generates a clipping region command
+	// Brings everything to the correct nearest multiple of 32
+	// Also makes sure min !> max && maxx !> 1280 && maxy !> 480
+crayon_clipping_cmd_t crayon_graphics_clamp_hardware_clip(const vec2_u16_t *values);
 
 // Only render in this region.
-	// Should only be called in a poly list internally and only accepts multiples of 32 as parameters
-	// Returns 0 on success, 1 on failure
-uint8_t crayon_graphics_set_hardware_clip(uint16_t minx, uint16_t miny, uint16_t maxx, uint16_t maxy);
+	// We assume the command is valid like with crayon_graphics_clamp_hardware_clip()
+void crayon_graphics_set_hardware_clip(crayon_clipping_cmd_t *clip);
 
 
 //------------------Drawing Sprites from Spritesheets------------------//

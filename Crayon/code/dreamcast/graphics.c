@@ -5,10 +5,10 @@ float __CRAYON_GRAPHICS_DEBUG_VARS[16] = {0};
 uint16_t __htz = 60;
 float __htz_adjustment = 1;
 
-uint32_t ta_clip_minx = 0;
-uint32_t ta_clip_miny = 0;
-uint32_t ta_clip_maxx = 640;	// Replace these with calls to crayon_graphics_get_window_width/height
-uint32_t ta_clip_maxy = 480;	// When I later integrate this into crayon_graphics_init()
+// Replace these initialisations with calls to crayon_graphics_get_window_width/height
+// When I later integrate this into crayon_graphics_init()
+
+int __clip_window[4] = {0, 0, 640, 480};
 
 // crayon_viewport_t __default_camera;
 
@@ -111,57 +111,48 @@ uint32_t crayon_graphics_get_window_height(){
 	return 480;
 }
 
-uint8_t crayon_graphics_clamp_hardware_clip(vec2_u16_t *values){
-	vec2_u16_t temp[2];
+crayon_clipping_cmd_t crayon_graphics_clamp_hardware_clip(const vec2_u16_t *values){
+	crayon_clipping_cmd_t clip;
 
-	temp[0].x = (values[0].x >> 5) << 5;
-	temp[0].y = (values[0].y >> 5) << 5;
+	// Specify this as a user clip command
+	clip.cmd = PVR_CMD_USERCLIP;
 
-	temp[1].x = ((values[1].x & ((1 << 5) - 1)) != 0) ? 32 : 0;
-	temp[1].x = ((values[1].x >> 5) << 5);
+	// Discard lowest 5 bits
+	clip.minx = values[0].x & ~((1 << 5) - 1);
+	clip.miny = values[0].y & ~((1 << 5) - 1);
 
-	temp[1].y = ((values[1].y & ((1 << 5) - 1)) != 0) ? 32 : 0;
-	temp[1].y = ((values[1].y >> 5) << 5);
+	// Round up to nearest multiple of 32
+	clip.maxx = (values[1].x & ~((1 << 5) - 1)) + ((values[1].x & ((1 << 5) - 1)) ? 32 : 0);
+	clip.maxy = (values[1].y & ~((1 << 5) - 1)) + ((values[1].y & ((1 << 5) - 1)) ? 32 : 0);
 
-	// Make sure that min is min and max is max
-	if(values[0].x >= values[1].x || values[0].y >= values[1].y){
-		return 1;
+	// Make sure that min is min and max is max. If they go over, just set them to the same thing
+	if(clip.minx > clip.maxx){
+		clip.minx = clip.maxx;
+	}
+	if(clip.miny > clip.maxy){
+		clip.miny = clip.maxy;
 	}
 
-	// We can't crop this far
-	if(temp[1].x > 1280 || temp[1].y > 480){
-		return 1;
+	// We can't crop this far, so bring it back
+	if(clip.maxx > 1280){
+		clip.maxx = 1280;
+	}
+	if(clip.maxy > 480){
+		clip.maxy = 480;
 	}
 
-	// Copy the values over
-	values[0].x = temp[0].x;
-	values[0].y = temp[0].y;
-	values[1].x = temp[1].x;
-	values[1].y = temp[1].y;
-
-	return 0;
+	return clip;
 }
 
-uint8_t crayon_graphics_set_hardware_clip(uint16_t minx, uint16_t miny, uint16_t maxx, uint16_t maxy){
-	// Check if the dimension values are correct
-	// Those "(blah & ((1 << 5) - 1)) != 0" are the equivalent of "blah % 32 != 0", but faster
-	if((minx & ((1 << 5) - 1)) != 0 || (miny & ((1 << 5) - 1)) != 0 || (maxx & ((1 << 5) - 1)) != 0 ||
-		(maxy & ((1 << 5) - 1)) != 0 || minx >= maxx || miny >= maxy || maxx > 1280 || maxy > 480){
-		return 1;
-	}
-	
-	//
-	ta_userclip_cmd_t clip;
-	clip.cmd = PVR_CMD_USERCLIP;
-	clip.minx = minx >> 5;
-	clip.miny = miny >> 5;
-	clip.maxx = (maxx >> 5) - 1;
-	clip.maxy = (maxy >> 5) - 1;
-	
-	// Send it to the TA
-	pvr_prim(&clip, sizeof(clip));
+void crayon_graphics_set_hardware_clip(crayon_clipping_cmd_t *clip){
+	// If this is a new dimension, update last dimension and submit TA
+	if(memcmp(&__clip_window, &clip->minx, sizeof(int) * 4)){
+		memcpy(&__clip_window, &clip->minx, sizeof(int) * 4);
 
-	return 0;
+		pvr_prim(clip, sizeof(crayon_clipping_cmd_t));
+	}
+
+	return;
 }
 
 

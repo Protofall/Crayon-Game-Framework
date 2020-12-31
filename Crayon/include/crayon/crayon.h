@@ -12,14 +12,14 @@
 
 // Debug mode
 #ifndef CRAYON_DEBUG
-#define CRAYON_DEBUG 0
+	#define CRAYON_DEBUG 0
 #endif
 
 #include "memory.h"
 #include "graphics.h"
 // #include "audio.h"
 
-#define MNT_MODE FS_FAT_MOUNT_READONLY
+#define CRAYON_SD_MNT_MODE FS_FAT_MOUNT_READONLY
 
 #include <dc/sd.h>
 #include <kos/blockdev.h>

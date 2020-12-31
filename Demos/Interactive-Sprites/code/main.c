@@ -4,6 +4,8 @@
 #include <crayon/misc.h>
 #include <crayon/debug.h>
 
+#include <crayon/crayon.h>
+
 //For region and htz stuff
 #include <dc/flashrom.h>
 
@@ -167,14 +169,19 @@ void set_msg_sprite(char * buffer, uint8_t sprite){
 }
 
 int main(){
-	#if CRAYON_BOOT_MODE == 1
-		int sdRes = mount_fat_sd();	//This function should be able to mount a FAT32 formatted sd card to the /sd dir	
-		if(sdRes != 0){
-			error_freeze("SD card couldn't be mounted: %d", sdRes);
-		}
-	#endif
+	// #if CRAYON_BOOT_MODE == 1
+	// 	int sdRes = mount_fat_sd();	//This function should be able to mount a FAT32 formatted sd card to the /sd dir
+	// 	if(sdRes != 0){
+	// 		error_freeze("SD card couldn't be mounted: %d", sdRes);
+	// 	}
+	// #endif
 
-	crayon_graphics_init(CRAYON_ENABLE_OP | CRAYON_ENABLE_PT | CRAYON_ENABLE_TR);
+	// crayon_graphics_init(CRAYON_ENABLE_OP | CRAYON_ENABLE_PT | CRAYON_ENABLE_TR);
+
+	// Initialise Crayon
+	if(crayon_init(CRAYON_PLATFORM_DREAMCAST, CRAYON_BOOT_MODE)){
+		return 1;
+	}
 
 	//load in assets here
 	crayon_sprite_array_t Highlight_Draw;
@@ -183,23 +190,27 @@ int main(){
 	crayon_palette_t Faces_P, BIOS_P;
 
 	#if CRAYON_BOOT_MODE == 0
-		crayon_memory_mount_romdisk("/cd/stuff.img", "/stuff");
+		uint8_t mount_res = crayon_memory_mount_romdisk("/cd/stuff.img", "/stuff");
 	#elif CRAYON_BOOT_MODE == 1
-		crayon_memory_mount_romdisk("/sd/stuff.img", "/stuff");
+		uint8_t mount_res = crayon_memory_mount_romdisk("/sd/stuff.img", "/stuff");
 	#elif CRAYON_BOOT_MODE == 2
-		crayon_memory_mount_romdisk("/pc/stuff.img", "/stuff");
+		uint8_t mount_res = crayon_memory_mount_romdisk("/pc/stuff.img", "/stuff");
 	#else
 		#error "Invalid crayon boot mode"
 	#endif
+
+	if(mount_res){
+		error_freeze("Failed to load stuff. %d, %s", __sd_present, __game_base_path);
+	}
 
 	crayon_memory_load_spritesheet(&Faces_SS, &Faces_P, 0, "/stuff/opaque.dtex");
 	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 1, "/stuff/BIOS.dtex");
 
 	fs_romdisk_unmount("/stuff");
 
-	#if CRAYON_BOOT_MODE == 1
-		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
-	#endif
+	// #if CRAYON_BOOT_MODE == 1
+	// 	unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
+	// #endif
 
 	uint8_t error = 0;
 	uint8_t i;
