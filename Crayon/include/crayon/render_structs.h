@@ -40,6 +40,16 @@ typedef struct crayon_viewport_t {
 	uint16_t window_y;
 	uint16_t window_width;
 	uint16_t window_height;
+
+	// TODO: SWITCH TO THIS LATER
+
+	// vec2_f_t world_coords;
+	// vec2_u16_t world_dimentions;
+
+	// float world_movement_factor;
+
+	// vec2_u16_t window_coords;
+	// vec2_u16_t window_dimentions;
 } crayon_viewport_t;
 
 typedef struct crayon_sprite_array_reference {
