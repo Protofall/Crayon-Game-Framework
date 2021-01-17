@@ -1,0 +1,9 @@
+*.o
+*.cdi
+*.iso
+*.elf
+*.bin
+cdfs/*
+*.zip
+*.7z
+

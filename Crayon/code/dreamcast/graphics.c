@@ -5,10 +5,11 @@ float __CRAYON_GRAPHICS_DEBUG_VARS[16] = {0};
 uint16_t __htz = 60;
 float __htz_adjustment = 1;
 
-// Replace these initialisations with calls to crayon_graphics_get_window_width/height
-// When I later integrate this into crayon_graphics_init()
+// Later integrate this into crayon_graphics_init()
 
-int __clip_window[4] = {0, 0, 640, 480};
+// Currently set to this since this appears to be the default viewport on Dreamcast
+	// Change the last two values to crayon_graphics_get_window_width/height for PC and others
+int __clip_window[4] = {0, 0, 0, 0};
 
 // crayon_viewport_t __default_camera;
 
@@ -154,10 +155,9 @@ crayon_clipping_cmd_t crayon_graphics_clamp_hardware_clip(vec2_u16_t *values){
 	return clip;
 }
 
-// TODO fix the if statement!
 void crayon_graphics_set_hardware_clip(crayon_clipping_cmd_t *clip){
 	// If this is a new dimension, update last dimension and submit TA
-	if(1 || memcmp(&__clip_window, &clip->minx, sizeof(int) * 4)){
+	if(memcmp(&__clip_window, &clip->minx, sizeof(int) * 4)){
 		memcpy(&__clip_window, &clip->minx, sizeof(int) * 4);
 
 		pvr_prim(clip, sizeof(crayon_clipping_cmd_t));
