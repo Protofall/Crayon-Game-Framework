@@ -76,7 +76,10 @@ uint32_t crayon_graphics_get_window_height();
 // Takes the camera boundries and generates a clipping region command
 	// Brings everything to the correct nearest multiple of 32
 	// Also makes sure min !> max && maxx !> 1280 && maxy !> 480
-crayon_clipping_cmd_t crayon_graphics_clamp_hardware_clip(const vec2_u16_t *values);
+// "values" is an array that is two elements long.
+	// Function can modify the array values if they are invalid
+	// Eg. Max is too big (x > 1280, y > 480) or min values are greater than max (Sets them both to max then)
+crayon_clipping_cmd_t crayon_graphics_clamp_hardware_clip(vec2_u16_t *values);
 
 // Only render in this region.
 	// We assume the command is valid like with crayon_graphics_clamp_hardware_clip()

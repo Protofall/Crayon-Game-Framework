@@ -111,42 +111,53 @@ uint32_t crayon_graphics_get_window_height(){
 	return 480;
 }
 
-crayon_clipping_cmd_t crayon_graphics_clamp_hardware_clip(const vec2_u16_t *values){
+crayon_clipping_cmd_t crayon_graphics_clamp_hardware_clip(vec2_u16_t *values){
 	crayon_clipping_cmd_t clip;
+
+	// We can't crop this far, so bring it back
+	if(values[1].x > 1280){
+		values[1].x = 1280;
+	}
+	if(values[1].y > 480){
+		values[1].y = 480;
+	}
+
+	// Make sure that min is min and max is max. If they go over, just set them to the same thing
+	if(values[0].x > values[1].x){
+		values[0].x = values[1].x;
+	}
+	if(values[0].y > values[1].y){
+		values[0].y = values[1].y;
+	}
 
 	// Specify this as a user clip command
 	clip.cmd = PVR_CMD_USERCLIP;
 
-	// Discard lowest 5 bits
-	clip.minx = values[0].x & ~((1 << 5) - 1);
-	clip.miny = values[0].y & ~((1 << 5) - 1);
+	// Discard lowest 5 bits (Round down)
+	clip.minx = values[0].x >> 5;
+	clip.miny = values[0].y >> 5;
 
-	// Round up to nearest multiple of 32
-	clip.maxx = (values[1].x & ~((1 << 5) - 1)) + ((values[1].x & ((1 << 5) - 1)) ? 32 : 0);
-	clip.maxy = (values[1].y & ~((1 << 5) - 1)) + ((values[1].y & ((1 << 5) - 1)) ? 32 : 0);
+	// Round up to nearest tile (Multiple of 32)
+	clip.maxx = (values[1].x >> 5);
 
-	// Make sure that min is min and max is max. If they go over, just set them to the same thing
-	if(clip.minx > clip.maxx){
-		clip.minx = clip.maxx;
-	}
-	if(clip.miny > clip.maxy){
-		clip.miny = clip.maxy;
+	// If none of the last 5 bits are set (Perfect multiple of 32)
+	// NOTE. For max we have that minus 1 since "int * 32" is technically the start of the next tile
+	if(!(values[1].x & ((1 << 5) - 1))){
+		clip.maxx -= 1;
 	}
 
-	// We can't crop this far, so bring it back
-	if(clip.maxx > 1280){
-		clip.maxx = 1280;
-	}
-	if(clip.maxy > 480){
-		clip.maxy = 480;
+	clip.maxy = (values[1].y >> 5);
+	if(!(values[1].y & ((1 << 5) - 1))){
+		clip.maxy -= 1;
 	}
 
 	return clip;
 }
 
+// TODO fix the if statement!
 void crayon_graphics_set_hardware_clip(crayon_clipping_cmd_t *clip){
 	// If this is a new dimension, update last dimension and submit TA
-	if(memcmp(&__clip_window, &clip->minx, sizeof(int) * 4)){
+	if(1 || memcmp(&__clip_window, &clip->minx, sizeof(int) * 4)){
 		memcpy(&__clip_window, &clip->minx, sizeof(int) * 4);
 
 		pvr_prim(clip, sizeof(crayon_clipping_cmd_t));
@@ -241,7 +252,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		sprite_array->spritesheet->texture_height, sprite_array->spritesheet->texture, sprite_array->filter);
 
 	// Override the clipping parameter
-	// context.gen.clip_mode = ;
+	context.gen.clip_mode = PVR_USERCLIP_INSIDE;
 
 	pvr_sprite_hdr_t header;
 	pvr_sprite_compile(&header, &context);
@@ -573,7 +584,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 		sprite_array->spritesheet->texture_height, sprite_array->spritesheet->texture, sprite_array->filter);
 
 	// Override the clipping parameter
-	// cxt.gen.clip_mode = ;
+	cxt.gen.clip_mode = PVR_USERCLIP_INSIDE;
 
 	pvr_poly_hdr_t hdr;
 	pvr_poly_compile(&hdr, &cxt);
@@ -867,7 +878,7 @@ uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *spr
 	pvr_poly_cxt_col(&cxt, poly_list_mode);
 
 	// Override the clipping parameter
-	// cxt.gen.clip_mode = ;
+	cxt.gen.clip_mode = PVR_USERCLIP_INSIDE;
 
 	pvr_poly_hdr_t hdr;	
 	pvr_poly_compile(&hdr, &cxt);
