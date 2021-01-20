@@ -7,9 +7,9 @@ float __htz_adjustment = 1;
 
 // Later integrate this into crayon_graphics_init()
 
-// Currently set to this since this appears to be the default viewport on Dreamcast
-	// Change the last two values to crayon_graphics_get_window_width/height for PC and others
-int __clip_window[4] = {0, 0, 0, 0};
+// Currently set to this since this appears to be the default viewport on Dreamcast (Nothing)
+	// Change the last two values to crayon_graphics_get_window_width/height for PC and other platforms
+int __clip_window[4] = {0, 0, -1, -1};
 
 // crayon_viewport_t __default_camera;
 
@@ -53,7 +53,10 @@ uint8_t crayon_graphics_init(uint8_t poly_modes){
 	// );
 
 	// Set the screen size to full screen by default
-	vec2_u16_t values[2] = {{0, 0}, {crayon_graphics_get_window_width(), crayon_graphics_get_window_height()}};
+	vec2_u16_t values[2] = {
+		{0, 0},
+		{crayon_graphics_get_window_width(), crayon_graphics_get_window_height()}
+	};
 	crayon_clipping_cmd_t clip = crayon_graphics_clamp_hardware_clip(values);
 
 	// We also need to submit it to take effect
