@@ -593,6 +593,8 @@ int main(){
 				current_camera_id += 1;
 				current_camera_id %= NUM_CAMERAS;
 				current_camera = &cameras[current_camera_id];
+
+				printf("--NOW USING CAMERA %d--\n", current_camera_id);
 			}
 
 			// Toggle oob/crop mode
@@ -665,6 +667,8 @@ int main(){
 		move_james(&James_Draw, moved_on_frame, stats.frame_count);
 
 		pvr_scene_begin();
+
+		printf("--FRAME BEGIN--\n");
 
 		pvr_get_stats(&stats);
 
@@ -787,6 +791,8 @@ int main(){
 		pvr_list_finish();
 
 		pvr_scene_finish();
+
+		printf("--FRAME END--\n");
 
 	}
 

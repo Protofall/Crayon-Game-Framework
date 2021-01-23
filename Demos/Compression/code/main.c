@@ -88,18 +88,18 @@ pvr_init_params_t pvr_params = {
 
 void set_screen(float * htz_adjustment){
 	*htz_adjustment = 1.0;
-	uint8_t region = flashrom_get_region();
-	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1
-		region = 0;	//Invalid region
+	int8_t region = flashrom_get_region();
+	if(region < 0){	// If error we just default to green swirl. Apparently its possible for some DCs to return -1
+		region = 0;	// Invalid region
 	}
 
-	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
+	if(vid_check_cable() == CT_VGA){	// If we have a VGA cable, use VGA
 		vid_set_mode(DM_640x480_VGA, PM_RGB565);
 	}
-	else{	//Else its RGB. This handles composite, S-video, SCART, etc
+	else{	// Else its RGB. This handles composite, S-video, SCART, etc
 		if(region == FLASHROM_REGION_EUROPE){
-			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
-			*htz_adjustment = 1.2;	//60/50Hz
+			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		// 50Hz
+			*htz_adjustment = 1.2;	// 60/50Hz
 		}
 		else{
 			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz

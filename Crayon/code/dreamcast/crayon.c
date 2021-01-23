@@ -27,12 +27,7 @@ uint8_t crayon_init(uint8_t platform, uint8_t boot_mode){
 	};
 	strcpy(__game_base_path, paths[boot_mode]);
 
-	if(boot_mode == CRAYON_BOOT_SD){
-		__sd_present = 1;
-	}
-	else{
-		__sd_present = 0;
-	}
+	__sd_present = (boot_mode == CRAYON_BOOT_SD);
 
 	// if(crayon_audio_init()){
 	//  goto crayon_init_end1;
@@ -95,13 +90,12 @@ uint8_t crayon_sd_mount_fat(){
 	}
 
 	//Mount the SD card to the sd dir in the VFS
-	if(fs_fat_mount("/sd", &sd_dev, MNT_MODE)){
+	if(fs_fat_mount("/sd", &sd_dev, CRAYON_SD_MNT_MODE)){
 		return 5;
 	}
+
 	return 0;
 }
-
-
 
 void crayon_shutdown(){
 	free(__game_base_path);

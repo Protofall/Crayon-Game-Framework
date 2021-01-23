@@ -3,7 +3,7 @@
 #include <crayon/graphics.h>
 #include <crayon/crayon.h>
 
-//For region and htz stuff
+//For region and hz stuff
 #include <dc/flashrom.h>
 
 //For the controller
@@ -208,8 +208,8 @@ int main(){
 	boxy_draw.colour[0] = 0xFF000000;
 	boxy_draw.rotation[0] = 0;
 
-	crayon_graphics_transistion_init(&effect[0], &fade_draw, modify_fade_effect, 5 * __htz, 1 * __htz);	//5 seconds to fade in, 1 to fade out
-	crayon_graphics_transistion_init(&effect[1], &boxy_draw, modify_boxy_effect, 2 * __htz, 2 * __htz);
+	crayon_graphics_transistion_init(&effect[0], &fade_draw, modify_fade_effect, 5 * __hz, 1 * __hz);	//5 seconds to fade in, 1 to fade out
+	crayon_graphics_transistion_init(&effect[1], &boxy_draw, modify_boxy_effect, 2 * __hz, 2 * __hz);
 
 	//Fade out and fade in are reversed
 

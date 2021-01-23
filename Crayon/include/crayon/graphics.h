@@ -11,7 +11,7 @@
 #include <string.h>	// For length of string
 #include <math.h>
 
-// For region and htz stuff
+// For region and hz stuff
 #include <dc/flashrom.h>
 
 #define CRAYON_OP_LIST PVR_LIST_OP_POLY	// No alpha
@@ -35,8 +35,8 @@
 	// this variable and render them later since this is global
 extern float __CRAYON_GRAPHICS_DEBUG_VARS[16];
 
-extern uint16_t __htz;
-extern float __htz_adjustment;
+extern uint16_t __hz;
+extern float __hz_adjustment;
 
 #define CRAYON_ENABLE_OP (1 << 0)
 #define CRAYON_ENABLE_TR (1 << 1)
@@ -44,7 +44,7 @@ extern float __htz_adjustment;
 uint8_t crayon_graphics_init(uint8_t poly_modes);
 void crayon_graphics_shutdown();
 
-#define crayon_graphics_set_bg_colour(r,g,b) pvr_set_bg_color(r,g,b);
+#define crayon_graphics_set_bg_colour(r, g, b) pvr_set_bg_color(r, g, b);
 
 // Sets a palette for a spritesheet
 uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp);
@@ -57,6 +57,19 @@ float crayon_graphics_get_draw_element_height(const crayon_sprite_array_t *sprit
 // This gets the width and height of the screen in pixels
 uint32_t crayon_graphics_get_window_width();
 uint32_t crayon_graphics_get_window_height();
+
+// Checks to see if it was an exact crop or not
+uint8_t crayon_graphics_is_hardware_clip_exact(const vec2_u16_t *values);
+
+// Takes the camera boundries and generates a clipping region command
+	// Brings everything to the correct nearest multiple of 32
+	// Also makes sure min !> max && maxx !> 1280 && maxy !> 480
+// "values" is an array that is two elements long.
+crayon_clipping_cmd_t crayon_graphics_clamp_hardware_clip(const vec2_u16_t *values);
+
+// Only render in this region.
+	// We assume the command is valid like with crayon_graphics_clamp_hardware_clip()
+void crayon_graphics_set_hardware_clip(crayon_clipping_cmd_t *clip);
 
 
 //------------------Drawing Sprites from Spritesheets------------------//

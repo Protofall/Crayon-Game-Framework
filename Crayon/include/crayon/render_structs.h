@@ -4,6 +4,21 @@
 #include "texture_structs.h"  // For the spritesheet and anim structs
 #include "vector_structs.h"
 
+// Hardware cropping structs/functions
+typedef struct crayon_clipping_cmd{
+	#if defined(_arch_dreamcast)
+
+	int cmd;
+	int padding[3];
+
+	#endif
+
+	int minx;
+	int miny;
+	int maxx;
+	int maxy;
+} crayon_clipping_cmd_t;
+
 #define CRAYON_REF_LIST (1 << 0)	// Tells the functions that we want each element to have a reference node
 #define CRAYON_MULTI_FRAME (1 << 1)
 #define CRAYON_MULTI_SCALE (1 << 2)
@@ -40,6 +55,16 @@ typedef struct crayon_viewport_t {
 	uint16_t window_y;
 	uint16_t window_width;
 	uint16_t window_height;
+
+	// TODO: SWITCH TO THIS LATER
+
+	// vec2_f_t world_coords;
+	// vec2_u16_t world_dimentions;
+
+	// float world_movement_factor;
+
+	// vec2_u16_t window_coords;
+	// vec2_u16_t window_dimentions;
 } crayon_viewport_t;
 
 typedef struct crayon_sprite_array_reference {

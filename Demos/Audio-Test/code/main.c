@@ -312,7 +312,7 @@ int main(){
 				// sourceFX.position.x, sourceFX.position.y,
 				// sourceFX.looping, sourceFX.volume, sourceFX.speed, sourceFX.num_buffers);
 			audio_update_source_state(&sourceMusic);
-			sprintf(BUFFER, "CONTROLS: \n-A starts the Streaming piano music\n-B stops it (bugged?)\n-X pauses it\n-Y unpauses it\nSTATE %d\n%d", sourceMusic.state, _audio_streamer_stopping);
+			sprintf(BUFFER, "CONTROLS: \n-A starts the Streaming piano music\n-B stops it (bugged?)\n-X pauses it\n-Y unpauses it\nSTATE %d\n%d", sourceMusic.state, __audio_streamer_stopping);
 			crayon_graphics_draw_text_mono(BUFFER, &BIOS_font, PVR_LIST_OP_POLY, 32, 100, 50, 2, 2, BIOS_P.palette_id);
 			// crayon_graphics_draw_text_mono(BUFFER, &B2, PVR_LIST_OP_POLY, 32, 100, 50, 2, 2, B2_P.palette_id);
 
@@ -338,10 +338,10 @@ int main(){
 	audio_stop_source(&sourceMusic);
 
 	audio_free_source(&sourceMusic);
-	audio_unload_info(&infoMusic);
+	audio_free_info(&infoMusic);
 
 	audio_free_source(&sourceFX);
-	audio_unload_info(&infoFX);
+	audio_free_info(&infoFX);
 
 	audio_shutdown();
 

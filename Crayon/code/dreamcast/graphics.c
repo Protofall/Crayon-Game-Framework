@@ -2,8 +2,14 @@
 
 float __CRAYON_GRAPHICS_DEBUG_VARS[16] = {0};
 
-uint16_t __htz = 60;
-float __htz_adjustment = 1;
+uint16_t __hz = 60;
+float __hz_adjustment = 1;
+
+// Later integrate this into crayon_graphics_init()
+
+// Currently set to this since this appears to be the default viewport on Dreamcast (Nothing)
+	// Change the last two values to crayon_graphics_get_window_width/height for PC and other platforms
+int __clip_window[4] = {0, 0, -1, -1};
 
 // crayon_viewport_t __default_camera;
 
@@ -24,18 +30,18 @@ uint8_t crayon_graphics_init(uint8_t poly_modes){
 
 	if(vid_check_cable() == CT_VGA){
 		vid_set_mode(DM_640x480_VGA, PM_RGB565);	// 60Hz
-		__htz = 60;
-		__htz_adjustment = 1;
+		__hz = 60;
+		__hz_adjustment = 1;
 	}
 	else if(flashrom_get_region() == FLASHROM_REGION_EUROPE){
 		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		// 50Hz
-		__htz = 50;
-		__htz_adjustment = 1.2;
+		__hz = 50;
+		__hz_adjustment = 1.2;
 	}
 	else{
 		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	// 60Hz
-		__htz = 60;
-		__htz_adjustment = 1;
+		__hz = 60;
+		__hz_adjustment = 1;
 	}
 
 	// // Initialise the default camera to use when no camer is specified
@@ -45,6 +51,20 @@ uint8_t crayon_graphics_init(uint8_t poly_modes){
 	// 	(vec2_u16_t){crayon_graphics_get_window_width(), crayon_graphics_get_window_height()},
 	// 	1
 	// );
+
+	// Set the screen size to full screen by default
+	vec2_u16_t values[2] = {
+		{0, 0},
+		{crayon_graphics_get_window_width(), crayon_graphics_get_window_height()}
+	};
+	crayon_clipping_cmd_t clip = crayon_graphics_clamp_hardware_clip(values);
+
+	// We also need to submit it to take effect
+	pvr_scene_begin();
+	pvr_list_begin(PVR_LIST_OP_POLY);
+	crayon_graphics_set_hardware_clip(&clip);
+	pvr_list_finish();
+	pvr_scene_finish();
 
 	return 0;
 }
@@ -106,6 +126,72 @@ uint32_t crayon_graphics_get_window_height(){
 	return 480;
 }
 
+uint8_t crayon_graphics_is_hardware_clip_exact(const vec2_u16_t *values){
+	if((values[0].x & ((1 << 5) - 1)) || (values[0].y & ((1 << 5) - 1)) ||
+		(values[1].x & ((1 << 5) - 1)) || (values[1].y & ((1 << 5) - 1))){
+		return 0;
+	}
+
+	return 1;
+}
+
+crayon_clipping_cmd_t crayon_graphics_clamp_hardware_clip(const vec2_u16_t *values){
+	// Make a copy since we might need to modify it
+	vec2_u16_t copy[2];
+	memcpy(copy, values, sizeof(vec2_u16_t) * 2);
+
+	// We can't crop this far, so bring it back
+	if(copy[1].x > 1280){
+		copy[1].x = 1280;
+	}
+	if(copy[1].y > 480){
+		copy[1].y = 480;
+	}
+
+	// Make sure that min is min and max is max. If they go over, just set them to the same thing
+	if(copy[0].x > copy[1].x){
+		copy[0].x = copy[1].x;
+	}
+	if(copy[0].y > copy[1].y){
+		copy[0].y = copy[1].y;
+	}
+
+	// Specify this as a user clip command
+	crayon_clipping_cmd_t clip;
+	clip.cmd = PVR_CMD_USERCLIP;
+
+	// Discard lowest 5 bits (Round down)
+	clip.minx = copy[0].x >> 5;
+	clip.miny = copy[0].y >> 5;
+
+	// Round up to nearest tile (Multiple of 32)
+	clip.maxx = (copy[1].x >> 5);
+
+	// If none of the last 5 bits are set (Perfect multiple of 32)
+	// NOTE. For max we have that minus 1 since "int * 32" is technically the start of the next tile
+	if(!(copy[1].x & ((1 << 5) - 1))){
+		clip.maxx -= 1;
+	}
+
+	clip.maxy = (copy[1].y >> 5);
+	if(!(copy[1].y & ((1 << 5) - 1))){
+		clip.maxy -= 1;
+	}
+
+	return clip;
+}
+
+void crayon_graphics_set_hardware_clip(crayon_clipping_cmd_t *clip){
+	// If this is a new dimension, update last dimension and submit TA
+	if(memcmp(&__clip_window, &clip->minx, sizeof(int) * 4)){
+		memcpy(&__clip_window, &clip->minx, sizeof(int) * 4);
+
+		pvr_prim(clip, sizeof(crayon_clipping_cmd_t));
+	}
+
+	return;
+}
+
 
 //---------------------------------------------------------------------//
 
@@ -141,7 +227,9 @@ static inline uint32_t PVR_PACK_16BIT_V(uint32_t sprite_uv, float v) {
 // S is for softare cropping (On PC this defaults to hardware cropping)
 int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 		uint8_t poly_list_mode, uint8_t draw_option){
-	if(sprite_array->size == 0){return 2;}	// Don't render nothing
+	if(sprite_array->size == 0){	// Don't render anything
+		return 2;
+	}
 
 	crayon_viewport_t default_camera;
 	if(camera == NULL){	// No Camera, use the default one
@@ -151,6 +239,21 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 			(vec2_u16_t){crayon_graphics_get_window_width(), crayon_graphics_get_window_height()}, 1);
 		camera = &default_camera;
 		// camera = &__default_camera;
+	}
+
+	// Set the clipping-region/scissor-test
+	if(draw_option & CRAYON_DRAW_HARDWARE_CROP){
+		vec2_u16_t values[2] = {
+			{camera->window_x, camera->window_y},
+			{camera->window_x + camera->window_width, camera->window_y + camera->window_height}
+		};
+		crayon_clipping_cmd_t clip = crayon_graphics_clamp_hardware_clip(values);
+		crayon_graphics_set_hardware_clip(&clip);
+
+		// No need to software crop if this happens
+		if(crayon_graphics_is_hardware_clip_exact(values)){
+			draw_option &= ~CRAYON_DRAW_SOFTWARE_CROP;
+		}
 	}
 
 	if(sprite_array->options & CRAYON_HAS_TEXTURE){	// Textured
@@ -164,18 +267,6 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 
 uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 		uint8_t poly_list_mode, uint8_t options){
-	// Which edges we are going to crop
-	// uint8_t crop_edges = (1 << 4) - 1;	// ---- BRTL
-										// ---- 1111 (Crop on all edges)
-
-	// NOTE: that Sutherland-hodgman uses L, T, R, B, the reverse order that we use here
-
-	// // DELETE THIS LATER. A basic optimisation for now
-	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
-	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
-	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
-	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
-
 	// Set the texture format including the palette id
 	int pvr_txr_fmt = sprite_array->spritesheet->texture_format;
 	switch(DTEX_TXRFMT(sprite_array->spritesheet->texture_format)){
@@ -190,6 +281,9 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 	pvr_sprite_cxt_t context;
 	pvr_sprite_cxt_txr(&context, poly_list_mode, pvr_txr_fmt, sprite_array->spritesheet->texture_width,
 		sprite_array->spritesheet->texture_height, sprite_array->spritesheet->texture, sprite_array->filter);
+
+	// Override the clipping parameter
+	context.gen.clip_mode = PVR_USERCLIP_INSIDE;
 
 	pvr_sprite_hdr_t header;
 	pvr_sprite_compile(&header, &context);
@@ -370,9 +464,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 			}
 		}
 
-		sprite.az = sprite_array->layer[i];
-		sprite.bz = sprite.az;
-		sprite.cz = sprite.az;
+		sprite.az = sprite.bz = sprite.cz = sprite_array->layer[i];
 
 		// Gets the Top Left and the Bottom Right vertex coords. Takes rotation into consideration.
 		sprite_verts[0].x = vert_ptr[rotation_val * 3];	// TL
@@ -389,7 +481,7 @@ uint8_t crayon_graphics_draw_sprites_simple(const crayon_sprite_array_t *sprite_
 		}
 
 		// If software cropping, Modify the verts/UVs
-		if((options & CRAYON_DRAW_SOFTWARE_CROP) && !0){
+		if((options & CRAYON_DRAW_SOFTWARE_CROP)){
 			// rotation_val:
 			// - 0: 0 degrees    a-vert: TL   ORDER (k, j): (0,3), (1,0), (2,1), (3,2)
 			// - 1: 270 degrees  a-vert: BL   ORDER       : (1,0), (2,1), (3,2), (0,3)
@@ -509,19 +601,17 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 			pvr_txr_fmt |= PVR_TXRFMT_8BPP_PAL(sprite_array->palette->palette_id);
 	}
 
-	// //DELETE THIS LATER. A basic optimisation for now
-	// if(camera->window_x == 0){crop_edges = crop_edges & (~ (1 << 0));}
-	// if(camera->window_y == 0){crop_edges = crop_edges & (~ (1 << 1));}
-	// if(camera->window_width == crayon_graphics_get_window_width()){crop_edges = crop_edges & (~ (1 << 2));}
-	// if(camera->window_height == crayon_graphics_get_window_height()){crop_edges = crop_edges & (~ (1 << 3));}
-
 	// Need to set them to zero to prevent a bunch of compiler warnings...
 	vec2_f_t uv[2] = {{0,0}};
 
 	pvr_poly_cxt_t cxt;
-	pvr_poly_hdr_t hdr;
 	pvr_poly_cxt_txr(&cxt, poly_list_mode, pvr_txr_fmt, sprite_array->spritesheet->texture_width,
 		sprite_array->spritesheet->texture_height, sprite_array->spritesheet->texture, sprite_array->filter);
+
+	// Override the clipping parameter
+	cxt.gen.clip_mode = PVR_USERCLIP_INSIDE;
+
+	pvr_poly_hdr_t hdr;
 	pvr_poly_compile(&hdr, &cxt);
 	hdr.cmd |= 4;	// Enable oargb
 	pvr_prim(&hdr, sizeof(hdr));
@@ -638,8 +728,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 		vert_coords[3].y = vert_coords[2].y;
 
 		// Store the unrotated vertex boundries for later if we're doing software cropping
-			// That !0 is a placeholder for the hardware check (WIP INCOMPLETE)
-		if(!0 && (options & CRAYON_DRAW_SOFTWARE_CROP)){
+		if((options & CRAYON_DRAW_SOFTWARE_CROP)){
 			vec[__SPRITE_BOUND_TL].x = vert_coords[0].x;
 			vec[__SPRITE_BOUND_TL].y = vert_coords[0].y;
 			vec[__SPRITE_BOUND_BR].x = vert_coords[1].x;
@@ -668,8 +757,7 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 		}
 
 		// Perform software cropping (But only if we can't do hardware cropping)
-			// That !0 is a placeholder for the hardware check
-		if((options & CRAYON_DRAW_SOFTWARE_CROP) && !0){
+		if((options & CRAYON_DRAW_SOFTWARE_CROP)){
 			poly_verts = crayon_graphics_sutherland_hodgman(vert_coords, window_coords);
 
 			// This will only really trigger is the OOB check was disabled
@@ -784,9 +872,6 @@ uint8_t crayon_graphics_draw_sprites_enhanced(const crayon_sprite_array_t *sprit
 
 uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *sprite_array, const crayon_viewport_t *camera,
 	uint8_t poly_list_mode, uint8_t options){
-	// ADD STUFF HERE FOR HARDWARE CROPPING OVERRIDE CHECKS
-	;
-
 	// This var exist so we don't need to worry about constantly floor-ing the camera's world points
 		// The sprite points are also floor-ed before calculations are done
 	vec2_f_t camera_scale = (vec2_f_t){camera->window_width / (float)camera->world_width,
@@ -810,8 +895,12 @@ uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *spr
 	window_coords[3] = camera->window_y + camera->window_height;
 
 	pvr_poly_cxt_t cxt;
-	pvr_poly_hdr_t hdr;
 	pvr_poly_cxt_col(&cxt, poly_list_mode);
+
+	// Override the clipping parameter
+	cxt.gen.clip_mode = PVR_USERCLIP_INSIDE;
+
+	pvr_poly_hdr_t hdr;	
 	pvr_poly_compile(&hdr, &cxt);
 	pvr_prim(&hdr, sizeof(hdr));
 
@@ -888,8 +977,7 @@ uint8_t crayon_graphics_draw_untextured_sprites(const crayon_sprite_array_t *spr
 		}
 
 		// Perform software cropping (But only if we can't do hardware cropping)
-			// That !0 is a placeholder for the hardware check
-		if((options & CRAYON_DRAW_SOFTWARE_CROP) && !0){
+		if((options & CRAYON_DRAW_SOFTWARE_CROP)){
 			poly_verts = crayon_graphics_sutherland_hodgman(vert_coords, window_coords);
 
 			// This will only really trigger is the OOB check was disabled

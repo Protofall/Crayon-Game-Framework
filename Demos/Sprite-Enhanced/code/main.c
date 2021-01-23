@@ -1,128 +1,23 @@
-//Crayon libraries
+// Crayon libraries
 #include <crayon/memory.h>
 #include <crayon/graphics.h>
+#include <crayon/debug.h>
+#include <crayon/crayon.h>
 
-//For region and htz stuff
+// For region and htz stuff
 #include <dc/flashrom.h>
 
-//For the controller
+// For the controller
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
 
-#if CRAYON_BOOT_MODE == 1
-	//For mounting the sd dir
-	#include <dc/sd.h>
-	#include <kos/blockdev.h>
-	#include <fat/fs_fat.h>
-#endif
-
-
-#if CRAYON_BOOT_MODE == 1
-	#define MNT_MODE FS_FAT_MOUNT_READONLY
-
-	static void unmount_fat_sd(){
-		fs_fat_unmount("/sd");
-		fs_fat_shutdown();
-		sd_shutdown();
-	}
-
-	static int mount_fat_sd(){
-		kos_blockdev_t sd_dev;
-		uint8 partition_type;
-
-		// Initialize the sd card if its present
-		if(sd_init()){
-			return 1;
-		}
-
-		// Grab the block device for the first partition on the SD card. Note that
-		// you must have the SD card formatted with an MBR partitioning scheme
-		if(sd_blockdev_for_partition(0, &sd_dev, &partition_type)){
-			return 2;
-		}
-
-		// Check to see if the MBR says that we have a valid partition
-		// if(partition_type != 0x83){
-			//I don't know what value I should be comparing against, hence this check is disabled for now
-			// This: https://en.wikipedia.org/wiki/Partition_type
-				//Suggests there's multiple types for FAT...not sure how to handle this
-			// return 3;
-		// }
-
-		// Initialize fs_fat and attempt to mount the device
-		if(fs_fat_init()){
-			return 4;
-		}
-
-		//Mount the SD card to the sd dir in the VFS
-		if(fs_fat_mount("/sd", &sd_dev, MNT_MODE)){
-			return 5;
-		}
-		return 0;
-	}
-
-#endif
-
-//Change this to only give room for PT list (Since other ones aren't used)
-pvr_init_params_t pvr_params = {
-		// Enable opaque, translucent and punch through polygons with size 16
-			//To better explain, the opb_sizes or Object Pointer Buffer sizes
-			//Work like this: Set to zero to disable. Otherwise the higher the
-			//number the more space used (And more efficient under higher loads)
-			//The lower the number, the less space used and less efficient under
-			//high loads. You can choose 0, 8, 16 or 32
-		{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16 },
-
-		// Vertex buffer size 512K
-		512 * 1024,
-
-		// No DMA
-		0,
-
-		// No FSAA
-		0,
-
-		// Translucent Autosort enabled
-		0
-};
-
-void set_screen(float * htz_adjustment){
-	*htz_adjustment = 1.0;
-	int8_t region = flashrom_get_region();
-	if(region < 0){	//If error we just default to green swirl. Apparently its possible for some DCs to return -1
-		region = 0;	//Invalid region
-	}
-
-	if(vid_check_cable() == CT_VGA){	//If we have a VGA cable, use VGA
-		vid_set_mode(DM_640x480_VGA, PM_RGB565);
-	}
-	else{	//Else its RGB. This handles composite, S-video, SCART, etc
-		if(region == FLASHROM_REGION_EUROPE){
-			vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		//50Hz
-			*htz_adjustment = 1.2;	//60/50Hz
-		}
-		else{
-			vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	//60Hz
-		}
-	}
-
-	return;
-}
-
 int main(){
-	pvr_init(&pvr_params);	//Init the pvr system
+	// Initialise Crayon
+	if(crayon_init(CRAYON_PLATFORM_DREAMCAST, CRAYON_BOOT_MODE)){
+		error_freeze("Unable to initialise crayon");
+	}
 
-	#if CRAYON_BOOT_MODE == 1
-		int sdRes = mount_fat_sd();	//This function should be able to mount a FAT32 formatted sd card to the /sd dir	
-		if(sdRes != 0){
-			error_freeze("SD card couldn't be mounted: %d", sdRes);
-		}
-	#endif
-
-	float htz_adjustment;
-	set_screen(&htz_adjustment);
-
-	srand(time(0));	//Set the seed for rand()
+	srand(time(0));	// Set the seed for rand()
 
 	crayon_spritesheet_t Dwarf_SS;
 	crayon_sprite_array_t Dwarf_Draw_Flip, Dwarf_Draw_Rotate, Dwarf_Draw_Scale, Dwarf_Draw_Frame,
@@ -130,7 +25,7 @@ int main(){
 	crayon_font_mono_t BIOS;
 	crayon_palette_t BIOS_P;
 
-	//Load the logo
+	// Load the romdisk
 	#if CRAYON_BOOT_MODE == 2
 		crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
 	#elif CRAYON_BOOT_MODE == 1
@@ -141,15 +36,11 @@ int main(){
 		#error Invalid CRAYON_BOOT_MODE value
 	#endif
 
-	//Load the asset
+	// Load the asset
 	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 0, "/files/BIOS_font.dtex");
 	crayon_memory_load_spritesheet(&Dwarf_SS, NULL, -1, "/files/sprite.dtex");
 
 	fs_romdisk_unmount("/files");
-
-	#if CRAYON_BOOT_MODE == 1
-		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
-	#endif
 
 	crayon_memory_init_sprite_array(&Dwarf_Draw_Flip, &Dwarf_SS, 0, NULL, 2, 1, CRAYON_MULTI_FLIP, PVR_FILTER_NONE, 0);
 	Dwarf_Draw_Flip.scale[0].x = 1;
@@ -169,7 +60,7 @@ int main(){
 	Dwarf_Draw_Flip.fade[0] = 0;
 	Dwarf_Draw_Flip.frame_id[0] = 0;
 	crayon_memory_set_frame_uv(&Dwarf_Draw_Flip, 0, 0);
-	uint8_t i;
+	unsigned int i;
 	for(i = 0; i < Dwarf_Draw_Flip.size; i++){
 		Dwarf_Draw_Flip.visible[i] = 1;
 	}
@@ -304,7 +195,7 @@ int main(){
 	Dwarf_Draw_Colour_Add.layer[1] = 2;
 	Dwarf_Draw_Colour_Add.layer[2] = 2;
 
-	Dwarf_Draw_Colour_Add.colour[0] = 0xFF0000FF;	//Blue
+	Dwarf_Draw_Colour_Add.colour[0] = 0xFF0000FF;	// Blue
 	Dwarf_Draw_Colour_Add.fade[0] = 0;
 	Dwarf_Draw_Colour_Add.colour[1] = 0xFF0000FF;
 	Dwarf_Draw_Colour_Add.fade[1] = 128;
@@ -396,7 +287,7 @@ int main(){
 		pvr_scene_finish();
 	}
 
-	//Also frees the spritesheet and palette
+	// Also frees the spritesheet and palette
 	crayon_memory_free_sprite_array(&Dwarf_Draw_Flip);
 	crayon_memory_free_sprite_array(&Dwarf_Draw_Rotate);
 	crayon_memory_free_sprite_array(&Dwarf_Draw_Scale);
