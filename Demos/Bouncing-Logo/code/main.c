@@ -66,8 +66,8 @@ int main(){
 
 	uint8_t begin = 0;
 	uint8_t moving = 0;
-	//__htz is set in cryaon_init()
-	float shrink_time = 2.5 * __htz;	//Time it takes to shrink (In seconds, __htz fixes for 50Hz)
+	//__hz is set in crayon_init()
+	float shrink_time = 2.5 * __hz;	//Time it takes to shrink (In seconds, __hz fixes for 50Hz)
 
 	//Positive is bottom right, negative is top left
 	int8_t x_dir = rand() % 2;
@@ -119,15 +119,15 @@ int main(){
 			//colours Dark Blue, Purple, Pink, Orange, vright Green, Yellow
 
 			//Movement
-			//NOTE: __htz_adjustment is set in crayon_graphics_init() or crayon_init()
-			Logo_Draw.coord[0].x += 1.5 * __htz_adjustment * x_dir;
-			Logo_Draw.coord[0].y += 1.5 * __htz_adjustment * y_dir;
+			//NOTE: __hz_adjustment is set in crayon_graphics_init() or crayon_init()
+			Logo_Draw.coord[0].x += 1.5 * __hz_adjustment * x_dir;
+			Logo_Draw.coord[0].y += 1.5 * __hz_adjustment * y_dir;
 		}
 
 		//Shrinking process
 		if(begin && Logo_Draw.scale[0].x > 0.4 && Logo_Draw.scale[0].y > 0.3){
-			Logo_Draw.scale[0].x -= (0.6/shrink_time) * __htz_adjustment;
-			Logo_Draw.scale[0].y -= (0.7/shrink_time) * __htz_adjustment;
+			Logo_Draw.scale[0].x -= (0.6/shrink_time) * __hz_adjustment;
+			Logo_Draw.scale[0].y -= (0.7/shrink_time) * __hz_adjustment;
 			new_width = crayon_graphics_get_draw_element_width(&Logo_Draw, 0);
 			new_height = crayon_graphics_get_draw_element_height(&Logo_Draw, 0);
 			Logo_Draw.coord[0].x = (crayon_graphics_get_window_width() - new_width) / 2;

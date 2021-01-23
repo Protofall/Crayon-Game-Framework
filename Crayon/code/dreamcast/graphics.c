@@ -2,8 +2,8 @@
 
 float __CRAYON_GRAPHICS_DEBUG_VARS[16] = {0};
 
-uint16_t __htz = 60;
-float __htz_adjustment = 1;
+uint16_t __hz = 60;
+float __hz_adjustment = 1;
 
 // Later integrate this into crayon_graphics_init()
 
@@ -30,18 +30,18 @@ uint8_t crayon_graphics_init(uint8_t poly_modes){
 
 	if(vid_check_cable() == CT_VGA){
 		vid_set_mode(DM_640x480_VGA, PM_RGB565);	// 60Hz
-		__htz = 60;
-		__htz_adjustment = 1;
+		__hz = 60;
+		__hz_adjustment = 1;
 	}
 	else if(flashrom_get_region() == FLASHROM_REGION_EUROPE){
 		vid_set_mode(DM_640x480_PAL_IL, PM_RGB565);		// 50Hz
-		__htz = 50;
-		__htz_adjustment = 1.2;
+		__hz = 50;
+		__hz_adjustment = 1.2;
 	}
 	else{
 		vid_set_mode(DM_640x480_NTSC_IL, PM_RGB565);	// 60Hz
-		__htz = 60;
-		__htz_adjustment = 1;
+		__hz = 60;
+		__hz_adjustment = 1;
 	}
 
 	// // Initialise the default camera to use when no camer is specified

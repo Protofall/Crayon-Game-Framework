@@ -11,7 +11,7 @@
 #include <string.h>	// For length of string
 #include <math.h>
 
-// For region and htz stuff
+// For region and hz stuff
 #include <dc/flashrom.h>
 
 // Hardware cropping structs/functions
@@ -50,8 +50,8 @@ typedef struct crayon_clipping_cmd{
 	// this variable and render them later since this is global
 extern float __CRAYON_GRAPHICS_DEBUG_VARS[16];
 
-extern uint16_t __htz;
-extern float __htz_adjustment;
+extern uint16_t __hz;
+extern float __hz_adjustment;
 
 #define CRAYON_ENABLE_OP (1 << 0)
 #define CRAYON_ENABLE_TR (1 << 1)
