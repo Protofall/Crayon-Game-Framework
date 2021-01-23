@@ -187,6 +187,10 @@ void crayon_graphics_set_hardware_clip(crayon_clipping_cmd_t *clip){
 		memcpy(&__clip_window, &clip->minx, sizeof(int) * 4);
 
 		pvr_prim(clip, sizeof(crayon_clipping_cmd_t));
+		printf("Swapped hardware clip. %d, %d, %d, %d\n", clip->minx, clip->miny, clip->maxx, clip->maxy);
+	}
+	else {
+		printf("No swap\n");
 	}
 
 	return;

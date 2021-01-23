@@ -112,14 +112,15 @@ int main(){
 	uint32_t curr_btns[4] = {0};
 	uint32_t prev_btns[4] = {0};
 
-	char options_msg[160];
+	char options_msg[200];
 
 	char msg[] = "Controls:\n"
 		"D-PAD UP/DOWN to select a poly/list (OP, TR, PT)\n"
 		"\"A\" to submit the cmd for this frame\n"
 		"\"B\" to switch our cmd (full screen or windowed)\n"
+		"\"X\" to make the next A press freeze the main loop\n"
 		"START to terminate program\n";
-	uint8_t lines = 5;
+	uint8_t lines = 6;
 
 	vec2_u16_t region[2] = {{161,80},{479,400}};
 	crayon_clipping_cmd_t Region_CMD = crayon_graphics_clamp_hardware_clip(region);
@@ -131,11 +132,12 @@ int main(){
 	region2[1].y = 480;
 	crayon_clipping_cmd_t Region_CMD2 = crayon_graphics_clamp_hardware_clip(region2);
 
+	uint8_t will_freeze = 0;
 	unsigned int i;
 	unsigned int loop = 1;
 	while(loop){
-		sprintf(options_msg, "OOB: %d, Crop: %d, Poly/list: %d\n ON: %d, %d, %d. modes: %d, %d, %d",
-			oob_culling, cropping, selected_poly, on[0], on[1], on[2], modes[0], modes[1], modes[2]);
+		sprintf(options_msg, "OOB: %d, Crop: %d, Poly/list: %d\n ON: %d, %d, %d. modes: %d, %d, %d\nWill Freeze? %d",
+			oob_culling, cropping, selected_poly, on[0], on[1], on[2], modes[0], modes[1], modes[2], will_freeze);
 
 		// Graphics
 		pvr_wait_ready();
@@ -149,7 +151,7 @@ int main(){
 
 			crayon_graphics_draw_sprites(&polys[0], NULL, PVR_LIST_OP_POLY, CRAYON_DRAW_ENHANCED | cropping | oob_culling);
 
-			crayon_graphics_draw_text_mono(options_msg, &BIOS, PVR_LIST_OP_POLY, 32, height - 24 - ((lines + 2.5) * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
+			crayon_graphics_draw_text_mono(options_msg, &BIOS, PVR_LIST_OP_POLY, 32, height - 24 - ((lines + 3.5) * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
 			crayon_graphics_draw_text_mono(msg, &BIOS, PVR_LIST_OP_POLY, 32, height - 24 - (lines * BIOS.char_height), 254, 1, 1, BIOS_P.palette_id);
 		pvr_list_finish();
 
@@ -175,9 +177,9 @@ int main(){
 			// If we only submit to TR then for one frame only the TR and PT stuff would be rendered because
 			// OP was before TR. DO NOTE if say PT appeared first and we did PT then everything renders since
 			// that was first
-		// if(on[0] || on[1] || on[2]){
-		// 	while(1){;}
-		// }
+		if((on[0] || on[1] || on[2]) && will_freeze){
+			while(1){;}
+		}
 
 		// Input handling
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
@@ -205,6 +207,16 @@ int main(){
 			// B press to change between full screen and boxed
 			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_B)){
 				modes[selected_poly] = !modes[selected_poly];
+			}
+
+			// X press enables a freeze after the next A press
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_X)){
+				will_freeze = !will_freeze;
+			}
+
+			// If its selected, we don't want to change it now
+			if(on[selected_poly]){
+				continue;
 			}
 
 			// Choose which poly poly/list to select
