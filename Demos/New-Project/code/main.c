@@ -193,7 +193,7 @@ int main(){
 	// If not on VGA output, select a refresh rate
 	hz_select(&fade_draw);
 
-	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
+	crayon_graphics_set_bg_colour(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
 	while(1){
 		pvr_wait_ready();

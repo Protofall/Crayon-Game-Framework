@@ -11,7 +11,7 @@ float __hz_adjustment = 1;
 	// Change the last two values to crayon_graphics_get_window_width/height for PC and other platforms
 int __clip_window[4] = {0, 0, -1, -1};
 
-// crayon_viewport_t __default_camera;
+crayon_viewport_t __default_camera;
 
 uint8_t crayon_graphics_init(uint8_t poly_modes){
 	pvr_init_params_t pvr_params;
@@ -27,6 +27,7 @@ uint8_t crayon_graphics_init(uint8_t poly_modes){
 	pvr_params.autosort_disabled = 0;
 
 	pvr_init(&pvr_params);
+	pvr_set_pal_format(PVR_PAL_ARGB8888);
 
 	if(vid_check_cable() == CT_VGA){
 		vid_set_mode(DM_640x480_VGA, PM_RGB565);	// 60Hz
@@ -44,13 +45,13 @@ uint8_t crayon_graphics_init(uint8_t poly_modes){
 		__hz_adjustment = 1;
 	}
 
-	// // Initialise the default camera to use when no camer is specified
-	// crayon_memory_init_camera(&__default_camera, (vec2_f_t){0, 0},
-	// 	(vec2_u16_t){crayon_graphics_get_window_width(), crayon_graphics_get_window_height()},
-	// 	(vec2_u16_t){0, 0},
-	// 	(vec2_u16_t){crayon_graphics_get_window_width(), crayon_graphics_get_window_height()},
-	// 	1
-	// );
+	// Initialise the default camera to use when no camer is specified
+	crayon_memory_init_camera(&__default_camera, (vec2_f_t){0, 0},
+		(vec2_u16_t){crayon_graphics_get_window_width(), crayon_graphics_get_window_height()},
+		(vec2_u16_t){0, 0},
+		(vec2_u16_t){crayon_graphics_get_window_width(), crayon_graphics_get_window_height()},
+		1
+	);
 
 	// Set the screen size to full screen by default
 	crayon_clipping_cmd_t clip = crayon_graphics_default_hardware_clip();
@@ -85,7 +86,6 @@ uint8_t crayon_graphics_setup_palette(const crayon_palette_t *cp){
 		return 2;
 	}
 
-	pvr_set_pal_format(PVR_PAL_ARGB8888);
 	unsigned int i;
 	for(i = 0; i < cp->colour_count; ++i){
 		pvr_set_pal_entry(i + entries * cp->palette_id, cp->palette[i]);
@@ -241,14 +241,8 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 		return 2;
 	}
 
-	crayon_viewport_t default_camera;
 	if(camera == NULL){	// No Camera, use the default one
-		crayon_memory_init_camera(&default_camera, (vec2_f_t){0, 0},
-			(vec2_u16_t){crayon_graphics_get_window_width(), crayon_graphics_get_window_height()},
-			(vec2_u16_t){0, 0},
-			(vec2_u16_t){crayon_graphics_get_window_width(), crayon_graphics_get_window_height()}, 1);
-		camera = &default_camera;
-		// camera = &__default_camera;
+		camera = &__default_camera;
 	}
 
 	// Set the clipping-region/scissor-test
