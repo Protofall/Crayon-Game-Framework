@@ -71,7 +71,7 @@ Don't use `apt` or other package managers as those use outdated versions.
 
 
 ### Starting a new project
-Firstly I'd recommend looking at the demos provided to see what Crayon is capable of.
+Firstly I'd recommend looking at the demos provided to see what Crayon is capable of. Do note that some of them aren't using the latest and best Crayon methods (Eg, you should always start your Crayon program with `crayon_init()`, however some programs have old code that skips that).
 
 Once you feel satisfied with understanding what Crayon is capable of, copy the `New-Project` demo. You can rename the project at the top of the makefile.
 

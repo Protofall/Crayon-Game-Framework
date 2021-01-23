@@ -14,21 +14,6 @@
 // For region and hz stuff
 #include <dc/flashrom.h>
 
-// Hardware cropping structs/functions
-typedef struct crayon_clipping_cmd{
-	#if defined(_arch_dreamcast)
-
-	int cmd;
-	int padding[3];
-
-	#endif
-
-	int minx;
-	int miny;
-	int maxx;
-	int maxy;
-} crayon_clipping_cmd_t;
-
 #define CRAYON_OP_LIST PVR_LIST_OP_POLY	// No alpha
 #define CRAYON_TR_LIST PVR_LIST_TR_POLY	// Alpha is either full on or off
 #define CRAYON_PT_LIST PVR_LIST_PT_POLY	// Varying alpha

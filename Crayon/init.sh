@@ -80,7 +80,7 @@ if [ ! -d "$repo_path" ]; then
 
 		scons
 		cp "DreamcastEyecatcherTool/DreamcastEyecatcherTool" "$bins"
-		cp "VmuLcdIconCreator/VmuLcdBitmapTool" "$bins"
+		cp "VmuLcdBitmapTool/VmuLcdBitmapTool" "$bins"
 		cp "DreamcastSavefileIconTool/DreamcastSavefileIconTool" "$bins"
 
 		cd "$user_dir"
