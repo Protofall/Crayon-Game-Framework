@@ -67,6 +67,9 @@ uint8_t crayon_graphics_is_hardware_clip_exact(const vec2_u16_t *values);
 // "values" is an array that is two elements long.
 crayon_clipping_cmd_t crayon_graphics_clamp_hardware_clip(const vec2_u16_t *values);
 
+// Same as above, but assumes full screen
+crayon_clipping_cmd_t crayon_graphics_default_hardware_clip();
+
 // Only render in this region.
 	// We assume the command is valid like with crayon_graphics_clamp_hardware_clip()
 void crayon_graphics_set_hardware_clip(crayon_clipping_cmd_t *clip);

@@ -53,11 +53,7 @@ uint8_t crayon_graphics_init(uint8_t poly_modes){
 	// );
 
 	// Set the screen size to full screen by default
-	vec2_u16_t values[2] = {
-		{0, 0},
-		{crayon_graphics_get_window_width(), crayon_graphics_get_window_height()}
-	};
-	crayon_clipping_cmd_t clip = crayon_graphics_clamp_hardware_clip(values);
+	crayon_clipping_cmd_t clip = crayon_graphics_default_hardware_clip();
 
 	// We also need to submit it to take effect
 	pvr_scene_begin();
@@ -181,6 +177,20 @@ crayon_clipping_cmd_t crayon_graphics_clamp_hardware_clip(const vec2_u16_t *valu
 	return clip;
 }
 
+crayon_clipping_cmd_t crayon_graphics_default_hardware_clip(){
+	crayon_clipping_cmd_t clip;
+	clip.cmd = PVR_CMD_USERCLIP;
+
+	clip.minx = 0;
+	clip.miny = 0;
+
+	// On dreamcast height can only be multiples of 32, so we don't need to check it and can instantly -1 it
+	clip.maxx = (crayon_graphics_get_window_width() >> 5) - 1;
+	clip.maxy = (crayon_graphics_get_window_height() >> 5) - 1;
+
+	return clip;
+}
+
 void crayon_graphics_set_hardware_clip(crayon_clipping_cmd_t *clip){
 	// If this is a new dimension, update last dimension and submit TA
 	if(memcmp(&__clip_window, &clip->minx, sizeof(int) * 4)){
@@ -247,13 +257,18 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 			{camera->window_x, camera->window_y},
 			{camera->window_x + camera->window_width, camera->window_y + camera->window_height}
 		};
+
 		crayon_clipping_cmd_t clip = crayon_graphics_clamp_hardware_clip(values);
 		crayon_graphics_set_hardware_clip(&clip);
 
-		// No need to software crop if this happens
+		// No need to software crop hardware crop is perfect
 		if(crayon_graphics_is_hardware_clip_exact(values)){
 			draw_option &= ~CRAYON_DRAW_SOFTWARE_CROP;
 		}
+	}
+	else {	// If we don't want to hardware crop, then we must revert to full screen
+		crayon_clipping_cmd_t clip = crayon_graphics_default_hardware_clip();
+		crayon_graphics_set_hardware_clip(&clip);
 	}
 
 	if(sprite_array->options & CRAYON_HAS_TEXTURE){	// Textured
