@@ -14,8 +14,8 @@ char *crayon_misc_get_version(){
 	crayon_misc_int_to_string(CRAYON_MINOR_NUMBER, minor_ver);
 	crayon_misc_int_to_string(CRAYON_PATCH_NUMBER, patch_ver);
 
-	// sprintf(version, "%s.%s.%s", major_ver, minor_ver, patch_ver);
-	sprintf(version, "%s.%s.%s-dev", major_ver, minor_ver, patch_ver);
+	sprintf(version, "%s.%s.%s", major_ver, minor_ver, patch_ver);
+	// sprintf(version, "%s.%s.%s-dev", major_ver, minor_ver, patch_ver);
 	return version;
 }
 
