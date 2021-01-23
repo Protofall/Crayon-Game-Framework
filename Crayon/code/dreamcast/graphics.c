@@ -59,12 +59,12 @@ uint8_t crayon_graphics_init(uint8_t poly_modes){
 	};
 	crayon_clipping_cmd_t clip = crayon_graphics_clamp_hardware_clip(values);
 
-	// We also need to submit it to take effect
-	pvr_scene_begin();
-	pvr_list_begin(PVR_LIST_OP_POLY);
-	crayon_graphics_set_hardware_clip(&clip);
-	pvr_list_finish();
-	pvr_scene_finish();
+	// // We also need to submit it to take effect
+	// pvr_scene_begin();
+	// pvr_list_begin(PVR_LIST_OP_POLY);
+	// crayon_graphics_set_hardware_clip(&clip);
+	// pvr_list_finish();
+	// pvr_scene_finish();
 
 	return 0;
 }
@@ -187,10 +187,6 @@ void crayon_graphics_set_hardware_clip(crayon_clipping_cmd_t *clip){
 		memcpy(&__clip_window, &clip->minx, sizeof(int) * 4);
 
 		pvr_prim(clip, sizeof(crayon_clipping_cmd_t));
-		printf("Swapped hardware clip. %d, %d, %d, %d\n", clip->minx, clip->miny, clip->maxx, clip->maxy);
-	}
-	else {
-		printf("No swap\n");
 	}
 
 	return;
@@ -245,20 +241,20 @@ int8_t crayon_graphics_draw_sprites(const crayon_sprite_array_t *sprite_array, c
 		// camera = &__default_camera;
 	}
 
-	// Set the clipping-region/scissor-test
-	if(draw_option & CRAYON_DRAW_HARDWARE_CROP){
-		vec2_u16_t values[2] = {
-			{camera->window_x, camera->window_y},
-			{camera->window_x + camera->window_width, camera->window_y + camera->window_height}
-		};
-		crayon_clipping_cmd_t clip = crayon_graphics_clamp_hardware_clip(values);
-		crayon_graphics_set_hardware_clip(&clip);
+	// // Set the clipping-region/scissor-test
+	// if(draw_option & CRAYON_DRAW_HARDWARE_CROP){
+	// 	vec2_u16_t values[2] = {
+	// 		{camera->window_x, camera->window_y},
+	// 		{camera->window_x + camera->window_width, camera->window_y + camera->window_height}
+	// 	};
+	// 	crayon_clipping_cmd_t clip = crayon_graphics_clamp_hardware_clip(values);
+	// 	crayon_graphics_set_hardware_clip(&clip);
 
-		// No need to software crop if this happens
-		if(crayon_graphics_is_hardware_clip_exact(values)){
-			draw_option &= ~CRAYON_DRAW_SOFTWARE_CROP;
-		}
-	}
+	// 	// No need to software crop if this happens
+	// 	if(crayon_graphics_is_hardware_clip_exact(values)){
+	// 		draw_option &= ~CRAYON_DRAW_SOFTWARE_CROP;
+	// 	}
+	// }
 
 	if(sprite_array->options & CRAYON_HAS_TEXTURE){	// Textured
 		if(draw_option & CRAYON_DRAW_ENHANCED){

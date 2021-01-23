@@ -27,7 +27,7 @@ int main(){
 		crayon_memory_mount_romdisk("/cd/font.img", "/files");
 	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_SD
 		uint8_t ret = crayon_memory_mount_romdisk("/sd/font.img", "/files");
-	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_PC
+	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_PC_LAN
 		uint8_t ret = crayon_memory_mount_romdisk("/pc/font.img", "/files");
 	#else
 		#error "UNSUPPORTED BOOT MODE"
@@ -99,7 +99,7 @@ int main(){
 		crayon_memory_mount_romdisk("/cd/sf_icon.img", "/FILES");
 	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_SD
 		uint8_t ret = crayon_memory_mount_romdisk("/sd/sf_icon.img", "/FILES");
-	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_PC
+	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_PC_LAN
 		uint8_t ret = crayon_memory_mount_romdisk("/pc/sf_icon.img", "/FILES");
 	#else
 		#error "UNSUPPORTED BOOT MODE"
