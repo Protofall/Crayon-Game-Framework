@@ -1,6 +1,6 @@
 # Crayon, framework for a new KOS project
 
-Hello! This is my main Dreamcast Homebrew project. When I started Dreamcast homebrew a few years ago, there wasn't really any existing frameworks/engines that I could use or learn from. Theres a few old abandoned ones in KOS ports, an older software-rendered OpenGL port and some other enginies that weren't publically available, so I started making my own thing. The goal of Crayon was to learn more about using the Dreamcast hardware and share it with the community so they could learn from it. Its not designed to be the best or well experience, that's why its called Crayon.
+Hello! This is my main Dreamcast Homebrew project. When I started Dreamcast homebrew a few years ago, there wasn't really any existing frameworks/engines that I could use or learn from. There's a few old abandoned ones in KOS ports, an older software-rendered OpenGL port and some other engines that weren't publically available, so I started making my own thing. The goal of Crayon was to learn more about using the Dreamcast hardware and share it with the community so they could learn from it. It's not designed to be the best or well experience, that's why it is called Crayon.
 
 `"Before you learn how to use a pencil, you use Crayons" - JamoHTP`
 
@@ -8,24 +8,24 @@ Crayon is a 2D game framework, it uses a combination of regular polygons and the
 
 Of course now we have Simulant, Kazade's GLdc, MrNeo240's Integrity Engine and nuQuake so we aren't short of alternatives anymore. Even so, maybe something here is of use to you. If you have any questions, you can find me on the Simulant discord or leave an issue on the github if you find a bug.
 
-### How to setup and Pre-requisites
+### How to setup and Prerequisites
 
 **NOTE:** So far this has only been tested on Native Ubuntu, MacOSX and WSL, but other platforms may work for you
 
-Before starting to use Crayon, you must have these pre-requisites met:
+Before starting to use Crayon, you must have these prerequisites met:
 + General knowledge of C
 + KallistiOS
 	+ As well as the KOS Port for "zlib"
 + Basic knowledge of Makefile (Later this will be SConstruct)
 + SoX for changing audio file sample rate
 
-### Installing Pre-requisites
+### Installing Prerequisites
 
 Here are some setup guides for installing KOS. I recommend downloading the latest development versions instead of the latest "Release version" so you can use the FAT file system support:
 + http://gamedev.allusion.net/softprj/kos/setup-linux.php (Mac setup is very similar to this)
 + http://gamedev.allusion.net/softprj/kos/setup-wsl.php
 
-Once that's done, go into the `Crayon` folder and run `./init.sh` which installs these pre-requisites for us:
+Once that's done, go into the `Crayon` folder and run `./init.sh` which installs these prerequisites for us:
 + ALdc2, an OpenAL implementation on Dreamcast
 + cdi4dc (Kazade's fork)
 + Texconv
@@ -35,7 +35,7 @@ Once that's done, go into the `Crayon` folder and run `./init.sh` which installs
 
 **NOTE:** You will need to change the bash script slightly if your terminal doesn't source from `~/.profile` or use the `apt-get` package manager.
 
-SoX is used for making sure WAV files' sample rates are no greater than 44.1khz and if so it will down sample it. This is because ALdc only allows up to 44.1khz since thats the best the Dreamcast can do. SoX can be installed via your package manager, for example on Debain you can run.
+SoX is used for making sure WAV files' sample rates are no greater than 44.1khz and if so it will down sample it. This is because ALdc only allows up to 44.1khz since that's the best the Dreamcast can do. SoX can be installed via your package manager, for example on Debian you can run.
 
 `sudo apt-get install sox`
 
@@ -46,9 +46,9 @@ Texturepacker should be installed with the `init.sh` script, but if it isn't the
 + Run it once, read the legal stuff (Or not) and type "agree"
 + You can now use the program
 
-### Future Pre-requisites
+### Future Prerequisites
 
-Crayon will uses SConstruct as an alternative to makefiles due to its enhanced ability. If you don't already have it installed, run this command
+Crayon will use SConstruct as an alternative to makefiles due to its enhanced ability. If you don't already have it installed, run this command
 
 `pip3 install scons`
 
@@ -75,7 +75,7 @@ Firstly I'd recommend looking at the demos provided to see what Crayon is capabl
 
 Once you feel satisfied with understanding what Crayon is capable of, copy the `New-Project` demo. You can rename the project at the top of the makefile.
 
-To find a full list of the functions/variables exposed by libCrayon navigate to `[CRAYON_ROOT]/Crayon/include/crayon/` where you will find multiple `.h` files. There are mutliple comments explaining what the functions do, hopefully they make sense to someone who isn't me, but if you have trouble understanding it, make a Github issue and I'll address it.
+To find a full list of the functions/variables exposed by libCrayon navigate to `[CRAYON_ROOT]/Crayon/include/crayon/` where you will find multiple `.h` files. There are multiple comments explaining what the functions do, hopefully they make sense to someone who isn't me, but if you have trouble understanding it, make a Github issue and I'll address it.
 
 ### How does the asset pre-processing script work?
 
@@ -85,10 +85,10 @@ This will be completely overhauled in v0.3, but at the moment this is how it wor
 + `PAL4BPP`, `PAL8BPP`, `ARGB1555`, `ARGB4444`, `RGB565`, `YUV422`: Works directories that have the `crayon_spritesheet` tag, as well as any PNG file. These tags will take the PNG and make a "DTEX" output file which is the native Dreamcast output format. The specific DTEX format will be the one that matches the tag you gave. Eg. `RGB565` will output a DTEX file where every 16-bits is a pixel with 5-bit red and blue channels and 6-bit green channel. Note that "A" stands for alpha so `ARGB1555` is just punchthrough (Similar to all GBA sprites) and `YUV422` is its own weird format.
 + `crayon_img`: Only works on directories. Once everything inside this directory has been processed, it will then turn it into a `.img` image. Used to load directories as "romdisks" on the Dreamcast
 + `crayon_gz`: Works on any file/folder. Will gz-compress it. It seems to be buggy on Dreamcast though, so don't use it.
-+ `crayon_anim`: Text files only. The just describe how a texture can be an animation sheet. The file states how many frames there are and each frame's width/height (Every frame has the same width/height)
-+ `crayon_temp`: Internal only, its a tag given to intermediate files. You can see this if you run the asset pre-processing script with `-noRM` and is useful to see if assets are being built right.
++ `crayon_anim`: Text files only. They just describe how a texture can be an animation sheet. The file states how many frames there are and each frame's width/height (Every frame has the same width/height)
++ `crayon_temp`: Internal only, it is a tag given to intermediate files. You can see this if you run the asset pre-processing script with `-noRM` and is useful to see if assets are being built right.
 
-Although not a tag, any WAV file it sees will be processed. If its > 44.1khz `sox` will lower the sample rate. It will also make all sound files mono.
+Although not a tag, any WAV file it sees will be processed. If it's > 44.1khz `sox` will lower the sample rate. It will also make all sound files mono.
 
 Any file within a tag and isn't inside a `crayon_img`, `crayon_gz` or `crayon_spritesheet` will instead be sym-linked into the right part of the `cdfs/` directory to help reduce space usage on your computer.
 
@@ -139,7 +139,7 @@ And run this command to see how many different colours are in the image
 
 **NOTE:** This does include alphas as seperate colours. This is useful if you are working with palettes and are curious how much wiggle room you may have.
 
-**NOTE:** Its up to the artist/developers to make sure that the art assets meet the BPP requirements and that the romdisk/textures/sound files will all fit in the Dreamcast's RAM nicely (Not crash). PALXBPP is X-bits per pixel and every other texture format is 16-bits per pixel.
+**NOTE:** It's up to the artist/developers to make sure that the art assets meet the BPP requirements and that the romdisk/textures/sound files will all fit in the Dreamcast's RAM nicely (Not crash). PALXBPP is X-bits per pixel and every other texture format is 16-bits per pixel.
 
 ### Credits
 
@@ -149,10 +149,10 @@ Thanks to JamoHTP for the makefile system overhaul a few years ago as well as mu
 
 Thanks Airofoil for the "dwarfy" and "James" sprites used in multiple demos.
 
-Lastly, multiple demos use the Microsoft "Tahoma" font to demonstraight the "proportionally spaced fonts". This isn't free it use in commercial products and needs to be replaced at a later date. Same goes for the "wololo" sound effect in the `Audio-Test` demo. BIOS font is as old as the ages. I don't remember who made it or what license it has.
+Lastly, multiple demos use the Microsoft "Tahoma" font to demonstrate the "proportionally spaced fonts". This isn't free to use in commercial products and needs to be replaced at a later date. Same goes for the "wololo" sound effect in the `Audio-Test` demo. BIOS font is as old as the ages. I don't remember who made it or what license it has.
 
 ### Final notes
 
-KallistiOS (KOS) is a free, BSD license-based development system for the Sega Dreamcast game console. Legal definitions really aren't my strength, they fly high above my head, so I'm probably forgetting to say something that the BSD license requires me to say. Just pretend that missing stuff is here or google what the BSD license is for yourself I guess. Also obligatory *If you use this and break something its not my fault, don't sue me ok?* message, I think thats a part of the BSD.
+KallistiOS (KOS) is a free, BSD license-based development system for the Sega Dreamcast game console. Legal definitions really aren't my strength, they fly high above my head, so I'm probably forgetting to say something that the BSD license requires me to say. Just pretend that missing stuff is here or google what the BSD license is for yourself I guess. Also obligatory *If you use this and break something its not my fault, don't sue me ok?* message, I think that's a part of the BSD.
 
 In Crayon, some of the code to load in the GZ compressed romdisk images came from dcemulation.org user "BlackAura". Crayon is a major evolution of the [PVR Spritesheet demo](https://dreamcast.wiki/PVR_Spritesheets), it has greatly expanded from that demo so much so I would say they aren't the same thing.
