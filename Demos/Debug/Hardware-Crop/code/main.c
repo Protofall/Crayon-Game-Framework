@@ -107,7 +107,6 @@ int main(){
 
 	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
-	// Just incase we use it
 	crayon_graphics_setup_palette(&BIOS_P);
 
 	uint32_t curr_btns[4] = {0};

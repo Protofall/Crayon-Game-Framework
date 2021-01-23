@@ -1,6 +1,5 @@
-# Compression
+# Fonts
 
-This shows how the Dreamcast's VQ compression works
+This demo showcases the fonts and the kinds of things you can do with them.
 
-NOTE: This example won't work right in most emulators (It works in the latest private DEMUL build, but not the 18th April 2018 public build), but it does work right on hardware. This is due to compressed textures being unsupported. To stop most emulators from crashing, comment out the line that says `crayon_graphics_draw_sprites(&Logo_Draw, PVR_LIST_PT_POLY);`
-
+We have two types of fonts, mono and proportionally spaced fonts. For mono fonts every character has the same width and height, but for proportionally spaced every character does have the same height, but they each have a different width.
