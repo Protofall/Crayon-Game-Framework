@@ -221,12 +221,12 @@ int main(){
 
 			// Choose which poly poly/list to select
 			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_DPAD_UP)){
-				if(selected_poly != 0){
+				if(selected_poly > 0){
 					selected_poly--;
 				}
 			}
 			else if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_DPAD_DOWN)){
-				if(selected_poly != 2){
+				if(selected_poly < 2){
 					selected_poly++;
 				}
 			}
