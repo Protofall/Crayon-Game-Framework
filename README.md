@@ -10,7 +10,7 @@ Of course now we have Simulant, Kazade's GLdc, MrNeo240's Integrity Engine and n
 
 ### How to setup and Pre-requisites
 
-NOTE: So far this has only been tested on Native Ubuntu, MacOSX and WSL, but other platforms may work for you
+**NOTE:** So far this has only been tested on Native Ubuntu, MacOSX and WSL, but other platforms may work for you
 
 Before starting to use Crayon, you must have these pre-requisites met:
 + General knowledge of C
@@ -33,7 +33,7 @@ Once that's done, go into the `Crayon` folder and run `./init.sh` which installs
 + TexturePacker
 + Crayon-Utilities (VMU bitmap tool, Dreamcast Savefile icon generator and Dreamcast Eyecatcher generator)
 
-NOTE: You will need to change the bash script slightly if your terminal doesn't source from `~/.profile` or use the `apt-get` package manager.
+**NOTE:** You will need to change the bash script slightly if your terminal doesn't source from `~/.profile` or use the `apt-get` package manager.
 
 SoX is used for making sure WAV files' sample rates are no greater than 44.1khz and if so it will down sample it. This is because ALdc only allows up to 44.1khz since thats the best the Dreamcast can do. SoX can be installed via your package manager, for example on Debain you can run.
 
@@ -120,7 +120,7 @@ cdfs/
 In Dreamcast/KOS VFS
 
 ```
-cd/(mount name)	#Note, this might be attached to the sd dir instead
+cd/[MOUNT_NAME]	# Note, this might be attached to the sd or pc dir instead
   |-> flowers.dtex
   |-> flowers.dtex.dpal
   |-> flowers.txt
@@ -137,9 +137,9 @@ And run this command to see how many different colours are in the image
 
 `identify -format %k "FILENAME" && echo`
 
-NOTE: This does include alphas as seperate colours. This is useful if you are working with palettes and are curious how much wiggle room you may have.
+**NOTE:** This does include alphas as seperate colours. This is useful if you are working with palettes and are curious how much wiggle room you may have.
 
-NOTE: Its up to the artist/developers to make sure that the art assets meet the BPP requirements and that the romdisk/textures/sound files will all fit in the Dreamcast's RAM nicely (Not crash). PALXBPP is X-bits per pixel and every other texture format is 16-bits per pixel.
+**NOTE:** Its up to the artist/developers to make sure that the art assets meet the BPP requirements and that the romdisk/textures/sound files will all fit in the Dreamcast's RAM nicely (Not crash). PALXBPP is X-bits per pixel and every other texture format is 16-bits per pixel.
 
 ### Credits
 
