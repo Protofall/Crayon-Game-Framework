@@ -1,16 +1,15 @@
-//Crayon libraries
+// Crayon libraries
 #include <crayon/memory.h>
 #include <crayon/graphics.h>
+#include <crayon/debug.h>
 #include <crayon/crayon.h>
 #include <crayon/input.h>
 
-//For the controller
+// For the controller
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
 
 int main(){
-	// float g_deadspace = 0.4;
-
 	// Initialise Crayon
 	if(crayon_init(CRAYON_PLATFORM_DREAMCAST, CRAYON_BOOT_OPTICAL)){
 		return 1;
@@ -25,10 +24,11 @@ int main(){
 	crayon_font_mono_t BIOS;
 	crayon_palette_t BIOS_P;
 
-	// CHANGE THIS SO ITS USING CD, SD OR PC
-	crayon_memory_mount_romdisk("/cd/stuff.img", "/files");
+	// Load our romdisk
+	crayon_memory_mount_romdisk("stuff.img", "/files", CRAYON_ADD_BASE_PATH);
 
-	int val = crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 0, "/files/BIOS.dtex");
+	int val = crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, "/files/BIOS.dtex",
+		CRAYON_USE_EXACT_PATH, 0);
 	if(val){error_freeze("Issue loading BIOS font. %d", val);}
 
 	fs_romdisk_unmount("/files");

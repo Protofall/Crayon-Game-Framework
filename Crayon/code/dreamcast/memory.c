@@ -1,16 +1,17 @@
 #include "memory.h"
 
 char *__game_base_path = NULL;
-float __MEMORY_DEBUG_VARIABLES[16] = {0};
+float __CRAYON_MEMORY_DEBUG_VARIABLES[16] = {0};
 
-int16_t crayon_memory_get_animation_id(char *name, crayon_spritesheet_t *ss){
-	uint16_t i;
-	for(i = 0; i < ss->animation_count; i++){
-		if(!strcmp(ss->animation[i].name, name)){
-			return i;
-		}
-	}
-	return -1;
+char *crayon_memory_get_full_path(char *path){
+	uint8_t game_base_path_length = strlen(__game_base_path);
+	uint8_t path_length = strlen(path);
+
+	char *real_path = malloc(sizeof(char) * (game_base_path_length + path_length + 1));
+	memcpy(real_path, __game_base_path, game_base_path_length + 1);
+	memcpy(real_path + game_base_path_length, path, path_length + 1);
+
+	return real_path;
 }
 
 uint8_t crayon_memory_load_dtex(crayon_txr_ptr_t *dtex, uint16_t *texture_width, uint16_t *texture_height,
@@ -49,9 +50,18 @@ uint8_t crayon_memory_load_dtex(crayon_txr_ptr_t *dtex, uint16_t *texture_width,
 	return dtex_result;
 }
 
-uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_t *cp, int8_t palette_id, char *path){
+uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_t *cp, char *path,
+		uint8_t use_game_base_path, int8_t palette_id){
+	char *real_path = NULL;
+	if(use_game_base_path){
+		real_path = crayon_memory_get_full_path(path);
+	}
+	else{
+		real_path = path;
+	}
+
 	uint8_t result = 0;
-	uint16_t i = 0;
+	unsigned int i = 0;
 
 	FILE *txt_file = NULL;
 	char *palette_path = NULL;
@@ -83,16 +93,16 @@ uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_
 	}
 
 	if(cp && palette_id >= 0 && bpp){	// If we pass in -1 or no cp, then we skip palettes
-		if(crayon_misc_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
+		if(crayon_misc_combine_strings(&palette_path, real_path, ".pal")){ERROR(8);}
 
-		int resultPal = crayon_memory_load_palette(cp, bpp, palette_id, palette_path);
+		int resultPal = crayon_memory_load_palette(cp, palette_path, bpp, palette_id, CRAYON_USE_EXACT_PATH);
 		// The function will modify the palette and colour count. Also it sends the BPP through
 		if(resultPal){ERROR(9 + resultPal);}
 		free(palette_path);
 		palette_path = NULL;
 	}
 
-	if(crayon_misc_change_extension(&txt_path, path, "txt")){ERROR(16);}
+	if(crayon_misc_change_extension(&txt_path, real_path, "txt")){ERROR(16);}
 
 	txt_file = fopen(txt_path, "rb");
 	if(!txt_file){ERROR(17);}
@@ -147,6 +157,10 @@ uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_
 
 	cleanup:
 
+	if(use_game_base_path){
+		free(real_path);
+	}
+
 	if(txt_file){fclose(txt_file);} // May need to enclode this in an if "res >= 12" if statement
 
 	// If a failure occured somewhere
@@ -170,7 +184,16 @@ uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_
 	return result;
 }
 
-uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palette_t *cp, int8_t palette_id, char *path){
+uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palette_t *cp, char *path,
+		uint8_t use_game_base_path, int8_t palette_id){
+	char *real_path = NULL;
+	if(use_game_base_path){
+		real_path = crayon_memory_get_full_path(path);
+	}
+	else{
+		real_path = path;
+	}
+
 	uint8_t result = 0;
 	fp->chars_per_row = NULL;
 	fp->char_width = NULL;
@@ -205,16 +228,16 @@ uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palett
 	}
 
 	if(palette_id >= 0 && bpp){	// If we pass in -1, then we skip palettes
-		if(crayon_misc_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
+		if(crayon_misc_combine_strings(&palette_path, real_path, ".pal")){ERROR(8);}
 
 		// The function will load the palette and colour count. With the specified BPP
-		int resultPal = crayon_memory_load_palette(cp, bpp, palette_id, palette_path);
+		int resultPal = crayon_memory_load_palette(cp, palette_path, bpp, palette_id, CRAYON_USE_EXACT_PATH);
 		if(resultPal){ERROR(9 + resultPal);}
 		free(palette_path);
 		palette_path = NULL;
 	}
 
-	if(crayon_misc_change_extension(&txt_path, path, "txt")){ERROR(16);}
+	if(crayon_misc_change_extension(&txt_path, real_path, "txt")){ERROR(16);}
 
 	txt_file = fopen(txt_path, "rb");
 	if(!txt_file){ERROR(17);}
@@ -232,7 +255,7 @@ uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palett
 	if(!fp->chars_per_row){ERROR(20);}
 
 	fp->num_chars = 0;
-	int i;
+	unsigned int i;
 	for(i = 0; i < fp->num_rows; i++){
 		if(crayon_misc_fget_next_int(txt_file, &number_holder)){ERROR(21);}
 		fp->chars_per_row[i] = number_holder;
@@ -277,6 +300,10 @@ uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palett
 
 	cleanup:
 
+	if(use_game_base_path){
+		free(real_path);
+	}
+
 	if(txt_file){fclose(txt_file);}
 
 	// If an error occured, free these things
@@ -294,7 +321,16 @@ uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palett
 	return result;
 }
 
-uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, int8_t palette_id, char *path){
+uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, char *path,
+		uint8_t use_game_base_path, int8_t palette_id){
+	char *real_path = NULL;
+	if(use_game_base_path){
+		real_path = crayon_memory_get_full_path(path);
+	}
+	else{
+		real_path = path;
+	}
+
 	uint8_t result = 0;
 	
 	fm->texture = NULL;
@@ -326,17 +362,17 @@ uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palett
 	}
 
 	if(cp && palette_id >= 0 && bpp){	// If we pass in -1, then we skip palettes
-		if(crayon_misc_combine_strings(&palette_path, path, ".pal")){ERROR(8);}
+		if(crayon_misc_combine_strings(&palette_path, real_path, ".pal")){ERROR(8);}
 		
 		cp->palette = NULL;
 		// The function will load the palette and colour count. With the specified BPP
-		uint8_t resultPal = crayon_memory_load_palette(cp, bpp, palette_id, palette_path);
+		uint8_t resultPal = crayon_memory_load_palette(cp, palette_path, bpp, palette_id, CRAYON_USE_EXACT_PATH);
 		if(resultPal){ERROR(9 + resultPal);}
 		free(palette_path);
 		palette_path = NULL;
 	}
 
-	if(crayon_misc_change_extension(&txt_path, path, "txt")){ERROR(16);}
+	if(crayon_misc_change_extension(&txt_path, real_path, "txt")){ERROR(16);}
 
 	// Read the info file ( Format "NUM1\sNUM2\sNUM3\sNUM4\n" )
 	txt_file = fopen(txt_path, "rb");
@@ -363,6 +399,10 @@ uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palett
 
 	cleanup:
 
+	if(use_game_base_path){
+		free(real_path);
+	}
+
 	if(txt_file){fclose(txt_file);}
 
 	// If a failure occured somewhere after loading texture
@@ -377,7 +417,16 @@ uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palett
 	return result;
 }
 
-uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, int8_t palette_id, char *path){
+uint8_t crayon_memory_load_palette(crayon_palette_t *cp, char *path, int8_t bpp, int8_t palette_id,
+		uint8_t use_game_base_path){
+	char *real_path = NULL;
+	if(use_game_base_path){
+		real_path = crayon_memory_get_full_path(path);
+	}
+	else{
+		real_path = path;
+	}
+
 	uint8_t result = 0;
 	FILE *palette_file = NULL;
 
@@ -385,7 +434,7 @@ uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, int8_t pale
 
 	if(!cp){PAL_ERROR(1);}
 	
-	palette_file = fopen(path, "rb");
+	palette_file = fopen(real_path, "rb");
 	if(!palette_file){PAL_ERROR(2);}
 
 	dpal_header_t dpal_header;
@@ -406,6 +455,10 @@ uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, int8_t pale
 	cp->palette_id = palette_id;
 
 	PAL_cleanup:
+
+	if(use_game_base_path){
+		free(real_path);
+	}
 
 	if(palette_file){fclose(palette_file);}
 	if(result > 5){free(cp->palette); cp->palette = NULL;}
@@ -1154,23 +1207,53 @@ int8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array){
 	return 0;
 }
 
-int8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint){
+int8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint, uint8_t use_game_base_path){
+	char *real_filename;
+	if(use_game_base_path){
+		real_filename = crayon_memory_get_full_path(filename);
+	}
+	else{
+		real_filename = filename;
+	}
+
+	// TODO: Later add check to see if theres enough available main ram
+	;
+
 	void *buffer;
-	ssize_t size = fs_load(filename, &buffer); // Loads the file "filename" into RAM
+	ssize_t size = fs_load(real_filename, &buffer); // Loads the file into RAM
+
+	// Free the temp string since we don't need it anymore
+	if(use_game_base_path){
+		free(real_filename);
+	}
 
 	if(size == -1){
 		return 1;
 	}
 	
 	fs_romdisk_mount(mountpoint, buffer, 1); // Now mount that file as a romdisk, buffer will be freed when romdisk is unmounted
+
 	return 0;
 }
 
-int8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint){
-	void *buffer;
-	int length = zlib_getlength(filename);
+int8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint, uint8_t use_game_base_path){
+	char *real_filename;
+	if(use_game_base_path){
+		real_filename = crayon_memory_get_full_path(filename);
+	}
+	else{
+		real_filename = filename;
+	}
 
-	// Later add check to see if theres enough available main ram
+	void *buffer;
+	int length = zlib_getlength(real_filename);
+
+	// Free the temp string since we don't need it anymore
+	if(use_game_base_path){
+		free(real_filename);
+	}
+
+	// TODO: Later add check to see if theres enough available main ram
 	;
 
 	if(length == 0){
@@ -1193,6 +1276,7 @@ int8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint){
 	gzclose(file);
 
 	fs_romdisk_mount(mountpoint, buffer, 1);
+
 	return 0;
 }
 
@@ -1459,6 +1543,16 @@ uint8_t crayon_memory_set_frame_uv(crayon_sprite_array_t *sprites, uint16_t inde
 		return 0;
 	}
 	return 1;
+}
+
+int16_t crayon_memory_get_animation_id(char *name, crayon_spritesheet_t *ss){
+	unsigned int i;
+	for(i = 0; i < ss->animation_count; i++){
+		if(!strcmp(ss->animation[i].name, name)){
+			return i;
+		}
+	}
+	return -1;
 }
 
 void crayon_memory_move_camera_x(crayon_viewport_t *camera, float x){

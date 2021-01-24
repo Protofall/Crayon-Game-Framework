@@ -1,76 +1,18 @@
-//Crayon libraries
+// Crayon libraries
 #include <crayon/memory.h>
 #include <crayon/graphics.h>
 #include <crayon/misc.h>
 #include <crayon/debug.h>
-
 #include <crayon/crayon.h>
 
-//For region and htz stuff
-#include <dc/flashrom.h>
-
-//For the controller
+// For the controller
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
 
-#if CRAYON_BOOT_MODE == 1
-	//For mounting the sd dir
-	#include <dc/sd.h>
-	#include <kos/blockdev.h>
-	#include <fat/fs_fat.h>
-#endif
-
-
-#if CRAYON_BOOT_MODE == 1
-	#define MNT_MODE FS_FAT_MOUNT_READONLY
-
-	static void unmount_fat_sd(){
-		fs_fat_unmount("/sd");
-		fs_fat_shutdown();
-		sd_shutdown();
-	}
-
-	static int mount_fat_sd(){
-		kos_blockdev_t sd_dev;
-		uint8 partition_type;
-
-		// Initialize the sd card if its present
-		if(sd_init()){
-			return 1;
-		}
-
-		// Grab the block device for the first partition on the SD card. Note that
-		// you must have the SD card formatted with an MBR partitioning scheme
-		if(sd_blockdev_for_partition(0, &sd_dev, &partition_type)){
-			return 2;
-		}
-
-		// Check to see if the MBR says that we have a valid partition
-		// if(partition_type != 0x83){
-			//I don't know what value I should be comparing against, hence this check is disabled for now
-			// This: https://en.wikipedia.org/wiki/Partition_type
-				//Suggests there's multiple types for FAT...not sure how to handle this
-			// return 3;
-		// }
-
-		// Initialize fs_fat and attempt to mount the device
-		if(fs_fat_init()){
-			return 4;
-		}
-
-		//Mount the SD card to the sd dir in the VFS
-		if(fs_fat_mount("/sd", &sd_dev, MNT_MODE)){
-			return 5;
-		}
-		return 0;
-	}
-
-#endif
-
 float thumbstick_int_to_float(int joy){
-	float ret_val;	//Range from -1 to 1
+	float ret_val;	// Range from -1 to 1
 
-	if(joy > 0){	//Converting from -128, 127 to -1, 1
+	if(joy > 0){	// Converting from -128, 127 to -1, 1
 		ret_val = joy / 127.0;
 	}
 	else{
@@ -100,14 +42,14 @@ void set_msg(char * buffer, uint8_t code){
 	return;
 }
 
-//0 = frame_id
-//1 = colour
-//2 = fade
-//3 = scale x
-//4 = scale y
-//5 = flip
-//6 = rotate
-//7 = layer
+// 0 = frame_id
+// 1 = colour
+// 2 = fade
+// 3 = scale x
+// 4 = scale y
+// 5 = flip
+// 6 = rotate
+// 7 = layer
 void set_msg_option(char * buffer, uint8_t option, uint8_t sub_option, uint8_t sprite){
 	uint8_t holder_value_u8;
 	switch(option){
@@ -169,68 +111,37 @@ void set_msg_sprite(char * buffer, uint8_t sprite){
 }
 
 int main(){
-	#if CRAYON_BOOT_MODE == 1
-		int sdRes = mount_fat_sd();	//This function should be able to mount a FAT32 formatted sd card to the /sd dir
-		// int sdRes = crayon_sd_mount_fat();
-		if(sdRes != 0){
-			error_freeze("SD card couldn't be mounted: %d", sdRes);
-		}
-	#endif
+	// Initialise Crayon
+	if(crayon_init(CRAYON_PLATFORM_DREAMCAST, CRAYON_BOOT_OPTICAL)){
+		return 1;
+	}
 
-	// error_freeze("Hey");
-
-	crayon_graphics_init(CRAYON_ENABLE_OP | CRAYON_ENABLE_PT | CRAYON_ENABLE_TR);
-
-	// error_freeze("Hey");
-
-	// // Initialise Crayon
-	// if(crayon_init(CRAYON_PLATFORM_DREAMCAST, CRAYON_BOOT_MODE)){
-	// 	return 1;
-	// }
-
-	//load in assets here
+	// Load in assets here
 	crayon_sprite_array_t Highlight_Draw;
 	crayon_spritesheet_t Faces_SS;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Faces_P, BIOS_P;
 
-	#if CRAYON_BOOT_MODE == 0
-		uint8_t mount_res = crayon_memory_mount_romdisk("/cd/stuff.img", "/stuff");
-	#elif CRAYON_BOOT_MODE == 1
-		uint8_t mount_res = crayon_memory_mount_romdisk("/sd/stuff.img", "/stuff");
-	#elif CRAYON_BOOT_MODE == 2
-		uint8_t mount_res = crayon_memory_mount_romdisk("/pc/stuff.img", "/stuff");
-	#else
-		#error "Invalid crayon boot mode"
-	#endif
-
-	// error_freeze("Hey");	// Gets stuck before here
+	uint8_t mount_res = crayon_memory_mount_romdisk("stuff.img", "/stuff", CRAYON_ADD_BASE_PATH);
 
 	if(mount_res){
 		error_freeze("Failed to load stuff. %d, %s", __sd_present, __game_base_path);
 	}
 
-	if(crayon_memory_load_spritesheet(&Faces_SS, &Faces_P, 0, "/stuff/opaque.dtex")){
+	if(crayon_memory_load_spritesheet(&Faces_SS, &Faces_P, "/stuff/opaque.dtex",
+			CRAYON_USE_EXACT_PATH, 0)){
 		error_freeze("Couldn't load faces");
 	}
 
-	if(crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 1, "/stuff/BIOS.dtex")){
+	if(crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, "/stuff/BIOS.dtex",
+			CRAYON_USE_EXACT_PATH, 1)){
 		error_freeze("Couldn't load BIOS font");
 	}
 
 	fs_romdisk_unmount("/stuff");
 
-	// error_freeze("ALMOST DONE");
-
-	#if CRAYON_BOOT_MODE == 1
-		// crayon_sd_unmount_fat();
-		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
-	#endif
-
-	// error_freeze("MADE IT");
-
 	uint8_t error = 0;
-	uint8_t i;
+	unsigned int i;
 	for(i = 0; i < 3; i++){
 		error = crayon_memory_init_sprite_array(&Faces_Draw[i], &Faces_SS, 0, &Faces_P, 1, 1, 0, PVR_FILTER_NONE, 0);
 		if(error){break;}
@@ -251,7 +162,9 @@ int main(){
 		if(error){break;}
 	}
 
-	if(error){error_freeze("An error in sprite arrays occurred");}
+	if(error){
+		error_freeze("An error in sprite arrays occurred");
+	}
 
 	frame_indexes[0] = 0;
 	frame_indexes[1] = 1;
@@ -265,7 +178,7 @@ int main(){
 	uint32_t holder_value_u32 = 0;
 	uint8_t escape = 0;
 
-	//The highlight box (Most of the details are set below)
+	// The highlight box (Most of the details are set below)
 	error = crayon_memory_init_sprite_array(&Highlight_Draw, NULL, 0, NULL, 1, 1, 0, PVR_FILTER_NONE, 0);
 	if(error){error_freeze("An error in sprite arrays occurred");}
 	error += crayon_memory_set_colour(&Highlight_Draw, 0, 0x88FF0000);
@@ -275,21 +188,21 @@ int main(){
 	uint8_t hide_msg = 0;
 	char msg[1024];
 	char msg_option[80];
-	//0 = frame_id
-	//1 = colour
-	//2 = fade
-	//3 = Blend/Add colour modes
-	//4 = scale x
-	//5 = scale y
-	//6 = flip
-	//7 = rotate
-	//8 = layer
+	// 0 = frame_id
+	// 1 = colour
+	// 2 = fade
+	// 3 = Blend/Add colour modes
+	// 4 = scale x
+	// 5 = scale y
+	// 6 = flip
+	// 7 = rotate
+	// 8 = layer
 	char msg_sprite[16];
 	set_msg(msg, 0);
 	set_msg_option(msg_option, option, sub_option, sprite);
 	set_msg_sprite(msg_sprite, sprite);
 
-	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
+	crayon_graphics_set_bg_colour(0.3, 0.3, 0.3); // Its useful-ish for debugging
 
 	crayon_graphics_setup_palette(&Faces_P);
 	crayon_graphics_setup_palette(&BIOS_P);
@@ -302,7 +215,7 @@ int main(){
 		pvr_wait_ready();
 		MAPLE_FOREACH_BEGIN(MAPLE_FUNC_CONTROLLER, cont_state_t, st)
 
-			//Choose option
+			// Choose option
 			if((st->ltrig > 0xFF * 0.1) && (prev_trigs[__dev->port].x <= 0xFF * 0.1)){
 				if(option == 0){option = max_options - 1;}
 				else{option--;}
@@ -316,7 +229,7 @@ int main(){
 				set_msg_option(msg_option, option, sub_option, sprite);
 			}
 
-			//Choose sprite
+			// Choose sprite
 			if((st->buttons & CONT_A) && !(prev_btns[__dev->port] & CONT_A)){
 				sprite++;
 				sprite %= 3;
@@ -324,7 +237,7 @@ int main(){
 				set_msg_option(msg_option, option, sub_option, sprite);	//To update the var
 			}
 
-			//Hid HUD text
+			// Hide HUD text
 			if((st->buttons & CONT_Y) && !(prev_btns[__dev->port] & CONT_Y)){
 				hide_msg = !hide_msg;
 			}
@@ -342,7 +255,7 @@ int main(){
 				Faces_Draw[sprite].coord[0].y += (thumb.y * 2.5);
 			}
 
-			//For ones we want to keep increasing per frame
+			// For ones we want to keep increasing per frame
 			if((st->buttons & CONT_DPAD_UP)){
 				switch(option){
 				case 1:
@@ -420,7 +333,7 @@ int main(){
 					break;
 				}
 			}
-			//Decrease value
+			// Decrease value
 			if((st->buttons & CONT_DPAD_DOWN)){
 				switch(option){
 				case 1:
@@ -499,7 +412,7 @@ int main(){
 				}
 			}
 
-			//Change between sub values (ARGB)
+			// Change between sub values (ARGB)
 			if(option == 1){
 				if((st->buttons & CONT_DPAD_LEFT) && !(prev_btns[__dev->port] & CONT_DPAD_LEFT)){
 					if(sub_option != 0){
@@ -517,7 +430,7 @@ int main(){
 				}
 			}
 
-			//Store the buttons and triggers for next loop
+			// Store the buttons and triggers for next loop
 			prev_btns[__dev->port] = st->buttons;
 			prev_trigs[__dev->port].x = st->ltrig;
 			prev_trigs[__dev->port].y = st->rtrig;
@@ -564,7 +477,7 @@ int main(){
 	crayon_memory_free_sprite_array(&Faces_Draw[2]);
 	crayon_memory_free_sprite_array(&Highlight_Draw);
 
-	pvr_shutdown();
+	crayon_shutdown();
 
 	return 0;
 }

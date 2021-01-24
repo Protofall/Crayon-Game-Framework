@@ -4,9 +4,6 @@
 #include <crayon/debug.h>
 #include <crayon/crayon.h>
 
-// For region and htz stuff
-#include <dc/flashrom.h>
-
 // For the controller
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
@@ -17,8 +14,6 @@ int main(){
 		error_freeze("Unable to initialise crayon");
 	}
 
-	srand(time(0));	// Set the seed for rand()
-
 	crayon_spritesheet_t Dwarf_SS;
 	crayon_sprite_array_t Dwarf_Draw_Flip, Dwarf_Draw_Rotate, Dwarf_Draw_Scale, Dwarf_Draw_Frame,
 		Dwarf_Draw_Colour_Blend, Dwarf_Draw_Colour_Add, Dwarf_Draw_Mash;
@@ -26,19 +21,13 @@ int main(){
 	crayon_palette_t BIOS_P;
 
 	// Load the romdisk
-	#if CRAYON_BOOT_MODE == 2
-		crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
-	#elif CRAYON_BOOT_MODE == 1
-		crayon_memory_mount_romdisk("/sd/stuff.img", "/files");
-	#elif CRAYON_BOOT_MODE == 0
-		crayon_memory_mount_romdisk("/cd/stuff.img", "/files");
-	#else
-		#error Invalid CRAYON_BOOT_MODE value
-	#endif
+	crayon_memory_mount_romdisk("stuff.img", "/files", CRAYON_ADD_BASE_PATH);
 
 	// Load the asset
-	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 0, "/files/BIOS_font.dtex");
-	crayon_memory_load_spritesheet(&Dwarf_SS, NULL, -1, "/files/sprite.dtex");
+	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, "/files/BIOS_font.dtex",
+		CRAYON_USE_EXACT_PATH, 0);
+	crayon_memory_load_spritesheet(&Dwarf_SS, NULL, "/files/sprite.dtex",
+		CRAYON_USE_EXACT_PATH, -1);
 
 	fs_romdisk_unmount("/files");
 
@@ -300,6 +289,8 @@ int main(){
 	crayon_memory_free_mono_font_sheet(&BIOS);
 
 	crayon_memory_free_palette(&BIOS_P);
+
+	crayon_shutdown();
 
 	return 0;
 }

@@ -23,17 +23,10 @@ int main(){
 	crayon_font_mono_t BIOS;
 	crayon_palette_t BIOS_P;
 
-	#if CRAYON_BOOT_MODE == CRAYON_BOOT_OPTICAL
-		crayon_memory_mount_romdisk("/cd/font.img", "/files");
-	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_SD
-		uint8_t ret = crayon_memory_mount_romdisk("/sd/font.img", "/files");
-	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_PC_LAN
-		uint8_t ret = crayon_memory_mount_romdisk("/pc/font.img", "/files");
-	#else
-		#error "UNSUPPORTED BOOT MODE"
-	#endif
+	crayon_memory_mount_romdisk("font.img", "/files", CRAYON_ADD_BASE_PATH);
 
-	int val = crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 0, "/files/BIOS.dtex");
+	int val = crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, "/files/BIOS.dtex",
+		CRAYON_USE_EXACT_PATH, 0);
 	if(val){
 		error_freeze("Issue loading BIOS font. %d", val);
 	}
@@ -95,15 +88,7 @@ int main(){
 
 	crayon_savefile_details_t savefile_details;
 
-	#if CRAYON_BOOT_MODE == CRAYON_BOOT_OPTICAL
-		crayon_memory_mount_romdisk("/cd/sf_icon.img", "/FILES");
-	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_SD
-		uint8_t ret = crayon_memory_mount_romdisk("/sd/sf_icon.img", "/FILES");
-	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_PC_LAN
-		uint8_t ret = crayon_memory_mount_romdisk("/pc/sf_icon.img", "/FILES");
-	#else
-		#error "UNSUPPORTED BOOT MODE"
-	#endif
+	crayon_memory_mount_romdisk("/sf_icon.img", "/FILES", CRAYON_ADD_BASE_PATH);
 
 	uint8_t setup_res = setup_savefile(&savefile_details);
 
@@ -191,6 +176,8 @@ int main(){
 
 	crayon_memory_free_mono_font_sheet(&BIOS);
 	crayon_memory_free_palette(&BIOS_P);
+
+	crayon_shutdown();
 
 	return 0;
 }

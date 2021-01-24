@@ -15,6 +15,8 @@ extern int zlib_getlength(char *filename);	// Because zlib.h won't declare it fo
 
 // This is set in crayon_init(). Its the /cd/, /sd/ or /pc/ before every file access
 extern char *__game_base_path;
+#define CRAYON_ADD_BASE_PATH 1
+#define CRAYON_USE_EXACT_PATH 0
 
 #define DTEX_TXRFMT(x) (7 & (x >> 27))	// Gets the 3 bits for format
 typedef struct dtex_header{
@@ -31,14 +33,14 @@ typedef struct dpal_header{
 } dpal_header_t;
 
 // This var's purpose is to make debugging the memory stuff such as the reference lists and other memory functions much easier
-extern float __MEMORY_DEBUG_VARIABLES[16];
+extern float __CRAYON_MEMORY_DEBUG_VARIABLES[16];
 
-//------------------Checking memory------------------//
-
-// Gets the index of an animation
-int16_t crayon_memory_get_animation_id(char *name, crayon_spritesheet_t *ss);
 
 //------------------Allocating memory------------------//
+
+
+// Returns a string thats "__game_base_path" with "path" on the end
+char *crayon_memory_get_full_path(char *path);
 
 // Reads a dtex file and loads it into vram
 uint8_t crayon_memory_load_dtex(crayon_txr_ptr_t *dtex, uint16_t *texture_width, uint16_t *texture_height,
@@ -46,18 +48,22 @@ uint8_t crayon_memory_load_dtex(crayon_txr_ptr_t *dtex, uint16_t *texture_width,
 
 // Loads a "crayon_spritesheet" spritesheet into memory
 	// If cp is NULL OR palette_id is < 0, then it won't attempt to load a palette
-uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_t *cp, int8_t palette_id, char *path);
+uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_t *cp, char *path,
+	uint8_t use_game_base_path, int8_t palette_id);
 
 // Loads a proportionally-spaced fontsheet into memory
 	// cp and palette_id are same as above
-uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palette_t *cp, int8_t palette_id, char *path);
+uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palette_t *cp, char *path,
+	uint8_t use_game_base_path, int8_t palette_id);
 
 // Loads a mono-spaced fontsheet into memory
 	// cp and palette_id are same as above
-uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, int8_t palette_id, char *path);
+uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, char *path,
+	uint8_t use_game_base_path, int8_t palette_id);
 
 // If given a valid path and a crayon_palette struct, it will populate the palette object with the correct data
-uint8_t crayon_memory_load_palette(crayon_palette_t *cp, int8_t bpp, int8_t palette_id, char *path);
+uint8_t crayon_memory_load_palette(crayon_palette_t *cp, char *path, int8_t bpp, int8_t palette_id,
+	uint8_t use_game_base_path);
 
 // This will make a new palette struct thats a copy of another one.
 uint8_t crayon_memory_clone_palette(crayon_palette_t *original, crayon_palette_t *copy, int8_t palette_id);
@@ -118,6 +124,7 @@ void crayon_memory_set_defaults_sprite_array(crayon_sprite_array_t *sprite_array
 // Quicksort implementation from: https://www.geeksforgeeks.org/quick-sort/
 void crayon_memory_quick_sort(uint16_t *arr, int low, int high);	// Call with low = 0 and high = Index of last element
 
+
 //------------------Freeing memory------------------//
 
 
@@ -139,6 +146,7 @@ int8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array);
 // Frees the texture itself
 void crayon_memory_free_txr(crayon_txr_ptr_t *ptr);
 
+// TODO why do we have a macro with the same signature as the function above?
 #define crayon_memory_free_txr(txr) pvr_mem_free(txr)
 
 
@@ -146,10 +154,10 @@ void crayon_memory_free_txr(crayon_txr_ptr_t *ptr);
 
 
 // Mount a regular img romdisk
-int8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint);
+int8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint, uint8_t use_game_base_path);
 
 // Mount a gz compressed romdisk (Apparently its kinda dodgy)
-int8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint);
+int8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint, uint8_t use_game_base_path);
 
 
 //------------------Render Struct Getters------------------//
@@ -191,6 +199,10 @@ uint8_t crayon_memory_set_frame_uv(crayon_sprite_array_t *sprites, uint16_t inde
 
 
 //--------------------------Misc--------------------------//
+
+
+// Gets the index of an animation
+int16_t crayon_memory_get_animation_id(char *name, crayon_spritesheet_t *ss);
 
 void crayon_memory_move_camera_x(crayon_viewport_t *camera, float x);
 void crayon_memory_move_camera_y(crayon_viewport_t *camera, float y);

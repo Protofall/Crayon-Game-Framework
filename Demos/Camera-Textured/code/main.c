@@ -4,6 +4,8 @@
 #include <crayon/graphics.h>
 #include <crayon/input.h>
 #include <crayon/misc.h>
+#include <crayon/debug.h>
+#include <crayon/crayon.h>
 
 #include <dc/maple.h>
 #include <dc/maple/controller.h> // For the "Press start to exit" thing
@@ -12,16 +14,16 @@
 
 // Char count below is incorrect
 
-//Char count:
-//63
-//28
-//27
-//39
-//68
-//72
-//27
-//29
-//Total: 353
+// Char count:
+// 63
+// 28
+// 27
+// 39
+// 68
+// 72
+// 27
+// 29
+// Total: 353
 void set_msg(char *buffer){
 	strcpy(buffer,
 		"A: Cycles through cameras\n"
@@ -81,6 +83,7 @@ int8_t check_james_dir(vec2_f_t distance){
 	if(x_dir < 4){
 		return x_dir;
 	}
+
 	return 0;	// Should never get here
 }
 
@@ -165,24 +168,37 @@ char *crop_mode(uint8_t crop_oob_mode){
 }
 
 int main(){
-	crayon_graphics_init(CRAYON_ENABLE_OP | CRAYON_ENABLE_TR | CRAYON_ENABLE_PT);
+	// Note: First parameter is ignore for now since Crayon is only on Dreamcast ATM
+	if(crayon_init(CRAYON_PLATFORM_DREAMCAST, CRAYON_BOOT_MODE)){
+		error_freeze("Crayon failed to initialise");
+	}
 
 	crayon_spritesheet_t Dwarf, Opaque, Man, Characters;
-	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw, Red_Man_Draw, Green_Man_Draw, Man_BG, James_Draw;
+	crayon_sprite_array_t Dwarf_Draw, Rainbow_Draw, Frames_Draw,
+		Red_Man_Draw, Green_Man_Draw, Man_BG, James_Draw;
+
 	#define NUM_CAMERAS 5
 	crayon_sprite_array_t Cam_BGs[NUM_CAMERAS];
+
 	crayon_font_prop_t Tahoma;
 	crayon_font_mono_t BIOS;
 	crayon_palette_t Tahoma_P, BIOS_P, Red_Man_P, Green_Man_P;
 
-	crayon_memory_mount_romdisk("/cd/colourMod.img", "/files");
+	// Load the romdisk (Crayon will automatically add the cd/, sd/ or pc/ to the front)
+	crayon_memory_mount_romdisk("colourMod.img", "/files", CRAYON_ADD_BASE_PATH);
 
-	crayon_memory_load_prop_font_sheet(&Tahoma, &Tahoma_P, 0, "/files/Fonts/Tahoma_font.dtex");
-	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 1, "/files/Fonts/BIOS_font.dtex");
-	crayon_memory_load_spritesheet(&Dwarf, NULL, -1, "/files/Dwarf.dtex");
-	crayon_memory_load_spritesheet(&Opaque, NULL, -1, "/files/Opaque.dtex");
-	crayon_memory_load_spritesheet(&Man, &Red_Man_P, 2, "/files/Man.dtex");	// Palette 3 will be reserved for Green Man
-	crayon_memory_load_spritesheet(&Characters, NULL, 4, "/files/Characters.dtex");	// Since it has 23 colours, we'll just use ARGB1555
+	crayon_memory_load_prop_font_sheet(&Tahoma, &Tahoma_P, "/files/Fonts/Tahoma_font.dtex",
+		CRAYON_USE_EXACT_PATH, 0);
+	crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, "/files/Fonts/BIOS_font.dtex",
+		CRAYON_USE_EXACT_PATH, 1);
+	crayon_memory_load_spritesheet(&Dwarf, NULL, "/files/Dwarf.dtex",
+		CRAYON_USE_EXACT_PATH, -1);
+	crayon_memory_load_spritesheet(&Opaque, NULL, "/files/Opaque.dtex",
+		CRAYON_USE_EXACT_PATH, -1);
+	crayon_memory_load_spritesheet(&Man, &Red_Man_P, "/files/Man.dtex",
+		CRAYON_USE_EXACT_PATH, 2);	// Palette 3 will be reserved for Green Man
+	crayon_memory_load_spritesheet(&Characters, NULL, "/files/Characters.dtex",
+		CRAYON_USE_EXACT_PATH, 4);	// Since it has 23 colours, we'll just use ARGB1555
 
 	fs_romdisk_unmount("/files");
 
@@ -824,7 +840,11 @@ int main(){
 	retVal += crayon_memory_free_sprite_array(&Cam_BGs[2]);
 	retVal += crayon_memory_free_sprite_array(&Cam_BGs[3]);
 
-	pvr_shutdown();
+	if(retVal){
+		error_freeze("An error occured in shutdown");
+	}
+
+	crayon_shutdown();
 
 	return retVal;
 }

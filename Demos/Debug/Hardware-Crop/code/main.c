@@ -3,6 +3,7 @@
 #include <crayon/graphics.h>
 #include <crayon/crayon.h>
 #include <crayon/input.h>
+#include <crayon/debug.h>
 
 //For the controller
 #include <dc/maple.h>
@@ -23,21 +24,14 @@ int main(){
 	crayon_font_mono_t BIOS;
 	crayon_palette_t BIOS_P;
 
-	#if CRAYON_BOOT_MODE == CRAYON_BOOT_OPTICAL
-		uint8_t ret = crayon_memory_mount_romdisk("/cd/stuff.img", "/files");
-	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_SD
-		uint8_t ret = crayon_memory_mount_romdisk("/sd/stuff.img", "/files");
-	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_PC_LAN
-		uint8_t ret = crayon_memory_mount_romdisk("/pc/stuff.img", "/files");
-	#else
-		#error "UNSUPPORTED BOOT MODE"
-	#endif
+	uint8_t ret = crayon_memory_mount_romdisk("stuff.img", "/files", CRAYON_ADD_BASE_PATH);
 
 	if(ret){
 		error_freeze("Failed to load. %d, %s", __sd_present, __game_base_path);
 	}
 
-	int val = crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, 0, "/files/BIOS.dtex");
+	int val = crayon_memory_load_mono_font_sheet(&BIOS, &BIOS_P, "/files/BIOS.dtex",
+		CRAYON_USE_EXACT_PATH, 0);
 	if(val){error_freeze("Issue loading BIOS font. %d", val);}
 
 	fs_romdisk_unmount("/files");

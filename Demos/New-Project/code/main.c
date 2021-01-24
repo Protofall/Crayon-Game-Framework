@@ -26,20 +26,13 @@ void hz_select(crayon_sprite_array_t *fade_draw){
 
 	crayon_font_mono_t BIOS_font;
 
-	#if CRAYON_BOOT_MODE == CRAYON_BOOT_OPTICAL
-		crayon_memory_mount_romdisk("/cd/stuff.img", "/Setup");
-	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_SD
-		crayon_memory_mount_romdisk("/sd/stuff.img", "/Setup");
-	#elif CRAYON_BOOT_MODE == CRAYON_BOOT_PC_LAN
-		crayon_memory_mount_romdisk("/pc/stuff.img", "/Setup");
-	#else
-		#error "Invalid CRAYON_BOOT_MODE"
-	#endif
+	crayon_memory_mount_romdisk("stuff.img", "/Setup", CRAYON_ADD_BASE_PATH);
 
 	crayon_palette_t BIOS_P;		// Entry 0
 	crayon_palette_t BIOS_Red_P;	// Entry 1
 
-	crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 0, "/Setup/BIOS.dtex");
+	crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, "/Setup/BIOS.dtex",
+		CRAYON_USE_EXACT_PATH, 0);
 
 	fs_romdisk_unmount("/Setup");
 
@@ -224,6 +217,8 @@ int main(){
 	}
 
 	crayon_memory_free_sprite_array(&fade_draw);
+
+	crayon_shutdown();
 
 	return 0;
 }

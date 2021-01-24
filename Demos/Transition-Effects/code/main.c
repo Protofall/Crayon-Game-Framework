@@ -1,79 +1,18 @@
-//Crayon libraries
+// Crayon libraries
 #include <crayon/memory.h>
 #include <crayon/graphics.h>
+#include <crayon/input.h>
+#include <crayon/debug.h>
 #include <crayon/crayon.h>
 
-//For region and hz stuff
-#include <dc/flashrom.h>
-
-//For the controller
+// For the controller
 #include <dc/maple.h>
 #include <dc/maple/controller.h>
 
-#if CRAYON_BOOT_MODE == 1
-	//For mounting the sd dir
-	#include <dc/sd.h>
-	#include <kos/blockdev.h>
-	#include <fat/fs_fat.h>
-#endif
-
-
-#if CRAYON_BOOT_MODE == 1
-	#define MNT_MODE FS_FAT_MOUNT_READONLY
-
-	static void unmount_fat_sd(){
-		fs_fat_unmount("/sd");
-		fs_fat_shutdown();
-		sd_shutdown();
-	}
-
-	static int mount_fat_sd(){
-		kos_blockdev_t sd_dev;
-		uint8 partition_type;
-
-		// Initialize the sd card if its present
-		if(sd_init()){
-			return 1;
-		}
-
-		// Grab the block device for the first partition on the SD card. Note that
-		// you must have the SD card formatted with an MBR partitioning scheme
-		if(sd_blockdev_for_partition(0, &sd_dev, &partition_type)){
-			return 2;
-		}
-
-		// Check to see if the MBR says that we have a valid partition
-		// if(partition_type != 0x83){
-			//I don't know what value I should be comparing against, hence this check is disabled for now
-			// This: https://en.wikipedia.org/wiki/Partition_type
-				//Suggests there's multiple types for FAT...not sure how to handle this
-			// return 3;
-		// }
-
-		// Initialize fs_fat and attempt to mount the device
-		if(fs_fat_init()){
-			return 4;
-		}
-
-		//Mount the SD card to the sd dir in the VFS
-		if(fs_fat_mount("/sd", &sd_dev, MNT_MODE)){
-			return 5;
-		}
-		return 0;
-	}
-
-#endif
-
 void set_indexes(uint16_t * indexes, uint16_t size){
-	#if CRAYON_BOOT_MODE == 0
-		FILE * fp = fopen("cd/boxy_indexes.bin", "rb");
-	#elif CRAYON_BOOT_MODE == 1
-		FILE * fp = fopen("sd/boxy_indexes.bin", "rb");
-	#elif CRAYON_BOOT_MODE == 2
-		FILE * fp = fopen("pc/boxy_indexes.bin", "rb");
-	#else
-		#error "Invalid CRAYON_BOOT_MODE"
-	#endif
+	char *path = crayon_memory_get_full_path("boxy_indexes.bin");
+	FILE * fp = fopen(path, "rb");
+	free(path);
 
 	fread(indexes, sizeof(uint16_t), size, fp);
 	fclose(fp);
@@ -81,15 +20,15 @@ void set_indexes(uint16_t * indexes, uint16_t size){
 }
 
 void modify_fade_effect(crayon_transition_t * effect, void * params){
-	if(params != NULL){return;}	//This only exists to make the compiler shut up
+	if(params != NULL){return;}	// This only exists to make the compiler shut up
 	effect->draw->colour[0] = crayon_misc_extract_bits(effect->draw->colour[0], 24, 0) +
 		((uint8_t)(crayon_graphics_transition_get_curr_percentage(effect) * 255) << 24);
 	return;
 }
 
-//To do the effect I'll just modify how many boxes are visible
+// To do the effect I'll just modify how many boxes are visible
 void modify_boxy_effect(crayon_transition_t * effect, void * params){
-	if(params != NULL){return;}	//This only exists to make the compiler shut up
+	if(params != NULL){return;}	// This only exists to make the compiler shut up
 	uint16_t num_visible = crayon_graphics_transition_get_curr_percentage(effect) * effect->draw->size;
 	uint16_t i;
 	for(i = 0; i < effect->draw->size; i++){
@@ -98,30 +37,27 @@ void modify_boxy_effect(crayon_transition_t * effect, void * params){
 	return;
 }
 
-//These two get modified together
+// These two get modified together
 void modify_flash_effect(crayon_transition_t * effect, void * params){
-	if(params != NULL || effect == NULL){return;}	//This only exists to make the compiler shut up
+	if(params != NULL || effect == NULL){return;}	// This only exists to make the compiler shut up
 	return;
 }
 
 void modify_flower_effect(crayon_transition_t * effect, void * params){
-	if(params != NULL || effect == NULL){return;}	//This only exists to make the compiler shut up
+	if(params != NULL || effect == NULL){return;}	// This only exists to make the compiler shut up
 	return;
 }
 
 int main(){
-	#if CRAYON_BOOT_MODE == 1
-		int sdRes = mount_fat_sd();	//This function should be able to mount a FAT32 formatted sd card to the /sd dir	
-		if(sdRes != 0){
-			error_freeze("SD card couldn't be mounted: %d", sdRes);
-		}
-	#endif
+	// Initialise Crayon
+	if(crayon_init(CRAYON_PLATFORM_DREAMCAST, CRAYON_BOOT_MODE)){
+		error_freeze("Unable to initialise crayon");
+	}
 
-	crayon_graphics_init(CRAYON_ENABLE_OP | CRAYON_ENABLE_TR | CRAYON_ENABLE_PT);
 	uint32_t width = crayon_graphics_get_window_width();
 	uint32_t height = crayon_graphics_get_window_height();
 
-	uint16_t i, j;
+	unsigned int i, j;
 
 	crayon_sprite_array_t scene_draw;
 	crayon_memory_init_sprite_array(&scene_draw, NULL, 0, NULL, 4, 0,
@@ -130,7 +66,7 @@ int main(){
 		scene_draw.visible[i] = 1;
 	}
 
-	//Roof
+	// Roof
 	scene_draw.scale[0].x = 200;
 	scene_draw.scale[0].y = 200;
 	scene_draw.coord[0].x = (width - scene_draw.scale[0].x) / 2;
@@ -139,7 +75,7 @@ int main(){
 	scene_draw.colour[0] = 0xFF344151;
 	scene_draw.rotation[0] = 45;
 
-	//House body
+	// House body
 	scene_draw.scale[1].x = 270;
 	scene_draw.scale[1].y = 210;
 	scene_draw.coord[1].x = (width - scene_draw.scale[1].x) / 2;
@@ -148,7 +84,7 @@ int main(){
 	scene_draw.colour[1] = 0xFFFFF8F4;
 	scene_draw.rotation[1] = 0;
 
-	//Door
+	// Door
 	scene_draw.scale[2].x = 50;
 	scene_draw.scale[2].y = 80;
 	scene_draw.coord[2].x = (width - scene_draw.scale[2].x) / 2;
@@ -157,7 +93,7 @@ int main(){
 	scene_draw.colour[2] = 0xFF7F3300;
 	scene_draw.rotation[2] = 0;
 
-	//Door knob
+	// Door knob
 	scene_draw.scale[3].x = 4;
 	scene_draw.scale[3].y = 4;
 	scene_draw.coord[3].x = scene_draw.coord[2].x + scene_draw.scale[2].x - scene_draw.scale[3].x - 5;
@@ -188,7 +124,7 @@ int main(){
 	fade_draw.visible[0] = 1;
 	fade_draw.layer[0] = 250;
 
-	vec2_u16_t num_boxes_dims = (vec2_u16_t){width / 32, height / 32};	//20 and 15
+	vec2_u16_t num_boxes_dims = (vec2_u16_t){width / 32, height / 32};	// 20 and 15
 	uint16_t num_boxes = num_boxes_dims.x * num_boxes_dims.y;
 	uint16_t * indexes = malloc(sizeof(uint16_t) * num_boxes);
 	set_indexes(indexes, num_boxes);
@@ -211,16 +147,16 @@ int main(){
 	crayon_graphics_transistion_init(&effect[0], &fade_draw, modify_fade_effect, 5 * __hz, 1 * __hz);	//5 seconds to fade in, 1 to fade out
 	crayon_graphics_transistion_init(&effect[1], &boxy_draw, modify_boxy_effect, 2 * __hz, 2 * __hz);
 
-	//Fade out and fade in are reversed
+	// Fade out and fade in are reversed
 
-	//We want them both to start off as faded out (This is redundant due to below, but anyways)
+	// We want them both to start off as faded out (This is redundant due to below, but anyways)
 	crayon_graphics_transistion_skip_to_state(&effect[0], NULL, CRAYON_FADE_STATE_OUT);
 	crayon_graphics_transistion_skip_to_state(&effect[1], NULL, CRAYON_FADE_STATE_OUT);
 
-	//Start the transition
+	// Start the transition
 	crayon_graphics_transistion_change_state(&effect[curr_effect], CRAYON_FADE_STATE_IN);
 
-	//For the 3rd effect
+	// For the 3rd effect
 	crayon_sprite_array_t letter_box_draw;
 	uint16_t widescreen_height = (2 * 180);
 	crayon_memory_init_sprite_array(&letter_box_draw, NULL, 0, NULL, 2, 0, 0, PVR_FILTER_NONE, 0);
@@ -238,38 +174,26 @@ int main(){
 	letter_box_draw.visible[1] = 1;
 	letter_box_draw.layer[1] = 254;
 
-	//The camera
+	// The camera
 	crayon_viewport_t Camera;
 	crayon_memory_init_camera(&Camera, (vec2_f_t){0, 0}, (vec2_u16_t){width, height},
 		(vec2_u16_t){0, 0}, (vec2_u16_t){width, height}, 1);
 
-	//load in assets here
+	// Load in assets here
 	crayon_font_mono_t BIOS_font;
-	crayon_palette_t BIOS_P;		//Entry 0
+	crayon_palette_t BIOS_P;		// Entry 0
 	
-	#if CRAYON_BOOT_MODE == 0
-		crayon_memory_mount_romdisk("/cd/stuff.img", "/Setup");
-	#elif CRAYON_BOOT_MODE == 1
-		crayon_memory_mount_romdisk("/sd/stuff.img", "/Setup");
-	#elif CRAYON_BOOT_MODE == 2
-		crayon_memory_mount_romdisk("/pc/stuff.img", "/Setup");
-	#else
-		#error "Invalid CRAYON_BOOT_MODE"
-	#endif
+	crayon_memory_mount_romdisk("stuff.img", "/Setup", CRAYON_ADD_BASE_PATH);
 
-
-	crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, 0, "/Setup/BIOS.dtex");
+	crayon_memory_load_mono_font_sheet(&BIOS_font, &BIOS_P, "/Setup/BIOS.dtex",
+		CRAYON_USE_EXACT_PATH, 0);
 
 	fs_romdisk_unmount("/Setup");
 
 	char debug[100];
 
-	pvr_set_bg_color(0.3, 0.3, 0.3); // Its useful-ish for debugging
+	crayon_graphics_set_bg_colour(0.3, 0.3, 0.3); // Its useful-ish for debugging
 	crayon_graphics_setup_palette(&BIOS_P);
-
-	#if CRAYON_BOOT_MODE == 1
-		unmount_fat_sd();	//Unmounts the SD dir to prevent corruption since we won't need it anymore
-	#endif
 
 	uint32_t curr_btns[4] = {0};
 	uint32_t prev_btns[4] = {0};
@@ -280,21 +204,22 @@ int main(){
 		MAPLE_FOREACH_END()
 
 		for(i = 0; i < 4; i++){
-			//Press A to fade in
-			if((curr_btns[i] & CONT_A) && !(prev_btns[i] & CONT_A)){
+			// Press A to fade in
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_A)){
 				if(effect[curr_effect].resting_state == CRAYON_FADE_STATE_RESTING_OUT){
 					crayon_graphics_transistion_change_state(&effect[curr_effect], CRAYON_FADE_STATE_IN);
 				}
 			}
 
-			//Press B to fade out
-			if((curr_btns[i] & CONT_B) && !(prev_btns[i] & CONT_B)){
+			// Press B to fade out
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_B)){
 				if(effect[curr_effect].resting_state == CRAYON_FADE_STATE_RESTING_IN){
 					crayon_graphics_transistion_change_state(&effect[curr_effect], CRAYON_FADE_STATE_OUT);
 				}
 			}
 
-			if((curr_btns[i] & CONT_X) && !(prev_btns[i] & CONT_X)){
+			// Press X to switch effect
+			if(crayon_input_button_pressed(curr_btns[i], prev_btns[i], CONT_X)){
 				curr_effect++;
 				if(curr_effect >= 2){
 					curr_effect = 0;
@@ -302,7 +227,7 @@ int main(){
 			}
 		}
 
-		//Apply the effect
+		// Apply the effect
 		crayon_graphics_transistion_apply(&effect[curr_effect], NULL);
 
 		if(curr_effect == 2){
@@ -317,7 +242,6 @@ int main(){
 		pvr_wait_ready();
 
 		pvr_scene_begin();
-
 
 		pvr_list_begin(PVR_LIST_TR_POLY);
 			if(curr_effect == 0){
@@ -343,7 +267,6 @@ int main(){
 				PVR_LIST_OP_POLY, 10, 30, 255, 1, 1, BIOS_P.palette_id);
 
 		pvr_list_finish();
-
 
 		pvr_list_begin(PVR_LIST_PT_POLY);
 			if(curr_effect == 2){
