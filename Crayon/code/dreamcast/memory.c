@@ -3,7 +3,7 @@
 char *__game_base_path = NULL;
 float __CRAYON_MEMORY_DEBUG_VARIABLES[16] = {0};
 
-char *crayon_memory_get_full_path(char *path){
+char *crayon_memory_get_full_path(const char *path){
 	uint8_t game_base_path_length = strlen(__game_base_path);
 	uint8_t path_length = strlen(path);
 
@@ -51,9 +51,9 @@ uint8_t crayon_memory_load_dtex(crayon_txr_ptr_t *dtex, uint16_t *texture_width,
 }
 
 uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_t *cp, char *path,
-		uint8_t use_game_base_path, int8_t palette_id){
+		crayon_basepath_t use_game_base_path, int8_t palette_id){
 	char *real_path = NULL;
-	if(use_game_base_path){
+	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
 		real_path = crayon_memory_get_full_path(path);
 	}
 	else{
@@ -157,7 +157,7 @@ uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_
 
 	cleanup:
 
-	if(use_game_base_path){
+	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
 		free(real_path);
 	}
 
@@ -185,9 +185,9 @@ uint8_t crayon_memory_load_spritesheet(crayon_spritesheet_t *ss, crayon_palette_
 }
 
 uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palette_t *cp, char *path,
-		uint8_t use_game_base_path, int8_t palette_id){
+		crayon_basepath_t use_game_base_path, int8_t palette_id){
 	char *real_path = NULL;
-	if(use_game_base_path){
+	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
 		real_path = crayon_memory_get_full_path(path);
 	}
 	else{
@@ -300,7 +300,7 @@ uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palett
 
 	cleanup:
 
-	if(use_game_base_path){
+	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
 		free(real_path);
 	}
 
@@ -322,9 +322,9 @@ uint8_t crayon_memory_load_prop_font_sheet(crayon_font_prop_t *fp, crayon_palett
 }
 
 uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palette_t *cp, char *path,
-		uint8_t use_game_base_path, int8_t palette_id){
+		crayon_basepath_t use_game_base_path, int8_t palette_id){
 	char *real_path = NULL;
-	if(use_game_base_path){
+	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
 		real_path = crayon_memory_get_full_path(path);
 	}
 	else{
@@ -399,7 +399,7 @@ uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palett
 
 	cleanup:
 
-	if(use_game_base_path){
+	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
 		free(real_path);
 	}
 
@@ -418,9 +418,9 @@ uint8_t crayon_memory_load_mono_font_sheet(crayon_font_mono_t *fm, crayon_palett
 }
 
 uint8_t crayon_memory_load_palette(crayon_palette_t *cp, char *path, int8_t bpp, int8_t palette_id,
-		uint8_t use_game_base_path){
+		crayon_basepath_t use_game_base_path){
 	char *real_path = NULL;
-	if(use_game_base_path){
+	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
 		real_path = crayon_memory_get_full_path(path);
 	}
 	else{
@@ -456,7 +456,7 @@ uint8_t crayon_memory_load_palette(crayon_palette_t *cp, char *path, int8_t bpp,
 
 	PAL_cleanup:
 
-	if(use_game_base_path){
+	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
 		free(real_path);
 	}
 
@@ -1209,7 +1209,7 @@ int8_t crayon_memory_free_sprite_array(crayon_sprite_array_t *sprite_array){
 
 int8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint, uint8_t use_game_base_path){
 	char *real_filename;
-	if(use_game_base_path){
+	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
 		real_filename = crayon_memory_get_full_path(filename);
 	}
 	else{
@@ -1223,7 +1223,7 @@ int8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint, uint8_t use
 	ssize_t size = fs_load(real_filename, &buffer); // Loads the file into RAM
 
 	// Free the temp string since we don't need it anymore
-	if(use_game_base_path){
+	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
 		free(real_filename);
 	}
 
@@ -1238,7 +1238,7 @@ int8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint, uint8_t use
 
 int8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint, uint8_t use_game_base_path){
 	char *real_filename;
-	if(use_game_base_path){
+	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
 		real_filename = crayon_memory_get_full_path(filename);
 	}
 	else{
@@ -1249,7 +1249,7 @@ int8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint, uint8_t 
 	int length = zlib_getlength(real_filename);
 
 	// Free the temp string since we don't need it anymore
-	if(use_game_base_path){
+	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
 		free(real_filename);
 	}
 
