@@ -27,7 +27,9 @@ uint8_t crayon_init(uint8_t platform, uint8_t boot_mode){
 	};
 	strcpy(__game_base_path, paths[boot_mode]);
 
-	__sd_present = (boot_mode == CRAYON_BOOT_SD);
+	#if FAT32 == 1
+		__sd_present = (boot_mode == CRAYON_BOOT_SD);
+	#endif
 
 	// if(crayon_audio_init()){
 	//  goto crayon_init_end1;
@@ -37,11 +39,13 @@ uint8_t crayon_init(uint8_t platform, uint8_t boot_mode){
 		goto crayon_init_end2;
 	}
 
-	if(__sd_present){
-		if(crayon_sd_mount_fat()){
-			goto crayon_init_end3;
+	#if FAT32 == 1
+		if(__sd_present){
+			if(crayon_sd_mount_fat()){
+				goto crayon_init_end3;
+			}
 		}
-	}
+	#endif
 
 	return 0;
 
@@ -60,7 +64,22 @@ uint8_t crayon_init(uint8_t platform, uint8_t boot_mode){
 	return 1;
 }
 
+void crayon_shutdown(){
+	free(__game_base_path);
 
+	#if FAT32 == 1
+	if(__sd_present){
+		crayon_sd_unmount_fat();
+	}
+	#endif
+
+	crayon_graphics_shutdown();
+	// crayon_audio_shutdown();
+
+	return;
+}
+
+#if FAT32 == 1
 uint8_t crayon_sd_mount_fat(){
 	kos_blockdev_t sd_dev;
 	uint8 partition_type;
@@ -97,19 +116,6 @@ uint8_t crayon_sd_mount_fat(){
 	return 0;
 }
 
-void crayon_shutdown(){
-	free(__game_base_path);
-
-	if(__sd_present){
-		crayon_sd_unmount_fat();
-	}
-
-	crayon_graphics_shutdown();
-	// crayon_audio_shutdown();
-
-	return;
-}
-
 void crayon_sd_unmount_fat(){
 	fs_fat_unmount("/sd");
 	fs_fat_shutdown();
@@ -117,3 +123,4 @@ void crayon_sd_unmount_fat(){
 
 	return;
 }
+#endif

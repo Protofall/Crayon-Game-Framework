@@ -19,11 +19,13 @@
 #include "graphics.h"
 // #include "audio.h"
 
+#if FAT32 == 1
 #define CRAYON_SD_MNT_MODE FS_FAT_MOUNT_READONLY
 
 #include <dc/sd.h>
 #include <kos/blockdev.h>
 #include <fat/fs_fat.h>
+#endif
 
 extern uint8_t __sd_present;
 
@@ -39,13 +41,14 @@ extern uint8_t __sd_present;
 uint8_t crayon_init(uint8_t platform, uint8_t boot_mode);
 // uint8_t __attribute__((weak)) crayon_init(uint8_t platform, uint8_t boot_mode);
 
-// NEED TO HANDLE RETURN CODES BETTER
-uint8_t crayon_sd_mount_fat();
-
 void crayon_shutdown();
 // void __attribute__((weak)) crayon_shutdown();
 
-void crayon_sd_unmount_fat();
+#if FAT32 == 1
+// NEED TO HANDLE RETURN CODES BETTER
+uint8_t crayon_sd_mount_fat();
 
+void crayon_sd_unmount_fat();
+#endif
 
 #endif

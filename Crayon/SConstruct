@@ -2,7 +2,7 @@
 import builder_functions as bf
 params = bf.input_logic(ARGUMENTS)
 
-# # Create the environments
+# Create the environments
 our_vars = dict()
 our_vars['CRAYON_BASE'] = './'
 envs = bf.create_builders(params, our_vars)

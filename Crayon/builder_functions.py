@@ -35,12 +35,20 @@ def get_supported_libraries():
 		else:
 			print('System: ' + s + ' libraries unknown!')
 			exit(1)
+	print(libraries)
 	return libraries
 
 # This will prevent 'none' from working
 	# Will also prevent `scons --help` from working
 	# TBH, choosing build `none` isn't terrible...
 def valid_build(key, val, env):
+	# If you try BUILDS=none, this function enters with an empty val...
+	if val == "":
+		print("Please give a value for BUILDS. Type \"scons --help\" for more information")
+		Exit(1)
+	else:
+		print('What? sadndsa')
+
 	# Split val so we can check all arguments
 	for v in val.split():
 		if not v in get_supported_libraries():
@@ -55,32 +63,42 @@ def input_logic(args):
 			default = 0),
 	)
 
+	# TODO: Fix this since its really broken (BUILDS=invalid)
+	# SUPER BUGGY
 	# This is the only way to set a validator for ListVariable. LHS is tuple
-		# TODO. Currently this only works for all-caps 'BUILDS'.
+		# TODO. Currently this only works for all-caps 'BUILDS'
 		# Also help doesn't work unless a platform is given
 	(key, help, default, _, converter) = ListVariable('BUILDS',
 		help = "The specific library builds we want to create",
 		default = 'unspecified',
 		names = get_supported_libraries()
-	)	
+	)	# I might be able to set map to map "dc" to dreamcast...
 	vars.Add((key, help, default, valid_build, converter))
 
-	# Create a processing env to handle unknown params
+	# Have to do this to access params
 	processing_env = Environment(tools = [], variables = vars)
-	unknown_params = vars.UnknownVariables()	# Must be done after env creation
+
+	# Must be done after env creation...
+	unknown_params = vars.UnknownVariables()
 	if unknown_params:
 		print("Invalid options detected: " + ', '.join(map(str, unknown_params.keys())))
 		Exit(1)
 
 	Help(vars.GenerateHelpText({}))	# Needs a parameter, but it doesn't have to look at it
 
-	return vars
+	# vars.FormatVariableHelpText() might be useful
+
+	arguments = dict()
+	arguments['BUILDS'] = processing_env['BUILDS']
+	arguments['DEBUG'] = processing_env['DEBUG']
+
+	return arguments
 
 # "params" is the targets, "our_vars" is just a dict with "CRAYON_BASE" ATM
+	# Replace the scons 'params' with my own one
 def create_builders(params, our_vars):
 	# Split the PLATFORMS into a list
-	params_env = Environment(tools = [], variables = params)
-	target_builds = str(params_env['BUILDS']).split(',')
+	target_builds = str(params['BUILDS']).split(',')
 
 	# If all was present, just set it to all platforms
 	if 'all' in target_builds:
@@ -98,7 +116,6 @@ def create_builders(params, our_vars):
 		if b.startswith('dreamcast'):
 			env.append(
 				Environment(
-					variables = params,
 					ENV = os.environ,
 					CC = 'kos-cc',
 					CXX = 'kos-c++',
@@ -129,22 +146,15 @@ def create_builders(params, our_vars):
 
 			# Parts of these might not be necessary
 			if 'fat32' in b:
-				print('FAT32 UNFINISHED')
-				env[-1].AppendUnique(CPPDEFINES = {'FAT32':1})	# not needed?
-				env[-1].AppendUnique(LIBS = '-lkosfat')
+				env[-1].AppendUnique(CPPDEFINES = {'FAT32':1})
+				env[-1].AppendUnique(LIBS = '-lkosfat')	# not needed?
 			if 'zlib' in b:
-				print('ZLIB UNFINISHED')
 				env[-1].AppendUnique(CPPDEFINES = {'ZLIB':1})
 				env[-1].AppendUnique(LIBS = '-lz')
 
-		if b.startswith('pc'):
+		elif b.startswith('pc'):
 			# Apparently some ppl need os' ENV for CCVERSION
-			env.append(
-				Environment(
-					variables = params,
-					ENV = os.environ,
-				)
-			)
+			env.append(Environment(ENV = os.environ))
 
 			# Add the platform
 			env[-1]['GENERAL_PLATFORM'] = 'pc'
@@ -157,12 +167,14 @@ def create_builders(params, our_vars):
 			else:
 				print('Computer platform "' + platform + '" is not supported')
 				Exit(1)
+		else:	# Should never get here
+			print(b)
+
 		env[-1]['SPECIFIC_BUILD'] = b
 
 		# Ensure CRAYON_BASE is set
 		if 'CRAYON_BASE' in our_vars:
 			env[-1]['CRAYON_BASE'] = our_vars['CRAYON_BASE']
-			# env[-1].AppendUnique(CPPPATH = ['$CRAYON_BASE'])	# Doesn't seem to be necessary, but keeping just incase
 			env[-1].AppendUnique(CPPPATH = ['$CRAYON_BASE/include/'])
 		else:
 			print('CRAYON_BASE is missing, please add the path')
@@ -174,14 +186,18 @@ def create_builders(params, our_vars):
 		# 	env[-1]['PROG_NAME'] = our_vars['PROG_NAME']
 
 		#Add in some cflags if in debug mode
+		env[-1]['DEBUG'] = params['DEBUG']
 		if env[-1]['DEBUG'] == True:
 			# Wformat level 2 has extra checks over standard.
 			# no-common is where two files define the same global var when they should be seperate
 			# g3 is like g, but it includes macro information
 			env[-1].AppendUnique(CPPFLAGS = ['-g3', '-Wall', '-Wformat=2', '-fno-common'])
+		else:
+			env[-1].AppendUnique(CPPFLAGS = '-Wno-unused-parameter')
 
 		# Shadow will tell us about vars in multiple scopes clashing and extra is good
-		env[-1].AppendUnique(CPPFLAGS = ['-Wshadow', '-Wextra'])
+		# no-unused-parameter disables the warning for unused parameters
+		env[-1].AppendUnique(CPPFLAGS = ['-Wshadow', '-Wextra', '-Wno-unused-parameter'])
 
 		# Enables GCC colour (Since it normally only does colour for terminals and scons is just an "output")
 		# Major, Minor, Patch version numbers

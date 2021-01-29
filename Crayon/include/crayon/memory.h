@@ -10,8 +10,11 @@
 #include <string.h>
 
 #include <kos/fs_romdisk.h> // For romdisk swapping
+
+#if ZLIB == 1
 #include <zlib/zlib.h>
 extern int zlib_getlength(char *filename);	// Because zlib.h won't declare it for us
+#endif
 
 // This is set in crayon_init(). Its the /cd/, /sd/ or /pc/ before every file access
 extern char *__game_base_path;
@@ -158,9 +161,11 @@ void crayon_memory_free_txr(crayon_txr_ptr_t *ptr);
 // Mount a regular img romdisk
 int8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint, uint8_t use_game_base_path);
 
+#if ZLIB == 1
 // Mount a gz compressed romdisk (Apparently its kinda dodgy)
 int8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint, uint8_t use_game_base_path);
 
+#endif
 
 //------------------Render Struct Getters------------------//
 

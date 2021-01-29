@@ -1236,6 +1236,7 @@ int8_t crayon_memory_mount_romdisk(char *filename, char *mountpoint, uint8_t use
 	return 0;
 }
 
+#if ZLIB == 1
 int8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint, uint8_t use_game_base_path){
 	char *real_filename;
 	if(use_game_base_path == CRAYON_ADD_BASE_PATH){
@@ -1279,6 +1280,7 @@ int8_t crayon_memory_mount_romdisk_gz(char *filename, char *mountpoint, uint8_t 
 
 	return 0;
 }
+#endif
 
 float crayon_memory_get_coord_x(crayon_sprite_array_t *sprites, uint16_t index, uint8_t *error){
 	if(index < sprites->size){
