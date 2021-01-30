@@ -35,7 +35,6 @@ def get_supported_libraries():
 		else:
 			print('System: ' + s + ' libraries unknown!')
 			exit(1)
-	print(libraries)
 	return libraries
 
 # This will prevent 'none' from working
@@ -46,8 +45,6 @@ def valid_build(key, val, env):
 	if val == "":
 		print("Please give a value for BUILDS. Type \"scons --help\" for more information")
 		Exit(1)
-	else:
-		print('What? sadndsa')
 
 	# Split val so we can check all arguments
 	for v in val.split():
@@ -89,22 +86,22 @@ def input_logic(args):
 	# vars.FormatVariableHelpText() might be useful
 
 	arguments = dict()
-	arguments['BUILDS'] = processing_env['BUILDS']
 	arguments['DEBUG'] = processing_env['DEBUG']
 
-	return arguments
+	# Split the BUILDS into a list
+	target_builds = str(processing_env['BUILDS']).split(',')
 
-# "params" is the targets, "our_vars" is just a dict with "CRAYON_BASE" ATM
-	# Replace the scons 'params' with my own one
-def create_builders(params, our_vars):
-	# Split the PLATFORMS into a list
-	target_builds = str(params['BUILDS']).split(',')
-
-	# If all was present, just set it to all platforms
+	# If 'all' was present, just set it to all platforms
 	if 'all' in target_builds:
 		target_builds = get_supported_libraries()
 		target_builds.remove('all')
 
+	arguments['BUILDS'] = target_builds
+
+	return arguments
+
+# "params" is the command line arguments, "our_vars" is just a dict with "CRAYON_BASE" and such
+def create_builders(params, our_vars):
 	import os
 	env = list()
 
@@ -112,7 +109,7 @@ def create_builders(params, our_vars):
 	colour_version = [4, 9, 0]
 
 	from sys import platform
-	for b in target_builds:
+	for b in params['BUILDS']:
 		if b.startswith('dreamcast'):
 			env.append(
 				Environment(
@@ -147,10 +144,10 @@ def create_builders(params, our_vars):
 			# Parts of these might not be necessary
 			if 'fat32' in b:
 				env[-1].AppendUnique(CPPDEFINES = {'FAT32':1})
-				env[-1].AppendUnique(LIBS = '-lkosfat')	# not needed?
+				env[-1].AppendUnique(LIBS = 'lkosfat')	# not needed?
 			if 'zlib' in b:
 				env[-1].AppendUnique(CPPDEFINES = {'ZLIB':1})
-				env[-1].AppendUnique(LIBS = '-lz')
+				env[-1].AppendUnique(LIBS = 'lz')
 
 		elif b.startswith('pc'):
 			# Apparently some ppl need os' ENV for CCVERSION
