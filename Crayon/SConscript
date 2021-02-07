@@ -3,23 +3,15 @@ Import('envs')
 # Create our library/s
 lib_dict = dict()
 for e in envs:
-	# Add in some cppflags if in debug mode
-	if e['DEBUG'] == True:
-		e.AppendUnique(CPPDEFINES = [{'CRAYON_DEBUG':1}])
-		# These can be helpful sometimes
-		# e.AppendUnique(CPPFLAGS = ['-Wconversion', '-Wno-unused-parameter'])
-		# conversion will check for type conversions (eg uint8_t var = (U32 VAR))
-		# no-unused-parameter disables said check
-
 	if '-' in e['SPECIFIC_BUILD']:
-		path = e['SPECIFIC_BUILD'].replace('-', '/', 1)
+		path = e['SPECIFIC_BUILD'].replace('-', '/', 1)	# Only replace the first -
 	else:
 		path = e['SPECIFIC_BUILD'] + '/default'
 	build_dir = 'build/'+ path
 	code_dir = 'code/dreamcast'	# TODO: Modify this once the pre-processing script is sorted
-	e.VariantDir(build_dir, code_dir, duplicate=0)	# Kind of moves over the processing for the code
-													# directory to our build dir duplicate=0 means it
-													# won't duplicate the src files
+	e.VariantDir(build_dir, code_dir, duplicate = 0)	# Kind of moves over the processing for the code
+														# directory to our build dir duplicate=0 means it
+														# won't duplicate the src files
 
 	prog_files = Glob(build_dir + '/*.c') # We have to specify the build path instead of the real one
 	

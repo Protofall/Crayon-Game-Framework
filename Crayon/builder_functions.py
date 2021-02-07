@@ -2,27 +2,22 @@
 from SCons.Script import *
 
 def get_supported_systems():
-	return ['dreamcast', 'all']	# TODO: Add 'pc'
+	return ['dreamcast']	# TODO: Add 'pc'
 
-# Used to make the user programs
-def get_supported_bootmodes():
-	systems = get_supported_systems()
+def get_bootmode_names(systems):
 	bootmodes = list()
 	for s in systems:
 		if s == 'dreamcast':
 			bootmodes.append(s + '-cd')
 			bootmodes.append(s + '-pc')
 			bootmodes.append(s + '-sd')
-		elif s == 'all':
-			bootmodes.append('all')
 		else:
 			print('System: ' + s + ' bootmodes unknown!')
-			exit(1)
+			return list()
+
 	return bootmodes
 
-# Used to make the libraries
-def get_supported_libraries():
-	systems = get_supported_systems()
+def get_library_names(systems, get_all = False):
 	libraries = list()
 	for s in systems:
 		if s == 'dreamcast':
@@ -30,19 +25,24 @@ def get_supported_libraries():
 			libraries.append(s + '-fat32')
 			libraries.append(s + '-zlib')
 			libraries.append(s + '-fat32-zlib')
-		elif s == 'all':
-			libraries.append('all')
 		else:
 			print('System: ' + s + ' libraries unknown!')
-			exit(1)
+			return list()
+
 	return libraries
 
+def get_supported_bootmodes():
+	return get_bootmode_names(get_supported_systems())
+
+def get_supported_libraries():
+	return get_library_names(get_supported_systems())
+
 # This will prevent 'none' from working
-	# Will also prevent `scons --help` from working
-	# TBH, choosing build `none` isn't terrible...
+	# Will also catch `help`, but I force it to ignore it and I handle it later
 def valid_build(key, val, env):
-	# If you try BUILDS=none, this function enters with an empty val...
-	if val == "":
+	# If you try BUILDS=none, this function enters with an empty value
+	# But we don't want to do this when in help mode
+	if val == "" and GetOption('help') != True:
 		print("Please give a value for BUILDS. Type \"scons --help\" for more information")
 		Exit(1)
 
@@ -57,7 +57,8 @@ def input_logic(args):
 	vars.AddVariables(
 		BoolVariable('DEBUG',
 			help = "Build in debug mode",
-			default = 0),
+			default = 0
+		),
 	)
 
 	# TODO: Fix this since its really broken (BUILDS=invalid)
@@ -67,7 +68,7 @@ def input_logic(args):
 		# Also help doesn't work unless a platform is given
 	(key, help, default, _, converter) = ListVariable('BUILDS',
 		help = "The specific library builds we want to create",
-		default = 'unspecified',
+		default = 'none',
 		names = get_supported_libraries()
 	)	# I might be able to set map to map "dc" to dreamcast...
 	vars.Add((key, help, default, valid_build, converter))
@@ -81,35 +82,36 @@ def input_logic(args):
 		print("Invalid options detected: " + ', '.join(map(str, unknown_params.keys())))
 		Exit(1)
 
-	Help(vars.GenerateHelpText({}))	# Needs a parameter, but it doesn't have to look at it
+	help_message = vars.GenerateHelpText({})	# Needs a parameter, but it doesn't have to look at it
+	Help(help_message)
 
-	# vars.FormatVariableHelpText() might be useful
+	# Since we're doing weird stuff with the ListVariable, this is how I get it to print the message
+	if GetOption('help') == True:
+		print(help_message)
+		Exit(1)
 
-	arguments = dict()
-	arguments['DEBUG'] = processing_env['DEBUG']
+	return vars
 
-	# Split the BUILDS into a list
-	target_builds = str(processing_env['BUILDS']).split(',')
-
-	# If 'all' was present, just set it to all platforms
-	if 'all' in target_builds:
-		target_builds = get_supported_libraries()
-		target_builds.remove('all')
-
-	arguments['BUILDS'] = target_builds
-
-	return arguments
-
-# "params" is the command line arguments, "our_vars" is just a dict with "CRAYON_BASE" and such
+# "params" is the command-line/scons_arg.py arguments
+# "our_vars" is just a dict with "CRAYON_BASE" and such
 def create_builders(params, our_vars):
 	import os
 	env = list()
+
+	# This is the only way to check the variables in "params"
+	args_env = Environment(tools = [], variables = params)
+
+	# Get all the libs in a way that we can iterate over them
+	target_builds = str(args_env['BUILDS']).split(',')
+	print(target_builds)
+	if 'all' in target_builds:
+		target_builds = get_library_names(get_supported_systems())
 
 	# GCC colour output was only added in this version
 	colour_version = [4, 9, 0]
 
 	from sys import platform
-	for b in params['BUILDS']:
+	for b in target_builds:
 		if b.startswith('dreamcast'):
 			env.append(
 				Environment(
@@ -117,6 +119,7 @@ def create_builders(params, our_vars):
 					CC = 'kos-cc',
 					CXX = 'kos-c++',
 					AR = 'kos-ar',
+					variables = params,
 				)
 			)
 
@@ -144,14 +147,19 @@ def create_builders(params, our_vars):
 			# Parts of these might not be necessary
 			if 'fat32' in b:
 				env[-1].AppendUnique(CPPDEFINES = {'FAT32':1})
-				env[-1].AppendUnique(LIBS = 'lkosfat')	# not needed?
+				env[-1].AppendUnique(LIBS = 'lkosfat')	# not needed for making the lib?
 			if 'zlib' in b:
 				env[-1].AppendUnique(CPPDEFINES = {'ZLIB':1})
 				env[-1].AppendUnique(LIBS = 'lz')
 
 		elif b.startswith('pc'):
 			# Apparently some ppl need os' ENV for CCVERSION
-			env.append(Environment(ENV = os.environ))
+			env.append(
+				Environment(
+					ENV = os.environ,
+					variables = params
+				)
+			)
 
 			# Add the platform
 			env[-1]['GENERAL_PLATFORM'] = 'pc'
@@ -177,20 +185,25 @@ def create_builders(params, our_vars):
 			print('CRAYON_BASE is missing, please add the path')
 			Exit(1)
 
-		env[-1]['CODE_DIR'] = 'code'
+		# # Stuff for building the project
+		# env[-1]['CODE_DIR'] = 'code'
 		# env[-1]['CDFS_DIR'] = 'cdfs'
 		# if 'PROG_NAME' in our_vars:
 		# 	env[-1]['PROG_NAME'] = our_vars['PROG_NAME']
 
+		# We convert debug to an int so we get `-DCRAYON_DEBUG=0/1` instead of true/false
+		env[-1].AppendUnique(CPPDEFINES = {'CRAYON_DEBUG': int(env[-1]['DEBUG'])})
+
 		#Add in some cflags if in debug mode
-		env[-1]['DEBUG'] = params['DEBUG']
 		if env[-1]['DEBUG'] == True:
+			# conversion will check for type conversions (eg uint8_t var = (U32 VAR))
+			# g3 is like g, but it includes macro information
 			# Wformat level 2 has extra checks over standard.
 			# no-common is where two files define the same global var when they should be seperate
-			# g3 is like g, but it includes macro information
-			env[-1].AppendUnique(CPPFLAGS = ['-g3', '-Wall', '-Wformat=2', '-fno-common'])
+			env[-1].AppendUnique(CPPFLAGS = ['-Wconversion', '-g3', '-Wall', '-Wformat=2', '-fno-common'])
 		else:
-			env[-1].AppendUnique(CPPFLAGS = '-Wno-unused-parameter')
+			# Disabled the unused parameters/variables warnings that can be a little annoying
+			env[-1].AppendUnique(CPPFLAGS = ['-Wno-unused-parameter', '-Wno-unused-value'])
 
 		# Shadow will tell us about vars in multiple scopes clashing and extra is good
 		# no-unused-parameter disables the warning for unused parameters
@@ -199,6 +212,7 @@ def create_builders(params, our_vars):
 		# Enables GCC colour (Since it normally only does colour for terminals and scons is just an "output")
 		# Major, Minor, Patch version numbers
 		# We need the CC and CXX checks for pc because this flag is only for GCC/G++
+			# TODO: Add a check to make sure compiler is a GCC variant. This is useless for clang and stuff
 		our_version = list(map(int, env[-1]['CCVERSION'].split('.')))
 		if all([a >= b for a, b in zip(our_version, colour_version)]) and (env[-1]['GENERAL_PLATFORM'] != 'pc' or (env[-1]['CC'] == 'gcc' or env[-1]['CXX'] == 'g++')):
 			env[-1].AppendUnique(CCFLAGS = ['-fdiagnostics-color=always'])

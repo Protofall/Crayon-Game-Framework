@@ -18,6 +18,7 @@ if CRAYON_BASE == None:	#Not in the environment
 BUILD_MODE = ARGUMENTS.get('build_mode', 'cd')
 #Section 10.2.1 of the scons user manual could be *very* useful for this
 #...if only it was clear whats going on. Refer to that later
+# https://scons.org/doc/production/HTML/scons-user/ch10s02.html#idp140637548595248
 
 import commands
 
@@ -26,10 +27,13 @@ CRAYON_PROJ_NAME 	= commands.getoutput("basename \"`pwd`\"")	#Basic
 CRAYON_PROJ_LIBS	= "-lkosfat -lz"
 CRAYON_PROJ_SRC_C	= commands.getoutput("find code -type f -name '*.c' | tr '\n' ' '")	#Note, since this is in the user space, the file paths can have spaces
 																						#Therefore I should modify this to be a list of strings
+																						# Really, I should modify this to use glob...
+# CFILES = ["code/" + PLATFORM + "/" + str(s) for s in Glob('*.c')]      #Converts SCons objects to str (Still list of X)
 CRAYON_PROJ_SRC_CPP	= commands.getoutput("find code -type f \( -name '*.cpp' -o -name '*.cc' \)  | tr '\n' ' '")
 CRAYON_BUILD_DIR	= "build"
-CRAYON_PREPROCESOR	= ""
-DREAMCAST_EMULATOR	= "redream"
+CRAYON_PREPROCESOR	= ""	# Can be in the user dict to override other variables.
+								# Might need to be an absolute path? idk
+DREAMCAST_EMULATOR	= "redream"	# Remove this, we don't need that in the scons file
 
 
 
@@ -62,7 +66,7 @@ extras_steps = imp.load_source('dreamcast', CRAYON_BASE+'/rules/'+'dreamcast.py'
 extras_steps.Init(env)
 # print env['ENV']['PROJECT']	#To confirm it loaded
 
-# Scons user manual section 10.3.2
+# Scons user manual section 10.3.2 (Default: https://scons.org/doc/production/HTML/scons-user/ch10s03.html#idp140637548709552 )
 # This is the code that will treat `scons` and `scons dreamcast` the same
 # But will BOOT_MODE be set correctly, id we do just `scons`?
 # Default(dreamcast())
