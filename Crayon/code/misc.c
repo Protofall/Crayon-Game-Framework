@@ -171,7 +171,7 @@ uint8_t crayon_misc_almost_equals(float a, float b, float epsilon){
 // Convert unsigned int to string
 // 'out_string' buffer is assumed to be large enough.
 // Requires an 11-byte output buffer for the string.
-// The biggest decimal number is 4294967295, which is 10 characters‬ (excluding null term).
+// The biggest decimal number is 4294967295, which is 10 characters (excluding null term).
 // Returns pointer to out_string.
 char *crayon_misc_uint_to_string(unsigned int in_number, char *out_string){
 	int i;
@@ -195,7 +195,7 @@ char *crayon_misc_uint_to_string(unsigned int in_number, char *out_string){
 // Convert signed int to string
 // 'out_string' buffer is assumed to be large enough.
 // Requires a 12-byte output buffer for the string.
-// The longest signed decimal numbers are 10 characters‬ (excluding null term and sign).
+// The longest signed decimal numbers are 10 characters (excluding null term and sign).
 // Returns pointer to out_string.
 char *crayon_misc_int_to_string(int in_number, char*out_string){
 	int i;

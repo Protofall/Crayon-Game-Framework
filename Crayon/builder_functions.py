@@ -172,14 +172,13 @@ def build_project(args):
 		print('ERROR: Somehow we didn\'t create any envs')
 		Exit(1)
 
-	return envs
-
 	lib_folder = envs[0]['CRAYON_BASE']
-	lib_dict = SConscript(lib_folder + '/SConscript', exports = 'envs')	# This isn't actually building the libs...
+	lib_dict = SConscript(lib_folder + '/SConscript', exports = 'envs')
+	Default(lib_dict.values())	# Strangly, ATM this is the only way to make a project build the library stuff...
 
 	return
 
-# 'params' is the command-line/scons_arg.py arguments
+# 'params' is the command-line/scons_arg.py arguments and 'mode' is project or library
 def create_builders(params, mode):
 	import os
 
