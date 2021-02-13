@@ -3,8 +3,6 @@ import builder_functions as bf
 params = bf.input_logic(ARGUMENTS, "library")
 
 # Create the environments
-our_vars = dict()
-our_vars['CRAYON_BASE'] = './'
-envs = bf.create_builders(params, our_vars)
+envs = bf.create_builders(params, "library")
 
 SConscript('SConscript', exports = 'envs')

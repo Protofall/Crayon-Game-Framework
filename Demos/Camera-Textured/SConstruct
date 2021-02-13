@@ -5,27 +5,12 @@ if crayon_base == None:	# Not in the environment
 	print("Cannot locate Crayon. Please set CRAYON_BASE to Crayon's root directory in your environment")
 	exit(1)
 
-# And alternative way to set extra variables
-	# Whats the point of this again?
-our_vars = dict()
-our_vars['PROGRAM_NAME'] = os.path.basename(os.getcwd()) # Name of host folder
-
 # Call the Crayon functions to build the project
 sys.path.append(crayon_base)
 import builder_functions
-builder_functions.build_project(ARGUMENTS, our_vars)
+builder_functions.build_project(ARGUMENTS)
 
 
-
-# # The 3 things below here can probably be rolled into one
-
-# params = bf.handle_input(ARGUMENTS)
-
-# # Create our envs
-# envs = bf.create_builders(params, our_vars)
-
-# # Build the lib/nodes
-# lib_dict = SConscript(lib_folder + 'SConscript', exports = 'envs')
 
 
 # # Next something to build the project
