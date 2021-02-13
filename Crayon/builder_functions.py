@@ -39,20 +39,42 @@ def get_supported_libraries():
 
 # This will prevent 'none' from working
 	# Will also catch `help`, but I force it to ignore it and I handle it later
-def valid_build(key, val, env):
+def crayon_validation(val, mode):
 	# If you try BUILDS=none, this function enters with an empty value
 	# But we don't want to do this when in help mode
 	if val == "" and GetOption('help') != True:
 		print("Please give a value for BUILDS. Type \"scons --help\" for more information")
 		Exit(1)
 
+	builds_list = []
+	if mode == "library":
+		builds_list = get_supported_libraries()
+	elif mode == "project":
+		builds_list = get_supported_bootmodes()
+	else:
+		print("ERROR: Invalid \"mode\" for \"crayon_validation()\"")
+		Exit(1)
+
 	# Split val so we can check all arguments
 	for v in val.split():
-		if not v in get_supported_libraries():
-			print("Please give a value for BUILDS. Type \"scons --help\" for more information")
+		if v not in builds_list:
+			print("Please give a valid value for BUILDS. Type \"scons --help\" for more information")
 			Exit(1)
+	
 
-def input_logic(args):
+def valid_library_build(key, val, env):
+	crayon_validation(val, "library")
+
+def valid_project_build(key, val, env):
+	crayon_validation(val, "project")
+
+def input_logic(args, mode):
+	help_text = ""
+	modeInt = 0
+	if mode != "library" and mode != "project":
+		print("ERROR: Invalid \"mode\" for \"input_logic()\"")
+		Exit(1)
+
 	vars = Variables('scons_args.py', args)
 	vars.AddVariables(
 		BoolVariable('DEBUG',
@@ -67,11 +89,11 @@ def input_logic(args):
 		# TODO. Currently this only works for all-caps 'BUILDS'
 		# Also help doesn't work unless a platform is given
 	(key, help, default, _, converter) = ListVariable('BUILDS',
-		help = "The specific library builds we want to create",
+		help = "The specific " + ("library" if mode == "library" else "bootmode") + " builds we want to create",
 		default = 'none',
-		names = get_supported_libraries()
+		names = (get_supported_libraries() if mode == "library" else get_supported_bootmodes())
 	)	# I might be able to set map to map "dc" to dreamcast...
-	vars.Add((key, help, default, valid_build, converter))
+	vars.Add((key, help, default, (valid_library_build if mode == "library" else valid_project_build), converter))
 
 	# Have to do this to access params
 	processing_env = Environment(tools = [], variables = vars)
@@ -85,12 +107,21 @@ def input_logic(args):
 	help_message = vars.GenerateHelpText({})	# Needs a parameter, but it doesn't have to look at it
 	Help(help_message)
 
-	# Since we're doing weird stuff with the ListVariable, this is how I get it to print the message
+	# Since we're doing weird stuff with the ListVariable, this is how I get it to print the message without continuing
 	if GetOption('help') == True:
 		print(help_message)
 		Exit(1)
 
 	return vars
+
+def build_project(args, our_vars):
+	params = input_logic(args, "project")
+
+	# envs = create_builders(params, our_vars)
+
+	# lib_dict = SConscript(lib_folder + 'SConscript', exports = 'envs')
+
+	return
 
 # "params" is the command-line/scons_arg.py arguments
 # "our_vars" is just a dict with "CRAYON_BASE" and such
@@ -103,7 +134,6 @@ def create_builders(params, our_vars):
 
 	# Get all the libs in a way that we can iterate over them
 	target_builds = str(args_env['BUILDS']).split(',')
-	print(target_builds)
 	if 'all' in target_builds:
 		target_builds = get_library_names(get_supported_systems())
 
@@ -173,7 +203,7 @@ def create_builders(params, our_vars):
 				print('Computer platform "' + platform + '" is not supported')
 				Exit(1)
 		else:	# Should never get here
-			print(b)
+			print("Somehow got here: " + b)
 
 		env[-1]['SPECIFIC_BUILD'] = b
 

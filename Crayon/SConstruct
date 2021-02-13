@@ -1,6 +1,6 @@
 # Import our helper functions
 import builder_functions as bf
-params = bf.input_logic(ARGUMENTS)
+params = bf.input_logic(ARGUMENTS, "library")
 
 # Create the environments
 our_vars = dict()
