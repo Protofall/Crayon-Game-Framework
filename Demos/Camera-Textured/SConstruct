@@ -8,8 +8,12 @@ if crayon_base == None:	# Not in the environment
 # Call the Crayon functions to build the project
 sys.path.append(crayon_base)
 import builder_functions
-builder_functions.build_project(ARGUMENTS)
+# builder_functions.build_project(ARGUMENTS)
 
+envs = builder_functions.build_project(ARGUMENTS)
+
+lib_folder = '../../Crayon'
+lib_dict = SConscript(lib_folder + '/SConscript', exports = 'envs')	# This isn't actually building the libs...
 
 
 

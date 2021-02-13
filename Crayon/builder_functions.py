@@ -2,7 +2,7 @@
 from SCons.Script import *
 
 def get_env_types_from_bootmodes(bootmodes, env):
-	result = list()
+	result = dict()
 
 	for b in bootmodes:
 		if b.startswith('dreamcast'):
@@ -12,7 +12,8 @@ def get_env_types_from_bootmodes(bootmodes, env):
 			if env['ZLIB'] == True:
 				name = '-'.join([name, 'zlib'])
 			if name not in result:
-				result.append(name)
+				result[name] = list()
+			result[name].append(b)
 		else:
 			print('ERROR: Unknown boot mode detected in \"get_env_types_from_bootmodes()\"')
 			Exit(1)
@@ -126,7 +127,7 @@ def input_logic(args, mode):
 		)
 	elif mode == 'library':
 		vars.Add(PathVariable('CRAYON_BASE',
-			help = 'Location of libCrayon',
+			help = 'Location of Crayon codebase',
 			default = './',
 			validator = PathVariable.PathIsDir
 		))
@@ -171,8 +172,10 @@ def build_project(args):
 		print('ERROR: Somehow we didn\'t create any envs')
 		Exit(1)
 
+	return envs
+
 	lib_folder = envs[0]['CRAYON_BASE']
-	lib_dict = SConscript(lib_folder + '/SConscript', exports = 'envs')
+	lib_dict = SConscript(lib_folder + '/SConscript', exports = 'envs')	# This isn't actually building the libs...
 
 	return
 
@@ -189,19 +192,19 @@ def create_builders(params, mode):
 	if mode == 'library':
 		if 'all' in target_builds:
 			target_builds = get_library_names(get_supported_systems())
-		env_names = target_builds
+		env_names_dict = {key: None for key in target_builds}
 	elif mode == 'project':
 		if 'all' in target_builds:
 			target_builds = get_bootmode_names(get_supported_systems())
-		env_names = get_env_types_from_bootmodes(target_builds, args_env)
+		env_names_dict = get_env_types_from_bootmodes(target_builds, args_env)
 	else:
 		print('ERROR: Invalid \"mode\" for \"create_builders()\"')
 		Exit(1)
 
 	from sys import platform
 	env = list()
-	for b in env_names:
-		if b.startswith('dreamcast'):
+	for env_type, bootmode in env_names_dict.items():
+		if env_type.startswith('dreamcast'):
 			env.append(
 				Environment(
 					ENV = os.environ,
@@ -234,14 +237,14 @@ def create_builders(params, mode):
 			# env[-1].AppendUnique(LIBS = ['-ALdc'])
 
 			# Parts of these might not be necessary
-			if 'fat32' in b:
+			if 'fat32' in env_type:
 				env[-1].AppendUnique(CPPDEFINES = {'FAT32':1})
 				env[-1].AppendUnique(LIBS = 'lkosfat')	# not needed for making the lib?
-			if 'zlib' in b:
+			if 'zlib' in env_type:
 				env[-1].AppendUnique(CPPDEFINES = {'ZLIB':1})
 				env[-1].AppendUnique(LIBS = 'lz')
 
-		elif b.startswith('pc'):
+		elif env_type.startswith('pc'):
 			# Apparently some ppl need os' ENV for CCVERSION
 			env.append(
 				Environment(
@@ -262,12 +265,11 @@ def create_builders(params, mode):
 				print('Computer platform "' + platform + '" is not supported')
 				Exit(1)
 		else:	# Should never get here
-			print('Somehow got here: ' + b)
+			print('Somehow got here with env type: ' + env_type)
 
 		# Set the specific lib and boot modes we'll want to use
-		env[-1]['SPECIFIC_BUILD'] = b
-		# env[-1]['SPECIFIC_BOOTMODE'] = 
-		env[-1]['SPECIFIC_LIBRARY'] = b
+		env[-1]['BOOTMODE_NAME'] = bootmode
+		env[-1]['LIBRARY_NAME'] = env_type
 
 		# Set the CRAYON_BASE related stuff
 		if 'CRAYON_BASE' not in env[-1]:
