@@ -1,0 +1,11 @@
+import os, sys
+
+crayon_base = os.environ['CRAYON_BASE']
+if crayon_base == None: # Not in the environment
+	print("Cannot locate Crayon. Please set CRAYON_BASE to Crayon's root directory in your environment")
+	exit(1)
+
+# Call the Crayon functions to build the project
+sys.path.append(crayon_base)
+import builder_functions
+builder_functions.build_project(ARGUMENTS)
