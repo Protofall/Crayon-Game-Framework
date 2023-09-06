@@ -1,3 +1,11 @@
+# IMPORTANT
+
+This repo is no longer active, instead I have moved to gitlab. Therefore I will no longer be updating this repository.
+
+To get the latest changes, go to: https://gitlab.com/Protofall/Crayon-Game-Framework
+
+-----------------------------------------
+
 # Crayon, framework for a new KOS project
 
 Hello! This is my main Dreamcast Homebrew project. When I started Dreamcast homebrew a few years ago, there wasn't really any existing frameworks/engines that I could use or learn from. There's a few old abandoned ones in KOS ports, an older software-rendered OpenGL port and some other engines that weren't publicly available, so I started making my own thing. The goal of Crayon was to learn more about using the Dreamcast hardware and share it with the community so they could learn from it. It's not designed to be the best or well experience, that's why it is called Crayon.
